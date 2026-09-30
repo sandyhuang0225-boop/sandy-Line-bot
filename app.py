@@ -352,6 +352,34 @@ def create_row(label, value, color='#111111', weight='regular'):
         ]
     )
 
+# ── 屋主委託諮詢表單卡片 ──
+def create_owner_inquiry_form_flex():
+    template_text = "屋主委託|房屋類型:大樓|地點:鼓山區|稱呼:王先生|電話:0912345678|方便聯絡時間:隨時"
+    return FlexSendMessage(
+        alt_text="【Sandy宅安心】屋主委託評估諮詢表單",
+        contents=BubbleContainer(
+            body=BoxComponent(layout='vertical', padding_all='none', contents=[
+                BoxComponent(layout='vertical', padding_all='lg', background_color='#20c997', contents=[
+                    TextComponent(text="📝 Sandy 宅安心 ｜ 屋主委託評估", weight='bold', size='md', color='#ffffff'),
+                    TextComponent(text="不想直接通話？請留下愛屋資訊，管家主動與您聯繫！", size='xs', color='#e6fffa', margin='xs'),
+                ]),
+                BoxComponent(layout='vertical', padding_all='lg', spacing='sm', contents=[
+                    TextComponent(text="📋 請於對話框回傳以下資訊：", weight='bold', size='sm', color='#333333'),
+                    SeparatorComponent(margin='xs'),
+                    create_row("🏢 房屋類型", "大樓 / 公寓 / 透天 / 套房 / 店面"),
+                    create_row("📍 物件地點", "行政區、路名（如：鼓山區裕誠路）"),
+                    create_row("👤 屋主稱呼", "如：王先生 / 陳小姐"),
+                    create_row("📞 聯絡電話", "方便聯繫的手機號碼"),
+                    create_row("⏰ 聯絡時間", "隨時 / 平日白天 / 晚上"),
+                    SeparatorComponent(margin='md'),
+                    TextComponent(text="💡 點選下方按鈕可「自動帶入範本」，填入您的愛屋資訊後即可送出！", size='xs', color='#666666', wrap=True),
+                    ButtonComponent(action=MessageAction(label="✏️ 點我填寫委託表單", text=template_text), style='primary', color='#20c997', height='sm'),
+                    ButtonComponent(action=URIAction(label="📞 還是想直接撥打電話？", uri=f"tel:{MANAGER_PHONE}"), style='secondary', height='sm'),
+                ]),
+            ])
+        )
+    )
+
 # ── 1. 包租代管介紹（雙卡輪播：服務保障 ＋ 政府3稅減免與補助）──
 def create_service_baozu_flex():
     # 卡片 1：房東四大服務保障
@@ -371,7 +399,7 @@ def create_service_baozu_flex():
                 SeparatorComponent(margin='md'),
                 TextComponent(text="👉 左右滑動查看【政府稅金減免與補助】", size='xs', color='#888888', align='center', margin='sm'),
                 ButtonComponent(action=URIAction(label="📞 撥打屋主諮詢專線", uri=f"tel:{MANAGER_PHONE}"), style='primary', color='#198754', height='sm'),
-                ButtonComponent(action=MessageAction(label="💬 留下委託諮詢", text="我想諮詢包租代管"), style='secondary', height='sm'),
+                ButtonComponent(action=MessageAction(label="📝 填寫委託諮詢表單", text="我想留下委託諮詢"), style='secondary', height='sm'),
             ]),
         ])
     )
@@ -396,8 +424,8 @@ def create_service_baozu_flex():
                 create_row("⚖️ 公證補助", "每件每次最高補助 3,000 元"),
                 create_row("🛡️ 保險補助", "每年最高補助 3,500 元居家安全險"),
                 SeparatorComponent(margin='md'),
-                ButtonComponent(action=URIAction(label="📞 諮詢房東稅費試算", uri=f"tel:{MANAGER_PHONE}"), style='primary', color='#0d6efd', height='sm'),
-                ButtonComponent(action=MessageAction(label="💬 預約 Sandy 評估", text="我想諮詢包租代管稅費優惠"), style='secondary', height='sm'),
+                ButtonComponent(action=URIAction(label="📞 撥打專人評估專線", uri=f"tel:{MANAGER_PHONE}"), style='primary', color='#0d6efd', height='sm'),
+                ButtonComponent(action=MessageAction(label="📝 線上預約專人評估", text="我想預約專人評估"), style='secondary', height='sm'),
             ]),
         ])
     )
@@ -1024,19 +1052,47 @@ def handle_message(event):
 
         # ==================== 六宮格按鍵（所有人可互動）====================
 
-        if text in ["包租代管", "1", "我要包租"]:
+        # ── 按鈕 1：包租代管 ──
+        if any(kw in text for kw in ["包租代管", "包租", "1", "我要包租", "包租貸款", "社會住宅"]) and not any(kw in text for kw in ["表單", "委託", "評估", "稅費", "優惠"]):
             line_bot_api.reply_message(event.reply_token, create_service_baozu_flex())
             return
 
-        if text in ["房屋託管", "2", "我要託管"]:
+        # ── 屋主委託諮詢表單（屋主欲填表或諮詢稅費/評估）──
+        if any(kw in text for kw in ["委託諮詢", "留下委託", "預約專人評估", "專人評估", "稅費優惠", "稅金優惠", "委託表單", "填寫表單", "屋主諮詢", "我想諮詢包租代管", "我想預約", "我想留下委託諮詢", "我想預約專人評估"]) and not (text.startswith("屋主委託") or text.startswith("屋主諮詢")):
+            line_bot_api.reply_message(event.reply_token, create_owner_inquiry_form_flex())
+            try:
+                line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(
+                    text=f"📢 【屋主諮詢意向】\n用戶：{user_name} ({user_id})\n點選：{text}\n系統已主動提供委託評估表單！"
+                ))
+            except Exception as err:
+                print(f"推播屋主意向失敗: {err}")
+            return
+
+        # ── 屋主送出愛屋資訊（填表回傳）──
+        if text.startswith("屋主委託") or text.startswith("屋主諮詢"):
+            try:
+                line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(
+                    text=f"🔥 【全新屋主委託來了！】\n來自用戶：{user_name} ({user_id})\n委託資訊如下：\n{text}\n\n請 Sandy 儘速主動回電為屋主評估！"
+                ))
+            except Exception as err:
+                print(f"轉發屋主委託通知失敗: {err}")
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(
+                text=f"🎉 非常感謝您的委託諮詢！\nSandy 管家已收到您的房屋資訊，將會於您方便的時段主動致電與您聯繫，竭誠為您服務！\n\n如有急件，亦歡迎直接撥打專線：{MANAGER_PHONE}，謝謝！"
+            ))
+            return
+
+        # ── 按鈕 2：房屋託管 ──
+        if any(kw in text for kw in ["房屋託管", "託管", "2", "我要託管"]) and "諮詢" not in text:
             line_bot_api.reply_message(event.reply_token, create_service_tuoguan_flex())
             return
 
-        if text in ["我要租屋", "3", "找房子", "租屋"]:
+        # ── 按鈕 3：我要租屋 ──
+        if any(kw in text for kw in ["我要租屋", "找房子", "租屋", "3"]) and "諮詢" not in text and "需求" not in text:
             line_bot_api.reply_message(event.reply_token, create_service_renting_flex())
             return
 
-        if text in ["修繕報修", "報修", "4", "設備維修"]:
+        # ── 按鈕 4：修繕報修 ──
+        if any(kw in text for kw in ["修繕報修", "報修", "4", "設備維修", "叫修"]) and not text.startswith("我要報修"):
             props     = load_properties()
             user_prop = next((p for p in props if p['line_id'] == user_id), None)
             line_bot_api.reply_message(event.reply_token, create_repair_flex(
@@ -1045,15 +1101,16 @@ def handle_message(event):
             ))
             return
 
-        if text in ["聯絡管家", "管家", "6", "聯絡", "客服"]:
+        # ── 按鈕 6：聯絡管家 ──
+        if any(kw in text for kw in ["聯絡管家", "聯繫管家", "管家名片", "專屬管家", "聯絡sandy", "聯絡Sandy", "管家", "客服", "聯絡客服", "找管家", "6"]) and "諮詢" not in text and "委託" not in text:
             line_bot_api.reply_message(event.reply_token, create_contact_manager_flex())
             return
 
-        # 客戶諮詢或叫修，自動轉知 Sandy
-        if any(text.startswith(kw) for kw in ["我想諮詢包租代管", "我想諮詢房屋託管", "我有租屋需求", "我想諮詢管家", "我要報修", "諮詢"]):
+        # 客戶其他諮詢或叫修，自動轉知 Sandy
+        if any(kw in text for kw in ["我想諮詢房屋託管", "我有租屋需求", "我想諮詢管家", "我要報修"]) or text.startswith("我要報修"):
             try:
                 line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(
-                    text=f"📢 【客戶即時需求通知】\n來自 LINE 用戶：{user_id}\n需求內容：{text}\n請管家抽空聯繫處理！"
+                    text=f"📢 【客戶即時需求通知】\n來自 LINE 用戶：{user_name} ({user_id})\n需求內容：{text}\n請管家抽空聯繫處理！"
                 ))
             except Exception as err:
                 print(f"轉發通知房東失敗: {err}")
@@ -1468,7 +1525,20 @@ def handle_message(event):
                 ))
             return
 
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text="請點選下方圖文選單進行操作。"))
+        # 訪客或自訂訊息通用智慧回覆（不再生硬回覆「請點選下方圖文選單」）
+        # 1. 若非 Sandy 本人，將訪客留言自動推播至 Sandy 手機
+        if user_id != MY_LINE_USER_ID:
+            try:
+                line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(
+                    text=f"💬 【LINE 收到訪客留言】\n來自用戶：{user_name} ({user_id})\n留言內容：\n{text}\n請管家抽空查看回覆！"
+                ))
+            except Exception as err:
+                print(f"轉發訪客留言失敗: {err}")
+
+        # 2. 親切回覆用戶，並提供專線電話
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(
+            text=f"您好！Sandy 管家已收到您的訊息：「{text}」，將儘速由專人為您服務！\n如情況緊急或需即時通話，歡迎直接撥打專線：{MANAGER_PHONE}，謝謝！"
+        ))
 
     except Exception as e:
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"系統處理發生異常：{str(e)}"))
