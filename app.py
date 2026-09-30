@@ -541,15 +541,15 @@ def create_receipt_flex(room_no, addr, tenant, month_str, amount_str, mgmt_fee=0
         header.append(TextComponent(text=f"🧪 安全測試模式（模擬發給：{tenant}）", size='xs', color='#ffeb3b', margin='xs'))
     breakdown = note if note else (f"含代收管理費 {mgmt_fee:,} 元" if mgmt_fee > 0 else "純租金")
     return FlexSendMessage(
-        alt_text=f"【租金收據】{room_no} {tenant} {month_str}月租金已入帳",
+        alt_text=f"【租金收據】{addr} {room_no} {tenant} {month_str}月租金已入帳",
         contents=BubbleContainer(
             body=BoxComponent(layout='vertical', padding_all='none', contents=[
                 BoxComponent(layout='vertical', padding_all='md', background_color='#198754', contents=header),
                 BoxComponent(layout='vertical', padding_all='lg', contents=[
                     TextComponent(text=f"{room_no} ｜ {tenant}", weight='bold', size='md', color='#333333'),
-                    TextComponent(text=addr, size='xs', color='#888888', margin='xs', wrap=True),
                     SeparatorComponent(margin='md'),
                     BoxComponent(layout='vertical', margin='md', spacing='sm', contents=[
+                        create_row("完整地址", addr, color='#111111', weight='bold'),
                         create_row("繳納月份", f"{month_str} 月"),
                         create_row("實收金額", f"{amount_str} 元", color='#198754', weight='bold'),
                         create_row("費用明細", breakdown, color='#666666'),
@@ -569,15 +569,15 @@ def create_reminder_flex(room_no, addr, tenant, month_str, amount_str, due_day, 
         header.append(TextComponent(text=f"🧪 安全測試模式（模擬發給：{tenant}）", size='xs', color='#ffffff', margin='xs'))
     month_desc = f"{month_str} 月租金 {note}" if note else f"{month_str} 月租金（含管理費）"
     return FlexSendMessage(
-        alt_text=f"【繳款提醒】{room_no} {tenant} {month_str}月租金請安排匯款",
+        alt_text=f"【繳款提醒】{addr} {room_no} {tenant} {month_str}月租金請安排匯款",
         contents=BubbleContainer(
             body=BoxComponent(layout='vertical', padding_all='none', contents=[
                 BoxComponent(layout='vertical', padding_all='md', background_color='#dc3545', contents=header),
                 BoxComponent(layout='vertical', padding_all='lg', contents=[
                     TextComponent(text=f"{room_no} ｜ {tenant} 您好", weight='bold', size='md', color='#333333'),
-                    TextComponent(text=addr, size='xs', color='#888888', margin='xs', wrap=True),
                     SeparatorComponent(margin='md'),
                     BoxComponent(layout='vertical', margin='md', spacing='sm', contents=[
+                        create_row("完整地址", addr, color='#111111', weight='bold'),
                         create_row("應繳月份", month_desc),
                         create_row("應繳總額", f"{amount_str} 元", color='#dc3545', weight='bold'),
                         create_row("約定繳租日", f"每月 {due_day} 號"),
@@ -595,24 +595,24 @@ def create_reminder_flex(room_no, addr, tenant, month_str, amount_str, due_day, 
 
 # ── 【修改八】管理費已繳確認卡（發給管理員）──
 def create_mgmt_paid_flex(addr, room_no, line_name, month_str, amount, last5, payer, is_test=False):
+    clean_payer = re.sub(r'[A-Za-z\(\)\s（）]', '', str(payer)).strip() or BANK_HOLDER
     header = [TextComponent(text="✅ 管理費繳費確認", weight='bold', size='md', color='#ffffff')]
     if is_test:
         header.append(TextComponent(text=f"🧪 測試模式（模擬發給：{line_name}）", size='xs', color='#ffeb3b', margin='xs'))
     return FlexSendMessage(
-        alt_text=f"【管理費確認】{addr} {month_str}月管理費已繳",
+        alt_text=f"【管理費確認】{addr} {room_no} {month_str}月管理費已繳",
         contents=BubbleContainer(
             body=BoxComponent(layout='vertical', padding_all='none', contents=[
                 BoxComponent(layout='vertical', padding_all='md', background_color='#198754', contents=header),
                 BoxComponent(layout='vertical', padding_all='lg', spacing='sm', contents=[
-                    TextComponent(text=addr, weight='bold', size='sm', color='#333333', wrap=True),
-                    SeparatorComponent(margin='md'),
-                    create_row("房號",     room_no),
+                    create_row("完整地址", addr, color='#111111', weight='bold'),
+                    create_row("房號/戶別", room_no if room_no else "—"),
                     create_row("繳費月份", f"{month_str} 月"),
-                    create_row("匯款人",   payer, color='#333333', weight='bold'),
+                    create_row("匯款人",   clean_payer, color='#333333', weight='bold'),
                     create_row("匯款金額", f"{amount} 元", color='#198754', weight='bold'),
                     create_row("帳號後5碼", last5 if last5 else "（未提供）", color='#0d6efd', weight='bold'),
                     SeparatorComponent(margin='md'),
-                    TextComponent(text="以上管理費已匯出，請確認收到，謝謝！", size='xs', color='#aaaaaa', margin='sm', align='center'),
+                    TextComponent(text="以上管理費已匯出，請管委會／管理員查收核銷，謝謝！", size='xs', color='#666666', margin='sm', align='center', wrap=True),
                 ]),
             ])
         )
@@ -620,24 +620,24 @@ def create_mgmt_paid_flex(addr, room_no, line_name, month_str, amount, last5, pa
 
 # ── 【修改八】貸款已繳確認卡（發給合伙人）──
 def create_loan_paid_flex(addr, room_no, line_name, month_str, amount, last5, payer, is_test=False):
+    clean_payer = re.sub(r'[A-Za-z\(\)\s（）]', '', str(payer)).strip() or BANK_HOLDER
     header = [TextComponent(text="✅ 貸款繳費確認", weight='bold', size='md', color='#ffffff')]
     if is_test:
         header.append(TextComponent(text=f"🧪 測試模式（模擬發給：{line_name}）", size='xs', color='#ffeb3b', margin='xs'))
     return FlexSendMessage(
-        alt_text=f"【貸款確認】{addr} {month_str}月貸款已繳",
+        alt_text=f"【貸款確認】{addr} {room_no} {month_str}月貸款已繳",
         contents=BubbleContainer(
             body=BoxComponent(layout='vertical', padding_all='none', contents=[
                 BoxComponent(layout='vertical', padding_all='md', background_color='#0d6efd', contents=header),
                 BoxComponent(layout='vertical', padding_all='lg', spacing='sm', contents=[
-                    TextComponent(text=addr, weight='bold', size='sm', color='#333333', wrap=True),
-                    SeparatorComponent(margin='md'),
-                    create_row("房號",     room_no),
+                    create_row("完整地址", addr, color='#111111', weight='bold'),
+                    create_row("房號/戶別", room_no if room_no else "—"),
                     create_row("繳費月份", f"{month_str} 月"),
-                    create_row("匯款人",   payer, color='#333333', weight='bold'),
+                    create_row("匯款人",   clean_payer, color='#333333', weight='bold'),
                     create_row("匯款金額", f"{amount} 元", color='#0d6efd', weight='bold'),
                     create_row("帳號後5碼", last5 if last5 else "（未提供）", color='#dc3545', weight='bold'),
                     SeparatorComponent(margin='md'),
-                    TextComponent(text="以上貸款已匯出，請確認收到，謝謝！", size='xs', color='#aaaaaa', margin='sm', align='center'),
+                    TextComponent(text="以上貸款已匯出，請確認查收核銷，謝謝！", size='xs', color='#666666', margin='sm', align='center', wrap=True),
                 ]),
             ])
         )
