@@ -1820,37 +1820,50 @@ def handle_message(event):
 
 @handler.add(MessageEvent, message=(ImageMessage, VideoMessage))
 def handle_media_message(event):
-    """【修繕報修】房客傳送照片或影片之自動轉發與親切回覆"""
+    """【修繕報修】房客傳送照片或影片之自動轉發與親切回覆（含防重複重試機制）"""
+    msg_id = getattr(event.message, 'id', '')
+    token  = getattr(event, 'reply_token', '')
+
+    # 雙重防重防刷機制：以 message_id 與 reply_token 攔截 LINE 的重試請求
+    if _is_duplicate(msg_id) or _is_duplicate(token):
+        return
+
     user_id = event.source.user_id
-    try:
-        profile = line_bot_api.get_profile(user_id)
-        user_name = profile.display_name
-    except Exception:
-        user_name = "訪客/租客"
-
-    props = load_properties()
-    user_prop = next((p for p in props if p['line_id'] == user_id), None)
-    if user_id == MY_LINE_USER_ID:
-        tenant_info = "（🧪 管理員 Sandy 模擬測試傳送照片/影片）"
-    elif user_prop:
-        tenant_info = f"（已綁定租客：{user_prop['tenant']}，地址：{user_prop['addr']}）"
-    else:
-        tenant_info = "（未綁定用戶）"
-
     msg_type_str = "照片" if isinstance(event.message, ImageMessage) else "影片"
 
-    # 即時轉推 Sandy 手機
+    # 先立即以 200 OK 回覆用戶，防止 LINE 伺服器因等待而觸發 5~7 次連鎖重送！
     try:
-        line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(
-            text=f"📸 【房客傳送修繕{msg_type_str}通知！】\n來自：{user_name} ({user_id}) {tenant_info}\n用戶在 LINE 傳送了修繕{msg_type_str}，請 Sandy 管家至 LINE 官方帳號查看！"
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(
+            text=f"✅ 已收到您傳送的修繕{msg_type_str}！\n系統已同步通知 Sandy 管家安排工班師傅。\n\n請您補充說明損壞狀況與房屋地址（若尚未填寫），管家將儘速為您安排！\n如遇重大漏水、停電等緊急狀況，歡迎直接撥打專線：{MANAGER_PHONE}，謝謝！"
         ))
-    except Exception as e:
-        print(f"轉發媒體通知給 Sandy 失敗: {e}")
+    except Exception as re:
+        print(f"回覆媒體失敗: {re}")
 
-    # 親切回覆用戶
-    line_bot_api.reply_message(event.reply_token, TextSendMessage(
-        text=f"✅ 已收到您傳送的修繕{msg_type_str}！\n系統已同步通知 Sandy 管家安排工班師傅。\n\n請您補充說明損壞狀況與房屋地址（若尚未填寫），管家將儘速為您安排！\n如遇重大漏水、停電等緊急狀況，歡迎直接撥打專線：{MANAGER_PHONE}，謝謝！"
-    ))
+    # 背景非同步推播一次通知給 Sandy
+    def _async_notify():
+        try:
+            try:
+                profile   = line_bot_api.get_profile(user_id)
+                user_name = profile.display_name
+            except Exception:
+                user_name = "管理員Sandy" if user_id == MY_LINE_USER_ID else "訪客/租客"
+
+            props     = load_properties()
+            user_prop = next((p for p in props if p['line_id'] == user_id), None)
+            if user_id == MY_LINE_USER_ID:
+                tenant_info = "（🧪 管理員 Sandy 模擬測試）"
+            elif user_prop:
+                tenant_info = f"（已綁定租客：{user_prop['tenant']}，地址：{user_prop['addr']}）"
+            else:
+                tenant_info = "（未綁定用戶）"
+
+            line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(
+                text=f"📸 【房客傳送修繕{msg_type_str}通知！】\n來自：{user_name} ({user_id}) {tenant_info}\n用戶在 LINE 傳送了修繕{msg_type_str}，請 Sandy 管家至 LINE 官方帳號查看！"
+            ))
+        except Exception as pe:
+            print(f"轉發媒體通知給 Sandy 失敗: {pe}")
+
+    threading.Thread(target=_async_notify, daemon=True).start()
 
 # 相容不同 gunicorn 啟動語法 (gunicorn app:app 或 gunicorn app.app)
 app.app = app
