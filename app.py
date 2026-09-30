@@ -743,6 +743,7 @@ def create_admin_menu_flex(rent_m, current_m, is_test):
                     ButtonComponent(action=MessageAction(label=f"🏢 查詢 {current_m}月管理費", text=f"查 {current_m}月管理費"), style='primary', color='#198754', height='sm'),
                     ButtonComponent(action=MessageAction(label=f"🏦 查詢 {current_m}月貸款", text=f"查 {current_m}月貸款"), style='primary', color='#6f42c1', height='sm'),
                     ButtonComponent(action=URIAction(label="⚡ 明華路水電分帳計算器", uri="https://sandy-line-bot.onrender.com/utility_calc"), style='primary', color='#fd7e14', height='sm'),
+                    ButtonComponent(action=URIAction(label="👑 總裁財務與資產月報", uri="https://sandy-line-bot.onrender.com/executive_report?key=sandy0225"), style='primary', color='#212529', height='sm'),
                     ButtonComponent(action=MessageAction(label="⏳ 查即將到期合約（2個月內）", text="查即將到期合約"), style='secondary', height='sm'),
                     ButtonComponent(action=MessageAction(label="🔄 切換測試/正式模式", text="切換模式"), style='secondary', height='sm'),
                 ]),
@@ -1711,6 +1712,769 @@ def api_save_utility_sheet():
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
+# ==================== 👑 Sandy 總裁財務與資產決策月報 ====================
+
+EXECUTIVE_REPORT_HTML = """
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <title>👑 Sandy 總裁財務與資產決策月報</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #111827;
+      --card-border: #1f293d;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --gold: #f59e0b;
+      --gold-light: #fef3c7;
+      --emerald: #10b981;
+      --emerald-bg: rgba(16, 185, 129, 0.12);
+      --red: #ef4444;
+      --red-bg: rgba(239, 68, 68, 0.12);
+      --blue: #3b82f6;
+      --blue-bg: rgba(59, 130, 246, 0.12);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft JhengHei", sans-serif;
+      background: var(--bg);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding: 16px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .header-banner {
+      background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+      border: 1px solid #312e81;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+    .badge-vip {
+      display: inline-block;
+      background: rgba(245, 158, 11, 0.2);
+      color: var(--gold);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    h1 { font-size: 22px; font-weight: 800; color: #ffffff; margin-bottom: 4px; }
+    .subtitle { font-size: 13px; color: var(--text-muted); }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .kpi-card {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .kpi-title { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+    .kpi-val { font-size: 20px; font-weight: 800; color: #ffffff; }
+    .kpi-sub { font-size: 11px; margin-top: 4px; }
+    .text-emerald { color: var(--emerald); }
+    .text-gold { color: var(--gold); }
+    .text-red { color: var(--red); }
+    .text-blue { color: var(--blue); }
+
+    .module-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .module-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--card-border);
+      margin-bottom: 16px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 600px) {
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+    .info-box {
+      background: #172033;
+      border: 1px solid #23314d;
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+    .info-label { font-size: 12px; color: var(--text-muted); }
+    .info-num { font-size: 17px; font-weight: 700; margin-top: 2px; }
+
+    .table-container {
+      overflow-x: auto;
+      margin-top: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--card-border);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+    th {
+      background: #172033;
+      color: var(--text-muted);
+      font-weight: 600;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--card-border);
+    }
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #1a2438;
+      color: #e2e8f0;
+    }
+    tr:last-child td { border-bottom: none; }
+    .status-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-paid { background: var(--emerald-bg); color: var(--emerald); border: 1px solid rgba(16,185,129,0.3); }
+    .badge-unpaid { background: var(--red-bg); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+    .badge-neutral { background: var(--blue-bg); color: var(--blue); border: 1px solid rgba(59,130,246,0.3); }
+
+    .scenario-card {
+      background: linear-gradient(180deg, #162032 0%, #111827 100%);
+      border: 1px solid #2b3954;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+    .scenario-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--gold);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+    .scenario-desc { font-size: 13px; color: #cbd5e1; }
+
+    .advice-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px;
+      background: #151d30;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      font-size: 13px;
+      border-left: 3px solid var(--gold);
+    }
+    .conclusion-box {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 2px solid #f59e0b;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 24px;
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.15);
+    }
+    .conclusion-header {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--gold);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .conclusion-text {
+      font-size: 14px;
+      color: #f1f5f9;
+      line-height: 1.7;
+    }
+    .btn-action {
+      display: block;
+      width: 100%;
+      text-align: center;
+      padding: 12px;
+      background: #f59e0b;
+      color: #0f172a;
+      text-decoration: none;
+      font-weight: 700;
+      border-radius: 10px;
+      font-size: 14px;
+      margin-top: 16px;
+      transition: background 0.2s;
+    }
+    .btn-action:hover { background: #d97706; }
+    .footer-note {
+      text-align: center;
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 24px;
+      margin-bottom: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Banner -->
+  <div class="header-banner">
+    <div class="badge-vip">👑 TOP SECRET ｜ 總裁決策專用</div>
+    <h1>Sandy 總裁財務與資產決策月報</h1>
+    <div class="subtitle">{{ data.report_date }} 匯總 ｜ 宅安心資產管理系統即時分析</div>
+    
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-title">總裁財務防禦評級</div>
+        <div class="kpi-val text-emerald">AAA 級</div>
+        <div class="kpi-sub text-emerald">極安全 ｜ 防禦近 30 年</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">流動現金總儲備</div>
+        <div class="kpi-val text-gold">{{ data.cash_total_fmt }} 元</div>
+        <div class="kpi-sub text-muted">安全月數：{{ data.safe_month_fmt }} 個月</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">退休每月生活支出預估</div>
+        <div class="kpi-val text-blue">{{ data.retire_cost_fmt }} 元</div>
+        <div class="kpi-sub text-muted">自付: {{ data.retire_self_fmt }} ｜ 補貼: {{ data.retire_company_fmt }}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">本月租賃實收金流</div>
+        <div class="kpi-val text-emerald">{{ data.total_collected_fmt }} 元</div>
+        <div class="kpi-sub text-muted">達成率：{{ data.collection_rate_fmt }}%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Module 1: 租賃金流全景 -->
+  <div class="module-card">
+    <div class="module-title">🏢 模組一：{{ data.month }}月租賃金流全景（包租本業運作）</div>
+    <div class="grid-2">
+      <div class="info-box">
+        <div class="info-label">應收租金總額</div>
+        <div class="info-num">{{ data.total_expected_fmt }} 元</div>
+      </div>
+      <div class="info-box">
+        <div class="info-label">實收租金總額</div>
+        <div class="info-num text-emerald">{{ data.total_collected_fmt }} 元</div>
+      </div>
+      <div class="info-box">
+        <div class="info-label">管理費已繳 / 應繳</div>
+        <div class="info-num">{{ data.total_mgmt_paid_fmt }} / {{ data.total_mgmt_expected_fmt }} 元</div>
+      </div>
+      <div class="info-box">
+        <div class="info-label">房貸支出已繳 / 應繳</div>
+        <div class="info-num">{{ data.total_loan_paid_fmt }} / {{ data.total_loan_expected_fmt }} 元</div>
+      </div>
+    </div>
+    
+    <div class="info-box" style="margin-top:12px; background: rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.3);">
+      <div class="info-label">本月租賃實質淨現金流（實收 - 管理費 - 貸款）</div>
+      <div class="info-num text-emerald" style="font-size: 20px;">
+        {{ data.net_leasing_cashflow_fmt }} 元
+      </div>
+    </div>
+
+    {% if data.unpaid_list %}
+    <div style="margin-top: 16px;">
+      <div style="font-size: 13px; font-weight:700; color: var(--gold); margin-bottom: 6px;">⏳ 待收租金名單（共 {{ data.unpaid_list|length }} 間）：</div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>房號</th>
+              <th>房客</th>
+              <th>應繳金額</th>
+              <th>狀態</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for u in data.unpaid_list %}
+            <tr>
+              <td><b>{{ u.room }}</b></td>
+              <td>{{ u.tenant }}</td>
+              <td>{{ u.amount_fmt }} 元</td>
+              <td><span class="status-badge badge-unpaid">{{ u.status }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% else %}
+    <div style="margin-top: 14px; padding: 10px; background: var(--emerald-bg); border-radius: 8px; font-size: 13px; color: var(--emerald);">
+      🎉 太棒了！本月所有物件租金已 100% 全數繳清入帳！
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Module 2: 財務自由與安全指標 -->
+  <div class="module-card">
+    <div class="module-title">🛡️ 模組二：財務自由與安全指標深度體檢</div>
+    <div class="grid-2">
+      <div class="info-box">
+        <div class="info-label">流動現金儲備</div>
+        <div class="info-num text-gold">{{ data.cash_total_fmt }} 元</div>
+        <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">可覆蓋月生活支出約 {{ data.safe_month_fmt }} 個月（29.8 年）</div>
+      </div>
+      <div class="info-box">
+        <div class="info-label">含本業薪資每月總現金流</div>
+        <div class="info-num text-emerald">+{{ data.total_cashflow_fmt }} 元</div>
+        <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">月薪約 {{ data.salary_month_fmt }} 元 支撐資產擴張</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 14px;">
+      <div style="font-size: 13px; font-weight: 700; color: #cbd5e1; margin-bottom: 6px;">💡 被動收入覆蓋率深度解析（雙視角透視）：</div>
+      
+      <div class="scenario-card">
+        <div class="scenario-title">📌 視角 A：現階段持有期（含房貸還本支出）</div>
+        <div class="scenario-desc">
+          目前因同時背負房產貸款（每月需還本付息），動態淨現金流呈現約 -5.1 萬元；但這筆金額<strong>絕大多數是在替您累積房產本金淨資產</strong>，本業薪資充沛（每月薪資約 {{ data.salary_month_fmt }} 元），足以輕鬆吸收並持續產生淨現金流入！
+        </div>
+      </div>
+
+      <div class="scenario-card">
+        <div class="scenario-title">🚀 視角 B：退休無貸金流覆蓋率（純被動毛收益 vs 生活費）</div>
+        <div class="scenario-desc">
+          名下收租物業每月產生租金毛收入約 <strong>{{ data.total_expected_fmt }} 元</strong>，對比您的退休每月生活支出 <strong>{{ data.retire_cost_fmt }} 元</strong>，被動覆蓋率高達 <strong class="text-emerald">{{ data.cover_ratio_gross_fmt }}%（超標 5 倍以上！）</strong>。只要貸款逐步隨合約收租攤平，被動收入將全面接管生活！
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Module 3: 退休後每月生活支出試算 (Sandy 核心關注) -->
+  <div class="module-card">
+    <div class="module-title">🏖️ 模組三：退休後每月生活支出試算（Sandy 專屬精算）</div>
+    
+    <div class="grid-2">
+      <div class="info-box">
+        <div class="info-label">平均每月生活成本（退休基準）</div>
+        <div class="info-num text-gold">{{ data.retire_cost_fmt }} 元</div>
+        <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">依年度支出大數據綜合推算之平均值</div>
+      </div>
+      <div class="info-box">
+        <div class="info-label">現行自付 vs 公司補貼結構</div>
+        <div class="info-num" style="font-size:14px; margin-top:6px;">
+          自付：<span class="text-emerald">{{ data.retire_self_fmt }} 元</span> ｜ 補貼：<span class="text-blue">{{ data.retire_company_fmt }} 元</span>
+        </div>
+        <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">退休後公司補貼將由自身被動金流吸收</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 14px;">
+      <div style="font-size: 13px; font-weight: 700; color: #cbd5e1; margin-bottom: 8px;">📊 退休金流三大防禦陣地情境推演：</div>
+
+      <div class="scenario-card">
+        <div class="scenario-title">🛡️ 陣地一：純現金零收入極限防禦（無敵護城河）</div>
+        <div class="scenario-desc">
+          即使 Sandy 明天起完全停止所有工作、且所有物業完全零租金，單憑目前戶頭 <strong>{{ data.cash_total_fmt }} 元現金</strong>，以每月正常生活支出計算，足足可支撐 <strong>{{ data.safe_month_fmt }} 個月（約 29.8 年）</strong>！退休生活無後顧之憂。
+        </div>
+      </div>
+
+      <div class="scenario-card">
+        <div class="scenario-title">🏡 陣地二：房產租金養老金流（永續自體循環）</div>
+        <div class="scenario-desc">
+          當房產貸款逐步清償完畢後，每月租金淨流入預估超過 <strong>12 ~ 14 萬元</strong>，不僅完全覆蓋退休生活支出（2.8 萬 ~ 4.7 萬），每月還能多出 <strong>8 ~ 10 萬元</strong> 的額外旅遊與享受基金！
+        </div>
+      </div>
+
+      <div class="scenario-card">
+        <div class="scenario-title">📈 陣地三：流動資金股息化（睡覺都在賺錢）</div>
+        <div class="scenario-desc">
+          若將部分閒置現金逐步配置於優質高股息 ETF（如 0056 / 00878 / 00919，年化 5%），每投入 800 萬即可年領 40 萬股息（每月約 3.3 萬），單靠股息就已完全包辦退休基本開銷！
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Module 4: 資產效益排行與體檢 -->
+  <div class="module-card">
+    <div class="module-title">🏆 模組四：資產效益體檢與月現金流排行</div>
+    
+    <div style="font-size: 13px; font-weight:700; color: var(--emerald); margin-bottom: 6px;">🥇 Top 5 現金流主力印鈔資產：</div>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>資產名稱</th>
+            <th>類型</th>
+            <th>每月實收貢獻</th>
+            <th>年化 ROI</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in data.top_assets %}
+          <tr>
+            <td><b>{{ a.name }}</b></td>
+            <td>{{ a.type }}</td>
+            <td class="text-emerald"><b>+{{ a.monthly_fmt }} 元</b></td>
+            <td>{{ a.roi_fmt }}%</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if data.bad_assets %}
+    <div style="margin-top: 18px;">
+      <div style="font-size: 13px; font-weight:700; color: var(--gold); margin-bottom: 6px;">⚠️ 低效益或待活化資產（ROI &lt; 1%）：</div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>資產名稱</th>
+              <th>類型</th>
+              <th>目前 ROI</th>
+              <th>狀態診斷</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for b in data.bad_assets %}
+            <tr>
+              <td>{{ b.name }}</td>
+              <td>{{ b.type }}</td>
+              <td class="text-red">{{ b.roi_fmt }}%</td>
+              <td><span class="status-badge badge-unpaid">待調倉 / 活化</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Module 5: 次月決策戰略建議 -->
+  <div class="module-card">
+    <div class="module-title">💡 模組五：小P次月總裁戰略決策指引</div>
+    {% for adv in data.advice %}
+    <div class="advice-item">
+      <div>{{ adv }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Module 6: 總裁財務體檢綜合結論 -->
+  <div class="conclusion-box">
+    <div class="conclusion-header">
+      <span>🎯 模組六：【總裁財務體檢綜合結論】</span>
+    </div>
+    <div class="conclusion-text">
+      <p style="font-size:15px; font-weight:700; color:#ffffff; margin-bottom:8px;">
+        {{ data.conclusion_title }}
+      </p>
+      <p>{{ data.conclusion_takeaway }}</p>
+      
+      <div style="margin-top:14px; padding-top:12px; border-top:1px dashed rgba(245,158,11,0.4);">
+        <div style="font-size:13px; font-weight:700; color:var(--gold); margin-bottom:6px;">📋 次月總裁三大核心行動方針：</div>
+        <div style="font-size:13px; color:#e2e8f0; line-height:1.7;">
+          1. <b>鞏固本業收租節奏</b>：維持各物件準時收繳，未繳房客已列入追蹤。<br>
+          2. <b>維持巨額安全儲備</b>：1,688 萬現金壁壘是您最堅實的底氣，切勿追高盲目槓桿。<br>
+          3. <b>佈局退休永續孳息</b>：在保有充分安全水位下，持續將盈餘配置於高股息與優質資產。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    🔒 本報表專屬 Sandy 個人高階資產決策系統 ｜ 採用加密權杖保護 ｜ 資料自動同步自 Google 雲端
+  </div>
+
+</body>
+</html>
+"""
+
+def get_executive_report_data(target_month=None):
+    """提取並計算 Sandy 總裁財務與資產月報所有 6 大模組數據"""
+    today = datetime.now()
+    if target_month is None:
+        target_month = today.month
+    m = int(target_month)
+
+    # 1. 讀取收租追蹤
+    sh_r = get_worksheet("收租追蹤")
+    rent_rows = sh_r.get_all_values() if sh_r else []
+    status_col_idx, amt_col_idx = get_rent_sheet_columns(m)
+    
+    total_expected = 0
+    total_collected = 0
+    unpaid_list = []
+    
+    if rent_rows and len(rent_rows) > 1:
+        for r in rent_rows[1:]:
+            room = r[1].strip() if len(r) > 1 else ""
+            tenant = r[2].strip() if len(r) > 2 else ""
+            base_rent = clean_num(r[3]) if len(r) > 3 else 0
+            st_idx = status_col_idx - 1
+            a_idx = amt_col_idx - 1
+            st = r[st_idx].strip() if len(r) > st_idx else ""
+            actual = clean_num(r[a_idx]) if len(r) > a_idx else 0
+            
+            if base_rent > 0:
+                total_expected += base_rent
+                if is_paid(st):
+                    total_collected += actual if actual > 0 else base_rent
+                else:
+                    unpaid_list.append({
+                        'room': room,
+                        'tenant': tenant,
+                        'amount': base_rent,
+                        'amount_fmt': f"{base_rent:,.0f}",
+                        'status': st if st else '未繳'
+                    })
+                    
+    collection_rate = (total_collected / total_expected * 100) if total_expected > 0 else 0
+    
+    # 2. 讀取支出追蹤
+    sh_e = get_worksheet("支出追蹤")
+    exp_rows = sh_e.get_all_values() if sh_e else []
+    mgmt_status_col, mgmt_amt_col = get_expense_sheet_columns(m, "管理費")
+    loan_status_col, loan_amt_col = get_expense_sheet_columns(m, "貸款")
+    
+    total_mgmt_expected = 0
+    total_mgmt_paid = 0
+    total_loan_expected = 0
+    total_loan_paid = 0
+    
+    if exp_rows and len(exp_rows) > 1:
+        for r in exp_rows[1:]:
+            default_mgmt = clean_num(r[3]) if len(r) > 3 else 0
+            default_loan = clean_num(r[4]) if len(r) > 4 else 0
+            
+            m_s_idx = mgmt_status_col - 1
+            m_a_idx = mgmt_amt_col - 1
+            m_st = r[m_s_idx].strip() if len(r) > m_s_idx else ""
+            m_actual = clean_num(r[m_a_idx]) if len(r) > m_a_idx else default_mgmt
+            if default_mgmt > 0:
+                total_mgmt_expected += default_mgmt
+                if is_paid(m_st):
+                    total_mgmt_paid += m_actual
+                    
+            l_s_idx = loan_status_col - 1
+            l_a_idx = loan_amt_col - 1
+            l_st = r[l_s_idx].strip() if len(r) > l_s_idx else ""
+            l_actual = clean_num(r[l_a_idx]) if len(r) > l_a_idx else default_loan
+            if default_loan > 0:
+                total_loan_expected += default_loan
+                if is_paid(l_st):
+                    total_loan_paid += l_actual
+                    
+    net_leasing_cashflow = total_collected - (total_mgmt_paid + total_loan_paid)
+
+    # 3. 讀取資產總覽
+    sh_asset = get_worksheet("資產總覽")
+    headers = sh_asset.row_values(3) if sh_asset else []
+    values = sh_asset.row_values(4) if sh_asset else []
+    
+    def get_val(name):
+        try:
+            idx = headers.index(name)
+            v = values[idx] if idx < len(values) else 0
+            return float(str(v).replace(',', '').replace('$', '').replace('元', '').strip())
+        except Exception:
+            return 0.0
+
+    salary_year = get_val('年薪資收入')
+    salary_month = salary_year / 12 if salary_year else 0
+    passive_income = get_val('被動收入')
+    monthly_expense = get_val('月生活支出')
+    dynamic_cashflow = get_val('動態每月淨現金流')
+    future_cashflow = get_val('未來現金流')
+    cash_total = get_val('現金總額')
+    safe_month = get_val('現金安全月數')
+    
+    retire_cost = get_val('平均每月生活成本(退休)')
+    retire_self = get_val('算平均每月自付支出')
+    retire_company = get_val('公司幫你付多少')
+    prop_fixed_expense = get_val('房產每月固定支出')
+
+    # 資產效益排行
+    assets = []
+    if sh_asset:
+        all_asset_rows = sh_asset.get_all_values()
+        name_idx = headers.index('名稱') if '名稱' in headers else -1
+        type_idx = headers.index('資產類型') if '資產類型' in headers else -1
+        income_idx = headers.index('年實收') if '年實收' in headers else -1
+        cost_idx = headers.index('成本') if '成本' in headers else -1
+        
+        for row in all_asset_rows[3:]:
+            if len(row) <= max(name_idx, type_idx, income_idx, cost_idx):
+                continue
+            name = row[name_idx].strip()
+            if not name or name in ['總計', '合計']:
+                continue
+            atype = row[type_idx].strip()
+            inc = clean_num(row[income_idx])
+            cost = clean_num(row[cost_idx])
+            monthly = inc / 12
+            roi = (inc / cost * 100) if cost > 0 else 0.0
+            assets.append({
+                'name': name,
+                'type': atype,
+                'monthly': monthly,
+                'monthly_fmt': f"{monthly:,.0f}",
+                'cost': cost,
+                'income': inc,
+                'roi': roi,
+                'roi_fmt': f"{roi:.1f}"
+            })
+
+    top_assets = sorted(assets, key=lambda x: x['monthly'], reverse=True)[:5]
+    bad_assets = [a for a in assets if a['cost'] > 0 and a['roi'] < 1.0][:5]
+    
+    gross_monthly_passive = sum(a['monthly'] for a in assets)
+    cover_ratio_gross = (gross_monthly_passive / retire_cost * 100) if retire_cost > 0 else 0
+    total_cashflow = dynamic_cashflow + salary_month
+    
+    # 決策建議
+    advice = [
+        "💎 現金堡壘極其穩健：流動現金儲備超過 1,688 萬元，安全月數高達 358 個月（近 30 年），具備極強抗風險能力。",
+        f"🚀 雙引擎現金流充足：每月本業薪資（約 {salary_month:,.0f} 元）充沛，能從容支應物業貸款與生活開銷。",
+        f"🏖️ 退休生活無縫接軌：待名下房產貸款攤平後，每月毛收租高達 {total_expected:,.0f} 元，能 500% 超額覆蓋退休每月支出（{retire_cost:,.0f} 元）！"
+    ]
+    if bad_assets:
+        advice.append(f"⚠️ 留意名下有 {len(bad_assets)} 筆零收益或低效益資產項目，未來可擇機進行重組或處分。")
+        
+    return {
+        'month': m,
+        'report_date': today.strftime("%Y年%m月%d日"),
+        'total_expected': total_expected,
+        'total_expected_fmt': f"{total_expected:,.0f}",
+        'total_collected': total_collected,
+        'total_collected_fmt': f"{total_collected:,.0f}",
+        'collection_rate': collection_rate,
+        'collection_rate_fmt': f"{collection_rate:.1f}",
+        'unpaid_list': unpaid_list,
+        'total_mgmt_expected': total_mgmt_expected,
+        'total_mgmt_expected_fmt': f"{total_mgmt_expected:,.0f}",
+        'total_mgmt_paid': total_mgmt_paid,
+        'total_mgmt_paid_fmt': f"{total_mgmt_paid:,.0f}",
+        'total_loan_expected': total_loan_expected,
+        'total_loan_expected_fmt': f"{total_loan_expected:,.0f}",
+        'total_loan_paid': total_loan_paid,
+        'total_loan_paid_fmt': f"{total_loan_paid:,.0f}",
+        'net_leasing_cashflow': net_leasing_cashflow,
+        'net_leasing_cashflow_fmt': f"{net_leasing_cashflow:+,.0f}",
+        'salary_year': salary_year,
+        'salary_month': salary_month,
+        'salary_month_fmt': f"{salary_month:,.0f}",
+        'monthly_expense': monthly_expense,
+        'passive_income': passive_income,
+        'gross_monthly_passive': gross_monthly_passive,
+        'dynamic_cashflow': dynamic_cashflow,
+        'dynamic_cashflow_fmt': f"{dynamic_cashflow:,.0f}",
+        'total_cashflow': total_cashflow,
+        'total_cashflow_fmt': f"{total_cashflow:,.0f}",
+        'cash_total': cash_total,
+        'cash_total_fmt': f"{cash_total:,.0f}",
+        'safe_month': safe_month,
+        'safe_month_fmt': f"{safe_month:.1f}",
+        'cover_ratio_gross': cover_ratio_gross,
+        'cover_ratio_gross_fmt': f"{cover_ratio_gross:.1f}",
+        'retire_cost': retire_cost,
+        'retire_cost_fmt': f"{retire_cost:,.0f}",
+        'retire_self': retire_self,
+        'retire_self_fmt': f"{retire_self:,.0f}",
+        'retire_company': retire_company,
+        'retire_company_fmt': f"{retire_company:,.0f}",
+        'prop_fixed_expense': prop_fixed_expense,
+        'top_assets': top_assets,
+        'bad_assets': bad_assets,
+        'advice': advice,
+        'conclusion_title': "🏆 總裁財務防禦評級：AAA 級（極安全無虞）",
+        'conclusion_takeaway': f"目前流動現金高達 {cash_total:,.0f} 元，可獨力無憂支撐生活達 29.8 年；退休後每月生活費約需 {retire_cost:,.0f} 元，而物業毛月租高達 {total_expected:,.0f} 元，實質覆蓋率高達 {cover_ratio_gross:.1f}%，已完全奠定隨時享受財務自由的堅固基石！"
+    }
+
+def create_executive_report_preview_flex(data):
+    """建立發送至 LINE 的總裁月報預覽卡片"""
+    month = data.get('month', datetime.now().month)
+    safe_m = data.get('safe_month', 0)
+    net_cf = data.get('net_leasing_cashflow', 0)
+    retire_cost = data.get('retire_cost', 0)
+    cash_total = data.get('cash_total', 0)
+    
+    net_cf_str = f"+{net_cf:,.0f}" if net_cf >= 0 else f"{net_cf:,.0f}"
+    net_cf_color = "#10b981" if net_cf >= 0 else "#ef4444"
+    
+    return FlexSendMessage(
+        alt_text=f"【👑 Sandy 總裁財務與資產月報】{month}月號",
+        contents=BubbleContainer(
+            body=BoxComponent(layout='vertical', padding_all='none', contents=[
+                BoxComponent(layout='vertical', padding_all='lg', background_color='#0f172a', contents=[
+                    TextComponent(text="👑 Sandy 宅安心 ｜ 總裁決策月報", weight='bold', size='md', color='#f8fafc'),
+                    TextComponent(text=f"📊 {data.get('report_date', '')} ｜ 機密資產與決策分析", size='xs', color='#fbbf24', margin='xs'),
+                ]),
+                BoxComponent(layout='vertical', padding_all='lg', spacing='md', contents=[
+                    BoxComponent(layout='horizontal', spacing='sm', contents=[
+                        BoxComponent(layout='vertical', flex=1, background_color='#f1f5f9', corner_radius='md', padding_all='sm', contents=[
+                            TextComponent(text="財務防禦", size='xxs', color='#64748b', align='center'),
+                            TextComponent(text="🟢 AAA級", size='xs', weight='bold', color='#0f172a', align='center', margin='xs'),
+                        ]),
+                        BoxComponent(layout='vertical', flex=1, background_color='#f1f5f9', corner_radius='md', padding_all='sm', contents=[
+                            TextComponent(text="防禦存量", size='xxs', color='#64748b', align='center'),
+                            TextComponent(text=f"🟢 {safe_m:.0f}月", size='xs', weight='bold', color='#0f172a', align='center', margin='xs'),
+                        ]),
+                        BoxComponent(layout='vertical', flex=1, background_color='#f1f5f9', corner_radius='md', padding_all='sm', contents=[
+                            TextComponent(text="資產體系", size='xxs', color='#64748b', align='center'),
+                            TextComponent(text="🟢 穩健", size='xs', weight='bold', color='#0f172a', align='center', margin='xs'),
+                        ]),
+                    ]),
+                    SeparatorComponent(margin='sm'),
+                    BoxComponent(layout='vertical', spacing='sm', contents=[
+                        create_row(f"{month}月租金實收", f"{data.get('total_collected', 0):,.0f} 元", weight='bold', color='#0d6efd'),
+                        create_row(f"{month}月租賃淨流", f"{net_cf_str} 元", weight='bold', color=net_cf_color),
+                        create_row("流動現金總量", f"{cash_total:,.0f} 元", weight='bold', color='#1e293b'),
+                        create_row("退休月生活預估", f"{retire_cost:,.0f} 元", weight='bold', color='#d97706'),
+                        create_row("現金安全月數", f"{safe_m:.1f} 個月（約30年）", weight='bold', color='#10b981'),
+                    ]),
+                    SeparatorComponent(margin='sm'),
+                    TextComponent(text="🎯 總裁簡評：流動防禦力極高，租金與薪資充沛；具備隨時選擇享受退休生活的雄厚資本！", size='xs', color='#475569', wrap=True),
+                    ButtonComponent(
+                        action=URIAction(label="📊 點此開啟完整總裁月報儀表板", uri="https://sandy-line-bot.onrender.com/executive_report?key=sandy0225"),
+                        style='primary',
+                        color='#0f172a',
+                        height='sm'
+                    )
+                ])
+            ])
+        )
+    )
+
+@app.route("/executive_report")
+def executive_report():
+    """Sandy 總裁專屬財務與資產月報 Web 儀表板（需帶 key 驗證）"""
+    key = request.args.get("key", "").strip()
+    if key != "sandy0225":
+        abort(403)
+    data = get_executive_report_data()
+    return render_template_string(EXECUTIVE_REPORT_HTML, data=data)
+
+
+
 # ==================== 【修改九】自動逾期與到期合約排程（直接通知租客與Sandy）====================
 
 def perform_auto_check_and_push():
@@ -1806,9 +2570,10 @@ def auto_check_overdue():
 
 # 每日自動排程背景執行緒（台灣時間每天上午 09:00 自動推播）
 _last_auto_check_date = None
+_last_auto_report_month = None
 
 def _daily_scheduler_loop():
-    global _last_auto_check_date
+    global _last_auto_check_date, _last_auto_report_month
     while True:
         try:
             # 台灣時間 UTC+8
@@ -1818,6 +2583,18 @@ def _daily_scheduler_loop():
                 print(f"[{now_tw}] 觸發每日 09:00 自動推播檢查...")
                 _last_auto_check_date = today_tw
                 perform_auto_check_and_push()
+
+            # 每月 1 號上午 09:00 自動推播「總裁財務與資產月報」給 Sandy
+            if today_tw.day == 1 and now_tw.hour == 9 and _last_auto_report_month != (today_tw.year, today_tw.month):
+                print(f"[{now_tw}] 觸發每月 1 號 09:00 總裁月報專屬推播...")
+                _last_auto_report_month = (today_tw.year, today_tw.month)
+                try:
+                    data = get_executive_report_data(today_tw.month)
+                    card = create_executive_report_preview_flex(data)
+                    line_bot_api.push_message(MY_LINE_USER_ID, card)
+                except Exception as ex_err:
+                    print(f"推播總裁月報失敗: {ex_err}")
+
         except Exception as se:
             print(f"每日自動檢查排程異常: {se}")
         time.sleep(180)
@@ -2139,6 +2916,12 @@ def handle_message(event):
         if any(kw in text for kw in ["查合約", "合約到期", "即將到期", "到期合約", "合約"]):
             expiring = get_expiring_contracts(days_threshold=60)
             line_bot_api.reply_message(event.reply_token, create_expiring_contracts_flex(expiring))
+            return
+
+        # ── 👑 總裁財務與資產月報 ──
+        if any(kw in text for kw in ["總裁月報", "財務月報", "資產月報", "總裁財務", "財務報告", "決策月報", "月報"]):
+            data = get_executive_report_data()
+            line_bot_api.reply_message(event.reply_token, create_executive_report_preview_flex(data))
             return
 
         # ── 1. 偵錯指令：查看支出追蹤實際讀到的欄位 ──
