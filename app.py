@@ -1,9 +1,10 @@
 import os
 import re
+import time
 import random
 import threading
 import calendar
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
@@ -749,10 +750,10 @@ def callback():
         abort(400)
     return 'OK'
 
-# ==================== 【修改九】自動逾期排程（直接通知租客）====================
+# ==================== 【修改九】自動逾期與到期合約排程（直接通知租客與Sandy）====================
 
-@app.route("/auto_check_overdue", methods=['GET'])
-def auto_check_overdue():
+def perform_auto_check_and_push():
+    """執行自動逾期催繳與到期合約檢查，並推播給 Sandy 與（正式模式下的）租客"""
     try:
         today       = datetime.now()
         current_day = today.day
@@ -801,9 +802,9 @@ def auto_check_overdue():
 
         mode_label = "🧪 安全測試模式（全發給您）" if TEST_MODE else "🚀 正式模式（已發給租客）"
         summary = (
-            f"📢 【今日逾期收租檢查 {today.strftime('%m/%d')}】{mode_label}\n"
+            f"📢 【今日收租與合約自動檢查 {today.strftime('%m/%d')}】{mode_label}\n"
             f"查詢月份：{check_month}月租金\n"
-            f"逾期筆數：{len(overdue_list)} 筆，已推播：{pushed_count} 封\n"
+            f"逾期筆數：{len(overdue_list)} 筆，已推播催繳：{pushed_count} 封\n"
         )
         if overdue_list:
             summary += "\n逾期清單：\n" + "\n".join(
@@ -813,7 +814,7 @@ def auto_check_overdue():
         else:
             summary += "\n🎉 所有房客皆已繳清，無逾期！"
 
-        # 檢查 60 天內即將到期合約
+        # 檢查 60 天內（約 2 個月）即將到期合約
         expiring = get_expiring_contracts(days_threshold=60)
         if expiring:
             summary += "\n\n⏳【合約即將到期提醒（60天內）】\n" + "\n".join(
@@ -821,10 +822,45 @@ def auto_check_overdue():
                 for c in expiring
             )
 
+        # 1. 發送每日文字彙總
         line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(text=summary))
-        return f"逾期檢查完成，逾期:{len(overdue_list)}筆，推播:{pushed_count}封，即將到期:{len(expiring)}筆"
+
+        # 2. 若有 60 天內到期合約，自動加推圖文 Flex 卡片給 Sandy，不必手動點選
+        if expiring:
+            try:
+                line_bot_api.push_message(MY_LINE_USER_ID, create_expiring_contracts_flex(expiring))
+            except Exception as ce:
+                print(f"推播到期卡片失敗: {ce}")
+
+        return f"檢查完成，逾期:{len(overdue_list)}筆，推播:{pushed_count}封，即將到期:{len(expiring)}筆", 200
     except Exception as e:
+        print(f"自動檢查發生異常: {e}")
         return f"檢查失敗: {str(e)}", 500
+
+@app.route("/auto_check_overdue", methods=['GET'])
+def auto_check_overdue():
+    msg, code = perform_auto_check_and_push()
+    return msg, code
+
+# 每日自動排程背景執行緒（台灣時間每天上午 09:00 自動推播）
+_last_auto_check_date = None
+
+def _daily_scheduler_loop():
+    global _last_auto_check_date
+    while True:
+        try:
+            # 台灣時間 UTC+8
+            now_tw = datetime.utcnow() + timedelta(hours=8)
+            today_tw = now_tw.date()
+            if now_tw.hour == 9 and _last_auto_check_date != today_tw:
+                print(f"[{now_tw}] 觸發每日 09:00 自動推播檢查...")
+                _last_auto_check_date = today_tw
+                perform_auto_check_and_push()
+        except Exception as se:
+            print(f"每日自動檢查排程異常: {se}")
+        time.sleep(180)
+
+threading.Thread(target=_daily_scheduler_loop, daemon=True).start()
 
 # ==================== 訊息事件處理 ====================
 
@@ -1206,6 +1242,134 @@ def handle_message(event):
             else:
                 line_bot_api.reply_message(event.reply_token, TextSendMessage(
                     text=f"🎉 【{target_m}月{expense_type}】目前已全數繳清！"
+                ))
+            return
+
+        # ── 5. 租金已收 → 更新收租表格 + 發送收據給租客 ──
+        if text.startswith("租金已收|"):
+            parts = text.split("|")
+            if len(parts) >= 3:
+                target_m    = parts[1].strip()
+                target_room = parts[2].strip()
+                status_col_idx, _ = get_rent_sheet_columns(target_m)
+                sh_r = get_worksheet("收租追蹤")
+                if not sh_r:
+                    line_bot_api.reply_message(event.reply_token, TextSendMessage(text="⚠️ 試算表連線失敗，請稍候再試。"))
+                    return
+                rent_rows = sh_r.get_all_values()
+                for idx, r in enumerate(rent_rows[1:], start=2):
+                    if len(r) > 1 and r[1].strip() == target_room:
+                        sh_r.update_cell(idx, status_col_idx, "✅")
+                        break
+
+                props = load_properties()
+                prop = next((p for p in props if p['room_no'] == target_room), None)
+                if prop:
+                    target_id = MY_LINE_USER_ID if TEST_MODE else (
+                        prop['line_id'] if prop['line_id'] else MY_LINE_USER_ID
+                    )
+                    card = create_receipt_flex(
+                        room_no=prop['room_no'], addr=prop['addr'], tenant=prop['tenant'],
+                        month_str=target_m, amount_str=prop['total_rent_str'],
+                        mgmt_fee=prop['mgmt_fee'], is_test=TEST_MODE
+                    )
+                    try:
+                        line_bot_api.push_message(target_id, card)
+                    except Exception as e:
+                        print(f"租金收據推播失敗: {e}")
+
+                    push_info = "（🧪 測試模式，已傳至您手機）" if TEST_MODE else (
+                        f"（已發送收據給 {prop['tenant']}）" if prop['line_id'] else "（房客未綁定LINE，已發給您留存）"
+                    )
+                    line_bot_api.reply_message(event.reply_token, TextSendMessage(
+                        text=f"✅ {target_room}（{prop['tenant']}）{target_m}月租金已標記繳清！\n金額：{prop['total_rent_str']} 元\n{push_info}"
+                    ))
+                else:
+                    line_bot_api.reply_message(event.reply_token, TextSendMessage(
+                        text=f"✅ {target_room} {target_m}月租金已標記繳清！"
+                    ))
+            return
+
+        # ── 6. 發送催繳提醒 → 發送催繳提醒卡給租客 ──
+        if text.startswith("發送提醒|"):
+            parts = text.split("|")
+            if len(parts) >= 3:
+                target_m    = parts[1].strip()
+                target_room = parts[2].strip()
+                props = load_properties()
+                prop = next((p for p in props if p['room_no'] == target_room), None)
+                if prop:
+                    target_id = MY_LINE_USER_ID if TEST_MODE else (
+                        prop['line_id'] if prop['line_id'] else MY_LINE_USER_ID
+                    )
+                    card = create_reminder_flex(
+                        room_no=prop['room_no'], addr=prop['addr'], tenant=prop['tenant'],
+                        month_str=target_m, amount_str=prop['total_rent_str'],
+                        due_day=prop['due_day'], is_test=TEST_MODE
+                    )
+                    try:
+                        line_bot_api.push_message(target_id, card)
+                    except Exception as e:
+                        print(f"催繳提醒推播失敗: {e}")
+
+                    push_info = "（🧪 測試模式，已傳至您手機）" if TEST_MODE else (
+                        f"（已發送催繳提醒給 {prop['tenant']}）" if prop['line_id'] else "（房客未綁定LINE，已發給您留存）"
+                    )
+                    line_bot_api.reply_message(event.reply_token, TextSendMessage(
+                        text=f"📢 已發送 {target_room}（{prop['tenant']}）{target_m}月催繳提醒！\n金額：{prop['total_rent_str']} 元\n{push_info}"
+                    ))
+                else:
+                    line_bot_api.reply_message(event.reply_token, TextSendMessage(
+                        text=f"❌ 找不到房號 {target_room} 之房客資料。"
+                    ))
+            return
+
+        # ── 7. 查詢租金未繳清單（輪播卡 + 租金已收/發催繳提醒按鈕）──
+        if "租金" in text:
+            today    = datetime.now()
+            target_m = next_rent_month(today.month)
+            for m in range(12, 0, -1):
+                if f"{m}月" in text:
+                    target_m = str(m)
+                    break
+            status_col_idx, _ = get_rent_sheet_columns(target_m)
+            sh_r = get_worksheet("收租追蹤")
+            if not sh_r:
+                line_bot_api.reply_message(event.reply_token, TextSendMessage(text="⚠️ 目前試算表連線維護中，請稍候再試。"))
+                return
+            rent_rows = sh_r.get_all_values()
+            props = load_properties()
+            prop_map = {p['room_no']: p for p in props}
+            unpaid_items = []
+
+            if rent_rows and len(rent_rows) > 1:
+                for row in rent_rows[1:]:
+                    room = row[1].strip() if len(row) > 1 else ""
+                    prop = prop_map.get(room)
+                    # 跳過：無物件、租金 <= 0 (Sandy自住)
+                    if not prop or prop['total_rent'] <= 0:
+                        continue
+                    cell_idx = status_col_idx - 1
+                    cell_status = row[cell_idx].strip() if len(row) > cell_idx else ""
+                    if not is_paid(cell_status):
+                        unpaid_items.append(prop)
+
+            if unpaid_items:
+                try:
+                    carousel = create_rent_carousel(target_m, unpaid_items)
+                    if carousel:
+                        line_bot_api.reply_message(event.reply_token, carousel)
+                        return
+                except Exception as ce:
+                    print(f"產生租金輪播卡失敗，改用文字備援: {ce}")
+
+                fallback_msg = f"📋 【{target_m}月租金未繳清單】共 {len(unpaid_items)} 筆：\n\n"
+                for item in unpaid_items:
+                    fallback_msg += f"• {item['room_no']} {item['tenant']}\n  金額：{item['total_rent_str']} 元（每月 {item['due_day']} 號應繳）\n"
+                line_bot_api.reply_message(event.reply_token, TextSendMessage(text=fallback_msg.strip()))
+            else:
+                line_bot_api.reply_message(event.reply_token, TextSendMessage(
+                    text=f"🎉 【{target_m}月租金】目前所有房客皆已繳納完畢！"
                 ))
             return
 
