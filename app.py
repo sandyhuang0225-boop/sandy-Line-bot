@@ -5,7 +5,7 @@ import random
 import threading
 import calendar
 from datetime import datetime, timedelta
-from flask import Flask, request, abort
+from flask import Flask, request, abort, render_template_string
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import (
@@ -399,7 +399,7 @@ def create_service_baozu_flex():
                 SeparatorComponent(margin='md'),
                 TextComponent(text="👉 左右滑動查看【政府稅金減免與補助】", size='xs', color='#888888', align='center', margin='sm'),
                 ButtonComponent(action=URIAction(label="📞 撥打屋主諮詢專線", uri=f"tel:{MANAGER_PHONE}"), style='primary', color='#198754', height='sm'),
-                ButtonComponent(action=MessageAction(label="💬 留下委託諮詢", text="我想諮詢包租代管"), style='secondary', height='sm'),
+                ButtonComponent(action=URIAction(label="📝 填寫線上委託表單", uri="https://sandy-line-bot.onrender.com/inquiry"), style='secondary', height='sm'),
             ]),
         ])
     )
@@ -425,7 +425,7 @@ def create_service_baozu_flex():
                 create_row("🛡️ 保險補助", "每年最高補助 3,500 元居家安全險"),
                 SeparatorComponent(margin='md'),
                 ButtonComponent(action=URIAction(label="📞 諮詢房東稅費試算", uri=f"tel:{MANAGER_PHONE}"), style='primary', color='#0d6efd', height='sm'),
-                ButtonComponent(action=MessageAction(label="💬 預約 Sandy 評估", text="我想諮詢包租代管稅費優惠"), style='secondary', height='sm'),
+                ButtonComponent(action=URIAction(label="📝 線上預約專人評估", uri="https://sandy-line-bot.onrender.com/inquiry"), style='secondary', height='sm'),
             ]),
         ])
     )
@@ -857,6 +857,140 @@ def callback():
     except InvalidSignatureError:
         abort(400)
     return 'OK'
+
+INQUIRY_FORM_HTML = """
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Sandy 宅安心 ｜ 屋主委託評估</title>
+  <style>
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    body { background-color: #f0f4f8; margin: 0; padding: 20px 12px; color: #333; }
+    .card { max-width: 460px; margin: 0 auto; background: #ffffff; border-radius: 16px; padding: 24px 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .header { text-align: center; border-bottom: 2px solid #eef2f5; padding-bottom: 16px; margin-bottom: 20px; }
+    .header h2 { margin: 0 0 6px; color: #198754; font-size: 20px; }
+    .header p { margin: 0; color: #666; font-size: 13px; line-height: 1.5; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; margin-bottom: 6px; font-weight: bold; font-size: 14px; color: #333; }
+    .req { color: #dc3545; }
+    input[type="text"], input[type="tel"], select, textarea {
+      width: 100%; padding: 12px; border: 1.5px solid #dce2e6; border-radius: 8px; font-size: 15px; outline: none; transition: border-color 0.2s; -webkit-appearance: none;
+    }
+    input:focus, select:focus, textarea:focus { border-color: #198754; background: #fafdfb; }
+    .btn-submit {
+      width: 100%; background: #198754; color: #fff; border: none; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; box-shadow: 0 4px 12px rgba(25,135,84,0.3);
+    }
+    .btn-submit:active { background: #146c43; }
+    .btn-call {
+      display: block; width: 100%; text-align: center; background: #f8f9fa; color: #0d6efd; border: 1.5px solid #0d6efd; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: bold; text-decoration: none; margin-top: 12px;
+    }
+    .success-box { text-align: center; padding: 30px 10px; }
+    .success-icon { font-size: 48px; color: #198754; margin-bottom: 12px; }
+    .success-box h3 { color: #198754; margin: 0 0 10px; font-size: 20px; }
+    .success-box p { color: #555; font-size: 14px; line-height: 1.6; margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    {% if success %}
+    <div class="success-box">
+      <div class="success-icon">✅</div>
+      <h3>委託需求已成功送出！</h3>
+      <p>非常感謝您的委託諮詢！<br><strong>Sandy（黃蕙芬）管家</strong> 已收到您的房屋資訊，將會於您方便的時段主動致電與您聯繫，竭誠為您服務！</p>
+      <a href="tel:0934008636" class="btn-call">📞 如有急件，可直接撥打管家專線</a>
+    </div>
+    {% else %}
+    <div class="header">
+      <h2>🏡 Sandy 宅安心 ｜ 屋主委託評估</h2>
+      <p>不便直接通話？請留下愛屋資訊，管家將主動致電為您評估！</p>
+    </div>
+    <form method="POST" action="/inquiry">
+      <div class="form-group">
+        <label>屋主姓名／稱呼 <span class="req">*</span></label>
+        <input type="text" name="name" placeholder="例如：陳先生、王小姐" required>
+      </div>
+      <div class="form-group">
+        <label>聯絡電話（手機） <span class="req">*</span></label>
+        <input type="tel" name="phone" placeholder="例如：0912345678" required>
+      </div>
+      <div class="form-group">
+        <label>房屋類型 <span class="req">*</span></label>
+        <select name="prop_type" required>
+          <option value="電梯大樓">電梯大樓</option>
+          <option value="無電梯公寓">無電梯公寓</option>
+          <option value="透天別墅">透天別墅</option>
+          <option value="獨立套房">獨立套房</option>
+          <option value="店面商辦">店面商辦</option>
+          <option value="車位">車位</option>
+          <option value="其他">其他類型</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>物件地點／地址 <span class="req">*</span></label>
+        <input type="text" name="location" placeholder="例如：高雄市鼓山區裕誠路..." required>
+      </div>
+      <div class="form-group">
+        <label>方便聯絡時段</label>
+        <select name="contact_time">
+          <option value="隨時皆可">隨時皆可</option>
+          <option value="平日白天（09:00~18:00）">平日白天（09:00~18:00）</option>
+          <option value="平日晚上（18:00~21:00）">平日晚上（18:00~21:00）</option>
+          <option value="週末假日">週末假日</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>其他需求或備註（選填）</label>
+        <textarea name="notes" rows="2" placeholder="例如：現有裝潢屋況、預計起租時間等"></textarea>
+      </div>
+      <button type="submit" class="btn-submit">🚀 送出委託諮詢</button>
+      <a href="tel:0934008636" class="btn-call">📞 或直接撥打專線諮詢</a>
+    </form>
+    {% endif %}
+  </div>
+</body>
+</html>
+"""
+
+@app.route("/inquiry", methods=['GET', 'POST'])
+def inquiry():
+    if request.method == 'POST':
+        name         = request.form.get("name", "").strip()
+        phone        = request.form.get("phone", "").strip()
+        prop_type    = request.form.get("prop_type", "").strip()
+        location     = request.form.get("location", "").strip()
+        contact_time = request.form.get("contact_time", "").strip()
+        notes        = request.form.get("notes", "").strip()
+
+        lead_card = FlexSendMessage(
+            alt_text=f"🔥 【新屋主線上委託】{name} {phone}",
+            contents=BubbleContainer(
+                body=BoxComponent(layout='vertical', padding_all='none', contents=[
+                    BoxComponent(layout='vertical', padding_all='md', background_color='#198754', contents=[
+                        TextComponent(text="🔥 【新屋主線上委託通知！】", weight='bold', size='md', color='#ffffff'),
+                        TextComponent(text="有屋主透過線上表單送出愛屋委託評估！", size='xs', color='#e8f5e9', margin='xs'),
+                    ]),
+                    BoxComponent(layout='vertical', padding_all='lg', spacing='sm', contents=[
+                        create_row("👤 屋主稱呼", name, color='#111111', weight='bold'),
+                        create_row("📞 聯絡電話", phone, color='#0d6efd', weight='bold'),
+                        create_row("🏢 房屋類型", prop_type),
+                        create_row("📍 物件地點", location),
+                        create_row("⏰ 聯絡時段", contact_time),
+                        create_row("📝 補充備註", notes if notes else "（無）", color='#666666'),
+                        SeparatorComponent(margin='md'),
+                        ButtonComponent(action=URIAction(label=f"📞 直接致電給屋主（{phone}）", uri=f"tel:{phone}"), style='primary', color='#198754', height='sm'),
+                    ]),
+                ])
+            )
+        )
+        try:
+            line_bot_api.push_message(MY_LINE_USER_ID, lead_card)
+        except Exception as e:
+            print(f"推播屋主委託至 Sandy 失敗: {e}")
+
+        return render_template_string(INQUIRY_FORM_HTML, success=True)
+    return render_template_string(INQUIRY_FORM_HTML, success=False)
 
 # ==================== 【修改九】自動逾期與到期合約排程（直接通知租客與Sandy）====================
 
