@@ -2675,7 +2675,8 @@ def create_thsr_menu_flex():
                     ButtonComponent(action=MessageAction(label="🚄 台北 ➔ 左營 / 高雄", text="高鐵 台北 左營"), style='secondary', height='sm'),
                     ButtonComponent(action=MessageAction(label="🚄 台中 ➔ 左營 / 高雄", text="高鐵 台中 左營"), style='secondary', height='sm'),
                     SeparatorComponent(margin='md'),
-                    ButtonComponent(action=URIAction(label="🎫 高鐵官方網路訂票系統 (IRS)", uri="https://irs.thsrc.com.tw/IMINT/?locale=tw"), style='primary', color='#2563eb', height='sm'),
+                    ButtonComponent(action=URIAction(label="📱 一鍵開啟高鐵 T-EX 行動購票 App", uri="https://sandy-line-bot.onrender.com/open_tex"), style='primary', color='#ea580c', height='sm'),
+                    ButtonComponent(action=URIAction(label="🌐 高鐵官方網頁訂票系統 (IRS)", uri="https://irs.thsrc.com.tw/IMINT/?locale=tw"), style='secondary', height='sm', margin='xs'),
                     SeparatorComponent(margin='md'),
                     TextComponent(text="💡 您可以隨時按住語音或直接打字說話：\n•「高鐵 台中到南港 10/2 晚上7點半」\n•「高鐵 台北到左營 明天下午2點」\n•「高鐵 台中 台北」\n支援全台 12 站，自動為您比選直達車！", size='xs', color='#888888', margin='sm', wrap=True),
                 ])
@@ -2720,7 +2721,8 @@ def create_thsr_results_flex(res, start_name, end_name, date_str, time_str):
         
     body_contents.extend([
         SeparatorComponent(margin='md'),
-        ButtonComponent(action=URIAction(label="🎫 立即前往高鐵官方劃位付款 (IRS)", uri="https://irs.thsrc.com.tw/IMINT/?locale=tw"), style='primary', color='#ea580c', height='sm'),
+        ButtonComponent(action=URIAction(label="📱 一鍵開啟高鐵 T-EX App 購票", uri="https://sandy-line-bot.onrender.com/open_tex"), style='primary', color='#ea580c', height='sm'),
+        ButtonComponent(action=URIAction(label="🌐 開啟高鐵官方網頁訂票 (IRS)", uri="https://irs.thsrc.com.tw/IMINT/?locale=tw"), style='secondary', height='sm', margin='sm'),
         ButtonComponent(action=MessageAction(label="🔍 查詢其他高鐵班次", text="高鐵"), style='secondary', height='sm', margin='sm'),
     ])
 
@@ -2736,6 +2738,109 @@ def create_thsr_results_flex(res, start_name, end_name, date_str, time_str):
             ])
         )
     )
+
+@app.route("/open_tex")
+def open_tex():
+    return render_template_string("""
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>開啟高鐵 T-EX 行動購票</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 85vh;
+            margin: 0;
+            padding: 24px;
+            text-align: center;
+        }
+        .card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 32px 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            max-width: 380px;
+            width: 100%;
+        }
+        .icon {
+            font-size: 52px;
+            margin-bottom: 12px;
+        }
+        h2 {
+            font-size: 20px;
+            margin: 0 0 8px 0;
+            color: #0f172a;
+        }
+        p {
+            font-size: 14px;
+            color: #64748b;
+            line-height: 1.6;
+            margin: 0 0 24px 0;
+        }
+        .btn-launch {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: #ea580c;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 700;
+            border-radius: 12px;
+            text-decoration: none;
+            box-shadow: 0 4px 12px rgba(234, 88, 12, 0.3);
+            margin-bottom: 12px;
+        }
+        .btn-secondary {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background: #f1f5f9;
+            color: #475569;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 12px;
+            text-decoration: none;
+        }
+        .hint {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 24px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="icon">🚄</div>
+        <h2>高鐵 T-EX 行動購票</h2>
+        <p>正在為您呼叫手機中的官方 App...<br>App 已儲存您的個人證號與常用行程，免重複填表！</p>
+        
+        <a href="thsrc://" id="launchBtn" class="btn-launch">📱 點此立即開啟 T-EX App</a>
+        <a href="https://irs.thsrc.com.tw/IMINT/?locale=tw" class="btn-secondary">🌐 改用電腦/網頁版訂票 (IRS)</a>
+
+        <div class="hint">
+            若手機尚未安裝 T-EX App：<br>
+            <a href="https://apps.apple.com/tw/app/id446442157" style="color: #ea580c; text-decoration: underline; font-weight: 600;">👉 iPhone 點此前去 App Store 下載</a><br>
+            <a href="https://play.google.com/store/apps/details?id=tw.com.thsrc.texpress" style="color: #64748b; text-decoration: underline;">Android 點此前去 Google Play</a>
+        </div>
+    </div>
+
+    <script>
+        // 自動嘗試喚醒 App
+        window.location.href = "thsrc://";
+    </script>
+</body>
+</html>
+""")
 
 
 
