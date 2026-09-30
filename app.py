@@ -1354,7 +1354,7 @@ def handle_message(event):
             return
 
         # ── 按鈕 3：我要租屋 ──
-        if any(kw in text for kw in ["我要租屋", "找房子", "租屋", "3"]) and "諮詢" not in text and "需求" not in text:
+        if any(kw in text for kw in ["我要租屋", "找房子", "租屋", "3", "我有租屋需求", "租屋需求", "找屋需求", "找屋"]) and "諮詢" not in text:
             line_bot_api.reply_message(event.reply_token, create_service_renting_flex())
             return
 
@@ -1373,11 +1373,17 @@ def handle_message(event):
             line_bot_api.reply_message(event.reply_token, create_contact_manager_flex())
             return
 
-        # ── 房客修繕回傳（文字描述）──
-        if any(kw in text for kw in ["我要報修", "修繕", "損壞", "壞了", "壞掉", "漏水", "跳電", "冷氣不冷", "馬桶不通", "維修"]) and not is_admin:
+        # ── 房客修繕回傳（文字描述，管理員 Sandy 亦可直接發送以測試流程）──
+        if any(kw in text for kw in ["我要報修", "修繕", "損壞", "壞了", "壞掉", "漏水", "跳電", "冷氣不冷", "馬桶不通", "維修"]) and text not in ["修繕報修", "4", "4號"]:
             props     = load_properties()
             user_prop = next((p for p in props if p['line_id'] == user_id), None)
-            tenant_info = f"（租客：{user_prop['tenant']}，地址：{user_prop['addr']}）" if user_prop else "（未綁定租客）"
+            if is_admin:
+                tenant_info = "（🧪 管理員 Sandy 模擬測試報修）"
+            elif user_prop:
+                tenant_info = f"（租客：{user_prop['tenant']}，地址：{user_prop['addr']}）"
+            else:
+                tenant_info = "（未綁定租客）"
+
             try:
                 line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(
                     text=f"🛠️ 【房客報修訊息通知！】\n來自：{user_name} ({user_id}) {tenant_info}\n報修內容：\n{text}\n請管家抽空安排工班！"
@@ -1389,8 +1395,8 @@ def handle_message(event):
             ))
             return
 
-        # ── 客戶諮詢需求（包租代管、稅費、託管、租屋、找管家）自動轉知 Sandy ──
-        if any(kw in text for kw in ["我想諮詢包租代管", "我想諮詢包租代管稅費優惠", "我想諮詢房屋託管", "我有租屋需求", "我想諮詢管家", "稅費優惠", "諮詢"]) and not is_admin:
+        # ── 客戶諮詢需求（包租代管、稅費、託管、找管家）自動轉知 Sandy ──
+        if any(kw in text for kw in ["我想諮詢包租代管", "我想諮詢包租代管稅費優惠", "我想諮詢房屋託管", "我想諮詢管家", "稅費優惠", "諮詢"]) and not is_admin:
             try:
                 line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(
                     text=f"💬 【客戶諮詢留言】\n來自 LINE 用戶：{user_name} ({user_id})\n需求內容：{text}\n請管家抽空聯繫處理！"
@@ -1838,7 +1844,12 @@ def handle_media_message(event):
 
     props = load_properties()
     user_prop = next((p for p in props if p['line_id'] == user_id), None)
-    tenant_info = f"（已綁定租客：{user_prop['tenant']}，地址：{user_prop['addr']}）" if user_prop else "（未綁定用戶）"
+    if user_id == MY_LINE_USER_ID:
+        tenant_info = "（🧪 管理員 Sandy 模擬測試傳送照片/影片）"
+    elif user_prop:
+        tenant_info = f"（已綁定租客：{user_prop['tenant']}，地址：{user_prop['addr']}）"
+    else:
+        tenant_info = "（未綁定用戶）"
 
     msg_type_str = "照片" if isinstance(event.message, ImageMessage) else "影片"
 
