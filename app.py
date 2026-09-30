@@ -88,11 +88,14 @@ _token_lock = threading.Lock()
 
 def _is_duplicate(token):
     """回傳 True = 此 token 已處理過（重複事件），直接忽略"""
+    if not token:
+        return False
+    token_str = str(token)
     with _token_lock:
-        if token in _processed_tokens:
+        if token_str in _processed_tokens:
             return True
-        _processed_tokens.add(token)
-        if len(_processed_tokens) > 500:
+        _processed_tokens.add(token_str)
+        if len(_processed_tokens) > 2000:
             _processed_tokens.clear()
         return False
 
@@ -859,6 +862,9 @@ def callback():
         handler.handle(body, signature)
     except InvalidSignatureError:
         abort(400)
+    except Exception as e:
+        print(f"Webhook handling exception (returning OK to terminate LINE retry loop): {e}")
+        return 'OK'
     return 'OK'
 
 INQUIRY_FORM_HTML = """
