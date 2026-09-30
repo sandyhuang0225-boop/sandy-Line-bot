@@ -2530,10 +2530,15 @@ def search_thsr_schedule(start_name, end_name, date_str=None, time_str=None):
         resp = urllib.request.urlopen(req, context=ctx, timeout=8)
         res = json.loads(resp.read().decode('utf-8'))
         trains = res.get('data', {}).get('DepartureTable', {}).get('TrainItem', [])
+        price_table = res.get('data', {}).get('PriceTable', {})
+        coach_p = price_table.get('Coach', [''])[0] if price_table.get('Coach') else ''
+        business_p = price_table.get('Business', [''])[0] if price_table.get('Business') else ''
+        unreserved_p = price_table.get('Unreserved', [''])[0] if price_table.get('Unreserved') else ''
         
         target_h, target_m = [int(x) for x in time_str.split(':')[:2]]
         target_mins = target_h * 60 + target_m
         
+        # 篩選最貼近該時段出發的班次（從目標時間前 15 分鐘往後的班次）
         matched = []
         for t in trains:
             dep = t.get('DepartureTime', '')
@@ -2541,7 +2546,7 @@ def search_thsr_schedule(start_name, end_name, date_str=None, time_str=None):
                 dh, dm = [int(x) for x in dep.split(':')[:2]]
                 dmins = dh * 60 + dm
                 diff = dmins - target_mins
-                if -15 <= diff <= 75:
+                if diff >= -15:
                     num = t.get('TrainNumber', '')
                     arr = t.get('DestinationTime', '')
                     dur = t.get('Duration', '')
@@ -2554,9 +2559,36 @@ def search_thsr_schedule(start_name, end_name, date_str=None, time_str=None):
                         'arr': arr,
                         'duration': dur,
                         'is_fast': is_fast,
-                        'diff': abs(diff)
+                        'diff': diff
                     })
-        return {'success': True, 'trains': matched[:5], 'date': date_str, 'start': start_name, 'end': end_name}
+        
+        matched.sort(key=lambda x: x['diff'])
+        selected = matched[:5]
+        if not selected and trains:
+            for t in trains[-5:]:
+                dur = t.get('Duration', '')
+                dur_parts = [int(x) for x in dur.split(':')[:2]] if ':' in dur else [1, 10]
+                selected.append({
+                    'num': t.get('TrainNumber', ''),
+                    'dep': t.get('DepartureTime', ''),
+                    'arr': t.get('DestinationTime', ''),
+                    'duration': dur,
+                    'is_fast': (dur_parts[0]*60 + dur_parts[1]) <= 65,
+                    'diff': 0
+                })
+
+        return {
+            'success': True,
+            'trains': selected,
+            'date': date_str,
+            'start': start_name,
+            'end': end_name,
+            'prices': {
+                'coach': coach_p,
+                'business': business_p,
+                'unreserved': unreserved_p
+            }
+        }
     except Exception as e:
         return {'success': False, 'message': str(e)}
 
@@ -2570,7 +2602,7 @@ def parse_thsr_query(text):
     found.sort(key=lambda x: x[0])
     
     start_s = found[0][1] if len(found) > 0 else '台中'
-    end_s = found[1][1] if len(found) > 1 else '南港'
+    end_s = found[1][1] if len(found) > 1 else '台北'
     if start_s == '高雄': start_s = '左營'
     if end_s == '高雄': end_s = '左營'
     
@@ -2590,19 +2622,39 @@ def parse_thsr_query(text):
         else:
             date_str = today.strftime('%Y/%m/%d')
             
-    time_str = '19:30'
     m_time = re.search(r'(\d{1,2})[:：](\d{2})', text)
     if m_time:
         h = int(m_time.group(1))
         mi = int(m_time.group(2))
         time_str = f"{h:02d}:{mi:02d}"
-    elif '晚上' in text or '下午' in text:
+    elif any(kw in text for kw in ['晚上', '下午', '上午', '早上', '中午', '傍晚']):
         m_h = re.search(r'(\d{1,2})[點時]', text)
         if m_h:
             h = int(m_h.group(1))
-            if h < 12: h += 12
+            if ('晚上' in text or '下午' in text or '傍晚' in text) and h < 12:
+                h += 12
             mi = 30 if '半' in text else 0
             time_str = f"{h:02d}:{mi:02d}"
+        else:
+            if '中午' in text: time_str = '12:00'
+            elif '晚上' in text: time_str = '19:00'
+            elif '下午' in text: time_str = '14:00'
+            elif '早上' in text or '上午' in text: time_str = '09:00'
+            elif '傍晚' in text: time_str = '17:30'
+            else: time_str = '12:00'
+    else:
+        m_h = re.search(r'(\d{1,2})[點時]', text)
+        if m_h:
+            h = int(m_h.group(1))
+            mi = 30 if '半' in text else 0
+            time_str = f"{h:02d}:{mi:02d}"
+        else:
+            # 沒指定時間：若是查詢今天，以當前時間為基準搜尋下班車；若是查詢未來日期，預設 09:00 出發
+            if date_str == today.strftime('%Y/%m/%d'):
+                cur_m = 30 if today.minute >= 30 else 0
+                time_str = f"{today.hour:02d}:{cur_m:02d}"
+            else:
+                time_str = '09:00'
             
     return start_s, end_s, date_str, time_str
 
@@ -2614,16 +2666,18 @@ def create_thsr_menu_flex():
             body=BoxComponent(layout='vertical', padding_all='none', contents=[
                 BoxComponent(layout='vertical', padding_all='lg', background_color='#ea580c', contents=[
                     TextComponent(text="🚄 Sandy 專屬 ｜ 高鐵差旅秘書", weight='bold', size='md', color='#ffffff'),
-                    TextComponent(text="即時車次查詢 ｜ 直達快速車推薦 ｜ 一鍵官方劃位", size='xs', color='#ffedd5', margin='xs'),
+                    TextComponent(text="即時官方車次 ｜ 直達快速車 ｜ 實時票價 ｜ 官方訂位", size='xs', color='#ffedd5', margin='xs'),
                 ]),
                 BoxComponent(layout='vertical', padding_all='lg', spacing='sm', contents=[
-                    TextComponent(text="請選擇常用行程，或直接在對話框用語音/打字說出需求：", size='xs', color='#666666', wrap=True),
-                    ButtonComponent(action=MessageAction(label="⚡ 台中 ➡️ 南港 (10/02 週五 19:30)", text="高鐵 台中 南港 10/2 19:30"), style='primary', color='#ea580c', height='sm'),
-                    ButtonComponent(action=MessageAction(label="⚡ 台北 ➡️ 左營 (直達快速車)", text="高鐵 台北 左營 14:00"), style='primary', color='#0f172a', height='sm'),
-                    ButtonComponent(action=MessageAction(label="⚡ 台北 ➡️ 台南 (直達快速車)", text="高鐵 台北 台南 14:00"), style='secondary', height='sm'),
-                    ButtonComponent(action=URIAction(label="🎫 前往高鐵官方線上訂票系統", uri="https://pass.thsrc.com.tw/"), style='secondary', height='sm'),
+                    TextComponent(text="常用差旅快捷查詢（點擊立即查最新班次）：", size='xs', color='#666666', wrap=True),
+                    ButtonComponent(action=MessageAction(label="🚄 台中 ➔ 台北 / 南港", text="高鐵 台中 南港"), style='primary', color='#ea580c', height='sm'),
+                    ButtonComponent(action=MessageAction(label="🚄 台北 / 南港 ➔ 台中", text="高鐵 台北 台中"), style='primary', color='#0f172a', height='sm'),
+                    ButtonComponent(action=MessageAction(label="🚄 台北 ➔ 左營 / 高雄", text="高鐵 台北 左營"), style='secondary', height='sm'),
+                    ButtonComponent(action=MessageAction(label="🚄 台中 ➔ 左營 / 高雄", text="高鐵 台中 左營"), style='secondary', height='sm'),
                     SeparatorComponent(margin='md'),
-                    TextComponent(text="💡 您也可以直接打字或按住麥克風說話：\n•「高鐵 台中 南港 10/2 19:30」\n•「高鐵 台北到左營 明天下午2點」\n小秘書會自動為您即時過濾直達車！", size='xs', color='#888888', margin='sm', wrap=True),
+                    ButtonComponent(action=URIAction(label="🎫 高鐵官方網路訂票系統 (IRS)", uri="https://irs.thsrc.com.tw/IMINT/?locale=tw"), style='primary', color='#2563eb', height='sm'),
+                    SeparatorComponent(margin='md'),
+                    TextComponent(text="💡 您可以隨時按住語音或直接打字說話：\n•「高鐵 台中到南港 10/2 晚上7點半」\n•「高鐵 台北到左營 明天下午2點」\n•「高鐵 台中 台北」\n支援全台 12 站，自動為您比選直達車！", size='xs', color='#888888', margin='sm', wrap=True),
                 ])
             ])
         )
@@ -2632,6 +2686,13 @@ def create_thsr_menu_flex():
 def create_thsr_results_flex(res, start_name, end_name, date_str, time_str):
     """高鐵班次比選結果卡片"""
     trains = res.get('trains', [])
+    prices = res.get('prices', {})
+    coach_p = prices.get('coach', '')
+    business_p = prices.get('business', '')
+    unres_p = prices.get('unreserved', '')
+    
+    fare_info = f"票價：標準 {coach_p} ｜ 商務 {business_p} ｜ 自由座 {unres_p}" if coach_p else ""
+
     rows = []
     for t in trains:
         badge_text = "👑 直達快速車" if t['is_fast'] else "各站停靠"
@@ -2641,14 +2702,27 @@ def create_thsr_results_flex(res, start_name, end_name, date_str, time_str):
                 BoxComponent(layout='horizontal', contents=[
                     TextComponent(text=f"車次 {t['num']}", weight='bold', size='sm', color='#0f172a', flex=3),
                     TextComponent(text=f"{t['dep']} ➔ {t['arr']}", weight='bold', size='sm', color='#ea580c', flex=5, align='center'),
-                    TextComponent(text=f"{t['duration']}", size='xs', color='#64748b', flex=2, align='end'),
+                    TextComponent(text=f"{t['duration']}", size='xs', color='#64748b', flex=3, align='end'),
                 ]),
                 BoxComponent(layout='horizontal', margin='xs', contents=[
                     TextComponent(text=badge_text, size='xxs', weight='bold', color=badge_color, flex=1),
-                    TextComponent(text="標準 $750 / 商務 $1,250", size='xxs', color='#94a3b8', flex=2, align='end'),
+                    TextComponent(text="可預訂標準/商務座", size='xxs', color='#94a3b8', flex=1, align='end'),
                 ])
             ])
         )
+
+    body_contents = [
+        TextComponent(text="AI 為您精選出的最佳車次清單：", size='xs', color='#666666'),
+        *rows,
+    ]
+    if fare_info:
+        body_contents.append(TextComponent(text=fare_info, size='xxs', color='#64748b', margin='md', align='center'))
+        
+    body_contents.extend([
+        SeparatorComponent(margin='md'),
+        ButtonComponent(action=URIAction(label="🎫 立即前往高鐵官方劃位付款 (IRS)", uri="https://irs.thsrc.com.tw/IMINT/?locale=tw"), style='primary', color='#ea580c', height='sm'),
+        ButtonComponent(action=MessageAction(label="🔍 查詢其他高鐵班次", text="高鐵"), style='secondary', height='sm', margin='sm'),
+    ])
 
     return FlexSendMessage(
         alt_text=f"【高鐵即時班次】{start_name} ➔ {end_name}（{len(trains)} 班次）",
@@ -2658,13 +2732,7 @@ def create_thsr_results_flex(res, start_name, end_name, date_str, time_str):
                     TextComponent(text=f"🚄 {start_name} ➔ {end_name} ｜ 高鐵推薦班次", weight='bold', size='md', color='#ffffff'),
                     TextComponent(text=f"搭乘日期：{date_str} ｜ {time_str} 前後班次", size='xs', color='#ffedd5', margin='xs'),
                 ]),
-                BoxComponent(layout='vertical', padding_all='lg', contents=[
-                    TextComponent(text="AI 為您精選出的最佳車次清單：", size='xs', color='#666666'),
-                    *rows,
-                    SeparatorComponent(margin='md'),
-                    ButtonComponent(action=URIAction(label="🎫 立即前往高鐵官方劃位付款", uri="https://pass.thsrc.com.tw/"), style='primary', color='#ea580c', height='sm'),
-                    ButtonComponent(action=MessageAction(label="🔍 查詢其他高鐵班次", text="高鐵"), style='secondary', height='sm', margin='sm'),
-                ])
+                BoxComponent(layout='vertical', padding_all='lg', contents=body_contents)
             ])
         )
     )
