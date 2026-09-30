@@ -399,7 +399,7 @@ def create_service_baozu_flex():
                 SeparatorComponent(margin='md'),
                 TextComponent(text="👉 左右滑動查看【政府稅金減免與補助】", size='xs', color='#888888', align='center', margin='sm'),
                 ButtonComponent(action=URIAction(label="📞 撥打屋主諮詢專線", uri=f"tel:{MANAGER_PHONE}"), style='primary', color='#198754', height='sm'),
-                ButtonComponent(action=MessageAction(label="📝 填寫委託諮詢表單", text="我想留下委託諮詢"), style='secondary', height='sm'),
+                ButtonComponent(action=MessageAction(label="💬 留下委託諮詢", text="我想諮詢包租代管"), style='secondary', height='sm'),
             ]),
         ])
     )
@@ -424,8 +424,8 @@ def create_service_baozu_flex():
                 create_row("⚖️ 公證補助", "每件每次最高補助 3,000 元"),
                 create_row("🛡️ 保險補助", "每年最高補助 3,500 元居家安全險"),
                 SeparatorComponent(margin='md'),
-                ButtonComponent(action=URIAction(label="📞 撥打專人評估專線", uri=f"tel:{MANAGER_PHONE}"), style='primary', color='#0d6efd', height='sm'),
-                ButtonComponent(action=MessageAction(label="📝 線上預約專人評估", text="我想預約專人評估"), style='secondary', height='sm'),
+                ButtonComponent(action=URIAction(label="📞 諮詢房東稅費試算", uri=f"tel:{MANAGER_PHONE}"), style='primary', color='#0d6efd', height='sm'),
+                ButtonComponent(action=MessageAction(label="💬 預約 Sandy 評估", text="我想諮詢包租代管稅費優惠"), style='secondary', height='sm'),
             ]),
         ])
     )
@@ -1053,31 +1053,20 @@ def handle_message(event):
         # ==================== 六宮格按鍵（所有人可互動）====================
 
         # ── 按鈕 1：包租代管 ──
-        if any(kw in text for kw in ["包租代管", "包租", "1", "我要包租", "包租貸款", "社會住宅"]) and not any(kw in text for kw in ["表單", "委託", "評估", "稅費", "優惠"]):
+        if any(kw in text for kw in ["包租代管", "包租", "1", "我要包租", "包租貸款", "社會住宅"]) and "諮詢" not in text and "優惠" not in text:
             line_bot_api.reply_message(event.reply_token, create_service_baozu_flex())
             return
 
-        # ── 屋主委託諮詢表單（屋主欲填表或諮詢稅費/評估）──
-        if any(kw in text for kw in ["委託諮詢", "留下委託", "預約專人評估", "專人評估", "稅費優惠", "稅金優惠", "委託表單", "填寫表單", "屋主諮詢", "我想諮詢包租代管", "我想預約", "我想留下委託諮詢", "我想預約專人評估"]) and not (text.startswith("屋主委託") or text.startswith("屋主諮詢")):
-            line_bot_api.reply_message(event.reply_token, create_owner_inquiry_form_flex())
+        # ── 客戶諮詢需求（包含包租代管、稅費優惠、房屋託管、租屋、叫修），自動即時轉知 Sandy ──
+        if any(kw in text for kw in ["我想諮詢包租代管", "我想諮詢包租代管稅費優惠", "我想諮詢房屋託管", "我有租屋需求", "我想諮詢管家", "稅費優惠", "諮詢"]) or text.startswith("我要報修"):
             try:
                 line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(
-                    text=f"📢 【屋主諮詢意向】\n用戶：{user_name} ({user_id})\n點選：{text}\n系統已主動提供委託評估表單！"
+                    text=f"📢 【客戶即時需求通知】\n來自 LINE 用戶：{user_name} ({user_id})\n需求內容：{text}\n請管家抽空聯繫處理！"
                 ))
             except Exception as err:
-                print(f"推播屋主意向失敗: {err}")
-            return
-
-        # ── 屋主送出愛屋資訊（填表回傳）──
-        if text.startswith("屋主委託") or text.startswith("屋主諮詢"):
-            try:
-                line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(
-                    text=f"🔥 【全新屋主委託來了！】\n來自用戶：{user_name} ({user_id})\n委託資訊如下：\n{text}\n\n請 Sandy 儘速主動回電為屋主評估！"
-                ))
-            except Exception as err:
-                print(f"轉發屋主委託通知失敗: {err}")
+                print(f"轉發通知房東失敗: {err}")
             line_bot_api.reply_message(event.reply_token, TextSendMessage(
-                text=f"🎉 非常感謝您的委託諮詢！\nSandy 管家已收到您的房屋資訊，將會於您方便的時段主動致電與您聯繫，竭誠為您服務！\n\n如有急件，亦歡迎直接撥打專線：{MANAGER_PHONE}，謝謝！"
+                text=f"✅ 已為您通知 Sandy 管家！管家將儘速與您聯繫。\n如情況緊急，歡迎直接撥打專線：{MANAGER_PHONE}，謝謝！"
             ))
             return
 
