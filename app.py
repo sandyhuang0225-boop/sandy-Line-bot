@@ -5,7 +5,7 @@ import random
 import threading
 import calendar
 from datetime import datetime, timedelta
-from flask import Flask, request, abort, render_template_string
+from flask import Flask, request, abort, render_template_string, jsonify
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import (
@@ -742,6 +742,7 @@ def create_admin_menu_flex(rent_m, current_m, is_test):
                     ButtonComponent(action=MessageAction(label=f"💰 查詢 {rent_m}月租金未繳", text=f"查 {rent_m}月租金"), style='primary', color='#0d6efd', height='sm'),
                     ButtonComponent(action=MessageAction(label=f"🏢 查詢 {current_m}月管理費", text=f"查 {current_m}月管理費"), style='primary', color='#198754', height='sm'),
                     ButtonComponent(action=MessageAction(label=f"🏦 查詢 {current_m}月貸款", text=f"查 {current_m}月貸款"), style='primary', color='#6f42c1', height='sm'),
+                    ButtonComponent(action=URIAction(label="⚡ 明華路水電分帳計算器", uri="https://sandy-line-bot.onrender.com/utility_calc"), style='primary', color='#fd7e14', height='sm'),
                     ButtonComponent(action=MessageAction(label="⏳ 查即將到期合約（2個月內）", text="查即將到期合約"), style='secondary', height='sm'),
                     ButtonComponent(action=MessageAction(label="🔄 切換測試/正式模式", text="切換模式"), style='secondary', height='sm'),
                 ]),
@@ -867,6 +868,142 @@ def create_expense_carousel(month_str, expense_type, unpaid_items):
     return FlexSendMessage(
         alt_text=f"【{month_str}月{expense_type}未繳清單】",
         contents={"type": "carousel", "contents": [b.as_json_dict() for b in bubbles]}
+    )
+
+# ==================== 明華路前後門水電分帳計算器核心邏輯 ====================
+
+def calculate_utility_split(period, elec_total, elec_public, front_read, back_read, water_total, front_init=42.3, back_init=25.5):
+    """
+    明華路271之1號 前後門水電分帳核心計算函數：
+    1. 電費：
+       - 流動電費 = 總額 - 公電
+       - 前門分電度數 = 前門新讀數 - 前門期初
+       - 後門分電度數 = 後門新讀數 - 後門期初
+       - 前門應收 = 流動電費 * (前門度數 / 總度數) + 公電 * 55%（四捨五入）
+       - 後門應收 = 總電費 - 前門應收
+    2. 水費：
+       - 前門應收 = 水費總額 * 66.67%（四捨五入）
+       - 後門應收 = 水費總額 - 前門應收
+    """
+    elec_total = float(elec_total or 0)
+    elec_public = float(elec_public or 0)
+    front_read = float(front_read or 0)
+    back_read = float(back_read or 0)
+    front_init = float(front_init or 42.3)
+    back_init = float(back_init or 25.5)
+
+    front_deg = max(0.0, front_read - front_init) if front_read >= front_init else 0.0
+    back_deg = max(0.0, back_read - back_init) if back_read >= back_init else 0.0
+    total_deg = front_deg + back_deg
+    front_ratio = (front_deg / total_deg) if total_deg > 0 else 0.5
+    back_ratio = 1.0 - front_ratio
+
+    flow_elec = max(0.0, elec_total - elec_public)
+    front_elec = round(flow_elec * front_ratio + elec_public * 0.55)
+    back_elec = int(elec_total - front_elec) if elec_total > 0 else 0
+
+    water_total = float(water_total or 0)
+    front_water = round(water_total * (2.0 / 3.0)) if water_total > 0 else 0
+    back_water = int(water_total - front_water) if water_total > 0 else 0
+
+    front_total = front_elec + front_water
+    back_total = back_elec + back_water
+
+    return {
+        'period': period or '本期',
+        'elec_total': int(elec_total),
+        'elec_public': int(elec_public),
+        'front_init': front_init,
+        'front_read': front_read,
+        'front_deg': round(front_deg, 1),
+        'front_ratio_pct': f"{round(front_ratio * 100, 1)}%",
+        'front_elec': front_elec,
+        'front_water': front_water,
+        'front_total': front_total,
+        
+        'back_init': back_init,
+        'back_read': back_read,
+        'back_deg': round(back_deg, 1),
+        'back_ratio_pct': f"{round(back_ratio * 100, 1)}%",
+        'back_elec': back_elec,
+        'back_water': back_water,
+        'back_total': back_total,
+        'water_total': int(water_total),
+    }
+
+def get_latest_utility_inits():
+    """從「電費分攤」的副本自動取得最新期初讀數（預設 42.3 與 25.5）"""
+    try:
+        ws_e = get_worksheet_safely(["「電費分攤」的副本", "電費分攤", "明華路電費分攤", "電費分帳"])
+        if ws_e:
+            rows = ws_e.get_all_values()
+            for r in reversed(rows[8:]):
+                if len(r) >= 5 and r[3].strip() and r[4].strip():
+                    try:
+                        return float(r[3].strip()), float(r[4].strip())
+                    except Exception:
+                        pass
+    except Exception as e:
+        print(f"讀取電費期初讀數失敗: {e}")
+    return 42.3, 25.5
+
+def create_utility_receipt_flex(data, is_front=True, is_test=False):
+    room_no = "A107" if is_front else "A109"
+    tenant = "林采葳" if is_front else "楊芸錚"
+    door = "前門店面" if is_front else "後門店面"
+    addr = "高雄市鼓山區明華路271之1號" + ("" if is_front else "（後門）")
+    deg = data.get('front_deg' if is_front else 'back_deg', 0)
+    init_val = data.get('front_init' if is_front else 'back_init', 0)
+    read_val = data.get('front_read' if is_front else 'back_read', 0)
+    ratio_pct = data.get('front_ratio_pct' if is_front else 'back_ratio_pct', '50%')
+    elec_amt = data.get('front_elec' if is_front else 'back_elec', 0)
+    water_amt = data.get('front_water' if is_front else 'back_water', 0)
+    total_amt = data.get('front_total' if is_front else 'back_total', 0)
+    pub_share_pct = "55%" if is_front else "45%"
+    water_share_desc = "2/3 分攤" if is_front else "1/3 分攤"
+    period = data.get('period', '本期')
+
+    header_color = "#fd7e14" if is_front else "#0d6efd"
+    header_contents = [
+        TextComponent(text=f"⚡ 明華路水電繳費單 ｜ {door}", weight='bold', size='md', color='#ffffff'),
+    ]
+    if is_test:
+        header_contents.append(TextComponent(text=f"🧪 安全測試模式（模擬發給：{tenant}）", size='xs', color='#ffeb3b', margin='xs', weight='bold'))
+    else:
+        header_contents.append(TextComponent(text=f"承租人：{tenant}（{room_no}）", size='xs', color='#ffffff', margin='xs'))
+
+    return FlexSendMessage(
+        alt_text=f"【水電繳費單】明華路 {door} {tenant} 本期應繳 {total_amt:,} 元",
+        contents=BubbleContainer(
+            body=BoxComponent(layout='vertical', padding_all='none', contents=[
+                BoxComponent(layout='vertical', padding_all='lg', background_color=header_color, contents=header_contents),
+                BoxComponent(layout='vertical', padding_all='lg', spacing='sm', contents=[
+                    create_row("承租人", f"{tenant}（{room_no} {door}）", weight='bold'),
+                    create_row("完整地址", addr, color='#111111'),
+                    create_row("計費期間", period, color='#333333', weight='bold'),
+                    SeparatorComponent(margin='md'),
+                    TextComponent(text="💡 電費計算明細：", size='xs', color='#666666', weight='bold'),
+                    create_row("分電表讀數", f"{init_val} ➔ {read_val}（用電 {deg} 度）", color='#0d6efd'),
+                    create_row("流動電費分攤", f"用電佔比 {ratio_pct}"),
+                    create_row("公電分攤", f"按戶別協議分攤 {pub_share_pct}"),
+                    create_row("電費應收小計", f"{elec_amt:,} 元", color='#dc3545', weight='bold'),
+                    SeparatorComponent(margin='sm'),
+                    TextComponent(text="💧 水費計算明細：", size='xs', color='#666666', weight='bold'),
+                    create_row("水費總額", f"{data.get('water_total', 0):,} 元"),
+                    create_row("分攤比例", water_share_desc),
+                    create_row("水費應收小計", f"{water_amt:,} 元", color='#dc3545', weight='bold'),
+                    SeparatorComponent(margin='md'),
+                    create_row("本期應繳總額", f"{total_amt:,} 元", color='#dc3545', weight='bold'),
+                    SeparatorComponent(margin='md'),
+                    TextComponent(text="指定匯款帳號（星展銀行）：", size='xs', color='#666666'),
+                    create_row("匯款銀行", f"{BANK_NAME}（代號 {BANK_CODE}）"),
+                    create_row("匯款帳號", BANK_ACCOUNT, color='#0d6efd', weight='bold'),
+                    create_row("戶名", BANK_HOLDER),
+                    SeparatorComponent(margin='sm'),
+                    TextComponent(text="請於收到通知後抽空安排轉帳匯款，完成後回傳末5碼，謝謝您的配合！", size='xs', color='#888888', margin='sm', wrap=True),
+                ])
+            ])
+        )
     )
 
 # ==================== Webhook 路由 ====================
@@ -1157,6 +1294,421 @@ def rental_inquiry():
 
         return render_template_string(RENTAL_INQUIRY_FORM_HTML, success=True)
     return render_template_string(RENTAL_INQUIRY_FORM_HTML, success=False)
+
+
+# ==================== 明華路水電分帳計算器 Web 路由 ====================
+
+UTILITY_CALC_HTML = """
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Sandy 宅安心 ｜ 明華路水電分帳計算器</title>
+  <style>
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    body { background-color: #f4f7f6; margin: 0; padding: 16px 12px; color: #333; }
+    .container { max-width: 540px; margin: 0 auto; }
+    .card { background: #ffffff; border-radius: 16px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); margin-bottom: 16px; }
+    .header { text-align: center; border-bottom: 2px solid #eef2f5; padding-bottom: 14px; margin-bottom: 16px; }
+    .header h2 { margin: 0 0 6px; color: #fd7e14; font-size: 20px; }
+    .header p { margin: 0; color: #666; font-size: 13px; line-height: 1.4; }
+    .badge { display: inline-block; background: #fff3cd; color: #856404; font-size: 11px; font-weight: bold; padding: 3px 8px; border-radius: 12px; margin-top: 4px; }
+    .section-title { font-size: 15px; font-weight: bold; color: #2c3e50; margin: 16px 0 10px; display: flex; align-items: center; gap: 6px; }
+    .form-group { margin-bottom: 12px; }
+    .form-row { display: flex; gap: 10px; }
+    .form-row .form-group { flex: 1; }
+    label { display: block; margin-bottom: 4px; font-size: 13px; font-weight: 600; color: #495057; }
+    input[type="text"], input[type="number"] {
+      width: 100%; padding: 10px 12px; border: 1.5px solid #dce2e6; border-radius: 8px; font-size: 15px; outline: none; transition: border-color 0.2s; -webkit-appearance: none;
+    }
+    input:focus { border-color: #fd7e14; background: #fffaf5; }
+    .details-toggle { font-size: 12px; color: #0d6efd; cursor: pointer; text-decoration: underline; margin-bottom: 10px; display: inline-block; }
+    .results-grid { display: flex; gap: 10px; margin-top: 14px; }
+    .result-box { flex: 1; background: #f8f9fa; border-radius: 12px; padding: 14px 12px; border-top: 4px solid #fd7e14; }
+    .result-box.back { border-top-color: #0d6efd; }
+    .result-box h4 { margin: 0 0 8px; font-size: 15px; color: #333; display: flex; justify-content: space-between; align-items: center; }
+    .result-box .tag { font-size: 11px; padding: 2px 6px; border-radius: 6px; background: #e9ecef; }
+    .res-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; color: #666; }
+    .res-total { border-top: 1px dashed #ccc; margin-top: 8px; padding-top: 8px; font-size: 14px; font-weight: bold; color: #dc3545; display: flex; justify-content: space-between; }
+    .btn { display: block; width: 100%; padding: 14px; border-radius: 10px; font-size: 15px; font-weight: bold; cursor: pointer; border: none; text-align: center; margin-top: 10px; transition: opacity 0.2s; }
+    .btn:active { opacity: 0.8; }
+    .btn-line { background: #06c755; color: #fff; box-shadow: 0 4px 12px rgba(6,199,85,0.3); }
+    .btn-sheet { background: #0d6efd; color: #fff; box-shadow: 0 4px 12px rgba(13,110,253,0.3); }
+    .btn-copy { background: #f8f9fa; color: #495057; border: 1.5px solid #ced4da; font-size: 13px; padding: 10px; }
+    .alert-box { padding: 12px; border-radius: 8px; font-size: 13px; margin-top: 14px; display: none; line-height: 1.4; }
+    .alert-success { background: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
+    .alert-error { background: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 6px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="header">
+        <h2>⚡ 明華路水電分帳計算器</h2>
+        <p>高雄市鼓山區明華路271之1號</p>
+        <span class="badge">前門 A107 林采葳 ｜ 後門 A109 楊芸錚</span>
+      </div>
+
+      <div class="form-group">
+        <label>📅 計費期間</label>
+        <input type="text" id="period" value="{{ default_period }}" placeholder="例如：2026/09/18~11/18">
+      </div>
+
+      <div class="section-title">⚡ 台電電費資訊</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>電費應繳總額 ($)</label>
+          <input type="number" id="elec_total" placeholder="例如：3500" value="0">
+        </div>
+        <div class="form-group">
+          <label>公共設施電費 ($)</label>
+          <input type="number" id="elec_public" placeholder="例如：500" value="0">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>前門新讀數（左表）</label>
+          <input type="number" step="0.1" id="front_read" placeholder="新度數" value="{{ default_front_init }}">
+        </div>
+        <div class="form-group">
+          <label>後門新讀數（右表）</label>
+          <input type="number" step="0.1" id="back_read" placeholder="新度數" value="{{ default_back_init }}">
+        </div>
+      </div>
+
+      <span class="details-toggle" onclick="toggleInits()">⚙️ 展開／自訂兩表期初起點</span>
+      <div id="inits_panel" style="display:none; background:#f1f3f5; padding:10px; border-radius:8px; margin-bottom:12px;">
+        <div class="form-row">
+          <div class="form-group">
+            <label style="font-size:11px;">前門期初起點</label>
+            <input type="number" step="0.1" id="front_init" value="{{ default_front_init }}">
+          </div>
+          <div class="form-group">
+            <label style="font-size:11px;">後門期初起點</label>
+            <input type="number" step="0.1" id="back_init" value="{{ default_back_init }}">
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">💧 台水水費資訊</div>
+      <div class="form-group">
+        <label>水費總額 ($)</label>
+        <input type="number" id="water_total" placeholder="例如：300" value="0">
+      </div>
+
+      <!-- 即時分帳試算預覽 -->
+      <div class="results-grid">
+        <div class="result-box">
+          <h4>
+            <span>🏢 前門（A107）</span>
+            <span class="tag">林采葳</span>
+          </h4>
+          <div class="res-row">
+            <span>用電度數</span>
+            <strong id="front_deg_txt">0.0 度</strong>
+          </div>
+          <div class="res-row">
+            <span>用電比 (流動+公電55%)</span>
+            <strong id="front_elec_txt">$0</strong>
+          </div>
+          <div class="res-row">
+            <span>水費分攤 (2/3)</span>
+            <strong id="front_water_txt">$0</strong>
+          </div>
+          <div class="res-total">
+            <span>應繳總額</span>
+            <span id="front_total_txt" style="font-size:16px;">$0 元</span>
+          </div>
+        </div>
+
+        <div class="result-box back">
+          <h4>
+            <span>🚪 後門（A109）</span>
+            <span class="tag">楊芸錚</span>
+          </h4>
+          <div class="res-row">
+            <span>用電度數</span>
+            <strong id="back_deg_txt">0.0 度</strong>
+          </div>
+          <div class="res-row">
+            <span>用電比 (流動+公電45%)</span>
+            <strong id="back_elec_txt">$0</strong>
+          </div>
+          <div class="res-row">
+            <span>水費分攤 (1/3)</span>
+            <strong id="back_water_txt">$0</strong>
+          </div>
+          <div class="res-total">
+            <span>應繳總額</span>
+            <span id="back_total_txt" style="font-size:16px;">$0 元</span>
+          </div>
+        </div>
+      </div>
+
+      <button type="button" class="btn btn-line" id="btn_send_line" onclick="sendToLine()">
+        📲 一鍵發送 2 張水電繳費單至 LINE
+      </button>
+      <button type="button" class="btn btn-sheet" id="btn_save_sheet" onclick="saveToSheet()">
+        💾 同步寫入 Google 試算表存檔
+      </button>
+      <button type="button" class="btn btn-copy" onclick="copyNotices()">
+        📋 複製前後門文字帳單（備用）
+      </button>
+
+      <div id="alert_box" class="alert-box"></div>
+    </div>
+  </div>
+
+  <script>
+    function toggleInits() {
+      var p = document.getElementById('inits_panel');
+      p.style.display = p.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function calculate() {
+      var period = document.getElementById('period').value;
+      var elec_total = parseFloat(document.getElementById('elec_total').value) || 0;
+      var elec_public = parseFloat(document.getElementById('elec_public').value) || 0;
+      var front_read = parseFloat(document.getElementById('front_read').value) || 0;
+      var back_read = parseFloat(document.getElementById('back_read').value) || 0;
+      var front_init = parseFloat(document.getElementById('front_init').value) || 42.3;
+      var back_init = parseFloat(document.getElementById('back_init').value) || 25.5;
+      var water_total = parseFloat(document.getElementById('water_total').value) || 0;
+
+      var front_deg = Math.max(0, front_read - front_init);
+      var back_deg = Math.max(0, back_read - back_init);
+      var total_deg = front_deg + back_deg;
+      var front_ratio = total_deg > 0 ? (front_deg / total_deg) : 0.5;
+
+      var flow_elec = Math.max(0, elec_total - elec_public);
+      var front_elec = Math.round(flow_elec * front_ratio + elec_public * 0.55);
+      var back_elec = Math.max(0, elec_total - front_elec);
+
+      var front_water = Math.round(water_total * (2.0 / 3.0));
+      var back_water = Math.max(0, water_total - front_water);
+
+      var front_total = front_elec + front_water;
+      var back_total = back_elec + back_water;
+
+      document.getElementById('front_deg_txt').innerText = front_deg.toFixed(1) + ' 度 (' + (front_ratio * 100).toFixed(1) + '%)';
+      document.getElementById('front_elec_txt').innerText = '$' + front_elec.toLocaleString();
+      document.getElementById('front_water_txt').innerText = '$' + front_water.toLocaleString();
+      document.getElementById('front_total_txt').innerText = '$' + front_total.toLocaleString() + ' 元';
+
+      document.getElementById('back_deg_txt').innerText = back_deg.toFixed(1) + ' 度 (' + ((1 - front_ratio) * 100).toFixed(1) + '%)';
+      document.getElementById('back_elec_txt').innerText = '$' + back_elec.toLocaleString();
+      document.getElementById('back_water_txt').innerText = '$' + back_water.toLocaleString();
+      document.getElementById('back_total_txt').innerText = '$' + back_total.toLocaleString() + ' 元';
+
+      return {
+        period: period,
+        elec_total: elec_total,
+        elec_public: elec_public,
+        front_read: front_read,
+        back_read: back_read,
+        front_init: front_init,
+        back_init: back_init,
+        water_total: water_total,
+        front_deg: front_deg.toFixed(1),
+        back_deg: back_deg.toFixed(1),
+        front_elec: front_elec,
+        back_elec: back_elec,
+        front_water: front_water,
+        back_water: back_water,
+        front_total: front_total,
+        back_total: back_total
+      };
+    }
+
+    var inputs = document.querySelectorAll('input');
+    inputs.forEach(function(el) {
+      el.addEventListener('input', calculate);
+    });
+    calculate();
+
+    function showAlert(msg, isSuccess) {
+      var box = document.getElementById('alert_box');
+      box.style.display = 'block';
+      box.className = 'alert-box ' + (isSuccess ? 'alert-success' : 'alert-error');
+      box.innerHTML = msg;
+    }
+
+    function sendToLine() {
+      var data = calculate();
+      var btn = document.getElementById('btn_send_line');
+      var origText = btn.innerText;
+      btn.innerHTML = '<span class="spinner"></span> 正在傳送收據至 LINE...';
+      btn.disabled = true;
+
+      fetch('/api/send_utility_receipts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(res) {
+        btn.innerHTML = origText;
+        btn.disabled = false;
+        if (res.status === 'ok') {
+          showAlert(res.message, true);
+        } else {
+          showAlert('❌ 傳送失敗：' + res.message, false);
+        }
+      })
+      .catch(function(err) {
+        btn.innerHTML = origText;
+        btn.disabled = false;
+        showAlert('❌ 網路請求失敗：' + err, false);
+      });
+    }
+
+    function saveToSheet() {
+      var data = calculate();
+      var btn = document.getElementById('btn_save_sheet');
+      var origText = btn.innerText;
+      btn.innerHTML = '<span class="spinner"></span> 正在同步寫入試算表...';
+      btn.disabled = true;
+
+      fetch('/api/save_utility_sheet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      })
+      .then(function(res) { return res.json(); })
+      .then(function(res) {
+        btn.innerHTML = origText;
+        btn.disabled = false;
+        if (res.status === 'ok') {
+          showAlert(res.message, true);
+        } else {
+          showAlert('❌ 存入失敗：' + res.message, false);
+        }
+      })
+      .catch(function(err) {
+        btn.innerHTML = origText;
+        btn.disabled = false;
+        showAlert('❌ 網路請求失敗：' + err, false);
+      });
+    }
+
+    function copyNotices() {
+      var d = calculate();
+      var text = "【明華路水電繳費通知】\\n"
+        + "計費期間：" + d.period + "\\n\\n"
+        + "🏢 前門（A107 林采葳）：\\n"
+        + "• 用電：" + d.front_deg + " 度（電費 $" + d.front_elec.toLocaleString() + "）\\n"
+        + "• 水費：$" + d.front_water.toLocaleString() + "\\n"
+        + "• 應繳總額：$" + d.front_total.toLocaleString() + " 元\\n\\n"
+        + "🚪 後門（A109 楊芸錚）：\\n"
+        + "• 用電：" + d.back_deg + " 度（電費 $" + d.back_elec.toLocaleString() + "）\\n"
+        + "• 水費：$" + d.back_water.toLocaleString() + "\\n"
+        + "• 應繳總額：$" + d.back_total.toLocaleString() + " 元\\n\\n"
+        + "匯款帳號：星展銀行 810 6712880487（戶名：黃蕙芬）";
+      navigator.clipboard.writeText(text).then(function() {
+        alert("📋 已複製前後門水電繳費通知文字！可直接貼在 LINE 傳給房客！");
+      });
+    }
+  </script>
+</body>
+</html>
+"""
+
+@app.route("/utility_calc")
+def utility_calc():
+    f_init, b_init = get_latest_utility_inits()
+    today = datetime.now()
+    default_period = f"{today.year}/{today.month}月期"
+    return render_template_string(
+        UTILITY_CALC_HTML,
+        default_front_init=f_init,
+        default_back_init=b_init,
+        default_period=default_period
+    )
+
+@app.route("/api/send_utility_receipts", methods=['POST'])
+def api_send_utility_receipts():
+    try:
+        data = request.get_json(force=True)
+        res = calculate_utility_split(
+            period=data.get('period', ''),
+            elec_total=data.get('elec_total', 0),
+            elec_public=data.get('elec_public', 0),
+            front_read=data.get('front_read', 0),
+            back_read=data.get('back_read', 0),
+            water_total=data.get('water_total', 0),
+            front_init=data.get('front_init', 42.3),
+            back_init=data.get('back_init', 25.5)
+        )
+        card_front = create_utility_receipt_flex(res, is_front=True, is_test=TEST_MODE)
+        card_back = create_utility_receipt_flex(res, is_front=False, is_test=TEST_MODE)
+
+        props = load_properties()
+        prop_front = next((p for p in props if p['room_no'] == 'A107'), None)
+        prop_back = next((p for p in props if p['room_no'] == 'A109'), None)
+
+        if TEST_MODE:
+            line_bot_api.push_message(MY_LINE_USER_ID, card_front)
+            line_bot_api.push_message(MY_LINE_USER_ID, card_back)
+            msg = "✅ 【安全測試模式】前後門 2 張水電繳費單已發送至 Sandy 手機！"
+        else:
+            target_front = prop_front['line_id'] if (prop_front and prop_front['line_id']) else MY_LINE_USER_ID
+            target_back = prop_back['line_id'] if (prop_back and prop_back['line_id']) else MY_LINE_USER_ID
+            line_bot_api.push_message(target_front, card_front)
+            line_bot_api.push_message(target_back, card_back)
+            note_f = "" if (prop_front and prop_front['line_id']) else "（林采葳尚未綁定LINE，已發給您留存）"
+            note_b = "" if (prop_back and prop_back['line_id']) else "（楊芸錚尚未綁定LINE，已發給您留存）"
+            msg = f"🚀 【正式模式】水電繳費單已成功發出！{note_f} {note_b}".strip()
+
+        return jsonify({'status': 'ok', 'message': msg, 'data': res})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@app.route("/api/save_utility_sheet", methods=['POST'])
+def api_save_utility_sheet():
+    try:
+        data = request.get_json(force=True)
+        period = str(data.get('period', '')).strip()
+        elec_total = float(data.get('elec_total', 0))
+        elec_public = float(data.get('elec_public', 0))
+        front_read = float(data.get('front_read', 0))
+        back_read = float(data.get('back_read', 0))
+        water_total = float(data.get('water_total', 0))
+
+        # 1. 寫入電費分攤表
+        target_row_e = None
+        ws_e = get_worksheet_safely(["「電費分攤」的副本", "電費分攤", "明華路電費分攤", "電費分帳"])
+        if ws_e:
+            rows_e = ws_e.get_all_values()
+            for idx in range(8, len(rows_e)):
+                r = rows_e[idx]
+                if not (r[0].strip() or (len(r) > 1 and r[1].strip())):
+                    target_row_e = idx + 1
+                    break
+            if not target_row_e:
+                target_row_e = len(rows_e) + 1
+            ws_e.update(values=[[period, elec_total, elec_public, front_read, back_read]], range_name=f"A{target_row_e}:E{target_row_e}", value_input_option='USER_ENTERED')
+
+        # 2. 寫入水費分攤表
+        target_row_w = None
+        ws_w = get_worksheet_safely(["「水費分攤」的副本", "水費分攤", "明華路水費分攤", "水費分帳"])
+        if ws_w:
+            rows_w = ws_w.get_all_values()
+            for idx in range(8, len(rows_w)):
+                r = rows_w[idx]
+                if not (r[0].strip() or (len(r) > 1 and r[1].strip())):
+                    target_row_w = idx + 1
+                    break
+            if not target_row_w:
+                target_row_w = len(rows_w) + 1
+            ws_w.update(values=[[period, water_total]], range_name=f"A{target_row_w}:B{target_row_w}", value_input_option='USER_ENTERED')
+
+        return jsonify({'status': 'ok', 'message': f'✅ 已成功同步存入 Google 試算表（電費第 {target_row_e} 列、水費第 {target_row_w} 列）！'})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
 # ==================== 【修改九】自動逾期與到期合約排程（直接通知租客與Sandy）====================
@@ -1558,6 +2110,29 @@ def handle_message(event):
             TEST_MODE = not TEST_MODE
             mode_name = "🛡️ 安全測試模式（卡片只發給您自己）" if TEST_MODE else "🚀 正式上線模式（卡片會真正發給租客/管理員/合伙人）"
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"✅ 模式已切換為：\n{mode_name}"))
+            return
+
+        # ── 查詢明華路水電分帳 ──
+        if any(kw in text for kw in ["水電分帳", "水電計算", "明華路水電", "算水電", "算電費", "水電"]):
+            line_bot_api.reply_message(event.reply_token, FlexSendMessage(
+                alt_text="【明華路前後門水電分帳計算器】",
+                contents=BubbleContainer(
+                    body=BoxComponent(layout='vertical', padding_all='none', contents=[
+                        BoxComponent(layout='vertical', padding_all='lg', background_color='#fd7e14', contents=[
+                            TextComponent(text="⚡ 明華路前後門水電分帳", weight='bold', size='md', color='#ffffff'),
+                            TextComponent(text="前門 A107 林采葳 ｜ 後門 A109 楊芸錚", size='xs', color='#fff3cd', margin='xs'),
+                        ]),
+                        BoxComponent(layout='vertical', padding_all='lg', spacing='sm', contents=[
+                            TextComponent(text="專為明華路 271-1 號設計之水電分帳小工具：", size='xs', color='#666666'),
+                            create_row("前門店面", "A107 林采葳（公電 55%、水費 2/3）"),
+                            create_row("後門店面", "A109 楊芸錚（公電 45%、水費 1/3）"),
+                            SeparatorComponent(margin='md'),
+                            TextComponent(text="點擊下方按鈕即可開啟專屬計算工具，一鍵即時試算、自動發送繳費單並同步存入試算表！", size='xs', color='#888888', margin='sm', wrap=True),
+                            ButtonComponent(action=URIAction(label="⚡ 開啟水電分帳計算器", uri="https://sandy-line-bot.onrender.com/utility_calc"), style='primary', color='#fd7e14', height='sm'),
+                        ])
+                    ])
+                )
+            ))
             return
 
         # ── 查詢即將到期合約（2個月內 / 60天） ──
