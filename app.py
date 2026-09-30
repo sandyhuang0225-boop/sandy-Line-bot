@@ -279,9 +279,9 @@ def parse_contract_date(date_str):
     d = max(1, min(max_day, d))
     return datetime(y, mon, d).date()
 
-def get_expiring_contracts(days_threshold=60):
+def get_expiring_contracts(days_threshold=100):
     """
-    找出即將在指定天數內（預設 60 天 = 約 2 個月）到期或已過期的合約
+    找出即將在指定天數內（預設 100 天 = 約 3 個月 / 涵蓋本季底與年底）到期或已過期的合約
     回傳清單: [{'room_no': 'A101', 'tenant': '...', 'addr': '...', 'end_date': date, 'days_left': 45}, ...]
     """
     props = load_properties()
@@ -744,7 +744,7 @@ def create_admin_menu_flex(rent_m, current_m, is_test):
                     ButtonComponent(action=MessageAction(label=f"🏦 查詢 {current_m}月貸款", text=f"查 {current_m}月貸款"), style='primary', color='#6f42c1', height='sm'),
                     ButtonComponent(action=URIAction(label="⚡ 明華路水電分帳計算器", uri="https://sandy-line-bot.onrender.com/utility_calc"), style='primary', color='#fd7e14', height='sm'),
                     ButtonComponent(action=URIAction(label="👑 總裁財務與資產月報", uri="https://sandy-line-bot.onrender.com/executive_report?key=sandy0225"), style='primary', color='#212529', height='sm'),
-                    ButtonComponent(action=MessageAction(label="⏳ 查即將到期合約（2個月內）", text="查即將到期合約"), style='secondary', height='sm'),
+                    ButtonComponent(action=MessageAction(label="⏳ 查即將到期合約（約3個月/年底）", text="查即將到期合約"), style='secondary', height='sm'),
                     ButtonComponent(action=MessageAction(label="🔄 切換測試/正式模式", text="切換模式"), style='secondary', height='sm'),
                 ]),
             ])
@@ -755,12 +755,12 @@ def create_admin_menu_flex(rent_m, current_m, is_test):
 def create_expiring_contracts_flex(expiring_list):
     if not expiring_list:
         return FlexSendMessage(
-            alt_text="【合約到期檢查】未來 60 天內無即將到期合約",
+            alt_text="【合約到期檢查】未來 100 天內無即將到期合約",
             contents=BubbleContainer(
                 body=BoxComponent(layout='vertical', padding_all='lg', spacing='sm', contents=[
                     TextComponent(text="📋 合約到期追蹤", weight='bold', size='md', color='#2c3e50'),
                     SeparatorComponent(margin='sm'),
-                    TextComponent(text="🎉 太棒了！未來 60 天內沒有即將到期的房客合約。", size='sm', color='#198754', margin='md', wrap=True),
+                    TextComponent(text="🎉 太棒了！未來 100 天內（含年底）沒有即將到期的房客合約。", size='sm', color='#198754', margin='md', wrap=True),
                 ])
             )
         )
@@ -768,7 +768,7 @@ def create_expiring_contracts_flex(expiring_list):
     rows_components = []
     for item in expiring_list[:8]:
         days_str = f"剩 {item['days_left']} 天" if item['days_left'] >= 0 else f"已逾期 {abs(item['days_left'])} 天"
-        color = "#dc3545" if item['days_left'] <= 30 else "#fd7e14"
+        color = "#dc3545" if item['days_left'] <= 30 else ("#fd7e14" if item['days_left'] <= 60 else "#0d6efd")
         rows_components.append(
             BoxComponent(layout='horizontal', spacing='sm', margin='sm', contents=[
                 TextComponent(text=f"{item['room_no']} {item['tenant']}", weight='bold', size='sm', flex=5),
@@ -782,7 +782,7 @@ def create_expiring_contracts_flex(expiring_list):
         contents=BubbleContainer(
             body=BoxComponent(layout='vertical', padding_all='none', contents=[
                 BoxComponent(layout='vertical', padding_all='md', background_color='#fd7e14', contents=[
-                    TextComponent(text="⏳ 房客合約即將到期提醒（60天內）", weight='bold', size='md', color='#ffffff'),
+                    TextComponent(text="⏳ 房客合約即將到期提醒（約3個月/年底前）", weight='bold', size='md', color='#ffffff'),
                     TextComponent(text=f"共發現 {len(expiring_list)} 位房客即將到期，請及早安排續約或招租！", size='xs', color='#fff3cd', margin='xs', wrap=True),
                 ]),
                 BoxComponent(layout='vertical', padding_all='lg', contents=[
@@ -2540,10 +2540,10 @@ def perform_auto_check_and_push():
         else:
             summary += "\n🎉 所有房客皆已繳清，無逾期！"
 
-        # 檢查 60 天內（約 2 個月）即將到期合約
-        expiring = get_expiring_contracts(days_threshold=60)
+        # 檢查 100 天內（約 3 個月 / 涵蓋本季底與年底）即將到期合約
+        expiring = get_expiring_contracts(days_threshold=100)
         if expiring:
-            summary += "\n\n⏳【合約即將到期提醒（60天內）】\n" + "\n".join(
+            summary += "\n\n⏳【合約即將到期提醒（約3個月/年底前）】\n" + "\n".join(
                 f"• {c['room_no']} {c['tenant']}: {c['end_date']} (剩 {c['days_left']} 天)"
                 for c in expiring
             )
@@ -2551,7 +2551,7 @@ def perform_auto_check_and_push():
         # 1. 發送每日文字彙總
         line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(text=summary))
 
-        # 2. 若有 60 天內到期合約，自動加推圖文 Flex 卡片給 Sandy，不必手動點選
+        # 2. 若有 100 天內到期合約，自動加推圖文 Flex 卡片給 Sandy，不必手動點選
         if expiring:
             try:
                 line_bot_api.push_message(MY_LINE_USER_ID, create_expiring_contracts_flex(expiring))
@@ -2912,9 +2912,9 @@ def handle_message(event):
             ))
             return
 
-        # ── 查詢即將到期合約（2個月內 / 60天） ──
+        # ── 查詢即將到期合約（約3個月 / 100天 / 年底前） ──
         if any(kw in text for kw in ["查合約", "合約到期", "即將到期", "到期合約", "合約"]):
-            expiring = get_expiring_contracts(days_threshold=60)
+            expiring = get_expiring_contracts(days_threshold=100)
             line_bot_api.reply_message(event.reply_token, create_expiring_contracts_flex(expiring))
             return
 
