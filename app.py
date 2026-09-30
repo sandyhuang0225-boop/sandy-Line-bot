@@ -352,29 +352,59 @@ def create_row(label, value, color='#111111', weight='regular'):
         ]
     )
 
-# ── 1. 包租代管介紹 ──
+# ── 1. 包租代管介紹（雙卡輪播：服務保障 ＋ 政府3稅減免與補助）──
 def create_service_baozu_flex():
+    # 卡片 1：房東四大服務保障
+    bubble1 = BubbleContainer(
+        body=BoxComponent(layout='vertical', padding_all='none', contents=[
+            BoxComponent(layout='vertical', padding_all='lg', background_color='#198754', contents=[
+                TextComponent(text="🏡 Sandy 宅安心 ｜ 包租代管保障", weight='bold', size='md', color='#ffffff'),
+                TextComponent(text="讓愛屋穩定收益，屋主輕鬆收租零煩惱！", size='xs', color='#e8f5e9', margin='xs'),
+            ]),
+            BoxComponent(layout='vertical', padding_all='lg', spacing='sm', contents=[
+                TextComponent(text="🌟 房東四大專屬服務保障", weight='bold', size='sm', color='#198754'),
+                SeparatorComponent(margin='xs'),
+                create_row("💰 穩定收租", "按月穩定收租入帳，合約期內零空置風險"),
+                create_row("🔍 嚴選租客", "多重身分過濾嚴格把關，杜絕惡鄰租霸"),
+                create_row("🛠️ 房屋管護", "定期屋況巡檢，配合專業工班即時維護"),
+                create_row("📜 法律公證", "合法租賃住宅契約＋公證保障，合法安心"),
+                SeparatorComponent(margin='md'),
+                TextComponent(text="👉 左右滑動查看【政府稅金減免與補助】", size='xs', color='#888888', align='center', margin='sm'),
+                ButtonComponent(action=URIAction(label="📞 撥打屋主諮詢專線", uri=f"tel:{MANAGER_PHONE}"), style='primary', color='#198754', height='sm'),
+                ButtonComponent(action=MessageAction(label="💬 留下委託諮詢", text="我想諮詢包租代管"), style='secondary', height='sm'),
+            ]),
+        ])
+    )
+
+    # 卡片 2：政府政策優惠（3稅減免 ＋ 3費補助）
+    bubble2 = BubbleContainer(
+        body=BoxComponent(layout='vertical', padding_all='none', contents=[
+            BoxComponent(layout='vertical', padding_all='lg', background_color='#0d6efd', contents=[
+                TextComponent(text="🎁 政府政策紅利 ｜ 3稅減免＋3費補助", weight='bold', size='md', color='#ffffff'),
+                TextComponent(text="加入包租代管，房東享政府多重節稅與修繕補助！", size='xs', color='#e3f2fd', margin='xs'),
+            ]),
+            BoxComponent(layout='vertical', padding_all='lg', spacing='sm', contents=[
+                TextComponent(text="🏛️ 房東 3 稅減免（超有感節稅）", weight='bold', size='sm', color='#0d6efd'),
+                SeparatorComponent(margin='xs'),
+                create_row("💵 所得稅", "每屋每月 1.5 萬免稅額，超額必要費用率 60%"),
+                create_row("🏠 房屋稅", "比照自用住宅稅率 1.2%（大幅減省囤房稅）"),
+                create_row("🌿 地價稅", "適用自用住宅優惠稅率 2‰（千分之二）"),
+                SeparatorComponent(margin='sm'),
+                TextComponent(text="🛠️ 政府 3 費全額補助", weight='bold', size='sm', color='#fd7e14'),
+                SeparatorComponent(margin='xs'),
+                create_row("🔧 修繕補助", "每屋每年最高補助 10,000 元（最高享3年）"),
+                create_row("⚖️ 公證補助", "每件每次最高補助 3,000 元"),
+                create_row("🛡️ 保險補助", "每年最高補助 3,500 元居家安全險"),
+                SeparatorComponent(margin='md'),
+                ButtonComponent(action=URIAction(label="📞 諮詢房東稅費試算", uri=f"tel:{MANAGER_PHONE}"), style='primary', color='#0d6efd', height='sm'),
+                ButtonComponent(action=MessageAction(label="💬 預約 Sandy 評估", text="我想諮詢包租代管稅費優惠"), style='secondary', height='sm'),
+            ]),
+        ])
+    )
+
     return FlexSendMessage(
-        alt_text="【Sandy宅安心】專業包租代管服務",
-        contents=BubbleContainer(
-            body=BoxComponent(layout='vertical', padding_all='none', contents=[
-                BoxComponent(layout='vertical', padding_all='lg', background_color='#198754', contents=[
-                    TextComponent(text="🏡 Sandy 宅安心 ｜ 包租代管", weight='bold', size='md', color='#ffffff'),
-                    TextComponent(text="讓愛屋穩定收益，屋主輕鬆收租！", size='xs', color='#e8f5e9', margin='xs'),
-                ]),
-                BoxComponent(layout='vertical', padding_all='lg', spacing='sm', contents=[
-                    TextComponent(text="🌟 為什麼選擇我們？", weight='bold', size='sm', color='#333333'),
-                    create_row("✅ 穩定保證", "按月穩定收租，合約期內零空置風險"),
-                    create_row("✅ 嚴選租客", "多重身分過濾，杜絕租霸惡鄰"),
-                    create_row("✅ 房屋管護", "專人巡檢清潔，維持愛屋高資產價值"),
-                    create_row("✅ 法律保障", "合法租賃住宅契約與公證保護"),
-                    SeparatorComponent(margin='md'),
-                    TextComponent(text="歡迎屋主委託，由 Sandy 管家親自為您評估！", size='xs', color='#666666', margin='md', align='center'),
-                    ButtonComponent(action=URIAction(label="📞 撥打屋主諮詢專線", uri=f"tel:{MANAGER_PHONE}"), style='primary', color='#198754', height='sm'),
-                    ButtonComponent(action=MessageAction(label="💬 留下委託諮詢", text="我想諮詢包租代管"), style='secondary', height='sm'),
-                ]),
-            ])
-        )
+        alt_text="【Sandy宅安心】包租代管服務保障與政府3稅減免優惠",
+        contents={"type": "carousel", "contents": [bubble1.as_json_dict(), bubble2.as_json_dict()]}
     )
 
 # ── 2. 房屋託管介紹 ──
@@ -1020,7 +1050,7 @@ def handle_message(event):
             return
 
         # 客戶諮詢或叫修，自動轉知 Sandy
-        if text in ["我想諮詢包租代管", "我想諮詢房屋託管", "我有租屋需求", "我想諮詢管家"] or text.startswith("我要報修"):
+        if any(text.startswith(kw) for kw in ["我想諮詢包租代管", "我想諮詢房屋託管", "我有租屋需求", "我想諮詢管家", "我要報修", "諮詢"]):
             try:
                 line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(
                     text=f"📢 【客戶即時需求通知】\n來自 LINE 用戶：{user_id}\n需求內容：{text}\n請管家抽空聯繫處理！"
