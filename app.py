@@ -2180,7 +2180,7 @@ def handle_message(event):
             if len(parts) >= 3:
                 target_m    = parts[1].strip()
                 target_addr = parts[2].strip()
-                status_col_idx, _ = get_expense_sheet_columns(target_m, "管理費")
+                status_col_idx, amount_col_idx = get_expense_sheet_columns(target_m, "管理費")
                 sh_e = get_worksheet("支出追蹤")
                 if not sh_e:
                     line_bot_api.reply_message(event.reply_token, TextSendMessage(text="⚠️ 試算表連線失敗，請稍候再試。"))
@@ -2190,7 +2190,10 @@ def handle_message(event):
                 for idx, r in enumerate(exp_rows[1:], start=2):
                     if len(r) > 0 and target_addr in r[0].strip():
                         amount_val = r[3].strip() if len(r) > 3 else "0"
-                        sh_e.update_cell(idx, status_col_idx, "✅")
+                        clean_amt = clean_num(amount_val)
+                        sh_e.update_cell(idx, status_col_idx, "✔")
+                        if clean_amt > 0:
+                            sh_e.update_cell(idx, amount_col_idx, clean_amt)
                         break
 
                 contacts         = load_contacts()
@@ -2222,7 +2225,7 @@ def handle_message(event):
             if len(parts) >= 3:
                 target_m    = parts[1].strip()
                 target_addr = parts[2].strip()
-                status_col_idx, _ = get_expense_sheet_columns(target_m, "貸款")
+                status_col_idx, amount_col_idx = get_expense_sheet_columns(target_m, "貸款")
                 sh_e = get_worksheet("支出追蹤")
                 if not sh_e:
                     line_bot_api.reply_message(event.reply_token, TextSendMessage(text="⚠️ 試算表連線失敗，請稍候再試。"))
@@ -2232,7 +2235,10 @@ def handle_message(event):
                 for idx, r in enumerate(exp_rows[1:], start=2):
                     if len(r) > 0 and target_addr in r[0].strip():
                         amount_val = r[4].strip() if len(r) > 4 else "0"
-                        sh_e.update_cell(idx, status_col_idx, "✅")
+                        clean_amt = clean_num(amount_val)
+                        sh_e.update_cell(idx, status_col_idx, "✔")
+                        if clean_amt > 0:
+                            sh_e.update_cell(idx, amount_col_idx, clean_amt)
                         break
 
                 contacts         = load_contacts()
@@ -2305,29 +2311,37 @@ def handle_message(event):
             if len(parts) >= 3:
                 target_m    = parts[1].strip()
                 target_room = parts[2].strip()
-                status_col_idx, _ = get_rent_sheet_columns(target_m)
+                status_col_idx, amount_col_idx = get_rent_sheet_columns(target_m)
                 sh_r = get_worksheet("收租追蹤")
                 if not sh_r:
                     line_bot_api.reply_message(event.reply_token, TextSendMessage(text="⚠️ 試算表連線失敗，請稍候再試。"))
                     return
-                rent_rows = sh_r.get_all_values()
-                for idx, r in enumerate(rent_rows[1:], start=2):
-                    if len(r) > 1 and r[1].strip() == target_room:
-                        sh_r.update_cell(idx, status_col_idx, "✅")
-                        # 若為周大哥季繳（1、4、7、10月），將該季 3 個月份一併標記已收
-                        if ('B1-03' in target_room or '周大哥' in (r[2] if len(r)>2 else '')) and target_m in ['1', '4', '7', '10']:
-                            q_start = int(target_m)
-                            for offset in [1, 2]:
-                                qm = q_start + offset
-                                if qm <= 12:
-                                    q_col, _ = get_rent_sheet_columns(str(qm))
-                                    sh_r.update_cell(idx, q_col, "✅")
-                        break
 
                 props = load_properties()
                 prop = next((p for p in props if p['room_no'] == target_room), None)
+                amt, amt_str, note_str, mgmt_fee_val = get_rent_for_month(prop, target_m) if prop else (0, "0", "", 0)
+
+                rent_rows = sh_r.get_all_values()
+                for idx, r in enumerate(rent_rows[1:], start=2):
+                    if len(r) > 1 and r[1].strip() == target_room:
+                        sh_r.update_cell(idx, status_col_idx, "✔")
+                        # 若為周大哥季繳（1、4、7、10月），每個月帶入 1,800 元，將該季 3 個月份一併標記已收
+                        if ('B1-03' in target_room or '周大哥' in (r[2] if len(r)>2 else '')):
+                            sh_r.update_cell(idx, amount_col_idx, 1800)
+                            if target_m in ['1', '4', '7', '10']:
+                                q_start = int(target_m)
+                                for offset in [1, 2]:
+                                    qm = q_start + offset
+                                    if qm <= 12:
+                                        q_stat_col, q_amt_col = get_rent_sheet_columns(str(qm))
+                                        sh_r.update_cell(idx, q_stat_col, "✔")
+                                        sh_r.update_cell(idx, q_amt_col, 1800)
+                        else:
+                            if amt > 0:
+                                sh_r.update_cell(idx, amount_col_idx, amt)
+                        break
+
                 if prop:
-                    amt, amt_str, note_str, mgmt_fee_val = get_rent_for_month(prop, target_m)
                     target_id = MY_LINE_USER_ID if TEST_MODE else (
                         prop['line_id'] if prop['line_id'] else MY_LINE_USER_ID
                     )
