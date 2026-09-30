@@ -932,7 +932,7 @@ INQUIRY_FORM_HTML = """
       </div>
       <div class="form-group">
         <label>物件地點／地址 <span class="req">*</span></label>
-        <input type="text" name="location" placeholder="例如：高雄市鼓山區裕誠路..." required>
+        <input type="text" name="location" placeholder="例如：台北中山區、新北板橋、台南東區、高雄裕誠路..." required>
       </div>
       <div class="form-group">
         <label>方便聯絡時段</label>
@@ -1053,16 +1053,8 @@ RENTAL_INQUIRY_FORM_HTML = """
         <input type="tel" name="phone" placeholder="例如：0912345678" required>
       </div>
       <div class="form-group">
-        <label>期望租屋區域 <span class="req">*</span></label>
-        <select name="area" required>
-          <option value="鼓山區">鼓山區（高鐵/巨蛋/美術館）</option>
-          <option value="左營區">左營區（巨蛋商圈/捷運周邊）</option>
-          <option value="三民區">三民區（火車站/高醫周邊）</option>
-          <option value="苓雅區">苓雅區（文化中心/三多商圈）</option>
-          <option value="新興區">新興區（捷運美麗島周邊）</option>
-          <option value="前鎮區">前鎮區（三多商圈/亞洲新灣區）</option>
-          <option value="其他區域">其他區域</option>
-        </select>
+        <label>期望租屋區域（縣市、行政區或路段） <span class="req">*</span></label>
+        <input type="text" name="area" placeholder="例如：台北大安區、新北板橋、台南東區、高雄裕誠路..." required>
       </div>
       <div class="form-group">
         <label>期望格局 <span class="req">*</span></label>
@@ -1071,19 +1063,14 @@ RENTAL_INQUIRY_FORM_HTML = """
           <option value="1 房 1 廳">1 房 1 廳</option>
           <option value="2 房格局">2 房格局</option>
           <option value="3 房以上家庭房">3 房以上家庭房</option>
+          <option value="店面商辦">店面商辦</option>
           <option value="車位租賃">平面／機械車位</option>
+          <option value="其他">其他類型</option>
         </select>
       </div>
       <div class="form-group">
-        <label>預算範圍（每月租金） <span class="req">*</span></label>
-        <select name="budget" required>
-          <option value="10,000 元以下">10,000 元以下</option>
-          <option value="10,000 ~ 15,000 元">10,000 ~ 15,000 元</option>
-          <option value="15,000 ~ 20,000 元">15,000 ~ 20,000 元</option>
-          <option value="20,000 ~ 25,000 元">20,000 ~ 25,000 元</option>
-          <option value="25,000 ~ 35,000 元">25,000 ~ 35,000 元</option>
-          <option value="35,000 元以上">35,000 元以上</option>
-        </select>
+        <label>每月租金預算（可自由填寫金額） <span class="req">*</span></label>
+        <input type="text" name="budget" placeholder="例如：25,000元左右、15,000~20,000元" required>
       </div>
       <div class="form-group">
         <label>預計起租日期</label>
@@ -1276,20 +1263,19 @@ def handle_message(event):
     text     = event.message.text.strip()
     is_admin = (user_id == MY_LINE_USER_ID)
 
-    # 紀錄新朋友加入
-    if not is_admin:
-        try:
-            sh_log = get_worksheet_safely(["LINE加入紀錄", "LINE 加入紀錄"])
-            if sh_log:
-                try:
-                    profile   = line_bot_api.get_profile(user_id)
-                    user_name = profile.display_name
-                except Exception:
-                    user_name = "訪客"
-                now_str = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
-                sh_log.append_row([now_str, user_id, user_name, text, "否", ""])
-        except Exception as err:
-            print(f"寫入加入紀錄失敗: {err}")
+    # 紀錄訊息日誌
+    try:
+        sh_log = get_worksheet_safely(["LINE加入紀錄", "LINE 加入紀錄"])
+        if sh_log:
+            try:
+                profile   = line_bot_api.get_profile(user_id)
+                user_name = profile.display_name
+            except Exception:
+                user_name = "管理員Sandy" if is_admin else "訪客"
+            now_str = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+            sh_log.append_row([now_str, user_id, user_name, text, "是" if is_admin else "否", ""])
+    except Exception as err:
+        print(f"寫入加入紀錄失敗: {err}")
 
     try:
         # ── 查詢自己的 LINE ID ──
@@ -1344,17 +1330,17 @@ def handle_message(event):
         # ==================== 六宮格按鍵（所有人可互動）====================
 
         # ── 按鈕 1：包租代管 ──
-        if any(kw in text for kw in ["包租代管", "包租", "1", "我要包租", "包租貸款", "社會住宅"]) and "諮詢" not in text and "優惠" not in text:
+        if any(kw in text for kw in ["包租代管", "包租", "1", "我要包租", "包租貸款", "社會住宅", "加入包租"]):
             line_bot_api.reply_message(event.reply_token, create_service_baozu_flex())
             return
 
         # ── 按鈕 2：房屋託管 ──
-        if any(kw in text for kw in ["房屋託管", "託管", "2", "我要託管"]) and "諮詢" not in text:
+        if any(kw in text for kw in ["房屋託管", "託管", "2", "我要託管", "代管", "房屋代管", "房屋管理"]):
             line_bot_api.reply_message(event.reply_token, create_service_tuoguan_flex())
             return
 
         # ── 按鈕 3：我要租屋 ──
-        if any(kw in text for kw in ["我要租屋", "找房子", "租屋", "3", "我有租屋需求", "租屋需求", "找屋需求", "找屋"]) and "諮詢" not in text:
+        if any(kw in text for kw in ["租屋", "找房", "找屋", "租房", "我要租屋", "我想租屋", "找房子", "3", "我有租屋需求", "租屋需求", "找屋需求", "我要租房", "我想租房", "租房子", "看屋", "我要看屋", "預約看屋", "房源", "安心租屋", "租屋專區", "租屋資訊", "我要租"]):
             line_bot_api.reply_message(event.reply_token, create_service_renting_flex())
             return
 
