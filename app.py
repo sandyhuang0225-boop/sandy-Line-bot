@@ -465,6 +465,7 @@ def create_tenant_account_flex(prop, month_str, paid_status):
                     TextComponent(text=f"{prop['room_no']} ｜ {prop['tenant']} 您好", size='xs', color='#ffffff', margin='xs'),
                 ]),
                 BoxComponent(layout='vertical', padding_all='lg', spacing='sm', contents=[
+                    create_row("完整地址", prop.get('addr', ''), color='#111111'),
                     create_row("繳款月份", f"{month_str} 月"),
                     create_row("應繳總額", f"{amt_str} 元", color='#dc3545', weight='bold'),
                     create_row("約定繳租日", f"每月 {prop['due_day']} 號", color='#0d6efd', weight='bold'),
@@ -736,7 +737,7 @@ def create_rent_carousel(month_str, unpaid_items):
                     TextComponent(text=item['room_no'], weight='bold', size='md', color='#0d6efd', flex=3),
                     TextComponent(text=item['tenant'],  weight='bold', size='md', color='#333333', flex=5),
                 ]),
-                TextComponent(text=item['addr'], size='xs', color='#888888', margin='xs', wrap=True),
+                TextComponent(text=f"📍 {item['addr']}", size='xs', color='#555555', margin='xs', wrap=True),
                 SeparatorComponent(margin='md'),
                 BoxComponent(layout='vertical', margin='md', spacing='sm', contents=info_rows),
                 SeparatorComponent(margin='md'),
@@ -763,7 +764,7 @@ def create_expense_carousel(month_str, expense_type, unpaid_items):
         bubble = BubbleContainer(
             body=BoxComponent(layout='vertical', padding_all='lg', contents=[
                 TextComponent(text=item.get('room_no', ''), weight='bold', size='md', color=color),
-                TextComponent(text=item.get('addr', ''), size='xs', color='#888888', margin='xs', wrap=True),
+                TextComponent(text=f"📍 {item.get('addr', '')}", size='xs', color='#555555', margin='xs', wrap=True),
                 SeparatorComponent(margin='md'),
                 BoxComponent(layout='vertical', margin='md', spacing='sm', contents=[
                     create_row("類型", expense_type),
