@@ -583,9 +583,10 @@ def create_guest_account_flex():
                     TextComponent(text="歡迎點選下方按鈕了解更多，或直接聯絡 Sandy 管家！", size='xs', color='#666666', margin='sm', align='center', wrap=True),
                     ButtonComponent(action=MessageAction(label="🏡 了解包租代管服務", text="包租代管"), style='primary', color='#198754', height='sm'),
                     ButtonComponent(action=MessageAction(label="🔍 我要租屋", text="我要租屋"), style='secondary', height='sm'),
+                    ButtonComponent(action=MessageAction(label="🔑 現有房客綁定房間", text="我想綁定房間"), style='secondary', height='sm'),
                     ButtonComponent(action=URIAction(label="📞 直接聯絡 Sandy 管家", uri=f"tel:{MANAGER_PHONE}"), style='secondary', height='sm'),
                     SeparatorComponent(margin='md'),
-                    TextComponent(text="若您是本管理系統用戶，請洽管家 Sandy 協助進行房號綁定。", size='xs', color='#aaaaaa', margin='sm', wrap=True),
+                    TextComponent(text="若您是現有房客，點擊上方【🔑 現有房客綁定房間】或輸入「我是＋姓名」即可立即開通！", size='xs', color='#888888', margin='sm', wrap=True),
                 ]),
             ])
         )
@@ -1329,23 +1330,63 @@ def handle_message(event):
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_msg))
             return
 
-        # ── 舊式地址綁定（保留相容）──
-        if "綁定地址" in text or "我要綁定" in text:
-            input_str = text.replace("綁定地址", "").replace("我要綁定", "").replace("：", "").replace(":", "").strip()
+        # ── 房客綁定指引 ──
+        if text in ["我想綁定房間", "我要綁定房間", "綁定教學", "如何綁定", "我要綁定"]:
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(
+                text="🔑 【現有房客快速綁定指引】\n請直接在此對話框輸入：\n「我是＋您的姓名」（例如：我是傅瑜）\n或「我是＋您的房號」（例如：我是A102）\n\n系統將自動核對房客名單為您綁定，開通個人帳務查詢與繳租收據服務，謝謝您！"
+            ))
+            return
+
+        # ── 房客自動綁定（支援「我是+姓名」、「我是+房號」、「綁定+姓名/房號」等自然語言）──
+        if any(kw in text for kw in ["我是", "我要綁定", "綁定房號", "綁定姓名", "綁定地址", "綁定"]) and not is_admin:
+            clean_input = text
+            for remove_word in ["我是", "我要綁定", "綁定房號", "綁定姓名", "綁定地址", "綁定", "：", ":", "房客", "您好", "你好", "已加", "加入"]:
+                clean_input = clean_input.replace(remove_word, "")
+            clean_input = clean_input.strip()
+
             props = load_properties()
-            matched_prop = next(
-                (p for p in props if input_str and (input_str in p['addr'] or p['addr'] in input_str or input_str in p['room_no'])),
-                None
-            )
+            matched_prop = None
+            if clean_input:
+                for p in props:
+                    # 依姓名、房號、地址比對
+                    if (p['tenant'] and clean_input == p['tenant']) or \
+                       (p['room_no'] and clean_input.upper() == p['room_no'].upper()) or \
+                       (p['tenant'] and p['tenant'] in clean_input) or \
+                       (p['room_no'] and p['room_no'].upper() in clean_input.upper()) or \
+                       (len(clean_input) >= 4 and clean_input in p['addr']):
+                        matched_prop = p
+                        break
+
             if matched_prop:
                 try:
-                    sheet_tenant.update_cell(matched_prop['row_idx'], 22, user_id)
-                    sheet_tenant.update_cell(matched_prop['row_idx'], 23, "Y")
-                    reply_msg = f"✅ 綁定成功！\n物件：{matched_prop['room_no']}（{matched_prop['tenant']} 您好）\n未來收租確認與繳費通知將會發送給您。"
+                    sh_t = get_worksheet("房客總表")
+                    if sh_t:
+                        sh_t.update_cell(matched_prop['row_idx'], 22, user_id)
+                        sh_t.update_cell(matched_prop['row_idx'], 23, "Y")
+                        reply_msg = (
+                            f"🎉 歡迎 {matched_prop['tenant']} 您好！\n"
+                            f"已成功為您綁定物件：{matched_prop['room_no']}（{matched_prop['addr']}）！\n\n"
+                            f"未來每月的繳租收據、個人帳務查詢與修繕服務都將在此為您提供。\n"
+                            f"您可以點選下方選單【租金與帳務】查看您的個人帳戶資訊，謝謝！"
+                        )
+                        # 通知 Sandy 管家
+                        try:
+                            line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(
+                                text=f"📢 【房客成功綁定通知！】\n"
+                                     f"房客：{matched_prop['tenant']}\n"
+                                     f"房號：{matched_prop['room_no']}\n"
+                                     f"地址：{matched_prop['addr']}\n"
+                                     f"LINE 暱稱：{user_name} ({user_id})\n"
+                                     f"已成功完成官方帳號綁定！"
+                            ))
+                        except Exception as pe:
+                            print(f"推播綁定通知給 Sandy 失敗: {pe}")
+                    else:
+                        reply_msg = "⚠️ 試算表連線維護中，請稍候再試或聯繫 Sandy 管家。"
                 except Exception as e:
                     reply_msg = f"⚠️ 綁定過程發生錯誤：{str(e)}"
             else:
-                reply_msg = "❌ 找不到符合的物件或地址，請確認輸入是否正確，或洽詢 Sandy 管家協助綁定。"
+                reply_msg = "❌ 找不到符合的房客姓名或房號。\n請確認輸入是否正確（例如輸入「我是傅瑜」或「我是A102」），或直接聯繫 Sandy 管家協助您綁定！"
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_msg))
             return
 
