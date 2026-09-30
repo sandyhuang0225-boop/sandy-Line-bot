@@ -205,6 +205,47 @@ def load_properties():
         print(f"讀取房客總表失敗: {e}")
     return properties
 
+def get_rent_for_month(prop, month_str):
+    """
+    根據月份動態計算應收租金金額、明細與說明：
+    1. A102 裕誠路（傅瑜）：
+       - 偶數月（如 10月、12月）: 29,931 元（含雙月代收管理費 1,931 元）
+       - 奇數月（如 11月、1月）: 28,000 元（純租金）
+    2. B1-03 車位（周大哥）：
+       - 季繳（1、4、7、10月）: 5,400 元（含當季 3 個月）
+    3. 其他一般物件：
+       - 依據房客總表定額
+    回傳: (amount_int, amount_str, note_str, mgmt_fee)
+    """
+    try:
+        m = int(month_str)
+    except:
+        m = datetime.now().month
+
+    room = prop.get('room_no', '').strip()
+    tenant = prop.get('tenant', '').strip()
+
+    # 1. A102 裕誠路（傅瑜）
+    if 'A102' in room or '傅瑜' in tenant:
+        if m % 2 == 0:
+            amt = 29931
+            return amt, "29,931", "含雙月代收管理費 1,931 元", 1931
+        else:
+            amt = 28000
+            return amt, "28,000", "純租金", 0
+
+    # 2. B1-03 車位（周大哥）
+    if 'B1-03' in room or '周大哥' in tenant:
+        amt = 5400
+        quarter_map = {1: "Q1（1~3月）", 4: "Q2（4~6月）", 7: "Q3（7~9月）", 10: "Q4（10~12月）"}
+        q_name = quarter_map.get(m, f"{m}月起一季")
+        return amt, "5,400", f"每季繳納（含 {q_name} 3個月）", 0
+
+    # 3. 其他一般物件
+    amt = prop.get('total_rent', 0)
+    mgmt = prop.get('mgmt_fee', 0)
+    return amt, f"{amt:,}", "", mgmt
+
 def parse_contract_date(date_str):
     """安全解析合約日期字串，防止 9-31 等月份天數錯誤"""
     if not date_str:
@@ -413,7 +454,8 @@ def create_tenant_account_flex(prop, month_str, paid_status):
     is_month_paid = is_paid(paid_status)
     status_text  = "✅ 本月已繳納入帳" if is_month_paid else "⏳ 本月尚未收訖"
     status_color = "#198754" if is_month_paid else "#dc3545"
-    breakdown    = f"含代收管理費 {prop['mgmt_fee']:,} 元" if prop['mgmt_fee'] > 0 else "純租金"
+    amt, amt_str, note_str, mgmt_fee_val = get_rent_for_month(prop, month_str)
+    breakdown    = note_str if note_str else (f"含代收管理費 {mgmt_fee_val:,} 元" if mgmt_fee_val > 0 else "純租金")
     return FlexSendMessage(
         alt_text=f"【個人帳務】{prop['room_no']} {month_str}月份租金繳費資訊",
         contents=BubbleContainer(
@@ -424,7 +466,7 @@ def create_tenant_account_flex(prop, month_str, paid_status):
                 ]),
                 BoxComponent(layout='vertical', padding_all='lg', spacing='sm', contents=[
                     create_row("繳款月份", f"{month_str} 月"),
-                    create_row("應繳總額", f"{prop['total_rent_str']} 元", color='#dc3545', weight='bold'),
+                    create_row("應繳總額", f"{amt_str} 元", color='#dc3545', weight='bold'),
                     create_row("約定繳租日", f"每月 {prop['due_day']} 號", color='#0d6efd', weight='bold'),
                     create_row("費用明細", breakdown, color='#666666'),
                     create_row("繳納狀態", status_text, color=status_color, weight='bold'),
@@ -493,11 +535,11 @@ def create_contact_manager_flex():
     )
 
 # ── 租金感謝收據卡（發給租客）──
-def create_receipt_flex(room_no, addr, tenant, month_str, amount_str, mgmt_fee=0, is_test=False):
+def create_receipt_flex(room_no, addr, tenant, month_str, amount_str, mgmt_fee=0, is_test=False, note=""):
     header = [TextComponent(text="🧾 租金已繳確認收據", weight='bold', size='md', color='#ffffff')]
     if is_test:
         header.append(TextComponent(text=f"🧪 安全測試模式（模擬發給：{tenant}）", size='xs', color='#ffeb3b', margin='xs'))
-    breakdown = f"含代收管理費 {mgmt_fee:,} 元" if mgmt_fee > 0 else "純租金"
+    breakdown = note if note else (f"含代收管理費 {mgmt_fee:,} 元" if mgmt_fee > 0 else "純租金")
     return FlexSendMessage(
         alt_text=f"【租金收據】{room_no} {tenant} {month_str}月租金已入帳",
         contents=BubbleContainer(
@@ -521,10 +563,11 @@ def create_receipt_flex(room_no, addr, tenant, month_str, amount_str, mgmt_fee=0
     )
 
 # ── 催繳提醒卡（發給逾期租客）──
-def create_reminder_flex(room_no, addr, tenant, month_str, amount_str, due_day, is_test=False):
+def create_reminder_flex(room_no, addr, tenant, month_str, amount_str, due_day, is_test=False, note=""):
     header = [TextComponent(text="📢 租金繳費溫馨提醒", weight='bold', size='md', color='#ffffff')]
     if is_test:
         header.append(TextComponent(text=f"🧪 安全測試模式（模擬發給：{tenant}）", size='xs', color='#ffffff', margin='xs'))
+    month_desc = f"{month_str} 月租金 {note}" if note else f"{month_str} 月租金（含管理費）"
     return FlexSendMessage(
         alt_text=f"【繳款提醒】{room_no} {tenant} {month_str}月租金請安排匯款",
         contents=BubbleContainer(
@@ -535,7 +578,7 @@ def create_reminder_flex(room_no, addr, tenant, month_str, amount_str, due_day, 
                     TextComponent(text=addr, size='xs', color='#888888', margin='xs', wrap=True),
                     SeparatorComponent(margin='md'),
                     BoxComponent(layout='vertical', margin='md', spacing='sm', contents=[
-                        create_row("應繳月份", f"{month_str} 月租金（含管理費）"),
+                        create_row("應繳月份", month_desc),
                         create_row("應繳總額", f"{amount_str} 元", color='#dc3545', weight='bold'),
                         create_row("約定繳租日", f"每月 {due_day} 號"),
                         SeparatorComponent(margin='sm'),
@@ -677,6 +720,16 @@ def create_expiring_contracts_flex(expiring_list):
 def create_rent_carousel(month_str, unpaid_items):
     bubbles = []
     for item in unpaid_items:
+        amt, amt_str, note_str, mgmt_fee_val = get_rent_for_month(item, month_str)
+        info_rows = [
+            create_row("應收總額", f"{amt_str} 元", color='#dc3545', weight='bold'),
+            create_row("繳租日",   f"每月 {item['due_day']} 號", color='#0d6efd', weight='bold'),
+        ]
+        if note_str:
+            info_rows.append(create_row("收費明細", note_str, color='#666666'))
+        elif mgmt_fee_val > 0:
+            info_rows.append(create_row("代收管理費", f"{mgmt_fee_val:,} 元", color='#666666'))
+
         bubble = BubbleContainer(
             body=BoxComponent(layout='vertical', padding_all='lg', contents=[
                 BoxComponent(layout='baseline', contents=[
@@ -685,11 +738,7 @@ def create_rent_carousel(month_str, unpaid_items):
                 ]),
                 TextComponent(text=item['addr'], size='xs', color='#888888', margin='xs', wrap=True),
                 SeparatorComponent(margin='md'),
-                BoxComponent(layout='vertical', margin='md', spacing='sm', contents=[
-                    create_row("應收總額", f"{item['total_rent_str']} 元", color='#dc3545', weight='bold'),
-                    create_row("繳租日",   f"每月 {item['due_day']} 號", color='#0d6efd', weight='bold'),
-                    create_row("代收管理費", f"{item['mgmt_fee']:,} 元" if item['mgmt_fee'] > 0 else "無", color='#666666'),
-                ]),
+                BoxComponent(layout='vertical', margin='md', spacing='sm', contents=info_rows),
                 SeparatorComponent(margin='md'),
                 BoxComponent(layout='vertical', margin='md', spacing='sm', contents=[
                     ButtonComponent(action=MessageAction(label="✅ 租金已收（發送收據）", text=f"租金已收|{month_str}|{item['room_no']}"), style='primary', color='#198754', height='sm'),
@@ -784,15 +833,16 @@ def perform_auto_check_and_push():
                     cell_idx    = status_col_idx - 1
                     cell_status = row[cell_idx].strip() if len(row) > cell_idx else ""
                     if not is_paid(cell_status):
-                        overdue_list.append(prop)
+                        amt, amt_str, note_str, _ = get_rent_for_month(prop, check_month)
+                        overdue_list.append({'prop': prop, 'amt_str': amt_str, 'note_str': note_str})
                         target_id = MY_LINE_USER_ID if TEST_MODE else (
                             prop['line_id'] if prop['line_id'] else MY_LINE_USER_ID
                         )
                         card = create_reminder_flex(
                             room_no=prop['room_no'], addr=prop['addr'],
                             tenant=prop['tenant'],   month_str=check_month,
-                            amount_str=prop['total_rent_str'], due_day=prop['due_day'],
-                            is_test=TEST_MODE
+                            amount_str=amt_str,      due_day=prop['due_day'],
+                            is_test=TEST_MODE,       note=note_str
                         )
                         try:
                             line_bot_api.push_message(target_id, card)
@@ -808,8 +858,8 @@ def perform_auto_check_and_push():
         )
         if overdue_list:
             summary += "\n逾期清單：\n" + "\n".join(
-                f"• {p['room_no']} {p['tenant']}（{p['total_rent_str']} 元）"
-                for p in overdue_list
+                f"• {item['prop']['room_no']} {item['prop']['tenant']}（{item['amt_str']} 元{' ' + item['note_str'] if item['note_str'] else ''}）"
+                for item in overdue_list
             )
         else:
             summary += "\n🎉 所有房客皆已繳清，無逾期！"
@@ -1260,18 +1310,27 @@ def handle_message(event):
                 for idx, r in enumerate(rent_rows[1:], start=2):
                     if len(r) > 1 and r[1].strip() == target_room:
                         sh_r.update_cell(idx, status_col_idx, "✅")
+                        # 若為周大哥季繳（1、4、7、10月），將該季 3 個月份一併標記已收
+                        if ('B1-03' in target_room or '周大哥' in (r[2] if len(r)>2 else '')) and target_m in ['1', '4', '7', '10']:
+                            q_start = int(target_m)
+                            for offset in [1, 2]:
+                                qm = q_start + offset
+                                if qm <= 12:
+                                    q_col, _ = get_rent_sheet_columns(str(qm))
+                                    sh_r.update_cell(idx, q_col, "✅")
                         break
 
                 props = load_properties()
                 prop = next((p for p in props if p['room_no'] == target_room), None)
                 if prop:
+                    amt, amt_str, note_str, mgmt_fee_val = get_rent_for_month(prop, target_m)
                     target_id = MY_LINE_USER_ID if TEST_MODE else (
                         prop['line_id'] if prop['line_id'] else MY_LINE_USER_ID
                     )
                     card = create_receipt_flex(
                         room_no=prop['room_no'], addr=prop['addr'], tenant=prop['tenant'],
-                        month_str=target_m, amount_str=prop['total_rent_str'],
-                        mgmt_fee=prop['mgmt_fee'], is_test=TEST_MODE
+                        month_str=target_m, amount_str=amt_str,
+                        mgmt_fee=mgmt_fee_val, is_test=TEST_MODE, note=note_str
                     )
                     try:
                         line_bot_api.push_message(target_id, card)
@@ -1281,8 +1340,9 @@ def handle_message(event):
                     push_info = "（🧪 測試模式，已傳至您手機）" if TEST_MODE else (
                         f"（已發送收據給 {prop['tenant']}）" if prop['line_id'] else "（房客未綁定LINE，已發給您留存）"
                     )
+                    extra_note = f"\n備註：{note_str}" if note_str else ""
                     line_bot_api.reply_message(event.reply_token, TextSendMessage(
-                        text=f"✅ {target_room}（{prop['tenant']}）{target_m}月租金已標記繳清！\n金額：{prop['total_rent_str']} 元\n{push_info}"
+                        text=f"✅ {target_room}（{prop['tenant']}）{target_m}月租金已標記繳清！\n金額：{amt_str} 元{extra_note}\n{push_info}"
                     ))
                 else:
                     line_bot_api.reply_message(event.reply_token, TextSendMessage(
@@ -1299,13 +1359,14 @@ def handle_message(event):
                 props = load_properties()
                 prop = next((p for p in props if p['room_no'] == target_room), None)
                 if prop:
+                    amt, amt_str, note_str, _ = get_rent_for_month(prop, target_m)
                     target_id = MY_LINE_USER_ID if TEST_MODE else (
                         prop['line_id'] if prop['line_id'] else MY_LINE_USER_ID
                     )
                     card = create_reminder_flex(
                         room_no=prop['room_no'], addr=prop['addr'], tenant=prop['tenant'],
-                        month_str=target_m, amount_str=prop['total_rent_str'],
-                        due_day=prop['due_day'], is_test=TEST_MODE
+                        month_str=target_m, amount_str=amt_str,
+                        due_day=prop['due_day'], is_test=TEST_MODE, note=note_str
                     )
                     try:
                         line_bot_api.push_message(target_id, card)
@@ -1315,8 +1376,9 @@ def handle_message(event):
                     push_info = "（🧪 測試模式，已傳至您手機）" if TEST_MODE else (
                         f"（已發送催繳提醒給 {prop['tenant']}）" if prop['line_id'] else "（房客未綁定LINE，已發給您留存）"
                     )
+                    extra_note = f"\n備註：{note_str}" if note_str else ""
                     line_bot_api.reply_message(event.reply_token, TextSendMessage(
-                        text=f"📢 已發送 {target_room}（{prop['tenant']}）{target_m}月催繳提醒！\n金額：{prop['total_rent_str']} 元\n{push_info}"
+                        text=f"📢 已發送 {target_room}（{prop['tenant']}）{target_m}月催繳提醒！\n金額：{amt_str} 元{extra_note}\n{push_info}"
                     ))
                 else:
                     line_bot_api.reply_message(event.reply_token, TextSendMessage(
@@ -1365,7 +1427,9 @@ def handle_message(event):
 
                 fallback_msg = f"📋 【{target_m}月租金未繳清單】共 {len(unpaid_items)} 筆：\n\n"
                 for item in unpaid_items:
-                    fallback_msg += f"• {item['room_no']} {item['tenant']}\n  金額：{item['total_rent_str']} 元（每月 {item['due_day']} 號應繳）\n"
+                    amt, amt_str, note_str, _ = get_rent_for_month(item, target_m)
+                    extra = f" {note_str}" if note_str else ""
+                    fallback_msg += f"• {item['room_no']} {item['tenant']}\n  金額：{amt_str} 元{extra}（每月 {item['due_day']} 號應繳）\n"
                 line_bot_api.reply_message(event.reply_token, TextSendMessage(text=fallback_msg.strip()))
             else:
                 line_bot_api.reply_message(event.reply_token, TextSendMessage(
