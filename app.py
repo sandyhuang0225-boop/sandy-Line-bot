@@ -744,6 +744,7 @@ def create_admin_menu_flex(rent_m, current_m, is_test):
                     ButtonComponent(action=MessageAction(label=f"🏦 查詢 {current_m}月貸款", text=f"查 {current_m}月貸款"), style='primary', color='#6f42c1', height='sm'),
                     ButtonComponent(action=URIAction(label="⚡ 明華路水電分帳計算器", uri="https://sandy-line-bot.onrender.com/utility_calc"), style='primary', color='#fd7e14', height='sm'),
                     ButtonComponent(action=URIAction(label="👑 總裁財務與資產月報", uri="https://sandy-line-bot.onrender.com/executive_report?key=sandy0225"), style='primary', color='#212529', height='sm'),
+                    ButtonComponent(action=MessageAction(label="🚄 總裁高鐵差旅秘書", text="高鐵"), style='primary', color='#ea580c', height='sm'),
                     ButtonComponent(action=MessageAction(label="⏳ 查即將到期合約（約3個月/年底）", text="查即將到期合約"), style='secondary', height='sm'),
                     ButtonComponent(action=MessageAction(label="🔄 切換測試/正式模式", text="切換模式"), style='secondary', height='sm'),
                 ]),
@@ -2474,6 +2475,201 @@ def executive_report():
     return render_template_string(EXECUTIVE_REPORT_HTML, data=data)
 
 
+# ==================== 🚄 Sandy 總裁高鐵差旅秘書模組 ====================
+
+THSR_STATIONS_MAP = {
+    '南港': 'NanGang', '台北': 'TaiPei', '板橋': 'BanQiao', '桃園': 'TaoYuan',
+    '新竹': 'XinZhu', '苗栗': 'MiaoLi', '台中': 'TaiZhong', '彰化': 'ZhangHua',
+    '雲林': 'YunLin', '嘉義': 'JiaYi', '台南': 'TaiNan', '左營': 'ZuoYing', '高雄': 'ZuoYing'
+}
+
+def search_thsr_schedule(start_name, end_name, date_str=None, time_str=None):
+    """查詢台灣高鐵官方即時車次時刻表"""
+    import urllib.request, urllib.parse, json, ssl
+    start_code = THSR_STATIONS_MAP.get(start_name)
+    end_code = THSR_STATIONS_MAP.get(end_name)
+    if not start_code or not end_code:
+        return {'success': False, 'message': '找不到指定的車站名稱'}
+    
+    today = datetime.now()
+    if not date_str:
+        date_str = today.strftime('%Y/%m/%d')
+    date_str = date_str.replace('-', '/')
+    if not time_str:
+        time_str = today.strftime('%H:%M')
+        
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    
+    data = urllib.parse.urlencode({
+        'SearchType': 'S',
+        'Lang': 'TW',
+        'StartStation': start_code,
+        'EndStation': end_code,
+        'OutWardSearchDate': date_str,
+        'OutWardSearchTime': time_str,
+        'ReturnSearchDate': '',
+        'ReturnSearchTime': '',
+        'DiscountType': ''
+    }).encode('utf-8')
+    
+    req = urllib.request.Request(
+        'https://www.thsrc.com.tw/TimeTable/Search',
+        data=data,
+        headers={
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Referer': 'https://www.thsrc.com.tw/ArticleContent/a3b630bb-1066-4352-a1ef-58c7b4e8ef7c',
+            'Origin': 'https://www.thsrc.com.tw',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+        }
+    )
+    
+    try:
+        resp = urllib.request.urlopen(req, context=ctx, timeout=8)
+        res = json.loads(resp.read().decode('utf-8'))
+        trains = res.get('data', {}).get('DepartureTable', {}).get('TrainItem', [])
+        
+        target_h, target_m = [int(x) for x in time_str.split(':')[:2]]
+        target_mins = target_h * 60 + target_m
+        
+        matched = []
+        for t in trains:
+            dep = t.get('DepartureTime', '')
+            if dep and ':' in dep:
+                dh, dm = [int(x) for x in dep.split(':')[:2]]
+                dmins = dh * 60 + dm
+                diff = dmins - target_mins
+                if -15 <= diff <= 75:
+                    num = t.get('TrainNumber', '')
+                    arr = t.get('DestinationTime', '')
+                    dur = t.get('Duration', '')
+                    dur_parts = [int(x) for x in dur.split(':')[:2]] if ':' in dur else [1, 10]
+                    dur_total = dur_parts[0]*60 + dur_parts[1]
+                    is_fast = dur_total <= 65
+                    matched.append({
+                        'num': num,
+                        'dep': dep,
+                        'arr': arr,
+                        'duration': dur,
+                        'is_fast': is_fast,
+                        'diff': abs(diff)
+                    })
+        return {'success': True, 'trains': matched[:5], 'date': date_str, 'start': start_name, 'end': end_name}
+    except Exception as e:
+        return {'success': False, 'message': str(e)}
+
+def parse_thsr_query(text):
+    """自然語言解析出發地、目的地、日期、時間"""
+    found = []
+    for s in THSR_STATIONS_MAP.keys():
+        idx = text.find(s)
+        if idx != -1:
+            found.append((idx, s))
+    found.sort(key=lambda x: x[0])
+    
+    start_s = found[0][1] if len(found) > 0 else '台中'
+    end_s = found[1][1] if len(found) > 1 else '南港'
+    if start_s == '高雄': start_s = '左營'
+    if end_s == '高雄': end_s = '左營'
+    
+    today = datetime.now()
+    if '今天' in text:
+        date_str = today.strftime('%Y/%m/%d')
+    elif '明天' in text:
+        date_str = (today + timedelta(days=1)).strftime('%Y/%m/%d')
+    elif '後天' in text:
+        date_str = (today + timedelta(days=2)).strftime('%Y/%m/%d')
+    else:
+        m_date = re.search(r'(\d{1,2})[/\-月](\d{1,2})', text)
+        if m_date:
+            m = int(m_date.group(1))
+            d = int(m_date.group(2))
+            date_str = f"{today.year}/{m:02d}/{d:02d}"
+        else:
+            date_str = today.strftime('%Y/%m/%d')
+            
+    time_str = '19:30'
+    m_time = re.search(r'(\d{1,2})[:：](\d{2})', text)
+    if m_time:
+        h = int(m_time.group(1))
+        mi = int(m_time.group(2))
+        time_str = f"{h:02d}:{mi:02d}"
+    elif '晚上' in text or '下午' in text:
+        m_h = re.search(r'(\d{1,2})[點時]', text)
+        if m_h:
+            h = int(m_h.group(1))
+            if h < 12: h += 12
+            mi = 30 if '半' in text else 0
+            time_str = f"{h:02d}:{mi:02d}"
+            
+    return start_s, end_s, date_str, time_str
+
+def create_thsr_menu_flex():
+    """高鐵差旅秘書選單導引卡片"""
+    return FlexSendMessage(
+        alt_text="【🚄 Sandy 專屬高鐵差旅秘書】",
+        contents=BubbleContainer(
+            body=BoxComponent(layout='vertical', padding_all='none', contents=[
+                BoxComponent(layout='vertical', padding_all='lg', background_color='#ea580c', contents=[
+                    TextComponent(text="🚄 Sandy 專屬 ｜ 高鐵差旅秘書", weight='bold', size='md', color='#ffffff'),
+                    TextComponent(text="即時車次查詢 ｜ 直達快速車推薦 ｜ 一鍵官方劃位", size='xs', color='#ffedd5', margin='xs'),
+                ]),
+                BoxComponent(layout='vertical', padding_all='lg', spacing='sm', contents=[
+                    TextComponent(text="請選擇常用行程，或直接在對話框用語音/打字說出需求：", size='xs', color='#666666', wrap=True),
+                    ButtonComponent(action=MessageAction(label="⚡ 台中 ➡️ 南港 (10/02 週五 19:30)", text="高鐵 台中 南港 10/2 19:30"), style='primary', color='#ea580c', height='sm'),
+                    ButtonComponent(action=MessageAction(label="⚡ 台北 ➡️ 左營 (直達快速車)", text="高鐵 台北 左營 14:00"), style='primary', color='#0f172a', height='sm'),
+                    ButtonComponent(action=MessageAction(label="⚡ 台北 ➡️ 台南 (直達快速車)", text="高鐵 台北 台南 14:00"), style='secondary', height='sm'),
+                    ButtonComponent(action=URIAction(label="🎫 前往高鐵官方線上訂票系統", uri="https://pass.thsrc.com.tw/"), style='secondary', height='sm'),
+                    SeparatorComponent(margin='md'),
+                    TextComponent(text="💡 您也可以直接打字或按住麥克風說話：\n•「高鐵 台中 南港 10/2 19:30」\n•「高鐵 台北到左營 明天下午2點」\n小秘書會自動為您即時過濾直達車！", size='xs', color='#888888', margin='sm', wrap=True),
+                ])
+            ])
+        )
+    )
+
+def create_thsr_results_flex(res, start_name, end_name, date_str, time_str):
+    """高鐵班次比選結果卡片"""
+    trains = res.get('trains', [])
+    rows = []
+    for t in trains:
+        badge_text = "👑 直達快速車" if t['is_fast'] else "各站停靠"
+        badge_color = "#059669" if t['is_fast'] else "#64748b"
+        rows.append(
+            BoxComponent(layout='vertical', margin='md', padding_all='sm', background_color='#f8fafc', corner_radius='md', contents=[
+                BoxComponent(layout='horizontal', contents=[
+                    TextComponent(text=f"車次 {t['num']}", weight='bold', size='sm', color='#0f172a', flex=3),
+                    TextComponent(text=f"{t['dep']} ➔ {t['arr']}", weight='bold', size='sm', color='#ea580c', flex=5, align='center'),
+                    TextComponent(text=f"{t['duration']}", size='xs', color='#64748b', flex=2, align='end'),
+                ]),
+                BoxComponent(layout='horizontal', margin='xs', contents=[
+                    TextComponent(text=badge_text, size='xxs', weight='bold', color=badge_color, flex=1),
+                    TextComponent(text="標準 $750 / 商務 $1,250", size='xxs', color='#94a3b8', flex=2, align='end'),
+                ])
+            ])
+        )
+
+    return FlexSendMessage(
+        alt_text=f"【高鐵即時班次】{start_name} ➔ {end_name}（{len(trains)} 班次）",
+        contents=BubbleContainer(
+            body=BoxComponent(layout='vertical', padding_all='none', contents=[
+                BoxComponent(layout='vertical', padding_all='lg', background_color='#ea580c', contents=[
+                    TextComponent(text=f"🚄 {start_name} ➔ {end_name} ｜ 高鐵推薦班次", weight='bold', size='md', color='#ffffff'),
+                    TextComponent(text=f"搭乘日期：{date_str} ｜ {time_str} 前後班次", size='xs', color='#ffedd5', margin='xs'),
+                ]),
+                BoxComponent(layout='vertical', padding_all='lg', contents=[
+                    TextComponent(text="AI 為您精選出的最佳車次清單：", size='xs', color='#666666'),
+                    *rows,
+                    SeparatorComponent(margin='md'),
+                    ButtonComponent(action=URIAction(label="🎫 立即前往高鐵官方劃位付款", uri="https://pass.thsrc.com.tw/"), style='primary', color='#ea580c', height='sm'),
+                    ButtonComponent(action=MessageAction(label="🔍 查詢其他高鐵班次", text="高鐵"), style='secondary', height='sm', margin='sm'),
+                ])
+            ])
+        )
+    )
+
+
 
 # ==================== 【修改九】自動逾期與到期合約排程（直接通知租客與Sandy）====================
 
@@ -2923,6 +3119,21 @@ def handle_message(event):
             data = get_executive_report_data()
             line_bot_api.reply_message(event.reply_token, create_executive_report_preview_flex(data))
             return
+
+        # ── 🚄 高鐵差旅小秘書 ──
+        if text in ["高鐵", "查高鐵", "高鐵票", "高鐵小秘書", "高鐵秘書", "高鐵時刻表"]:
+            line_bot_api.reply_message(event.reply_token, create_thsr_menu_flex())
+            return
+
+        if "高鐵" in text or (any(s in text for s in THSR_STATIONS_MAP.keys()) and any(kw in text for kw in ["車次", "火車", "訂票", "時刻表"])):
+            start_s, end_s, date_str, time_str = parse_thsr_query(text)
+            res = search_thsr_schedule(start_s, end_s, date_str, time_str)
+            if res.get('success') and res.get('trains'):
+                line_bot_api.reply_message(event.reply_token, create_thsr_results_flex(res, start_s, end_s, date_str, time_str))
+                return
+            else:
+                line_bot_api.reply_message(event.reply_token, create_thsr_menu_flex())
+                return
 
         # ── 1. 偵錯指令：查看支出追蹤實際讀到的欄位 ──
         if text.startswith("debug支出"):
