@@ -10,6 +10,7 @@ from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import (
     MessageEvent, TextMessage, TextSendMessage,
+    ImageMessage, VideoMessage,
     TemplateSendMessage, ButtonsTemplate, MessageAction, URIAction,
     FlexSendMessage, BubbleContainer, BoxComponent, TextComponent,
     SeparatorComponent, ButtonComponent
@@ -446,14 +447,15 @@ def create_service_tuoguan_flex():
                     TextComponent(text="為您打理所有繁瑣的租屋管理大小事！", size='xs', color='#e3f2fd', margin='xs'),
                 ]),
                 BoxComponent(layout='vertical', padding_all='lg', spacing='sm', contents=[
-                    TextComponent(text="🌟 託管核心服務內容", weight='bold', size='sm', color='#333333'),
-                    create_row("💰 租金代收", "每月系統自動對帳、催收與匯報"),
-                    create_row("🔧 修繕對接", "配合專業工班隨時排除水電設備故障"),
-                    create_row("🏠 定期巡視", "退租點交、設備檢驗拍照存證"),
-                    create_row("🤝 協調溝通", "管家即時排解租客日常問題"),
+                    TextComponent(text="🌟 託管四大核心專業服務", weight='bold', size='sm', color='#0d6efd'),
+                    SeparatorComponent(margin='xs'),
+                    create_row("💰 租金代收", "每月自動對帳催收，按期匯入屋主戶頭"),
+                    create_row("🔧 修繕對接", "嚴選水電泥作工班，故障排除即時回報"),
+                    create_row("🏠 驗屋巡視", "退租完整屋況點交，拍照存證確保權益"),
+                    create_row("🤝 租客溝通", "專業管家排解日常大小事，房東零負擔"),
                     SeparatorComponent(margin='md'),
                     ButtonComponent(action=URIAction(label="📞 預約託管規劃專線", uri=f"tel:{MANAGER_PHONE}"), style='primary', color='#0d6efd', height='sm'),
-                    ButtonComponent(action=MessageAction(label="💬 留下託管需求", text="我想諮詢房屋託管"), style='secondary', height='sm'),
+                    ButtonComponent(action=URIAction(label="📝 填寫線上委託表單", uri="https://sandy-line-bot.onrender.com/inquiry"), style='secondary', height='sm'),
                 ]),
             ])
         )
@@ -462,7 +464,7 @@ def create_service_tuoguan_flex():
 # ── 3. 我要租屋 ──
 def create_service_renting_flex():
     return FlexSendMessage(
-        alt_text="【Sandy宅安心】優質租屋尋找",
+        alt_text="【Sandy宅安心】優質安心好宅尋找",
         contents=BubbleContainer(
             body=BoxComponent(layout='vertical', padding_all='none', contents=[
                 BoxComponent(layout='vertical', padding_all='lg', background_color='#fd7e14', contents=[
@@ -470,22 +472,23 @@ def create_service_renting_flex():
                     TextComponent(text="嚴選安心好宅，給您舒適溫馨的家！", size='xs', color='#fff3cd', margin='xs'),
                 ]),
                 BoxComponent(layout='vertical', padding_all='lg', spacing='sm', contents=[
-                    TextComponent(text="🏡 我們的房源特色", weight='bold', size='sm', color='#333333'),
+                    TextComponent(text="🏡 我們的房源特色", weight='bold', size='sm', color='#fd7e14'),
+                    SeparatorComponent(margin='xs'),
                     create_row("✨ 拎包入住", "冷氣、冰箱、洗衣機、熱水器一應俱全"),
                     create_row("✨ 生活便利", "鄰近捷運與商圈，交通採買超方便"),
                     create_row("✨ 專人管理", "專業管家服務，居住問題迅速處理"),
                     SeparatorComponent(margin='md'),
-                    TextComponent(text="請告訴管家您的「預算、期望區域、起租日期」，我們將為您推薦最適合的房源！", size='xs', color='#666666', margin='md', wrap=True),
-                    ButtonComponent(action=MessageAction(label="📝 填寫找屋需求", text="我有租屋需求"), style='primary', color='#fd7e14', height='sm'),
-                    ButtonComponent(action=URIAction(label="📞 撥打看屋專線", uri=f"tel:{MANAGER_PHONE}"), style='secondary', height='sm'),
+                    TextComponent(text="歡迎登記您的「預算、期望區域、格局」，Sandy 管家將為您推薦最適合的房源！", size='xs', color='#666666', margin='sm', wrap=True),
+                    ButtonComponent(action=URIAction(label="📞 撥打看屋專線", uri=f"tel:{MANAGER_PHONE}"), style='primary', color='#fd7e14', height='sm'),
+                    ButtonComponent(action=URIAction(label="📝 登記線上找屋需求", uri="https://sandy-line-bot.onrender.com/rental_inquiry"), style='secondary', height='sm'),
                 ]),
             ])
         )
     )
 
 # ── 4. 修繕報修 ──
-def create_repair_flex(room_no="", tenant=""):
-    room_info = f"房號：{room_no}（{tenant} 您好）" if room_no else "請提供您的房號與地址"
+def create_repair_flex(addr="", tenant=""):
+    addr_info = f"📍 租賃地址：{addr}（{tenant} 您好）" if addr else "📍 請提供您的【完整承租地址（含樓層戶別）】"
     return FlexSendMessage(
         alt_text="【Sandy宅安心】設備修繕報修中心",
         contents=BubbleContainer(
@@ -495,13 +498,13 @@ def create_repair_flex(room_no="", tenant=""):
                     TextComponent(text="設備有故障？管家儘速為您安排工班！", size='xs', color='#555555', margin='xs'),
                 ]),
                 BoxComponent(layout='vertical', padding_all='lg', spacing='sm', contents=[
-                    TextComponent(text=f"📍 {room_info}", weight='bold', size='sm', color='#0d6efd'),
+                    TextComponent(text=addr_info, weight='bold', size='sm', color='#0d6efd', wrap=True),
                     SeparatorComponent(margin='sm'),
-                    TextComponent(text="請在此對話框直接傳送報修訊息：", weight='bold', size='xs', color='#333333', margin='sm'),
-                    TextComponent(text="1. 損壞設備名稱（如冷氣不冷、水管漏水）\n2. 附上損壞狀況之【照片或短影片】\n3. 方便師傅到府維修的時段", size='xs', color='#666666', wrap=True),
+                    TextComponent(text="📋 報修傳送方式：", weight='bold', size='xs', color='#333333', margin='xs'),
+                    TextComponent(text="1. 請直接在此對話框傳送【故障照片或影片】\n2. 說明損壞狀況與房屋地址（樓層戶別）\n3. 方便師傅到府檢修時段", size='xs', color='#555555', wrap=True),
                     SeparatorComponent(margin='md'),
-                    ButtonComponent(action=MessageAction(label="✏️ 我要送出報修資訊", text=f"我要報修|{room_no}"), style='primary', color='#0d6efd', height='sm'),
-                    ButtonComponent(action=URIAction(label="📞 緊急修繕專線", uri=f"tel:{MANAGER_PHONE}"), style='secondary', height='sm'),
+                    ButtonComponent(action=URIAction(label="📞 緊急修繕專線", uri=f"tel:{MANAGER_PHONE}"), style='primary', color='#dc3545', height='sm'),
+                    ButtonComponent(action=MessageAction(label="💬 留下報修說明", text="我要報修"), style='secondary', height='sm'),
                 ]),
             ])
         )
@@ -992,6 +995,160 @@ def inquiry():
         return render_template_string(INQUIRY_FORM_HTML, success=True)
     return render_template_string(INQUIRY_FORM_HTML, success=False)
 
+RENTAL_INQUIRY_FORM_HTML = """
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Sandy 宅安心 ｜ 預約找屋需求登記</title>
+  <style>
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    body { background-color: #f8f9fa; margin: 0; padding: 20px 12px; color: #333; }
+    .card { max-width: 460px; margin: 0 auto; background: #ffffff; border-radius: 16px; padding: 24px 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .header { text-align: center; border-bottom: 2px solid #eef2f5; padding-bottom: 16px; margin-bottom: 20px; }
+    .header h2 { margin: 0 0 6px; color: #fd7e14; font-size: 20px; }
+    .header p { margin: 0; color: #666; font-size: 13px; line-height: 1.5; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; margin-bottom: 6px; font-weight: bold; font-size: 14px; color: #333; }
+    .req { color: #dc3545; }
+    input[type="text"], input[type="tel"], select, textarea {
+      width: 100%; padding: 12px; border: 1.5px solid #dce2e6; border-radius: 8px; font-size: 15px; outline: none; transition: border-color 0.2s; -webkit-appearance: none;
+    }
+    input:focus, select:focus, textarea:focus { border-color: #fd7e14; background: #fffaf5; }
+    .btn-submit {
+      width: 100%; background: #fd7e14; color: #fff; border: none; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; box-shadow: 0 4px 12px rgba(253,126,20,0.3);
+    }
+    .btn-submit:active { background: #e0680a; }
+    .btn-call {
+      display: block; width: 100%; text-align: center; background: #f8f9fa; color: #0d6efd; border: 1.5px solid #0d6efd; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: bold; text-decoration: none; margin-top: 12px;
+    }
+    .success-box { text-align: center; padding: 30px 10px; }
+    .success-icon { font-size: 48px; color: #fd7e14; margin-bottom: 12px; }
+    .success-box h3 { color: #fd7e14; margin: 0 0 10px; font-size: 20px; }
+    .success-box p { color: #555; font-size: 14px; line-height: 1.6; margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    {% if success %}
+    <div class="success-box">
+      <div class="success-icon">🎉</div>
+      <h3>找屋需求已成功送出！</h3>
+      <p>非常感謝您的登記！<br><strong>Sandy（黃蕙芬）管家</strong> 已收到您的找屋條件，將會為您配對合適房源，並主動與您聯繫安排看屋！</p>
+      <a href="tel:0934008636" class="btn-call">📞 如急需看屋，可直接撥打管家專線</a>
+    </div>
+    {% else %}
+    <div class="header">
+      <h2>🔍 Sandy 宅安心 ｜ 預約找屋需求</h2>
+      <p>告訴管家您的找屋條件，為您精選最適合的安心好宅！</p>
+    </div>
+    <form method="POST" action="/rental_inquiry">
+      <div class="form-group">
+        <label>您的稱呼 <span class="req">*</span></label>
+        <input type="text" name="name" placeholder="例如：林先生、張小姐" required>
+      </div>
+      <div class="form-group">
+        <label>聯絡電話（手機） <span class="req">*</span></label>
+        <input type="tel" name="phone" placeholder="例如：0912345678" required>
+      </div>
+      <div class="form-group">
+        <label>期望租屋區域 <span class="req">*</span></label>
+        <select name="area" required>
+          <option value="鼓山區">鼓山區（高鐵/巨蛋/美術館）</option>
+          <option value="左營區">左營區（巨蛋商圈/捷運周邊）</option>
+          <option value="三民區">三民區（火車站/高醫周邊）</option>
+          <option value="苓雅區">苓雅區（文化中心/三多商圈）</option>
+          <option value="新興區">新興區（捷運美麗島周邊）</option>
+          <option value="前鎮區">前鎮區（三多商圈/亞洲新灣區）</option>
+          <option value="其他區域">其他區域</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>期望格局 <span class="req">*</span></label>
+        <select name="layout" required>
+          <option value="獨立套房">獨立套房</option>
+          <option value="1 房 1 廳">1 房 1 廳</option>
+          <option value="2 房格局">2 房格局</option>
+          <option value="3 房以上家庭房">3 房以上家庭房</option>
+          <option value="車位租賃">平面／機械車位</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>預算範圍（每月租金） <span class="req">*</span></label>
+        <select name="budget" required>
+          <option value="10,000 元以下">10,000 元以下</option>
+          <option value="10,000 ~ 15,000 元">10,000 ~ 15,000 元</option>
+          <option value="15,000 ~ 20,000 元">15,000 ~ 20,000 元</option>
+          <option value="20,000 ~ 25,000 元">20,000 ~ 25,000 元</option>
+          <option value="25,000 ~ 35,000 元">25,000 ~ 35,000 元</option>
+          <option value="35,000 元以上">35,000 元以上</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>預計起租日期</label>
+        <select name="move_in_date">
+          <option value="兩週內起租">兩週內起租（急需）</option>
+          <option value="一個月內">一個月內</option>
+          <option value="兩個月內">兩個月內</option>
+          <option value="半年內/先看看">半年內 / 先看看房源</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>特殊需求或備註（選填）</label>
+        <textarea name="notes" rows="2" placeholder="例如：需汽車停車位、可開伙、有養貓咪、陽台獨洗曬等"></textarea>
+      </div>
+      <button type="submit" class="btn-submit">🚀 送出找屋需求</button>
+      <a href="tel:0934008636" class="btn-call">📞 亦可直接撥打看屋專線</a>
+    </form>
+    {% endif %}
+  </div>
+</body>
+</html>
+"""
+
+@app.route("/rental_inquiry", methods=['GET', 'POST'])
+def rental_inquiry():
+    if request.method == 'POST':
+        name         = request.form.get("name", "").strip()
+        phone        = request.form.get("phone", "").strip()
+        area         = request.form.get("area", "").strip()
+        layout       = request.form.get("layout", "").strip()
+        budget       = request.form.get("budget", "").strip()
+        move_in_date = request.form.get("move_in_date", "").strip()
+        notes        = request.form.get("notes", "").strip()
+
+        lead_card = FlexSendMessage(
+            alt_text=f"🔍 【新租客找屋需求】{name} {phone}",
+            contents=BubbleContainer(
+                body=BoxComponent(layout='vertical', padding_all='none', contents=[
+                    BoxComponent(layout='vertical', padding_all='md', background_color='#fd7e14', contents=[
+                        TextComponent(text="🔍 【新租客找屋需求通知！】", weight='bold', size='md', color='#ffffff'),
+                        TextComponent(text="有新租客登記找屋條件，請管家配對房源！", size='xs', color='#fff3cd', margin='xs'),
+                    ]),
+                    BoxComponent(layout='vertical', padding_all='lg', spacing='sm', contents=[
+                        create_row("👤 租客稱呼", name, color='#111111', weight='bold'),
+                        create_row("📞 聯絡電話", phone, color='#0d6efd', weight='bold'),
+                        create_row("📍 期望區域", area),
+                        create_row("🏠 期望格局", layout),
+                        create_row("💰 預算範圍", budget, color='#fd7e14', weight='bold'),
+                        create_row("📅 預計起租", move_in_date),
+                        create_row("💡 特殊需求", notes if notes else "（無）", color='#666666'),
+                        SeparatorComponent(margin='md'),
+                        ButtonComponent(action=URIAction(label=f"📞 直接致電給租客（{phone}）", uri=f"tel:{phone}"), style='primary', color='#fd7e14', height='sm'),
+                    ]),
+                ])
+            )
+        )
+        try:
+            line_bot_api.push_message(MY_LINE_USER_ID, lead_card)
+        except Exception as e:
+            print(f"推播租客需求至 Sandy 失敗: {e}")
+
+        return render_template_string(RENTAL_INQUIRY_FORM_HTML, success=True)
+    return render_template_string(RENTAL_INQUIRY_FORM_HTML, success=False)
+
+
 # ==================== 【修改九】自動逾期與到期合約排程（直接通知租客與Sandy）====================
 
 def perform_auto_check_and_push():
@@ -1191,19 +1348,6 @@ def handle_message(event):
             line_bot_api.reply_message(event.reply_token, create_service_baozu_flex())
             return
 
-        # ── 客戶諮詢需求（包含包租代管、稅費優惠、房屋託管、租屋、叫修），自動即時轉知 Sandy ──
-        if any(kw in text for kw in ["我想諮詢包租代管", "我想諮詢包租代管稅費優惠", "我想諮詢房屋託管", "我有租屋需求", "我想諮詢管家", "稅費優惠", "諮詢"]) or text.startswith("我要報修"):
-            try:
-                line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(
-                    text=f"📢 【客戶即時需求通知】\n來自 LINE 用戶：{user_name} ({user_id})\n需求內容：{text}\n請管家抽空聯繫處理！"
-                ))
-            except Exception as err:
-                print(f"轉發通知房東失敗: {err}")
-            line_bot_api.reply_message(event.reply_token, TextSendMessage(
-                text=f"✅ 已為您通知 Sandy 管家！管家將儘速與您聯繫。\n如情況緊急，歡迎直接撥打專線：{MANAGER_PHONE}，謝謝！"
-            ))
-            return
-
         # ── 按鈕 2：房屋託管 ──
         if any(kw in text for kw in ["房屋託管", "託管", "2", "我要託管"]) and "諮詢" not in text:
             line_bot_api.reply_message(event.reply_token, create_service_tuoguan_flex())
@@ -1215,12 +1359,12 @@ def handle_message(event):
             return
 
         # ── 按鈕 4：修繕報修 ──
-        if any(kw in text for kw in ["修繕報修", "報修", "4", "設備維修", "叫修"]) and not text.startswith("我要報修"):
+        if any(kw in text for kw in ["修繕報修", "報修", "4", "設備維修", "叫修"]) and text not in ["我要報修", "我要修繕"]:
             props     = load_properties()
             user_prop = next((p for p in props if p['line_id'] == user_id), None)
             line_bot_api.reply_message(event.reply_token, create_repair_flex(
-                room_no=user_prop['room_no'] if user_prop else "",
-                tenant =user_prop['tenant']  if user_prop else ""
+                addr  =user_prop['addr']   if user_prop else "",
+                tenant=user_prop['tenant'] if user_prop else ""
             ))
             return
 
@@ -1229,11 +1373,27 @@ def handle_message(event):
             line_bot_api.reply_message(event.reply_token, create_contact_manager_flex())
             return
 
-        # 客戶其他諮詢或叫修，自動轉知 Sandy
-        if any(kw in text for kw in ["我想諮詢房屋託管", "我有租屋需求", "我想諮詢管家", "我要報修"]) or text.startswith("我要報修"):
+        # ── 房客修繕回傳（文字描述）──
+        if any(kw in text for kw in ["我要報修", "修繕", "損壞", "壞了", "壞掉", "漏水", "跳電", "冷氣不冷", "馬桶不通", "維修"]) and not is_admin:
+            props     = load_properties()
+            user_prop = next((p for p in props if p['line_id'] == user_id), None)
+            tenant_info = f"（租客：{user_prop['tenant']}，地址：{user_prop['addr']}）" if user_prop else "（未綁定租客）"
             try:
                 line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(
-                    text=f"📢 【客戶即時需求通知】\n來自 LINE 用戶：{user_name} ({user_id})\n需求內容：{text}\n請管家抽空聯繫處理！"
+                    text=f"🛠️ 【房客報修訊息通知！】\n來自：{user_name} ({user_id}) {tenant_info}\n報修內容：\n{text}\n請管家抽空安排工班！"
+                ))
+            except Exception as err:
+                print(f"轉發報修失敗: {err}")
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(
+                text=f"✅ 已為您通知 Sandy 管家安排工班師傅！管家將儘速與您聯繫確認到府時間。\n若尚未提供【房屋地址（含樓層戶別）】或【故障照片】，歡迎直接回傳！\n如遇重大漏水、停電等緊急狀況，歡迎直接撥打專線：{MANAGER_PHONE}，謝謝！"
+            ))
+            return
+
+        # ── 客戶諮詢需求（包租代管、稅費、託管、租屋、找管家）自動轉知 Sandy ──
+        if any(kw in text for kw in ["我想諮詢包租代管", "我想諮詢包租代管稅費優惠", "我想諮詢房屋託管", "我有租屋需求", "我想諮詢管家", "稅費優惠", "諮詢"]) and not is_admin:
+            try:
+                line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(
+                    text=f"💬 【客戶諮詢留言】\n來自 LINE 用戶：{user_name} ({user_id})\n需求內容：{text}\n請管家抽空聯繫處理！"
                 ))
             except Exception as err:
                 print(f"轉發通知房東失敗: {err}")
@@ -1666,6 +1826,34 @@ def handle_message(event):
     except Exception as e:
         line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"系統處理發生異常：{str(e)}"))
 
+@handler.add(MessageEvent, message=(ImageMessage, VideoMessage))
+def handle_media_message(event):
+    """【修繕報修】房客傳送照片或影片之自動轉發與親切回覆"""
+    user_id = event.source.user_id
+    try:
+        profile = line_bot_api.get_profile(user_id)
+        user_name = profile.display_name
+    except Exception:
+        user_name = "訪客/租客"
+
+    props = load_properties()
+    user_prop = next((p for p in props if p['line_id'] == user_id), None)
+    tenant_info = f"（已綁定租客：{user_prop['tenant']}，地址：{user_prop['addr']}）" if user_prop else "（未綁定用戶）"
+
+    msg_type_str = "照片" if isinstance(event.message, ImageMessage) else "影片"
+
+    # 即時轉推 Sandy 手機
+    try:
+        line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(
+            text=f"📸 【房客傳送修繕{msg_type_str}通知！】\n來自：{user_name} ({user_id}) {tenant_info}\n用戶在 LINE 傳送了修繕{msg_type_str}，請 Sandy 管家至 LINE 官方帳號查看！"
+        ))
+    except Exception as e:
+        print(f"轉發媒體通知給 Sandy 失敗: {e}")
+
+    # 親切回覆用戶
+    line_bot_api.reply_message(event.reply_token, TextSendMessage(
+        text=f"✅ 已收到您傳送的修繕{msg_type_str}！\n系統已同步通知 Sandy 管家安排工班師傅。\n\n請您補充說明損壞狀況與房屋地址（若尚未填寫），管家將儘速為您安排！\n如遇重大漏水、停電等緊急狀況，歡迎直接撥打專線：{MANAGER_PHONE}，謝謝！"
+    ))
 
 # 相容不同 gunicorn 啟動語法 (gunicorn app:app 或 gunicorn app.app)
 app.app = app
