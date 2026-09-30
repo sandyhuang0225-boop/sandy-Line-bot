@@ -155,6 +155,22 @@ def next_rent_month(current_month: int) -> str:
     """【修改五】租金收的是下個月，查詢時用 current_month+1（跨年 12→1）"""
     return str(1 if current_month == 12 else current_month + 1)
 
+def parse_target_month(text: str, default_month: str) -> str:
+    """從使用者文字中解析目標月份，支援國字 (如十月) 與阿拉伯數字 (如 10月)"""
+    cn_months = {
+        "十二月": "12", "十一月": "11", "十月": "10",
+        "一月": "1", "二月": "2", "三月": "3", "四月": "4",
+        "五月": "5", "六月": "6", "七月": "7", "八月": "8",
+        "九月": "9"
+    }
+    for cn_m, num_m in cn_months.items():
+        if cn_m in text:
+            return num_m
+    for m in range(12, 0, -1):
+        if f"{m}月" in text or f"{m} 月" in text:
+            return str(m)
+    return str(default_month)
+
 def get_rent_sheet_columns(month_str):
     """收租追蹤：(狀態欄, 實收金額欄) 1-indexed"""
     m = int(month_str)
@@ -1336,22 +1352,26 @@ def handle_message(event):
         # ==================== 六宮格按鍵（所有人可互動）====================
 
         # ── 按鈕 1：包租代管 ──
-        if any(kw in text for kw in ["包租代管", "包租", "1", "我要包租", "包租貸款", "社會住宅", "加入包租"]):
+        if any(kw in text for kw in ["包租代管", "我要包租", "包租貸款", "社會住宅", "加入包租"]) or text in ["包租", "1", "1號", "按鈕1"]:
             line_bot_api.reply_message(event.reply_token, create_service_baozu_flex())
             return
 
         # ── 按鈕 2：房屋託管 ──
-        if any(kw in text for kw in ["房屋託管", "託管", "2", "我要託管", "代管", "房屋代管", "房屋管理"]):
+        if any(kw in text for kw in ["房屋託管", "我要託管", "房屋代管", "房屋管理"]) or text in ["託管", "代管", "2", "2號", "按鈕2"]:
             line_bot_api.reply_message(event.reply_token, create_service_tuoguan_flex())
             return
 
         # ── 按鈕 3：我要租屋 ──
-        if any(kw in text for kw in ["租屋", "找房", "找屋", "租房", "我要租屋", "我想租屋", "找房子", "3", "我有租屋需求", "租屋需求", "找屋需求", "我要租房", "我想租房", "租房子", "看屋", "我要看屋", "預約看屋", "房源", "安心租屋", "租屋專區", "租屋資訊", "我要租"]):
+        if any(kw in text for kw in [
+            "我要租屋", "我想租屋", "找房子", "我有租屋需求", "租屋需求",
+            "找屋需求", "我要租房", "我想租房", "租房子", "我要看屋",
+            "預約看屋", "安心租屋", "租屋專區", "租屋資訊", "我要租"
+        ]) or text in ["租屋", "找房", "找屋", "租房", "看屋", "房源", "3", "3號", "按鈕3"]:
             line_bot_api.reply_message(event.reply_token, create_service_renting_flex())
             return
 
         # ── 按鈕 4：修繕報修 ──
-        if any(kw in text for kw in ["修繕報修", "報修", "4", "設備維修", "叫修"]) and text not in ["我要報修", "我要修繕"]:
+        if (any(kw in text for kw in ["修繕報修", "設備維修", "叫修"]) or text in ["報修", "4", "4號", "按鈕4"]) and text not in ["我要報修", "我要修繕"]:
             props     = load_properties()
             user_prop = next((p for p in props if p['line_id'] == user_id), None)
             line_bot_api.reply_message(event.reply_token, create_repair_flex(
@@ -1361,7 +1381,10 @@ def handle_message(event):
             return
 
         # ── 按鈕 6：聯絡管家 ──
-        if any(kw in text for kw in ["聯絡管家", "聯繫管家", "管家名片", "專屬管家", "聯絡sandy", "聯絡Sandy", "管家", "客服", "聯絡客服", "找管家", "6"]) and "諮詢" not in text and "委託" not in text:
+        if (any(kw in text for kw in [
+            "聯絡管家", "聯繫管家", "管家名片", "專屬管家",
+            "聯絡sandy", "聯絡Sandy", "聯絡客服", "找管家"
+        ]) or text in ["管家", "客服", "6", "6號", "按鈕6"]) and "諮詢" not in text and "委託" not in text:
             line_bot_api.reply_message(event.reply_token, create_contact_manager_flex())
             return
 
@@ -1622,11 +1645,7 @@ def handle_message(event):
         # ── 4. 查詢管理費或貸款（XX 或 ❌ 邏輯 + 發通知按鈕）──
         if "管理費" in text or "貸款" in text:
             today        = datetime.now()
-            target_m     = str(today.month)
-            for m in range(12, 0, -1):
-                if f"{m}月" in text:
-                    target_m = str(m)
-                    break
+            target_m     = parse_target_month(text, str(today.month))
             expense_type = "管理費" if "管理費" in text else "貸款"
             status_col_idx, _ = get_expense_sheet_columns(target_m, expense_type)
             sh_e = get_worksheet("支出追蹤")
@@ -1758,11 +1777,7 @@ def handle_message(event):
         # ── 7. 查詢租金未繳清單（輪播卡 + 租金已收/發催繳提醒按鈕）──
         if "租金" in text:
             today    = datetime.now()
-            target_m = next_rent_month(today.month)
-            for m in range(12, 0, -1):
-                if f"{m}月" in text:
-                    target_m = str(m)
-                    break
+            target_m = parse_target_month(text, next_rent_month(today.month))
             status_col_idx, _ = get_rent_sheet_columns(target_m)
             sh_r = get_worksheet("收租追蹤")
             if not sh_r:
