@@ -3301,7 +3301,7 @@ def handle_message(event):
                         c_room = cr[2].strip() if len(cr) > 2 else ""
                         c_role = cr[8].strip() if len(cr) > 8 else "合夥人"
                         if (c_name and (clean_input == c_name or c_name in clean_input or clean_input in c_name)) or \
-                           (clean_input in ["謝建文", "謝介文", "建文"] and "謝" in c_name):
+                           (clean_input in ["謝介文", "謝建文", "介文", "建文"] and "謝" in c_name):
                             matched_contacts.append((c_idx, c_name, c_addr, c_room, c_role))
                 except Exception as ce:
                     print(f"比對LINE聯絡人出錯: {ce}")
@@ -3332,7 +3332,7 @@ def handle_message(event):
                 except Exception as e:
                     reply_msg = f"⚠️ 綁定過程發生錯誤：{str(e)}"
             else:
-                reply_msg = "❌ 找不到符合的房客或合夥人姓名。\n請確認輸入是否正確（例如輸入「我是傅瑜」或「我是謝建文」），或直接聯繫 Sandy 管家協助您綁定！"
+                reply_msg = "❌ 找不到符合的房客或合夥人姓名。\n請確認輸入是否正確（例如輸入「我是傅瑜」或「我是謝介文」），或直接聯繫 Sandy 管家協助您綁定！"
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_msg))
             return
 
