@@ -608,10 +608,8 @@ def create_contact_manager_flex():
                     create_row("LINE ID",  MANAGER_LINE_ID, color='#20c997', weight='bold'),
                     create_row("服務時間", "週一至週日 09:00 ~ 20:00"),
                     SeparatorComponent(margin='md'),
-                    TextComponent(text="如有預約看屋、租屋諮詢或合約修繕問題，歡迎隨時聯繫！", size='xs', color='#666666', margin='sm', align='center', wrap=True),
+                    TextComponent(text="💡 如有預約看屋、租屋諮詢或合約問題，歡迎直接在此對話框輸入文字，管家將即時為您服務！", size='xs', color='#666666', margin='sm', wrap=True),
                     ButtonComponent(action=URIAction(label="📞 直接撥打專線電話", uri=f"tel:{MANAGER_PHONE}"), style='primary', color='#20c997', height='sm'),
-                    ButtonComponent(action=URIAction(label="➕ 加 Sandy 個人 LINE 私聊", uri=f"https://line.me/ti/p/~{MANAGER_LINE_ID}"), style='secondary', height='sm', margin='xs'),
-                    ButtonComponent(action=MessageAction(label="💬 在此對話框留言提問", text="我想留言給管家"), style='secondary', height='sm', margin='xs'),
                 ]),
             ])
         )
