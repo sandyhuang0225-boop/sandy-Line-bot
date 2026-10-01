@@ -482,7 +482,6 @@ def create_service_tuoguan_flex():
 
 # ── 3. 我要租屋 ──
 def create_service_renting_flex():
-    rental_template = "找屋需求|稱呼:王小姐|電話:0912345678|期望區域:鼓山區/左營區|預算:15000元|格局:兩房或大套房|預計入住:隨時"
     return FlexSendMessage(
         alt_text="【Sandy宅安心】優質安心好宅尋找與需求登記",
         contents=BubbleContainer(
@@ -500,7 +499,6 @@ def create_service_renting_flex():
                     SeparatorComponent(margin='md'),
                     TextComponent(text="📋 歡迎點擊下方表單登記您的找屋條件，管家將立即為您精準配對合適房源！", size='xs', color='#666666', margin='sm', wrap=True),
                     ButtonComponent(action=URIAction(label="📝 線上填寫找屋需求表單", uri="https://sandy-line-bot.onrender.com/rental_inquiry"), style='primary', color='#fd7e14', height='sm'),
-                    ButtonComponent(action=MessageAction(label="💬 LINE 快速留言登記", text=rental_template), style='secondary', height='sm', margin='xs'),
                     ButtonComponent(action=URIAction(label="📞 直接撥打看屋專線", uri=f"tel:{MANAGER_PHONE}"), style='secondary', height='sm', margin='xs'),
                 ]),
             ])
@@ -610,9 +608,10 @@ def create_contact_manager_flex():
                     create_row("LINE ID",  MANAGER_LINE_ID, color='#20c997', weight='bold'),
                     create_row("服務時間", "週一至週日 09:00 ~ 20:00"),
                     SeparatorComponent(margin='md'),
-                    TextComponent(text="如有緊急修繕、租屋諮詢或合約問題，歡迎隨時聯繫！", size='xs', color='#666666', margin='md', align='center'),
-                    ButtonComponent(action=URIAction(label="📞 直接撥打電話", uri=f"tel:{MANAGER_PHONE}"), style='primary', color='#20c997', height='sm'),
-                    ButtonComponent(action=MessageAction(label="💬 留下提問訊息", text="我想諮詢管家"), style='secondary', height='sm'),
+                    TextComponent(text="如有預約看屋、租屋諮詢或合約修繕問題，歡迎隨時聯繫！", size='xs', color='#666666', margin='sm', align='center', wrap=True),
+                    ButtonComponent(action=URIAction(label="📞 直接撥打專線電話", uri=f"tel:{MANAGER_PHONE}"), style='primary', color='#20c997', height='sm'),
+                    ButtonComponent(action=URIAction(label="➕ 加 Sandy 個人 LINE 私聊", uri=f"https://line.me/ti/p/~{MANAGER_LINE_ID}"), style='secondary', height='sm', margin='xs'),
+                    ButtonComponent(action=MessageAction(label="💬 在此對話框留言提問", text="我想留言給管家"), style='secondary', height='sm', margin='xs'),
                 ]),
             ])
         )
@@ -3377,8 +3376,15 @@ def handle_message(event):
             ))
             return
 
-        # ── 客戶諮詢需求（包租代管、稅費、託管、找管家）自動轉知 Sandy ──
-        if any(kw in text for kw in ["我想諮詢包租代管", "我想諮詢包租代管稅費優惠", "我想諮詢房屋託管", "我想諮詢管家", "稅費優惠", "諮詢"]):
+        # ── 聯絡管家留言提問引導（點選名片卡「在此對話框留言提問」或輸入相關詞）──
+        if any(kw in text for kw in ["我想留言給管家", "我想諮詢管家", "我要留言", "留言提問", "我想留言"]):
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(
+                text="💬 請直接在此對話框輸入您想詢問的問題或看屋需求（例如：特定房源何時可看屋、租金與水電計費、合約相關問題等）。\n\n您輸入送出後，系統會立即轉知 Sandy 管家親自為您解答！"
+            ))
+            return
+
+        # ── 客戶諮詢需求（包租代管、稅費、託管）自動轉知 Sandy ──
+        if any(kw in text for kw in ["我想諮詢包租代管", "我想諮詢包租代管稅費優惠", "我想諮詢房屋託管", "稅費優惠"]):
             if not is_admin:
                 try:
                     line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(
@@ -3848,18 +3854,18 @@ def handle_message(event):
             return
 
         # 訪客或自訂訊息通用智慧回覆（不再生硬回覆「請點選下方圖文選單」）
-        # 1. 若非 Sandy 本人，將訪客留言自動推播至 Sandy 手機
-        if user_id != MY_LINE_USER_ID:
-            try:
-                line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(
-                    text=f"💬 【LINE 收到訪客留言】\n來自用戶：{user_name} ({user_id})\n留言內容：\n{text}\n請管家抽空查看回覆！"
-                ))
-            except Exception as err:
-                print(f"轉發訪客留言失敗: {err}")
+        # 1. 將訪客留言自動推播至 Sandy 手機（若為 Sandy 本人測試則加上測試標註）
+        try:
+            test_tag = "（🧪 管理員 Sandy 模擬測試）" if user_id == MY_LINE_USER_ID else ""
+            line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(
+                text=f"💬 【LINE 收到訪客留言{test_tag}】\n來自用戶：{user_name} ({user_id})\n留言內容：\n{text}\n請管家抽空查看回覆！"
+            ))
+        except Exception as err:
+            print(f"轉發訪客留言失敗: {err}")
 
         # 2. 親切回覆用戶，並提供專線電話
         line_bot_api.reply_message(event.reply_token, TextSendMessage(
-            text=f"您好！Sandy 管家已收到您的訊息：「{text}」，將儘速由專人為您服務！\n如情況緊急或需即時通話，歡迎直接撥打專線：{MANAGER_PHONE}，謝謝！"
+            text=f"您好！Sandy 管家已收到您的訊息：「{text}」，將儘速由專人為您解答！\n如情況緊急或需即時通話，歡迎直接撥打專線：{MANAGER_PHONE}，謝謝！"
         ))
 
     except Exception as e:
