@@ -482,8 +482,9 @@ def create_service_tuoguan_flex():
 
 # ── 3. 我要租屋 ──
 def create_service_renting_flex():
+    rental_template = "找屋需求|稱呼:王小姐|電話:0912345678|期望區域:鼓山區/左營區|預算:15000元|格局:兩房或大套房|預計入住:隨時"
     return FlexSendMessage(
-        alt_text="【Sandy宅安心】優質安心好宅尋找",
+        alt_text="【Sandy宅安心】優質安心好宅尋找與需求登記",
         contents=BubbleContainer(
             body=BoxComponent(layout='vertical', padding_all='none', contents=[
                 BoxComponent(layout='vertical', padding_all='lg', background_color='#fd7e14', contents=[
@@ -497,9 +498,10 @@ def create_service_renting_flex():
                     create_row("✨ 生活便利", "鄰近捷運與商圈，交通採買超方便"),
                     create_row("✨ 專人管理", "專業管家服務，居住問題迅速處理"),
                     SeparatorComponent(margin='md'),
-                    TextComponent(text="歡迎登記您的「預算、期望區域、格局」，Sandy 管家將為您推薦最適合的房源！", size='xs', color='#666666', margin='sm', wrap=True),
-                    ButtonComponent(action=URIAction(label="📞 撥打看屋專線", uri=f"tel:{MANAGER_PHONE}"), style='primary', color='#fd7e14', height='sm'),
-                    ButtonComponent(action=URIAction(label="📝 登記線上找屋需求", uri="https://sandy-line-bot.onrender.com/rental_inquiry"), style='secondary', height='sm'),
+                    TextComponent(text="📋 歡迎點擊下方表單登記您的找屋條件，管家將立即為您精準配對合適房源！", size='xs', color='#666666', margin='sm', wrap=True),
+                    ButtonComponent(action=URIAction(label="📝 線上填寫找屋需求表單", uri="https://sandy-line-bot.onrender.com/rental_inquiry"), style='primary', color='#fd7e14', height='sm'),
+                    ButtonComponent(action=MessageAction(label="💬 LINE 快速留言登記", text=rental_template), style='secondary', height='sm', margin='xs'),
+                    ButtonComponent(action=URIAction(label="📞 直接撥打看屋專線", uri=f"tel:{MANAGER_PHONE}"), style='secondary', height='sm', margin='xs'),
                 ]),
             ])
         )
@@ -3295,26 +3297,43 @@ def handle_message(event):
         # ==================== 六宮格按鍵（所有人可互動）====================
 
         # ── 按鈕 1：包租代管 ──
-        if any(kw in text for kw in ["包租代管", "我要包租", "包租貸款", "社會住宅", "加入包租"]) or text in ["包租", "1", "1號", "按鈕1"]:
+        if any(kw in text for kw in ["包租代管", "我要包租", "包租貸款", "社會住宅", "加入包租", "我想了解包租代管", "我想了解包租"]) or text in ["包租", "1", "1號", "按鈕1"]:
             line_bot_api.reply_message(event.reply_token, create_service_baozu_flex())
             return
 
         # ── 按鈕 2：房屋託管 ──
-        if any(kw in text for kw in ["房屋託管", "我要託管", "房屋代管", "房屋管理"]) or text in ["託管", "代管", "2", "2號", "按鈕2"]:
+        if any(kw in text for kw in ["房屋託管", "我要託管", "房屋代管", "房屋管理", "我想了解房屋託管", "我想了解託管"]) or text in ["託管", "代管", "2", "2號", "按鈕2"]:
             line_bot_api.reply_message(event.reply_token, create_service_tuoguan_flex())
             return
 
-        # ── 按鈕 3：我要租屋 ──
-        if any(kw in text for kw in [
-            "我要租屋", "我想租屋", "找房子", "我有租屋需求", "租屋需求",
-            "找屋需求", "我要租房", "我想租房", "租房子", "我要看屋",
-            "預約看屋", "安心租屋", "租屋專區", "租屋資訊", "我要租"
-        ]) or text in ["租屋", "找房", "找屋", "租房", "看屋", "房源", "3", "3號", "按鈕3"]:
+        # ── 按鈕 3：我要租屋 / 找屋 ──
+        if (
+            any(kw in text for kw in [
+                "我想找出租房屋", "找出租房屋", "出租房屋", "我要租屋", "我想租屋",
+                "找房子", "我有租屋需求", "租屋需求", "找屋需求", "我要租房",
+                "我想租房", "租房子", "我要看屋", "預約看屋", "安心租屋",
+                "租屋專區", "租屋資訊", "我要租", "我想租", "找屋", "找房"
+            ])
+            or text in ["租屋", "找房", "找屋", "租房", "看屋", "房源", "3", "3號", "按鈕3"]
+        ) and not text.startswith("找屋需求|"):
             line_bot_api.reply_message(event.reply_token, create_service_renting_flex())
             return
 
+        # ── 找屋需求表單回傳（LINE 快速留言登記）──
+        if text.startswith("找屋需求|"):
+            try:
+                line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(
+                    text=f"🏠 【收到找屋需求登記！】\n來自 LINE 用戶：{user_name} ({user_id})\n登記內容：\n{text}\n請管家儘速聯繫配對合適房源！"
+                ))
+            except Exception as err:
+                print(f"轉發找屋需求失敗: {err}")
+            line_bot_api.reply_message(event.reply_token, TextSendMessage(
+                text=f"✅ 已收到您的找屋需求登記！\nSandy 管家已同步收到通知，將為您精準配對合適房源並儘速與您聯繫。\n如需即時看屋或諮詢，歡迎直接撥打看屋專線：{MANAGER_PHONE}，謝謝您！"
+            ))
+            return
+
         # ── 按鈕 4：修繕報修 ──
-        if (any(kw in text for kw in ["修繕報修", "設備維修", "叫修"]) or text in ["報修", "4", "4號", "按鈕4"]) and text not in ["我要報修", "我要修繕"]:
+        if (any(kw in text for kw in ["修繕報修", "設備維修", "叫修", "我要修繕報修", "我要修繕"]) or text in ["報修", "4", "4號", "按鈕4"]) and text not in ["我要報修"]:
             props     = load_properties()
             user_prop = next((p for p in props if p['line_id'] == user_id), None)
             line_bot_api.reply_message(event.reply_token, create_repair_flex(
@@ -3324,10 +3343,15 @@ def handle_message(event):
             return
 
         # ── 按鈕 6：聯絡管家 ──
-        if (any(kw in text for kw in [
-            "聯絡管家", "聯繫管家", "管家名片", "專屬管家",
-            "聯絡sandy", "聯絡Sandy", "聯絡客服", "找管家"
-        ]) or text in ["管家", "客服", "6", "6號", "按鈕6"]) and "諮詢" not in text and "委託" not in text:
+        if (
+            any(kw in text for kw in [
+                "我想連絡宅安心管家", "我想聯絡宅安心管家", "連絡宅安心管家", "聯絡宅安心管家",
+                "聯絡管家", "連絡管家", "聯繫管家", "管家名片", "專屬管家",
+                "聯絡sandy", "聯絡Sandy", "連絡sandy", "連絡Sandy", "聯絡客服", "連絡客服", "找管家"
+            ])
+            or (("連絡" in text or "聯絡" in text or "聯繫" in text) and ("管家" in text or "Sandy" in text or "sandy" in text))
+            or text in ["管家", "客服", "名片", "6", "6號", "按鈕6"]
+        ) and "諮詢" not in text and "委託" not in text:
             line_bot_api.reply_message(event.reply_token, create_contact_manager_flex())
             return
 
@@ -3354,13 +3378,14 @@ def handle_message(event):
             return
 
         # ── 客戶諮詢需求（包租代管、稅費、託管、找管家）自動轉知 Sandy ──
-        if any(kw in text for kw in ["我想諮詢包租代管", "我想諮詢包租代管稅費優惠", "我想諮詢房屋託管", "我想諮詢管家", "稅費優惠", "諮詢"]) and not is_admin:
-            try:
-                line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(
-                    text=f"💬 【客戶諮詢留言】\n來自 LINE 用戶：{user_name} ({user_id})\n需求內容：{text}\n請管家抽空聯繫處理！"
-                ))
-            except Exception as err:
-                print(f"轉發通知房東失敗: {err}")
+        if any(kw in text for kw in ["我想諮詢包租代管", "我想諮詢包租代管稅費優惠", "我想諮詢房屋託管", "我想諮詢管家", "稅費優惠", "諮詢"]):
+            if not is_admin:
+                try:
+                    line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(
+                        text=f"💬 【客戶諮詢留言】\n來自 LINE 用戶：{user_name} ({user_id})\n需求內容：{text}\n請管家抽空聯繫處理！"
+                    ))
+                except Exception as err:
+                    print(f"轉發通知房東失敗: {err}")
             line_bot_api.reply_message(event.reply_token, TextSendMessage(
                 text=f"✅ 已為您通知 Sandy 管家！管家將儘速與您聯繫。\n如情況緊急，歡迎直接撥打專線：{MANAGER_PHONE}，謝謝！"
             ))
@@ -3368,7 +3393,7 @@ def handle_message(event):
 
         # ==================== 按鍵 5：租金與帳務（【修改六】角色分流）====================
         if text in ["租金與帳務", "租金及帳務", "查詢租金", "5", "選單", "目錄", "功能", "查租金",
-                    "我想查询租金及账务", "我想查詢租金及帳務"]:
+                    "我想查询租金及账务", "我想查詢租金及帳務", "我想查詢租金與帳務", "5號", "按鈕5"]:
             current_m = datetime.now().month
             role, role_data = identify_user_role(user_id)
 
