@@ -2478,13 +2478,32 @@ def executive_report():
 # ==================== 🚄 Sandy 總裁高鐵差旅秘書模組 ====================
 
 THSR_STATIONS_MAP = {
-    '南港': 'NanGang', '台北': 'TaiPei', '板橋': 'BanQiao', '桃園': 'TaoYuan',
-    '新竹': 'XinZhu', '苗栗': 'MiaoLi', '台中': 'TaiZhong', '彰化': 'ZhangHua',
-    '雲林': 'YunLin', '嘉義': 'JiaYi', '台南': 'TaiNan', '左營': 'ZuoYing', '高雄': 'ZuoYing'
+    '南港': 'NanGang', '台北': 'TaiPei', '臺北': 'TaiPei', '板橋': 'BanQiao', '板桥': 'BanQiao',
+    '桃園': 'TaoYuan', '桃园': 'TaoYuan', '新竹': 'XinZhu', '苗栗': 'MiaoLi',
+    '台中': 'TaiZhong', '臺中': 'TaiZhong', '彰化': 'ZhangHua',
+    '雲林': 'YunLin', '云林': 'YunLin', '嘉義': 'JiaYi', '嘉义': 'JiaYi',
+    '台南': 'TaiNan', '臺南': 'TaiNan', '左營': 'ZuoYing', '左营': 'ZuoYing',
+    '高雄': 'ZuoYing'
 }
 
-def search_thsr_schedule(start_name, end_name, date_str=None, time_str=None):
-    """查詢台灣高鐵官方即時車次時刻表"""
+CN_NUMS = {
+    '零': 0, '一': 1, '二': 2, '兩': 2, '两': 2, '三': 3, '四': 4, '五': 5,
+    '六': 6, '七': 7, '八': 8, '九': 9, '十': 10, '十一': 11, '十二': 12
+}
+
+def cn_to_int(s):
+    if not s: return None
+    s = str(s).strip()
+    if s.isdigit():
+        return int(s)
+    if s in CN_NUMS:
+        return CN_NUMS[s]
+    if s.startswith('十') and len(s) == 2 and s[1] in CN_NUMS:
+        return 10 + CN_NUMS[s[1]]
+    return None
+
+def search_thsr_schedule(start_name, end_name, date_str=None, time_str=None, end_time_str=None):
+    """查詢台灣高鐵官方即時車次時刻表，支援單一時間與區間時段搜尋"""
     import urllib.request, urllib.parse, json, ssl
     start_code = THSR_STATIONS_MAP.get(start_name)
     end_code = THSR_STATIONS_MAP.get(end_name)
@@ -2538,32 +2557,53 @@ def search_thsr_schedule(start_name, end_name, date_str=None, time_str=None):
         target_h, target_m = [int(x) for x in time_str.split(':')[:2]]
         target_mins = target_h * 60 + target_m
         
-        # 篩選最貼近該時段出發的班次（從目標時間前 15 分鐘往後的班次）
+        end_mins = None
+        if end_time_str:
+            eh, em = [int(x) for x in end_time_str.split(':')[:2]]
+            end_mins = eh * 60 + em
+            if end_mins < target_mins:
+                end_mins += 24 * 60
+        
+        is_long_route = ('南港' in [start_name, end_name] or '台北' in [start_name, end_name] or '臺北' in [start_name, end_name]) and ('左營' in [start_name, end_name] or '左营' in [start_name, end_name] or '高雄' in [start_name, end_name] or '台南' in [start_name, end_name] or '臺南' in [start_name, end_name])
+
         matched = []
         for t in trains:
             dep = t.get('DepartureTime', '')
             if dep and ':' in dep:
                 dh, dm = [int(x) for x in dep.split(':')[:2]]
                 dmins = dh * 60 + dm
-                diff = dmins - target_mins
-                if diff >= -15:
-                    num = t.get('TrainNumber', '')
-                    arr = t.get('DestinationTime', '')
-                    dur = t.get('Duration', '')
-                    dur_parts = [int(x) for x in dur.split(':')[:2]] if ':' in dur else [1, 10]
-                    dur_total = dur_parts[0]*60 + dur_parts[1]
-                    is_fast = dur_total <= 65
-                    matched.append({
-                        'num': num,
-                        'dep': dep,
-                        'arr': arr,
-                        'duration': dur,
-                        'is_fast': is_fast,
-                        'diff': diff
-                    })
+                
+                dur = t.get('Duration', '')
+                dur_parts = [int(x) for x in dur.split(':')[:2]] if ':' in dur else [1, 10]
+                dur_total = dur_parts[0]*60 + dur_parts[1]
+                is_fast = (dur_total <= 110) if is_long_route else (dur_total <= 65)
+
+                if end_mins is not None:
+                    # 區間時段模式：精準篩選該時段內出發的所有班次
+                    if (target_mins - 5) <= dmins <= (end_mins + 5):
+                        matched.append({
+                            'num': t.get('TrainNumber', ''),
+                            'dep': dep,
+                            'arr': t.get('DestinationTime', ''),
+                            'duration': dur,
+                            'is_fast': is_fast,
+                            'mins': dmins
+                        })
+                else:
+                    # 單一時間點模式：從目標時間前 15 分鐘往後的班次
+                    diff = dmins - target_mins
+                    if diff >= -15:
+                        matched.append({
+                            'num': t.get('TrainNumber', ''),
+                            'dep': dep,
+                            'arr': t.get('DestinationTime', ''),
+                            'duration': dur,
+                            'is_fast': is_fast,
+                            'mins': dmins
+                        })
         
-        matched.sort(key=lambda x: x['diff'])
-        selected = matched[:5]
+        matched.sort(key=lambda x: x['mins'])
+        selected = matched[:7] if end_mins is not None else matched[:5]
         if not selected and trains:
             for t in trains[-5:]:
                 dur = t.get('Duration', '')
@@ -2573,16 +2613,19 @@ def search_thsr_schedule(start_name, end_name, date_str=None, time_str=None):
                     'dep': t.get('DepartureTime', ''),
                     'arr': t.get('DestinationTime', ''),
                     'duration': dur,
-                    'is_fast': (dur_parts[0]*60 + dur_parts[1]) <= 65,
-                    'diff': 0
+                    'is_fast': False,
+                    'mins': 0
                 })
+
+        clean_start = '左營' if start_name in ['左營', '左营', '高雄'] else ('台北' if start_name == '臺北' else start_name)
+        clean_end = '左營' if end_name in ['左營', '左营', '高雄'] else ('台北' if end_name == '臺北' else end_name)
 
         return {
             'success': True,
             'trains': selected,
             'date': date_str,
-            'start': start_name,
-            'end': end_name,
+            'start': clean_start,
+            'end': clean_end,
             'prices': {
                 'coach': coach_p,
                 'business': business_p,
@@ -2593,70 +2636,130 @@ def search_thsr_schedule(start_name, end_name, date_str=None, time_str=None):
         return {'success': False, 'message': str(e)}
 
 def parse_thsr_query(text):
-    """自然語言解析出發地、目的地、日期、時間"""
-    found = []
+    """自然語言解析出發地、目的地、日期、時段區間（支援語音識別空格、簡體字、中文數字等）"""
+    text_clean = text.strip()
+    
+    # 1. 出發站與目的地解析（優先識別「從/出發」與「到/抵達/往」）
+    start_s = None
+    end_s = None
+    
+    found_stations = []
     for s in THSR_STATIONS_MAP.keys():
-        idx = text.find(s)
-        if idx != -1:
-            found.append((idx, s))
-    found.sort(key=lambda x: x[0])
+        idx = 0
+        while True:
+            pos = text_clean.find(s, idx)
+            if pos == -1: break
+            found_stations.append((pos, s))
+            idx = pos + len(s)
+    found_stations.sort(key=lambda x: x[0])
     
-    start_s = found[0][1] if len(found) > 0 else '台中'
-    end_s = found[1][1] if len(found) > 1 else '台北'
-    if start_s == '高雄': start_s = '左營'
-    if end_s == '高雄': end_s = '左營'
-    
+    for pos, s in found_stations:
+        before = text_clean[max(0, pos-4):pos]
+        after = text_clean[pos+len(s):min(len(text_clean), pos+len(s)+4)]
+        if any(kw in after for kw in ['出發', '出发', '開', '起程', '到', '往', '至']) or any(kw in before for kw in ['從', '从', '由']):
+            if not start_s: start_s = s
+        elif any(kw in before for kw in ['到', '去', '往', '抵達', '抵达', '至']) or any(kw in after for kw in ['抵達', '抵达']):
+            if not end_s: end_s = s
+            
+    # 若語意標記未抓完整，按出現順序推算
+    remaining = [s for _, s in found_stations if s != start_s and s != end_s]
+    if not start_s and found_stations:
+        start_s = found_stations[0][1]
+        remaining = [s for _, s in found_stations[1:]]
+    if not end_s and remaining:
+        end_s = remaining[0]
+        
+    if not start_s: start_s = '台中'
+    if not end_s: end_s = '台北'
+    if start_s in ['高雄', '左营']: start_s = '左營'
+    if end_s in ['高雄', '左营']: end_s = '左營'
+
+    # 2. 日期解析
     today = datetime.now()
-    if '今天' in text:
+    if '今天' in text_clean:
         date_str = today.strftime('%Y/%m/%d')
-    elif '明天' in text:
-        date_str = (today + timedelta(days=1)).strftime('%Y/%m/%d')
-    elif '後天' in text:
+    elif '大後天' in text_clean or '大后天' in text_clean:
+        date_str = (today + timedelta(days=3)).strftime('%Y/%m/%d')
+    elif '後天' in text_clean or '后天' in text_clean:
         date_str = (today + timedelta(days=2)).strftime('%Y/%m/%d')
+    elif '明天' in text_clean:
+        date_str = (today + timedelta(days=1)).strftime('%Y/%m/%d')
     else:
-        m_date = re.search(r'(\d{1,2})[/\-月](\d{1,2})', text)
+        m_date = re.search(r'(\d{1,2})[/\-月](\d{1,2})', text_clean)
         if m_date:
             m = int(m_date.group(1))
             d = int(m_date.group(2))
             date_str = f"{today.year}/{m:02d}/{d:02d}"
         else:
-            date_str = today.strftime('%Y/%m/%d')
+            weekday_map = {'一': 0, '二': 1, '三': 2, '四': 3, '五': 4, '六': 5, '日': 6, '天': 6}
+            m_w = re.search(r'(?:星期|禮拜|礼拜|週|周)([一二三四五六日天])', text_clean)
+            if m_w:
+                target_w = weekday_map[m_w.group(1)]
+                days_ahead = (target_w - today.weekday()) % 7
+                if days_ahead == 0 and '下' in text_clean:
+                    days_ahead = 7
+                date_str = (today + timedelta(days=days_ahead)).strftime('%Y/%m/%d')
+            else:
+                date_str = today.strftime('%Y/%m/%d')
+
+    # 3. 時間與時段區間解析（強健相容語音識別產生的空格與簡體字）
+    start_time_str = None
+    end_time_str = None
+    
+    is_pm = any(kw in text_clean for kw in ['下午', '晚上', '傍晚', '晚间', '晚間'])
+    is_am = any(kw in text_clean for kw in ['早上', '上午', '清晨', '早晨'])
+    
+    # 模式 A: 區間形式，例如 "下午 5 点到 7 点" / "5點~7點" / "17:00到19:00" / "五點到七點"
+    range_regex = r'(\d{1,2}|[一二兩两三四五六七八九十]+)\s*(?:[:：](\d{2}))?\s*[點点時时]?\s*(?:到|至|~|-|－)\s*(\d{1,2}|[一二兩两三四五六七八九十]+)\s*(?:[:：](\d{2}))?\s*[點点時时]'
+    m_range = re.search(range_regex, text_clean)
+    if m_range:
+        h1 = cn_to_int(m_range.group(1))
+        m1 = int(m_range.group(2)) if m_range.group(2) else 0
+        h2 = cn_to_int(m_range.group(3))
+        m2 = int(m_range.group(4)) if m_range.group(4) else 0
+        
+        if is_pm and h1 and h1 < 12: h1 += 12
+        if is_pm and h2 and h2 < 12: h2 += 12
+        
+        if h1 is not None:
+            start_time_str = f"{h1:02d}:{m1:02d}"
+        if h2 is not None:
+            end_time_str = f"{h2:02d}:{m2:02d}"
             
-    m_time = re.search(r'(\d{1,2})[:：](\d{2})', text)
-    if m_time:
-        h = int(m_time.group(1))
-        mi = int(m_time.group(2))
-        time_str = f"{h:02d}:{mi:02d}"
-    elif any(kw in text for kw in ['晚上', '下午', '上午', '早上', '中午', '傍晚']):
-        m_h = re.search(r'(\d{1,2})[點時]', text)
-        if m_h:
-            h = int(m_h.group(1))
-            if ('晚上' in text or '下午' in text or '傍晚' in text) and h < 12:
-                h += 12
-            mi = 30 if '半' in text else 0
-            time_str = f"{h:02d}:{mi:02d}"
+    # 模式 B: 標準時間冒號形式 "17:30" / "5:30"
+    if not start_time_str:
+        m_colon = re.search(r'(\d{1,2})[:：](\d{2})', text_clean)
+        if m_colon:
+            h = int(m_colon.group(1))
+            mi = int(m_colon.group(2))
+            if is_pm and h < 12: h += 12
+            start_time_str = f"{h:02d}:{mi:02d}"
+
+    # 模式 C: 單一時間點 "5點" / "5 點" / "5点" / "五點半"
+    if not start_time_str:
+        m_single = re.search(r'(\d{1,2}|[一二兩两三四五六七八九十]+)\s*[點点時时](?:\s*(半|30))?', text_clean)
+        if m_single:
+            h = cn_to_int(m_single.group(1))
+            mi = 30 if m_single.group(2) else 0
+            if is_pm and h and h < 12: h += 12
+            if h is not None:
+                start_time_str = f"{h:02d}:{mi:02d}"
+
+    # 模式 D: 概略時段兜底
+    if not start_time_str:
+        if '中午' in text_clean: start_time_str = '12:00'
+        elif '晚上' in text_clean or '晚间' in text_clean: start_time_str = '19:00'
+        elif '下午' in text_clean: start_time_str = '14:00'
+        elif '早上' in text_clean or '上午' in text_clean: start_time_str = '09:00'
+        elif '傍晚' in text_clean: start_time_str = '17:30'
         else:
-            if '中午' in text: time_str = '12:00'
-            elif '晚上' in text: time_str = '19:00'
-            elif '下午' in text: time_str = '14:00'
-            elif '早上' in text or '上午' in text: time_str = '09:00'
-            elif '傍晚' in text: time_str = '17:30'
-            else: time_str = '12:00'
-    else:
-        m_h = re.search(r'(\d{1,2})[點時]', text)
-        if m_h:
-            h = int(m_h.group(1))
-            mi = 30 if '半' in text else 0
-            time_str = f"{h:02d}:{mi:02d}"
-        else:
-            # 沒指定時間：若是查詢今天，以當前時間為基準搜尋下班車；若是查詢未來日期，預設 09:00 出發
             if date_str == today.strftime('%Y/%m/%d'):
                 cur_m = 30 if today.minute >= 30 else 0
-                time_str = f"{today.hour:02d}:{cur_m:02d}"
+                start_time_str = f"{today.hour:02d}:{cur_m:02d}"
             else:
-                time_str = '09:00'
-            
-    return start_s, end_s, date_str, time_str
+                start_time_str = '09:00'
+
+    return start_s, end_s, date_str, start_time_str, end_time_str
 
 def create_thsr_menu_flex():
     """高鐵差旅秘書選單導引卡片"""
@@ -2679,13 +2782,13 @@ def create_thsr_menu_flex():
                     ButtonComponent(action=URIAction(label="📱 iPhone 啟動／下載 T-EX App", uri="https://apps.apple.com/app/id468963664"), style='primary', color='#0f172a', height='sm', margin='xs'),
                     ButtonComponent(action=URIAction(label="🚄 高鐵行動差旅中心（更多指引）", uri="https://sandy-line-bot.onrender.com/open_tex"), style='secondary', height='sm', margin='xs'),
                     SeparatorComponent(margin='md'),
-                    TextComponent(text="💡 您可以隨時按住語音或直接打字說話：\n•「高鐵 台中到南港 10/2 晚上7點半」\n•「高鐵 台北到左營 明天下午2點」\n•「高鐵 台中 台北」\n支援全台 12 站，自動為您比選直達車！", size='xs', color='#888888', margin='sm', wrap=True),
+                    TextComponent(text="💡 您可以隨時按住語音或直接打字說話：\n•「高鐵 下午 5 點到 7 點 南港到左營」\n•「高鐵 台北到左營 明天下午2點」\n•「高鐵 台中 台北」\n支援全台 12 站與時段區間搜尋，自動比選直達車！", size='xs', color='#888888', margin='sm', wrap=True),
                 ])
             ])
         )
     )
 
-def create_thsr_results_flex(res, start_name, end_name, date_str, time_str):
+def create_thsr_results_flex(res, start_name, end_name, date_str, time_str, end_time_str=None):
     """高鐵班次比選結果卡片"""
     trains = res.get('trains', [])
     prices = res.get('prices', {})
@@ -2694,6 +2797,7 @@ def create_thsr_results_flex(res, start_name, end_name, date_str, time_str):
     unres_p = prices.get('unreserved', '')
     
     fare_info = f"票價：標準 {coach_p} ｜ 商務 {business_p} ｜ 自由座 {unres_p}" if coach_p else ""
+    time_desc = f"{time_str} ~ {end_time_str} 區間推薦班次" if end_time_str else f"{time_str} 前後推薦班次"
 
     rows = []
     for t in trains:
@@ -2733,7 +2837,7 @@ def create_thsr_results_flex(res, start_name, end_name, date_str, time_str):
             body=BoxComponent(layout='vertical', padding_all='none', contents=[
                 BoxComponent(layout='vertical', padding_all='lg', background_color='#ea580c', contents=[
                     TextComponent(text=f"🚄 {start_name} ➔ {end_name} ｜ 高鐵推薦班次", weight='bold', size='md', color='#ffffff'),
-                    TextComponent(text=f"搭乘日期：{date_str} ｜ {time_str} 前後班次", size='xs', color='#ffedd5', margin='xs'),
+                    TextComponent(text=f"搭乘日期：{date_str} ｜ {time_desc}", size='xs', color='#ffedd5', margin='xs'),
                 ]),
                 BoxComponent(layout='vertical', padding_all='lg', contents=body_contents)
             ])
@@ -3394,15 +3498,15 @@ def handle_message(event):
             return
 
         # ── 🚄 高鐵差旅小秘書 ──
-        if text in ["高鐵", "查高鐵", "高鐵票", "高鐵小秘書", "高鐵秘書", "高鐵時刻表"]:
+        if text in ["高鐵", "查高鐵", "高鐵票", "高鐵小秘書", "高鐵秘書", "高鐵時刻表", "高铁", "查高铁", "高铁票", "高铁小秘书", "高铁秘书", "高铁时刻表"]:
             line_bot_api.reply_message(event.reply_token, create_thsr_menu_flex())
             return
 
-        if "高鐵" in text or (any(s in text for s in THSR_STATIONS_MAP.keys()) and any(kw in text for kw in ["車次", "火車", "訂票", "時刻表"])):
-            start_s, end_s, date_str, time_str = parse_thsr_query(text)
-            res = search_thsr_schedule(start_s, end_s, date_str, time_str)
+        if any(kw in text for kw in ["高鐵", "高铁"]) or (any(s in text for s in THSR_STATIONS_MAP.keys()) and any(kw in text for kw in ["車次", "班次", "火車", "火车", "訂票", "订票", "時刻表", "时刻表", "出發", "出发", "抵達", "抵达"])):
+            start_s, end_s, date_str, time_str, end_time_str = parse_thsr_query(text)
+            res = search_thsr_schedule(start_s, end_s, date_str, time_str, end_time_str)
             if res.get('success') and res.get('trains'):
-                line_bot_api.reply_message(event.reply_token, create_thsr_results_flex(res, start_s, end_s, date_str, time_str))
+                line_bot_api.reply_message(event.reply_token, create_thsr_results_flex(res, start_s, end_s, date_str, time_str, end_time_str))
                 return
             else:
                 line_bot_api.reply_message(event.reply_token, create_thsr_menu_flex())
