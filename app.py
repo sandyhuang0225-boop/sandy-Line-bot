@@ -2675,8 +2675,9 @@ def create_thsr_menu_flex():
                     ButtonComponent(action=MessageAction(label="🚄 台北 ➔ 左營 / 高雄", text="高鐵 台北 左營"), style='secondary', height='sm'),
                     ButtonComponent(action=MessageAction(label="🚄 台中 ➔ 左營 / 高雄", text="高鐵 台中 左營"), style='secondary', height='sm'),
                     SeparatorComponent(margin='md'),
-                    ButtonComponent(action=URIAction(label="📱 一鍵開啟高鐵 T-EX 行動購票 App", uri="https://sandy-line-bot.onrender.com/open_tex"), style='primary', color='#ea580c', height='sm'),
-                    ButtonComponent(action=URIAction(label="🌐 高鐵官方網頁訂票系統 (IRS)", uri="https://irs.thsrc.com.tw/IMINT/?locale=tw"), style='secondary', height='sm', margin='xs'),
+                    ButtonComponent(action=URIAction(label="📱 開啟高鐵 T-EX App（已安裝）", uri="https://sandy-line-bot.onrender.com/open_tex"), style='primary', color='#ea580c', height='sm'),
+                    ButtonComponent(action=URIAction(label="🌐 高鐵官方即時訂票（免裝 App）", uri="https://irs.thsrc.com.tw/IMINT/?locale=tw"), style='primary', color='#0f172a', height='sm', margin='xs'),
+                    ButtonComponent(action=URIAction(label="🍎 下載 T-EX App（iPhone 專用）", uri="https://apps.apple.com/app/id468963664"), style='secondary', height='sm', margin='xs'),
                     SeparatorComponent(margin='md'),
                     TextComponent(text="💡 您可以隨時按住語音或直接打字說話：\n•「高鐵 台中到南港 10/2 晚上7點半」\n•「高鐵 台北到左營 明天下午2點」\n•「高鐵 台中 台北」\n支援全台 12 站，自動為您比選直達車！", size='xs', color='#888888', margin='sm', wrap=True),
                 ])
@@ -2721,8 +2722,9 @@ def create_thsr_results_flex(res, start_name, end_name, date_str, time_str):
         
     body_contents.extend([
         SeparatorComponent(margin='md'),
-        ButtonComponent(action=URIAction(label="📱 一鍵開啟高鐵 T-EX App 購票", uri="https://sandy-line-bot.onrender.com/open_tex"), style='primary', color='#ea580c', height='sm'),
-        ButtonComponent(action=URIAction(label="🌐 開啟高鐵官方網頁訂票 (IRS)", uri="https://irs.thsrc.com.tw/IMINT/?locale=tw"), style='secondary', height='sm', margin='sm'),
+        ButtonComponent(action=URIAction(label="📱 開啟高鐵 T-EX App 購票", uri="https://sandy-line-bot.onrender.com/open_tex"), style='primary', color='#ea580c', height='sm'),
+        ButtonComponent(action=URIAction(label="🌐 官方網頁即時訂票 (免裝 App)", uri="https://irs.thsrc.com.tw/IMINT/?locale=tw"), style='primary', color='#0f172a', height='sm', margin='sm'),
+        ButtonComponent(action=URIAction(label="🍎 下載 T-EX App (iPhone 專用)", uri="https://apps.apple.com/app/id468963664"), style='secondary', height='sm', margin='sm'),
         ButtonComponent(action=MessageAction(label="🔍 查詢其他高鐵班次", text="高鐵"), style='secondary', height='sm', margin='sm'),
     ])
 
@@ -2746,97 +2748,229 @@ def open_tex():
 <html lang="zh-TW">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>開啟高鐵 T-EX 行動購票</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>台灣高鐵行動差旅中心</title>
     <style>
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: #f8fafc;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+            background: #f1f5f9;
             color: #1e293b;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 85vh;
-            margin: 0;
-            padding: 24px;
+            min-height: 100vh;
+            padding: 20px 16px;
+        }
+        .container {
+            max-width: 420px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+        .header {
+            background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+            color: #ffffff;
+            padding: 24px 20px;
             text-align: center;
         }
-        .card {
-            background: #ffffff;
-            border-radius: 16px;
-            padding: 32px 24px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
-            max-width: 380px;
-            width: 100%;
+        .header-icon {
+            font-size: 42px;
+            margin-bottom: 6px;
         }
-        .icon {
-            font-size: 52px;
-            margin-bottom: 12px;
-        }
-        h2 {
+        .header h1 {
             font-size: 20px;
-            margin: 0 0 8px 0;
-            color: #0f172a;
+            font-weight: 800;
+            letter-spacing: 0.5px;
         }
-        p {
-            font-size: 14px;
-            color: #64748b;
-            line-height: 1.6;
-            margin: 0 0 24px 0;
+        .header p {
+            font-size: 13px;
+            color: #ffedd5;
+            margin-top: 4px;
         }
-        .btn-launch {
-            display: block;
-            width: 100%;
-            padding: 15px;
+        .content {
+            padding: 24px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .btn-main {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 16px;
             background: #ea580c;
             color: #ffffff;
+            text-decoration: none;
             font-size: 16px;
             font-weight: 700;
-            border-radius: 12px;
-            text-decoration: none;
-            box-shadow: 0 4px 12px rgba(234, 88, 12, 0.3);
-            margin-bottom: 12px;
+            border-radius: 14px;
+            box-shadow: 0 4px 14px rgba(234, 88, 12, 0.35);
+            transition: all 0.2s;
+            text-align: center;
         }
-        .btn-secondary {
-            display: block;
-            width: 100%;
-            padding: 12px;
-            background: #f1f5f9;
-            color: #475569;
-            font-size: 14px;
-            font-weight: 600;
-            border-radius: 12px;
-            text-decoration: none;
+        .btn-main:active {
+            transform: scale(0.98);
+            background: #c2410c;
         }
-        .hint {
+        .notice-box {
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+            border-radius: 12px;
+            padding: 12px 14px;
             font-size: 12px;
+            color: #9a3412;
+            line-height: 1.5;
+        }
+        .section-divider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 4px 0;
             color: #94a3b8;
-            margin-top: 24px;
-            line-height: 1.6;
+            font-size: 12px;
+        }
+        .section-divider::before, .section-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e2e8f0;
+        }
+        .download-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .btn-download {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 8px;
+            background: #f8fafc;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 12px;
+            text-decoration: none;
+            color: #0f172a;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .btn-download:active {
+            background: #e2e8f0;
+        }
+        .btn-download.highlight {
+            border-color: #0284c7;
+            background: #f0f9ff;
+        }
+        .btn-download .badge {
+            font-size: 11px;
+            font-weight: 700;
+            color: #0284c7;
+            margin-bottom: 2px;
+        }
+        .btn-download .title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .btn-web {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 13px;
+            background: #0f172a;
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 700;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .btn-web:active {
+            background: #334155;
+        }
+        .footer-tips {
+            font-size: 11px;
+            color: #94a3b8;
+            text-align: center;
+            line-height: 1.5;
+            margin-top: 6px;
         }
     </style>
 </head>
 <body>
-    <div class="card">
-        <div class="icon">🚄</div>
-        <h2>高鐵 T-EX 行動購票</h2>
-        <p>正在為您呼叫手機中的官方 App...<br>App 已儲存您的個人證號與常用行程，免重複填表！</p>
-        
-        <a href="thsrc://" id="launchBtn" class="btn-launch">📱 點此立即開啟 T-EX App</a>
-        <a href="https://irs.thsrc.com.tw/IMINT/?locale=tw" class="btn-secondary">🌐 改用電腦/網頁版訂票 (IRS)</a>
+    <div class="container">
+        <div class="header">
+            <div class="header-icon">🚄</div>
+            <h1>台灣高鐵行動差旅中心</h1>
+            <p>即時車次 ｜ 一鍵購票 ｜ 免排隊通關</p>
+        </div>
 
-        <div class="hint">
-            若手機尚未安裝 T-EX App：<br>
-            <a href="https://apps.apple.com/tw/app/id446442157" style="color: #ea580c; text-decoration: underline; font-weight: 600;">👉 iPhone 點此前去 App Store 下載</a><br>
-            <a href="https://play.google.com/store/apps/details?id=tw.com.thsrc.texpress" style="color: #64748b; text-decoration: underline;">Android 點此前去 Google Play</a>
+        <div class="content">
+            <!-- 方案一：已安裝 App -->
+            <a href="thsrc://" id="btnOpenApp" class="btn-main">
+                <span>📱 開啟高鐵 T-EX App</span>
+            </a>
+
+            <div class="notice-box">
+                💡 <b>使用說明：</b><br>
+                • 若手機<b>已安裝</b> T-EX，點擊上方按鈕即可直接開啟。<br>
+                • 若點擊後 iPhone 提示「網址無效」，代表手機尚未安裝，請點選下方對應商店免費下載！
+            </div>
+
+            <div class="section-divider">尚未安裝？免費下載官方 App</div>
+
+            <!-- 方案二：下載 App -->
+            <div class="download-group">
+                <a href="https://apps.apple.com/app/id468963664" class="btn-download" id="btnIos">
+                    <span class="badge" id="iosBadge">🍎 iPhone 專用</span>
+                    <span class="title">App Store 下載</span>
+                </a>
+                <a href="https://play.google.com/store/apps/details?id=tw.com.thsrc.texpress" class="btn-download" id="btnAndroid">
+                    <span class="badge" id="androidBadge">🤖 Android 專用</span>
+                    <span class="title">Google Play 下載</span>
+                </a>
+            </div>
+
+            <div class="section-divider">不想裝 App？免安裝直接訂票</div>
+
+            <!-- 方案三：網頁版 -->
+            <a href="https://irs.thsrc.com.tw/IMINT/?locale=tw" class="btn-web">
+                <span>🌐 高鐵官方即時網頁訂票 (IRS)</span>
+            </a>
+
+            <div class="footer-tips">
+                © 台灣高鐵官方購票服務 ｜ Sandy 總裁高鐵差旅秘書
+            </div>
         </div>
     </div>
 
     <script>
-        // 自動嘗試喚醒 App
-        window.location.href = "thsrc://";
+        // 依據使用裝置智慧突顯下載按鈕
+        (function() {
+            var ua = navigator.userAgent || '';
+            var isIOS = /iPhone|iPad|iPod/i.test(ua);
+            var isAndroid = /Android/i.test(ua);
+
+            var iosBtn = document.getElementById('btnIos');
+            var androidBtn = document.getElementById('btnAndroid');
+            var iosBadge = document.getElementById('iosBadge');
+            var androidBadge = document.getElementById('androidBadge');
+
+            if (isIOS && iosBtn) {
+                iosBtn.classList.add('highlight');
+                iosBadge.innerText = '🍎 推薦 iPhone 下載';
+            } else if (isAndroid && androidBtn) {
+                androidBtn.classList.add('highlight');
+                androidBadge.innerText = '🤖 推薦 Android 下載';
+            }
+        })();
     </script>
 </body>
 </html>
