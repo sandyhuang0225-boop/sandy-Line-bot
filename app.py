@@ -3286,8 +3286,53 @@ def handle_message(event):
                         reply_msg = "⚠️ 試算表連線維護中，請稍候再試或聯繫 Sandy 管家。"
                 except Exception as e:
                     reply_msg = f"⚠️ 綁定過程發生錯誤：{str(e)}"
+                line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_msg))
+                return
+
+            # ── 檢查是否為「LINE聯絡人」的合夥人或管理員（例如：我是謝建文）──
+            matched_contacts = []
+            sh_c = get_worksheet_safely(["LINE聯絡人", "LINE 聯絡人"])
+            if sh_c and clean_input:
+                try:
+                    c_rows = sh_c.get_all_values()
+                    for c_idx, cr in enumerate(c_rows[1:], start=2):
+                        c_name = cr[3].strip() if len(cr) > 3 else ""
+                        c_addr = cr[0].strip() if len(cr) > 0 else ""
+                        c_room = cr[2].strip() if len(cr) > 2 else ""
+                        c_role = cr[8].strip() if len(cr) > 8 else "合夥人"
+                        if (c_name and (clean_input == c_name or c_name in clean_input or clean_input in c_name)) or \
+                           (clean_input in ["謝建文", "謝介文", "建文"] and "謝" in c_name):
+                            matched_contacts.append((c_idx, c_name, c_addr, c_room, c_role))
+                except Exception as ce:
+                    print(f"比對LINE聯絡人出錯: {ce}")
+
+            if matched_contacts:
+                try:
+                    for row_num, c_name, c_addr, c_room, c_role in matched_contacts:
+                        sh_c.update_cell(row_num, 5, user_id)  # E 欄 = 第 5 欄 (LINE ID)
+                    
+                    first_item = matched_contacts[0]
+                    reply_msg = (
+                        f"🎉 歡迎 {first_item[1]} {first_item[4]}！\n"
+                        f"已成功為您更新綁定物件：{first_item[3]}（{first_item[2]}）！\n\n"
+                        f"系統已將您當前的新 LINE 帳號自動綁定完成。\n"
+                        f"您可以點選下方選單【我的帳戶】，隨時查看貸款與物業繳費狀態，謝謝！"
+                    )
+                    # 通知 Sandy 管家
+                    try:
+                        line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(
+                            text=f"📢 【合夥人/聯絡人成功綁定通知！】\n"
+                                 f"姓名：{first_item[1]}（{first_item[4]}）\n"
+                                 f"物件：{first_item[3]}（{first_item[2]}）\n"
+                                 f"LINE 暱稱：{user_name} ({user_id})\n"
+                                 f"已成功更新為最新 LINE ID 綁定！"
+                        ))
+                    except Exception as pe:
+                        print(f"推播通知失敗: {pe}")
+                except Exception as e:
+                    reply_msg = f"⚠️ 綁定過程發生錯誤：{str(e)}"
             else:
-                reply_msg = "❌ 找不到符合的房客姓名或房號。\n請確認輸入是否正確（例如輸入「我是傅瑜」或「我是A102」），或直接聯繫 Sandy 管家協助您綁定！"
+                reply_msg = "❌ 找不到符合的房客或合夥人姓名。\n請確認輸入是否正確（例如輸入「我是傅瑜」或「我是謝建文」），或直接聯繫 Sandy 管家協助您綁定！"
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_msg))
             return
 
