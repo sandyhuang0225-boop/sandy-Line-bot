@@ -1132,6 +1132,12 @@ def create_utility_receipt_flex(data, is_front=True, is_test=False):
         )
     )
 
+# ==================== 首頁健康檢查與 24/7 防休眠路由 ====================
+
+@app.route("/", methods=['GET'])
+def index():
+    return "✅ Sandy 宅安心房產管理系統運作中 (24/7 Keep-Alive Active)", 200
+
 # ==================== Webhook 路由 ====================
 
 @app.route("/callback", methods=['POST'])
