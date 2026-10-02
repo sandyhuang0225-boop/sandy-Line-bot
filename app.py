@@ -3247,14 +3247,37 @@ def handle_message(event):
 
             props = load_properties()
             matched_prop = None
+
+            # 常見語音同音異字對照表（確保語音辨識出錯仍可 100% 精準對照雲端《房客總表》正確本名）
+            name_aliases = {
+                "楊雲臻": "楊芸錚", "楊芸臻": "楊芸錚", "楊雲錚": "楊芸錚", "楊雲珍": "楊芸錚", "芸錚": "楊芸錚", "雲臻": "楊芸錚",
+                "林彩薇": "林采葳", "林采薇": "林采葳", "林彩葳": "林采葳", "林採薇": "林采葳", "采葳": "林采葳", "彩薇": "林采葳",
+                "謝建文": "謝介文", "建文": "謝介文", "介文": "謝介文",
+                "傅魚": "傅瑜", "傅于": "傅瑜", "富瑜": "傅瑜",
+                "杜依凌": "杜依陵", "杜依玲": "杜依陵", "依陵": "杜依陵",
+                "廖子勛": "廖子勛", "廖子勳": "廖子勛", "子勛": "廖子勛",
+                "李乃亙": "李乃亘", "李乃宣": "李乃亘", "乃亘": "李乃亘",
+                "汪晉宇": "汪晉宇", "汪進宇": "汪晉宇", "晉宇": "汪晉宇",
+                "陳又慈": "陳又慈", "陳幼慈": "陳又慈", "又慈": "陳又慈",
+                "林孟廷": "林孟廷", "林孟庭": "林孟廷", "孟廷": "林孟廷"
+            }
+
+            canonical_input = name_aliases.get(clean_input, clean_input)
+
             if clean_input:
                 for p in props:
-                    # 依姓名、房號、地址比對
-                    if (p['tenant'] and clean_input == p['tenant']) or \
-                       (p['room_no'] and clean_input.upper() == p['room_no'].upper()) or \
-                       (p['tenant'] and p['tenant'] in clean_input) or \
-                       (p['room_no'] and p['room_no'].upper() in clean_input.upper()) or \
-                       (len(clean_input) >= 4 and clean_input in p['addr']):
+                    t_name = p['tenant'].strip()
+                    r_no = p['room_no'].strip()
+                    # 1. 依標準本名或別名比對
+                    if t_name and (clean_input == t_name or canonical_input == t_name or t_name in clean_input or clean_input in t_name or canonical_input in t_name):
+                        matched_prop = p
+                        break
+                    # 2. 依房號比對（A101 ~ A109, B1-02, B1-03）
+                    elif r_no and (clean_input.upper() == r_no.upper() or r_no.upper() in clean_input.upper()):
+                        matched_prop = p
+                        break
+                    # 3. 依地址比對
+                    elif len(clean_input) >= 4 and clean_input in p['addr']:
                         matched_prop = p
                         break
 
