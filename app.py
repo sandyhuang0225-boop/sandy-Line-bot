@@ -870,11 +870,206 @@ def create_admin_menu_flex(rent_m, current_m, is_test):
                     ButtonComponent(action=URIAction(label="👑 總裁財務與資產月報", uri="https://sandy-line-bot.onrender.com/executive_report?key=sandy0225"), style='primary', color='#212529', height='sm'),
                     ButtonComponent(action=MessageAction(label="🚄 總裁高鐵差旅秘書", text="高鐵"), style='primary', color='#ea580c', height='sm'),
                     ButtonComponent(action=MessageAction(label="⏳ 查即將到期合約（約3個月/年底）", text="查即將到期合約"), style='secondary', height='sm'),
+                    ButtonComponent(action=MessageAction(label="🔄 2027 年度一鍵開局與歷史封存", text="2027開局確認"), style='secondary', height='sm'),
                     ButtonComponent(action=MessageAction(label="🔄 切換測試/正式模式", text="切換模式"), style='secondary', height='sm'),
                 ]),
             ])
         )
     )
+
+# ── 2027 年度開局防護確認卡片 ──
+def create_annual_rollover_confirm_flex(today):
+    is_early = (today.month < 12 or (today.month == 12 and today.day < 20))
+    date_str = today.strftime("%Y年%m月%d日")
+    
+    warning_box = []
+    if is_early:
+        warning_box = [
+            BoxComponent(
+                layout='vertical', background_color='#fef3c7', border_color='#f59e0b', border_width='1px',
+                padding_all='md', corner_radius='md', margin='md', contents=[
+                    TextComponent(text="⚠️ 貼心提醒：目前尚未到 12 月底！", size='xs', color='#b45309', weight='bold'),
+                    TextComponent(
+                        text=f"今天日期為 {date_str}，仍在 2026 年度收租週期中。通常建議於 12月25日~31日，確認 12 月款項皆已結清後再執行開局最為安全。",
+                        size='xxs', color='#92400e', margin='xs', wrap=True
+                    )
+                ]
+            )
+        ]
+        
+    return FlexSendMessage(
+        alt_text="【年度開局確認】2027 年度一鍵開局與歷史封存",
+        contents=BubbleContainer(
+            body=BoxComponent(layout='vertical', padding_all='none', contents=[
+                BoxComponent(layout='vertical', padding_all='md', background_color='#1e293b', contents=[
+                    TextComponent(text="🔄 2027 年度一鍵開局與歷史封存", weight='bold', size='md', color='#ffffff'),
+                    TextComponent(text="三重安全防護 ｜ 無損自動備份 ｜ 智慧週期重置", size='xs', color='#94a3b8', margin='xs'),
+                ]),
+                BoxComponent(layout='vertical', padding_all='lg', spacing='sm', contents=[
+                    TextComponent(text="執行開局後，系統將全自動完成：", size='xs', color='#333333', weight='bold'),
+                    TextComponent(text="1️⃣ 自動建立《2026_收租追蹤》與《2026_支出追蹤》完整封存", size='xs', color='#475569', wrap=True),
+                    TextComponent(text="2️⃣ 收租追蹤：1~12月實收清空，狀態全自動填入 ❌", size='xs', color='#475569', wrap=True),
+                    TextComponent(text="3️⃣ 大樓管理費：依雙月/半年/每月週期精準打 ❌，免繳月留白", size='xs', color='#475569', wrap=True),
+                    TextComponent(text="4️⃣ 銀行貸款：3 間扣繳物業自動標記 ❌", size='xs', color='#475569', wrap=True),
+                    *warning_box,
+                    SeparatorComponent(margin='md'),
+                    TextComponent(text="🛡️ 備有隨時一鍵還原機制，資料絕不遺失。", size='xxs', color='#64748b', align='center', margin='sm'),
+                    BoxComponent(layout='vertical', spacing='sm', margin='sm', contents=[
+                        ButtonComponent(action=MessageAction(label="🚀 確認執行 2027 開局（含自動備份）", text="執行2027開局|CONFIRM"), style='primary', color='#0284c7', height='sm'),
+                        ButtonComponent(action=MessageAction(label="❌ 取消返回", text="房東選單"), style='secondary', height='sm'),
+                    ])
+                ])
+            ])
+        )
+    )
+
+# ── 2027 年度開局成功結果卡片 ──
+def create_annual_rollover_success_flex(backup_titles):
+    titles_str = "、".join(f"《{t}》" for t in backup_titles)
+    return FlexSendMessage(
+        alt_text="🎉 2027 年度開局成功完成！",
+        contents=BubbleContainer(
+            body=BoxComponent(layout='vertical', padding_all='none', contents=[
+                BoxComponent(layout='vertical', padding_all='md', background_color='#15803d', contents=[
+                    TextComponent(text="🎉 2027 年度開局圓滿成功！", weight='bold', size='md', color='#ffffff'),
+                    TextComponent(text="新年度表單已就緒 ｜ 歷史資料已完整封存", size='xs', color='#dcfce7', margin='xs'),
+                ]),
+                BoxComponent(layout='vertical', padding_all='lg', spacing='sm', contents=[
+                    create_row("歷史封存", titles_str, color='#15803d', weight='bold'),
+                    create_row("收租狀態", "1~12月已全數重置為 ❌（未收）", color='#333333'),
+                    create_row("大樓管理費", "已依雙月/半年/每月週期精準標記", color='#333333'),
+                    create_row("銀行貸款", "已全數標記 ❌（未繳）", color='#333333'),
+                    SeparatorComponent(margin='md'),
+                    BoxComponent(
+                        layout='vertical', background_color='#f0fdf4', border_color='#86efac', border_width='1px',
+                        padding_all='md', corner_radius='md', contents=[
+                            TextComponent(text="✨ 2027 新年度正式起跑！", size='xs', color='#166534', weight='bold'),
+                            TextComponent(text="即日起即可無縫查詢 2027 各月份租金、管理費與貸款狀態，祝收租順利、財源廣進！", size='xxs', color='#15803d', margin='xs', wrap=True)
+                        ]
+                    ),
+                    SeparatorComponent(margin='md'),
+                    ButtonComponent(
+                        action=MessageAction(label="⏪ 一鍵還原回 2026 狀態（若需恢復）", text="還原2026表單|CONFIRM"),
+                        style='secondary', height='sm'
+                    )
+                ])
+            ])
+        )
+    )
+
+def execute_annual_rollover_2027():
+    """執行 2027 年度開局：先備份 2026 工作表，再以批次更新智慧重置收租追蹤與支出追蹤"""
+    try:
+        sh = get_spreadsheet()
+        if not sh:
+            return False, "無法連線至 Google 試算表", []
+
+        existing_titles = [w.title for w in sh.worksheets()]
+        backup_titles = []
+
+        # 1. 備份收租追蹤
+        sh_r = sh.worksheet("收租追蹤")
+        backup_rent_title = "2026_收租追蹤"
+        if backup_rent_title in existing_titles:
+            sh.del_worksheet(sh.worksheet(backup_rent_title))
+        sh.duplicate_sheet(sh_r.id, new_sheet_name=backup_rent_title)
+        backup_titles.append(backup_rent_title)
+
+        # 2. 備份支出追蹤
+        sh_e = sh.worksheet("支出追蹤")
+        backup_exp_title = "2026_支出追蹤"
+        if backup_exp_title in existing_titles:
+            sh.del_worksheet(sh.worksheet(backup_exp_title))
+        sh.duplicate_sheet(sh_e.id, new_sheet_name=backup_exp_title)
+        backup_titles.append(backup_exp_title)
+
+        # 3. 重置收租追蹤 (1~12月狀態填 ❌，實收金額清空)
+        # 收租追蹤欄位：Col 6 (F) ~ Col 29 (AC)，共 24 欄
+        rent_rows = sh_r.get_all_values()
+        num_rent_rows = len(rent_rows)
+        if num_rent_rows > 1:
+            rent_matrix = []
+            for r in rent_rows[1:]:
+                room = r[1].strip() if len(r) > 1 else ""
+                rent_val = clean_num(r[3]) if len(r) > 3 else 0
+                row_vals = []
+                is_active = bool(room and room != "A108" and rent_val > 0)
+                for _ in range(12):
+                    row_vals.append("❌" if is_active else "")
+                    row_vals.append("")
+                rent_matrix.append(row_vals)
+            
+            end_row = 1 + len(rent_matrix)
+            sh_r.update(f"F2:AC{end_row}", rent_matrix)
+
+        # 4. 重置支出追蹤 (依管理費頻率與貸款智慧填 ❌)
+        # 支出追蹤欄位：Col 6 (F) ~ Col 53 (BA)，共 48 欄
+        exp_rows = sh_e.get_all_values()
+        num_exp_rows = len(exp_rows)
+        if num_exp_rows > 1:
+            exp_matrix = []
+            for r in exp_rows[1:]:
+                room = r[1].strip() if len(r) > 1 else ""
+                freq = r[2].strip() if len(r) > 2 else "每月"
+                mgmt_amt = clean_num(r[3]) if len(r) > 3 else 0
+                loan_amt = clean_num(r[4]) if len(r) > 4 else 0
+                row_vals = []
+                for m in range(1, 13):
+                    # 管理費狀態
+                    if mgmt_amt <= 0 or not room:
+                        mgmt_st = ""
+                    elif freq == "雙月":
+                        mgmt_st = "❌" if m in [2, 4, 6, 8, 10, 12] else ""
+                    elif freq == "半年":
+                        mgmt_st = "❌" if m in [2, 8] else ""
+                    else:
+                        mgmt_st = "❌"
+                    row_vals.append(mgmt_st)
+                    row_vals.append("")  # 管理費支出清空
+                    
+                    # 貸款狀態
+                    loan_st = "❌" if loan_amt > 0 and room else ""
+                    row_vals.append(loan_st)
+                    row_vals.append("")  # 貸款支出清空
+                exp_matrix.append(row_vals)
+            
+            end_row_exp = 1 + len(exp_matrix)
+            sh_e.update(f"F2:BA{end_row_exp}", exp_matrix)
+
+        return True, "開局成功", backup_titles
+    except Exception as e:
+        return False, str(e), []
+
+def restore_annual_backup_2026():
+    """一鍵還原 2026 備份表單回原工作表"""
+    try:
+        sh = get_spreadsheet()
+        if not sh:
+            return False, "無法連線至 Google 試算表"
+        
+        existing_titles = [w.title for w in sh.worksheets()]
+        if "2026_收租追蹤" not in existing_titles or "2026_支出追蹤" not in existing_titles:
+            return False, "找不到 2026 備份工作表，無法執行還原。"
+        
+        # 1. 還原收租追蹤
+        sh_bak_r = sh.worksheet("2026_收租追蹤")
+        bak_r_rows = sh_bak_r.get_all_values()
+        sh_r = sh.worksheet("收租追蹤")
+        if len(bak_r_rows) > 1:
+            sh_r.clear()
+            sh_r.update("A1", bak_r_rows)
+            
+        # 2. 還原支出追蹤
+        sh_bak_e = sh.worksheet("2026_支出追蹤")
+        bak_e_rows = sh_bak_e.get_all_values()
+        sh_e = sh.worksheet("支出追蹤")
+        if len(bak_e_rows) > 1:
+            sh_e.clear()
+            sh_e.update("A1", bak_e_rows)
+            
+        return True, "還原成功"
+    except Exception as e:
+        return False, str(e)
 
 # ── 即將到期合約卡片 ──
 def create_expiring_contracts_flex(expiring_list):
@@ -3818,6 +4013,28 @@ def handle_message(event):
             TEST_MODE = not TEST_MODE
             mode_name = "🛡️ 安全測試模式（卡片只發給您自己）" if TEST_MODE else "🚀 正式上線模式（卡片會真正發給租客/管理員/合伙人）"
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"✅ 模式已切換為：\n{mode_name}"))
+            return
+
+        # ── 2027 年度開局與歷史封存 ──
+        if text in ["2027開局確認", "2027年度開局", "開局2027", "2027開局"]:
+            today = datetime.now()
+            line_bot_api.reply_message(event.reply_token, create_annual_rollover_confirm_flex(today))
+            return
+
+        if text == "執行2027開局|CONFIRM":
+            success, msg, backup_titles = execute_annual_rollover_2027()
+            if success:
+                line_bot_api.reply_message(event.reply_token, create_annual_rollover_success_flex(backup_titles))
+            else:
+                line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"⚠️ 年度開局失敗：{msg}"))
+            return
+
+        if text == "還原2026表單|CONFIRM":
+            success, msg = restore_annual_backup_2026()
+            if success:
+                line_bot_api.reply_message(event.reply_token, TextSendMessage(text="✅ 已成功將 2026 備份表單完整還原回《收租追蹤》與《支出追蹤》！所有資料毫髮無傷。"))
+            else:
+                line_bot_api.reply_message(event.reply_token, TextSendMessage(text=f"⚠️ 還原失敗：{msg}"))
             return
 
         # ── 查詢明華路水電分帳 ──
