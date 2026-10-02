@@ -3239,7 +3239,7 @@ def handle_message(event):
             return
 
         # ── 房客與合夥人自動綁定（支援姓名、語音同音異字、租屋地址路名等自然語言）──
-        if any(kw in text for kw in ["我是", "我要綁定", "身分綁定", "綁定姓名", "綁定地址", "綁定路名", "綁定"]) and not is_admin:
+        if any(kw in text for kw in ["我是", "我要綁定", "身分綁定", "綁定姓名", "綁定地址", "綁定路名", "綁定"]):
             clean_input = text
             for remove_word in ["我是", "我要綁定", "身分綁定", "綁定姓名", "綁定地址", "綁定路名", "綁定房號", "綁定", "：", ":", "房客", "您好", "你好", "已加", "加入", "的"]:
                 clean_input = clean_input.replace(remove_word, "")
@@ -3266,6 +3266,16 @@ def handle_message(event):
                             for row_num, c_name, c_addr, c_room, c_role in matched_c_rows:
                                 sh_c.update_cell(row_num, 5, user_id)  # E 欄 = 第 5 欄 (LINE ID)
                             
+                            # 同步在「房客總表」A102 備註欄註記合夥人已綁定（方便管理員查看）
+                            try:
+                                sh_t_sync = get_worksheet("房客總表")
+                                if sh_t_sync:
+                                    cur_note = sh_t_sync.cell(3, 18).value or ""
+                                    if "謝介文" not in cur_note:
+                                        sh_t_sync.update_cell(3, 18, f"{cur_note} | 合夥人:謝介文(已綁定:{user_id[:8]})")
+                            except Exception as syn_e:
+                                print(f"同步房客總表A102備註失敗: {syn_e}")
+
                             first_item = matched_c_rows[0]
                             reply_msg = (
                                 f"🎉 歡迎 {first_item[1]} {first_item[4]}！\n"
@@ -3280,7 +3290,7 @@ def handle_message(event):
                                          f"姓名：{first_item[1]}（{first_item[4]}）\n"
                                          f"物件：{first_item[2]}（{first_item[3]}）\n"
                                          f"LINE 暱稱：{user_name} ({user_id})\n"
-                                         f"已成功由舊帳號更新為最新 LINE ID！"
+                                         f"已成功更新為最新 LINE ID！"
                                 ))
                             except Exception as pe:
                                 print(f"推播通知 Sandy 失敗: {pe}")
