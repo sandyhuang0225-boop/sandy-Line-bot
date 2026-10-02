@@ -583,10 +583,10 @@ def create_guest_account_flex():
                     TextComponent(text="歡迎點選下方按鈕了解更多，或直接聯絡 Sandy 管家！", size='xs', color='#666666', margin='sm', align='center', wrap=True),
                     ButtonComponent(action=MessageAction(label="🏡 了解包租代管服務", text="包租代管"), style='primary', color='#198754', height='sm'),
                     ButtonComponent(action=MessageAction(label="🔍 我要租屋", text="我要租屋"), style='secondary', height='sm'),
-                    ButtonComponent(action=MessageAction(label="🔑 現有房客綁定房間", text="我想綁定房間"), style='secondary', height='sm'),
+                    ButtonComponent(action=MessageAction(label="🔑 現有房客身分綁定", text="我想綁定身分"), style='secondary', height='sm'),
                     ButtonComponent(action=URIAction(label="📞 直接聯絡 Sandy 管家", uri=f"tel:{MANAGER_PHONE}"), style='secondary', height='sm'),
                     SeparatorComponent(margin='md'),
-                    TextComponent(text="若您是現有房客，點擊上方【🔑 現有房客綁定房間】或輸入「我是＋姓名」即可立即開通！", size='xs', color='#888888', margin='sm', wrap=True),
+                    TextComponent(text="若您是現有房客，點擊上方【🔑 現有房客身分綁定】或輸入「我是＋姓名」或「我是＋租屋路名」即可立即開通！", size='xs', color='#888888', margin='sm', wrap=True),
                 ]),
             ])
         )
@@ -3205,7 +3205,7 @@ def handle_message(event):
         # ── 查詢自己的 LINE ID ──
         if text in ["我的ID", "查ID", "id", "ID"]:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(
-                text=f"您的 LINE User ID 是：\n{user_id}\n\n可將此 ID 提供給 Sandy 管家進行房號綁定。"
+                text=f"您的 LINE User ID 是：\n{user_id}\n\n可將此 ID 提供給 Sandy 管家進行身分綁定。"
             ))
             return
 
@@ -3225,62 +3225,212 @@ def handle_message(event):
             try:
                 sh_t.update_cell(entry['row_idx'], 22, user_id)
                 sh_t.update_cell(entry['row_idx'], 23, "Y")
-                reply_msg = f"✅ 綁定成功！\n房號：{entry['room_no']}\n未來收租確認與繳費通知將會發送給您，謝謝！"
+                reply_msg = f"✅ 綁定成功！\n承租地址：{entry['addr']}\n未來收租確認與繳費通知將會發送給您，謝謝！"
             except Exception as e:
                 reply_msg = f"⚠️ 綁定過程發生錯誤：{str(e)}"
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_msg))
             return
 
-        # ── 房客綁定指引 ──
-        if text in ["我想綁定房間", "我要綁定房間", "綁定教學", "如何綁定", "我要綁定"]:
+        # ── 房客身分綁定指引 ──
+        if text in ["我想綁定房間", "我要綁定房間", "我想綁定身分", "我要綁定身分", "綁定身分", "身分綁定", "綁定教學", "如何綁定", "我要綁定", "綁定"]:
             line_bot_api.reply_message(event.reply_token, TextSendMessage(
-                text="🔑 【現有房客快速綁定指引】\n請直接在此對話框輸入：\n「我是＋您的姓名」（例如：我是傅瑜）\n或「我是＋您的房號」（例如：我是A102）\n\n系統將自動核對房客名單為您綁定，開通個人帳務查詢與繳租收據服務，謝謝您！"
+                text="🔑 【現有房客快速身分綁定】\n房客不需要記內部房號，請直接在此對話框輸入：\n\n👉「我是＋您的姓名」（例如：我是傅瑜、我是黃蕙芬）\n👉 或「我是＋您住的地址路名」（例如：我是昌盛路房客、我是裕誠路）\n\n系統將自動比對雲端名單為您完成綁定，開通個人帳務查詢與專屬管家服務，謝謝您！"
             ))
             return
 
-        # ── 房客自動綁定（支援「我是+姓名」、「我是+房號」、「綁定+姓名/房號」等自然語言）──
-        if any(kw in text for kw in ["我是", "我要綁定", "綁定房號", "綁定姓名", "綁定地址", "綁定"]) and not is_admin:
+        # ── 房客與合夥人自動綁定（支援姓名、語音同音異字、租屋地址路名等自然語言）──
+        if any(kw in text for kw in ["我是", "我要綁定", "身分綁定", "綁定姓名", "綁定地址", "綁定路名", "綁定"]) and not is_admin:
             clean_input = text
-            for remove_word in ["我是", "我要綁定", "綁定房號", "綁定姓名", "綁定地址", "綁定", "：", ":", "房客", "您好", "你好", "已加", "加入"]:
+            for remove_word in ["我是", "我要綁定", "身分綁定", "綁定姓名", "綁定地址", "綁定路名", "綁定房號", "綁定", "：", ":", "房客", "您好", "你好", "已加", "加入", "的"]:
                 clean_input = clean_input.replace(remove_word, "")
             clean_input = clean_input.strip()
 
+            # ── 1. 優先檢查：合夥人（謝介文）新舊 LINE ID 自動綁定 ──
+            # 支援：「我是謝介文」、「我是謝建文」、「我是介文」、「我是裕誠路合夥人」等
+            is_xie_partner = any(k in text for k in ["謝介文", "謝建文", "介文", "建文"]) or ("裕誠" in text and any(k in text for k in ["合夥", "伙伴", "業主", "房東"]))
+            if is_xie_partner:
+                sh_c = get_worksheet_safely(["LINE聯絡人", "LINE 聯絡人"])
+                if sh_c:
+                    try:
+                        c_rows = sh_c.get_all_values()
+                        matched_c_rows = []
+                        for c_idx, cr in enumerate(c_rows[1:], start=2):
+                            c_name = cr[3].strip() if len(cr) > 3 else ""
+                            c_addr = cr[0].strip() if len(cr) > 0 else ""
+                            c_room = cr[2].strip() if len(cr) > 2 else ""
+                            c_role = cr[8].strip() if len(cr) > 8 else "合夥人"
+                            if "謝" in c_name:
+                                matched_c_rows.append((c_idx, c_name, c_addr, c_room, c_role))
+                        
+                        if matched_c_rows:
+                            for row_num, c_name, c_addr, c_room, c_role in matched_c_rows:
+                                sh_c.update_cell(row_num, 5, user_id)  # E 欄 = 第 5 欄 (LINE ID)
+                            
+                            first_item = matched_c_rows[0]
+                            reply_msg = (
+                                f"🎉 歡迎 {first_item[1]} {first_item[4]}！\n"
+                                f"已成功為您更新最新 LINE 帳號綁定！\n"
+                                f"📍 物件：{first_item[2]}（{first_item[3]}）\n\n"
+                                f"系統已覆蓋舊帳號並啟用新身分，您可以點選下方選單隨時查看物業繳費與貸款狀態，謝謝！"
+                            )
+                            # 通知 Sandy 管家
+                            try:
+                                line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(
+                                    text=f"📢 【合夥人更新綁定通知！】\n"
+                                         f"姓名：{first_item[1]}（{first_item[4]}）\n"
+                                         f"物件：{first_item[2]}（{first_item[3]}）\n"
+                                         f"LINE 暱稱：{user_name} ({user_id})\n"
+                                         f"已成功由舊帳號更新為最新 LINE ID！"
+                                ))
+                            except Exception as pe:
+                                print(f"推播通知 Sandy 失敗: {pe}")
+                            
+                            line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_msg))
+                            return
+                    except Exception as ce:
+                        print(f"處理合夥人綁定出錯: {ce}")
+
+            # ── 2. 房客總表智慧比對（姓名、語音同音別名、真實路名）──
             props = load_properties()
             matched_prop = None
+            disambiguate_msg = None
 
-            # 常見語音同音異字對照表（確保語音辨識出錯仍可 100% 精準對照雲端《房客總表》正確本名）
-            name_aliases = {
-                "楊雲臻": "楊芸錚", "楊芸臻": "楊芸錚", "楊雲錚": "楊芸錚", "楊雲珍": "楊芸錚", "芸錚": "楊芸錚", "雲臻": "楊芸錚",
-                "林彩薇": "林采葳", "林采薇": "林采葳", "林彩葳": "林采葳", "林採薇": "林采葳", "采葳": "林采葳", "彩薇": "林采葳",
-                "謝建文": "謝介文", "建文": "謝介文", "介文": "謝介文",
-                "傅魚": "傅瑜", "傅于": "傅瑜", "富瑜": "傅瑜",
-                "杜依凌": "杜依陵", "杜依玲": "杜依陵", "依陵": "杜依陵",
-                "廖子勛": "廖子勛", "廖子勳": "廖子勛", "子勛": "廖子勛",
-                "李乃亙": "李乃亘", "李乃宣": "李乃亘", "乃亘": "李乃亘",
-                "汪晉宇": "汪晉宇", "汪進宇": "汪晉宇", "晉宇": "汪晉宇",
-                "陳又慈": "陳又慈", "陳幼慈": "陳又慈", "又慈": "陳又慈",
-                "林孟廷": "林孟廷", "林孟庭": "林孟廷", "孟廷": "林孟廷"
+            # 建立房客同音異字與語音別名庫（以雲端《房客總表》正式登記姓名為準）
+            alias_map = {
+                # 房客總表本名: [可能出現的語音轉文字同音異字、稱呼]
+                "楊芸錚": ["楊芸錚", "楊雲臻", "楊芸臻", "楊雲錚", "楊雲珍", "楊雲真", "楊芸真", "芸錚", "雲臻", "雲珍", "雲真", "楊小姐"],
+                "林采葳": ["林采葳", "林彩薇", "林采薇", "林彩葳", "林採薇", "林采微", "采葳", "彩薇", "採薇", "采微", "林小姐"],
+                "傅瑜":   ["傅瑜", "傅魚", "傅于", "富瑜", "傅小姐"],
+                "杜依陵": ["杜依陵", "杜依凌", "杜依玲", "依陵", "依凌", "依玲", "杜小姐"],
+                "廖子勛": ["廖子勛", "廖子勳", "子勛", "子勳", "廖先生"],
+                "李乃亘": ["李乃亘", "李乃亙", "李乃宣", "乃亘", "乃亙", "李先生"],
+                "汪晉宇": ["汪晉宇", "汪進宇", "晉宇", "進宇", "汪先生"],
+                "黃蕙芬": ["黃蕙芬", "黃惠芬", "黃會芬", "蕙芬", "惠芬", "黃小姐"],
+                "陳又慈": ["陳又慈", "陳幼慈", "又慈", "幼慈", "陳小姐"],
+                "林孟廷": ["林孟廷", "林孟庭", "孟廷", "孟庭", "林先生"],
+                "周大哥": ["周大哥", "老周", "周先生", "周大俠"]
             }
 
-            canonical_input = name_aliases.get(clean_input, clean_input)
+            # 步驟 A：先掃描姓名與同音字別名
+            for canonical_name, aliases in alias_map.items():
+                if any(alias in text for alias in aliases):
+                    for p in props:
+                        if p['tenant'].strip() == canonical_name:
+                            matched_prop = p
+                            break
+                    if matched_prop:
+                        break
 
-            if clean_input:
+            # 步驟 B：若姓名未中，進行「真實住址路名」與「樓層戶別」解析
+            if not matched_prop:
+                has_chang_sheng = ("昌盛" in text)
+                has_yu_cheng    = ("裕誠" in text)
+                has_ming_hua    = ("明華" in text)
+                has_nan_ping    = ("南屏" in text)
+                has_fu_de       = ("福德" in text)
+                has_wen_xin     = ("文信" in text)
+                has_wen_cheng   = ("文成" in text)
+                has_zhuang_jing = ("莊敬" in text)
+
+                # 1. 唯一路名直接鎖定（房客只報路名也能綁定）
+                if has_chang_sheng:
+                    for p in props:
+                        if "昌盛" in p['addr']:
+                            matched_prop = p
+                            break
+                elif has_yu_cheng:
+                    for p in props:
+                        if "裕誠" in p['addr']:
+                            matched_prop = p
+                            break
+                elif has_ming_hua:
+                    for p in props:
+                        if "明華" in p['addr']:
+                            matched_prop = p
+                            break
+                elif has_nan_ping:
+                    for p in props:
+                        if "南屏" in p['addr']:
+                            matched_prop = p
+                            break
+                elif has_fu_de:
+                    for p in props:
+                        if "福德" in p['addr']:
+                            matched_prop = p
+                            break
+
+                # 2. 多戶路名：進一步檢查樓層或戶別
+                elif has_wen_xin:
+                    if any(k in text for k in ["3樓", "3f", "3F", "3", "三樓", "廖"]):
+                        for p in props:
+                            if "文信" in p['addr'] and "3" in p['addr']:
+                                matched_prop = p
+                                break
+                    elif any(k in text for k in ["11樓", "11f", "11F", "11", "十一樓", "李"]):
+                        for p in props:
+                            if "文信" in p['addr'] and "11" in p['addr']:
+                                matched_prop = p
+                                break
+                    else:
+                        disambiguate_msg = (
+                            "📍 您好！高雄鼓山【文信路】有兩處物件：\n"
+                            "👉 若您承租 3樓，請輸入：我是文信路3樓（或 我是廖子勛）\n"
+                            "👉 若您承租 11樓，請輸入：我是文信路11樓（或 我是李乃亘）\n"
+                            "系統將立即為您完成專屬綁定！"
+                        )
+
+                elif has_wen_cheng:
+                    if any(k in text for k in ["11樓", "11", "杜"]):
+                        for p in props:
+                            if "文成" in p['addr'] and ("11" in p['addr'] or p['tenant'] == "杜依陵"):
+                                matched_prop = p
+                                break
+                    elif any(k in text for k in ["陳", "又慈"]):
+                        for p in props:
+                            if "文成" in p['addr'] and p['tenant'] == "陳又慈":
+                                matched_prop = p
+                                break
+                    else:
+                        disambiguate_msg = (
+                            "📍 您好！台南北區【文成二路】有兩處租約：\n"
+                            "👉 若您承租 11樓，請輸入：我是文成二路11樓（或 我是杜依陵）\n"
+                            "👉 若您是 陳小姐，請輸入：我是陳又慈\n"
+                            "系統將立即為您完成專屬綁定！"
+                        )
+
+                elif has_zhuang_jing:
+                    if any(k in text for k in ["13樓", "13", "黃", "蕙芬"]):
+                        for p in props:
+                            if "莊敬" in p['addr'] and p['tenant'] == "黃蕙芬":
+                                matched_prop = p
+                                break
+                    elif any(k in text for k in ["車位", "停車", "車", "周"]):
+                        for p in props:
+                            if "莊敬" in p['addr'] and p['tenant'] == "周大哥":
+                                matched_prop = p
+                                break
+                    else:
+                        disambiguate_msg = (
+                            "📍 您好！新北汐止【莊敬街】包含套房與車位：\n"
+                            "👉 若您承租 13樓住宅，請輸入：我是莊敬街13樓（或 我是黃蕙芬）\n"
+                            "👉 若您承租 車位，請輸入：我是莊敬街車位（或 我是周大哥）\n"
+                            "系統將立即為您完成專屬綁定！"
+                        )
+
+            # 步驟 C：向下相容（若有輸入內部房號如 A101 ~ A109）
+            if not matched_prop and not disambiguate_msg and clean_input:
                 for p in props:
-                    t_name = p['tenant'].strip()
                     r_no = p['room_no'].strip()
-                    # 1. 依標準本名或別名比對
-                    if t_name and (clean_input == t_name or canonical_input == t_name or t_name in clean_input or clean_input in t_name or canonical_input in t_name):
-                        matched_prop = p
-                        break
-                    # 2. 依房號比對（A101 ~ A109, B1-02, B1-03）
-                    elif r_no and (clean_input.upper() == r_no.upper() or r_no.upper() in clean_input.upper()):
-                        matched_prop = p
-                        break
-                    # 3. 依地址比對
-                    elif len(clean_input) >= 4 and clean_input in p['addr']:
+                    if r_no and (clean_input.upper() == r_no.upper() or r_no.upper() in clean_input.upper()):
                         matched_prop = p
                         break
 
+            # ── 處理歧義提示 ──
+            if disambiguate_msg:
+                line_bot_api.reply_message(event.reply_token, TextSendMessage(text=disambiguate_msg))
+                return
+
+            # ── 執行房客總表綁定 ──
             if matched_prop:
                 try:
                     sh_t = get_worksheet("房客總表")
@@ -3289,7 +3439,8 @@ def handle_message(event):
                         sh_t.update_cell(matched_prop['row_idx'], 23, "Y")
                         reply_msg = (
                             f"🎉 歡迎 {matched_prop['tenant']} 您好！\n"
-                            f"已成功為您綁定物件：{matched_prop['room_no']}（{matched_prop['addr']}）！\n\n"
+                            f"已成功為您完成租屋身分綁定！\n"
+                            f"📍 承租地址：{matched_prop['addr']}\n\n"
                             f"未來每月的繳租收據、個人帳務查詢與修繕服務都將在此為您提供。\n"
                             f"您可以點選下方選單【租金與帳務】查看您的個人帳戶資訊，謝謝！"
                         )
@@ -3297,11 +3448,11 @@ def handle_message(event):
                         try:
                             line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(
                                 text=f"📢 【房客成功綁定通知！】\n"
-                                     f"房客：{matched_prop['tenant']}\n"
-                                     f"房號：{matched_prop['room_no']}\n"
-                                     f"地址：{matched_prop['addr']}\n"
+                                     f"房客姓名：{matched_prop['tenant']}\n"
+                                     f"內部房號：{matched_prop['room_no']}\n"
+                                     f"承租地址：{matched_prop['addr']}\n"
                                      f"LINE 暱稱：{user_name} ({user_id})\n"
-                                     f"已成功完成官方帳號綁定！"
+                                     f"已成功完成官方帳號身分綁定！"
                             ))
                         except Exception as pe:
                             print(f"推播綁定通知給 Sandy 失敗: {pe}")
@@ -3312,50 +3463,14 @@ def handle_message(event):
                 line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_msg))
                 return
 
-            # ── 檢查是否為「LINE聯絡人」的合夥人或管理員（例如：我是謝建文）──
-            matched_contacts = []
-            sh_c = get_worksheet_safely(["LINE聯絡人", "LINE 聯絡人"])
-            if sh_c and clean_input:
-                try:
-                    c_rows = sh_c.get_all_values()
-                    for c_idx, cr in enumerate(c_rows[1:], start=2):
-                        c_name = cr[3].strip() if len(cr) > 3 else ""
-                        c_addr = cr[0].strip() if len(cr) > 0 else ""
-                        c_room = cr[2].strip() if len(cr) > 2 else ""
-                        c_role = cr[8].strip() if len(cr) > 8 else "合夥人"
-                        if (c_name and (clean_input == c_name or c_name in clean_input or clean_input in c_name)) or \
-                           (clean_input in ["謝介文", "謝建文", "介文", "建文"] and "謝" in c_name):
-                            matched_contacts.append((c_idx, c_name, c_addr, c_room, c_role))
-                except Exception as ce:
-                    print(f"比對LINE聯絡人出錯: {ce}")
-
-            if matched_contacts:
-                try:
-                    for row_num, c_name, c_addr, c_room, c_role in matched_contacts:
-                        sh_c.update_cell(row_num, 5, user_id)  # E 欄 = 第 5 欄 (LINE ID)
-                    
-                    first_item = matched_contacts[0]
-                    reply_msg = (
-                        f"🎉 歡迎 {first_item[1]} {first_item[4]}！\n"
-                        f"已成功為您更新綁定物件：{first_item[3]}（{first_item[2]}）！\n\n"
-                        f"系統已將您當前的新 LINE 帳號自動綁定完成。\n"
-                        f"您可以點選下方選單【我的帳戶】，隨時查看貸款與物業繳費狀態，謝謝！"
-                    )
-                    # 通知 Sandy 管家
-                    try:
-                        line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(
-                            text=f"📢 【合夥人/聯絡人成功綁定通知！】\n"
-                                 f"姓名：{first_item[1]}（{first_item[4]}）\n"
-                                 f"物件：{first_item[3]}（{first_item[2]}）\n"
-                                 f"LINE 暱稱：{user_name} ({user_id})\n"
-                                 f"已成功更新為最新 LINE ID 綁定！"
-                        ))
-                    except Exception as pe:
-                        print(f"推播通知失敗: {pe}")
-                except Exception as e:
-                    reply_msg = f"⚠️ 綁定過程發生錯誤：{str(e)}"
-            else:
-                reply_msg = "❌ 找不到符合的房客或合夥人姓名。\n請確認輸入是否正確（例如輸入「我是傅瑜」或「我是謝介文」），或直接聯繫 Sandy 管家協助您綁定！"
+            # 若比對均未符合
+            reply_msg = (
+                "❌ 找不到符合的房客或合夥人資訊。\n"
+                "請確認輸入格式，例如：\n"
+                "👉「我是＋姓名」（例如：我是傅瑜、我是楊雲臻）\n"
+                "👉「我是＋路名」（例如：我是昌盛路、我是裕誠路）\n\n"
+                "或請直接聯繫 Sandy 管家協助您完成綁定！"
+            )
             line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_msg))
             return
 
