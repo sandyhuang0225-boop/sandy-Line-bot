@@ -257,9 +257,15 @@ def get_rent_for_month(prop, month_str):
     # 2. B1-03 車位（周大哥）
     if 'B1-03' in room or '周大哥' in tenant:
         amt = 5400
-        quarter_map = {1: "Q1（1~3月）", 4: "Q2（4~6月）", 7: "Q3（7~9月）", 10: "Q4（10~12月）"}
-        q_name = quarter_map.get(m, f"{m}月起一季")
-        return amt, "5,400", f"每季繳納（含 {q_name} 3個月）", 0
+        if m in [1, 2, 3]:
+            q_name = "Q1（1~3月）"
+        elif m in [4, 5, 6]:
+            q_name = "Q2（4~6月）"
+        elif m in [7, 8, 9]:
+            q_name = "Q3（7~9月）"
+        else:
+            q_name = "Q4（10~12月）"
+        return amt, "5,400", f"每季繳納（含 {q_name} 3個月，每月1,800元）", 0
 
     # 3. 其他一般物件
     amt = prop.get('total_rent', 0)
@@ -2348,6 +2354,11 @@ def get_executive_report_data(target_month=None):
             room = r[1].strip() if len(r) > 1 else ""
             tenant = r[2].strip() if len(r) > 2 else ""
             base_rent = clean_num(r[3]) if len(r) > 3 else 0
+            if 'B1-03' in room or '周大哥' in tenant:
+                base_rent = 1800  # 車位周大哥每季 5,400 元，每月平均實收 1,800 元
+            elif 'A102' in room or '傅瑜' in tenant:
+                base_rent = 29931 if m % 2 == 0 else 28000
+
             st_idx = status_col_idx - 1
             a_idx = amt_col_idx - 1
             st = r[st_idx].strip() if len(r) > st_idx else ""
@@ -4094,19 +4105,24 @@ def handle_message(event):
                 rent_rows = sh_r.get_all_values()
                 for idx, r in enumerate(rent_rows[1:], start=2):
                     if len(r) > 1 and r[1].strip() == target_room:
-                        sh_r.update_cell(idx, status_col_idx, "✔")
-                        # 若為周大哥季繳（1、4、7、10月），每個月帶入 1,800 元，將該季 3 個月份一併標記已收
+                        # 若為周大哥季繳（B1-03），每季 5,400 元，攤提至每月 1,800 元
+                        # 不論從該季度的哪一個月份觸發，全季 3 個月份的狀態一律標記 ✔，實收金額一律寫入 1800
                         if ('B1-03' in target_room or '周大哥' in (r[2] if len(r)>2 else '')):
-                            sh_r.update_cell(idx, amount_col_idx, 1800)
-                            if target_m in ['1', '4', '7', '10']:
-                                q_start = int(target_m)
-                                for offset in [1, 2]:
-                                    qm = q_start + offset
-                                    if qm <= 12:
-                                        q_stat_col, q_amt_col = get_rent_sheet_columns(str(qm))
-                                        sh_r.update_cell(idx, q_stat_col, "✔")
-                                        sh_r.update_cell(idx, q_amt_col, 1800)
+                            m_int = int(target_m) if target_m.isdigit() else 10
+                            if m_int in [1, 2, 3]:
+                                q_months = [1, 2, 3]
+                            elif m_int in [4, 5, 6]:
+                                q_months = [4, 5, 6]
+                            elif m_int in [7, 8, 9]:
+                                q_months = [7, 8, 9]
+                            else:
+                                q_months = [10, 11, 12]
+                            for qm in q_months:
+                                q_stat_col, q_amt_col = get_rent_sheet_columns(str(qm))
+                                sh_r.update_cell(idx, q_stat_col, "✔")
+                                sh_r.update_cell(idx, q_amt_col, 1800)
                         else:
+                            sh_r.update_cell(idx, status_col_idx, "✔")
                             if amt > 0:
                                 sh_r.update_cell(idx, amount_col_idx, amt)
                         break
@@ -4128,10 +4144,18 @@ def handle_message(event):
                     push_info = "（🧪 測試模式，已傳至您手機）" if TEST_MODE else (
                         f"（已發送收據給 {prop['tenant']}）" if prop['line_id'] else "（房客未綁定LINE，已發給您留存）"
                     )
-                    extra_note = f"\n備註：{note_str}" if note_str else ""
-                    line_bot_api.reply_message(event.reply_token, TextSendMessage(
-                        text=f"✅ {target_room}（{prop['tenant']}）{target_m}月租金已標記繳清！\n金額：{amt_str} 元{extra_note}\n{push_info}"
-                    ))
+                    if ('B1-03' in target_room or '周大哥' in prop.get('tenant', '')):
+                        m_int = int(target_m) if target_m.isdigit() else 10
+                        q_name = "Q1（1~3月）" if m_int in [1, 2, 3] else "Q2（4~6月）" if m_int in [4, 5, 6] else "Q3（7~9月）" if m_int in [7, 8, 9] else "Q4（10~12月）"
+                        reply_msg = (
+                            f"✅ {target_room}（{prop['tenant']}）{q_name} 車位租金已標記繳清！\n"
+                            f"季繳總額：5,400 元\n"
+                            f"（每月實收 1,800 元已全數自動寫入試算表 3 個月份）\n{push_info}"
+                        )
+                    else:
+                        extra_note = f"\n備註：{note_str}" if note_str else ""
+                        reply_msg = f"✅ {target_room}（{prop['tenant']}）{target_m}月租金已標記繳清！\n金額：{amt_str} 元{extra_note}\n{push_info}"
+                    line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_msg))
                 else:
                     line_bot_api.reply_message(event.reply_token, TextSendMessage(
                         text=f"✅ {target_room} {target_m}月租金已標記繳清！"
