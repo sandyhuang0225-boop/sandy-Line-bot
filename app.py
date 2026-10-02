@@ -724,6 +724,124 @@ def create_loan_paid_flex(addr, room_no, line_name, month_str, amount, last5, pa
         )
     )
 
+# ── 【新增】裕誠路 A102 合夥人月結算清單輪播卡片 ──
+def create_yucheng_settlement_carousel(is_test=False):
+    # 卡片 1: 9月份結算（奇數月，純租金期，免扣管理費）
+    header1 = [
+        TextComponent(text="🤝 裕誠路 A102 ｜ 9月合夥人結算", weight='bold', size='md', color='#ffffff'),
+        TextComponent(text="奇數月（純租金期 ｜ 免扣大樓管理費）", size='xs', color='#e0f2fe', margin='xs'),
+    ]
+    if is_test:
+        header1.append(TextComponent(text="🧪 測試模式（通知僅發至自己手機）", size='xxs', color='#ffeb3b', margin='xs'))
+
+    bubble1 = BubbleContainer(
+        body=BoxComponent(layout='vertical', padding_all='none', contents=[
+            BoxComponent(layout='vertical', padding_all='md', background_color='#0284c7', contents=header1),
+            BoxComponent(layout='vertical', padding_all='lg', spacing='sm', contents=[
+                create_row("物業地址", "鼓山區裕誠路1065號7樓", color='#111111', weight='bold'),
+                create_row("合夥夥伴", "謝介文", color='#0284c7', weight='bold'),
+                create_row("結算月份", "2026年 9月 (奇數月)"),
+                SeparatorComponent(margin='sm'),
+                create_row("房客實繳租金", "+28,000 元", color='#16a34a', weight='bold'),
+                create_row("大樓管理費", "0 元 (雙月繳，本月無)", color='#64748b'),
+                create_row("銀行扣繳房貸", "-26,778 元 (謝介文帳戶扣繳)", color='#dc2626'),
+                create_row("盈餘平攤與手續費", "+1,167 元 (含二人分潤+手續費折抵)", color='#475569'),
+                SeparatorComponent(margin='md'),
+                BoxComponent(
+                    layout='vertical', background_color='#f0fdf4', border_color='#86efac', border_width='1px',
+                    padding_all='md', corner_radius='md', contents=[
+                        TextComponent(text="💵 Sandy 9月應匯給謝介文金額：", size='xs', color='#166534', weight='bold'),
+                        TextComponent(text="$27,389 元", size='xl', color='#15803d', weight='bold', margin='xs'),
+                        TextComponent(text="（含房貸扣繳款與二人盈餘平分）", size='xxs', color='#64748b', margin='xs')
+                    ]
+                ),
+                SeparatorComponent(margin='md'),
+                ButtonComponent(
+                    action=MessageAction(label="📲 標記已匯 9月 $27,389 並發通知", text="匯款謝介文|9|27389"),
+                    style='primary', color='#0284c7', height='sm'
+                ),
+            ])
+        ])
+    )
+
+    # 卡片 2: 10月份結算（偶數月，雙月大樓管理費期）
+    header2 = [
+        TextComponent(text="🤝 裕誠路 A102 ｜ 10月合夥人結算", weight='bold', size='md', color='#ffffff'),
+        TextComponent(text="偶數月（大樓管委會收雙月管理費期）", size='xs', color='#ffedd5', margin='xs'),
+    ]
+    if is_test:
+        header2.append(TextComponent(text="🧪 測試模式（通知僅發至自己手機）", size='xxs', color='#ffeb3b', margin='xs'))
+
+    bubble2 = BubbleContainer(
+        body=BoxComponent(layout='vertical', padding_all='none', contents=[
+            BoxComponent(layout='vertical', padding_all='md', background_color='#ea580c', contents=header2),
+            BoxComponent(layout='vertical', padding_all='lg', spacing='sm', contents=[
+                create_row("物業地址", "鼓山區裕誠路1065號7樓", color='#111111', weight='bold'),
+                create_row("合夥夥伴", "謝介文", color='#ea580c', weight='bold'),
+                create_row("結算月份", "2026年 10月 (偶數月)"),
+                SeparatorComponent(margin='sm'),
+                create_row("房客實繳租金", "+29,931 元 (含營業用補貼 $1,931)", color='#16a34a', weight='bold'),
+                create_row("大樓管委會費", "-7,726 元 (雙月總額，Sandy月底代繳)", color='#dc2626', weight='bold'),
+                create_row("銀行扣繳房貸", "-26,778 元 (謝介文帳戶扣繳)", color='#dc2626'),
+                create_row("管委會分攤折抵", "-2,943 元 (管理費差額切半+轉帳費折抵)", color='#64748b'),
+                SeparatorComponent(margin='md'),
+                BoxComponent(
+                    layout='vertical', background_color='#fff7ed', border_color='#fed7aa', border_width='1px',
+                    padding_all='md', corner_radius='md', contents=[
+                        TextComponent(text="💵 Sandy 10月應匯給謝介文金額：", size='xs', color='#9a3412', weight='bold'),
+                        TextComponent(text="$24,446 元", size='xl', color='#c2410c', weight='bold', margin='xs'),
+                        TextComponent(text="（已扣除大樓管理費二人平攤與匯費）", size='xxs', color='#64748b', margin='xs')
+                    ]
+                ),
+                SeparatorComponent(margin='md'),
+                ButtonComponent(
+                    action=MessageAction(label="📲 標記已匯 10月 $24,446 並發通知", text="匯款謝介文|10|24446"),
+                    style='primary', color='#ea580c', height='sm'
+                ),
+            ])
+        ])
+    )
+
+    return FlexSendMessage(
+        alt_text="【合夥結算】裕誠路 A102 合夥人月結算清單 (9月/10月)",
+        contents={"type": "carousel", "contents": [bubble1.as_json_dict(), bubble2.as_json_dict()]}
+    )
+
+# ── 【新增】發送給合夥人謝介文的對帳通知小卡 ──
+def create_yucheng_partner_notice_flex(month_str, amount_str, is_test=False):
+    header = [
+        TextComponent(text="✅ 裕誠路 A102 ｜ 合夥款已匯出通知", weight='bold', size='md', color='#ffffff'),
+        TextComponent(text=f"{month_str} 月份房貸分攤款項已匯入您的帳戶", size='xs', color='#e0f2fe', margin='xs'),
+    ]
+    if is_test:
+        header.append(TextComponent(text="🧪 測試模式（發送模擬）", size='xxs', color='#ffeb3b', margin='xs'))
+
+    m = int(month_str) if str(month_str).isdigit() else 9
+    if m % 2 == 1:
+        note_detail = "📌 本月為奇數月（純租金期），款項已包含房貸扣繳款與二人平攤盈餘，請留意帳戶扣款，謝謝！"
+    else:
+        note_detail = "📌 本月為偶數月，款項已扣除大樓營業用雙月管理費之二人平攤款項；大樓管理費 $7,726 已由 Sandy 代繳完畢，謝謝！"
+
+    return FlexSendMessage(
+        alt_text=f"【合夥對帳】裕誠路 A102 {month_str}月份合夥款 ${amount_str} 已匯出",
+        contents=BubbleContainer(
+            body=BoxComponent(layout='vertical', padding_all='none', contents=[
+                BoxComponent(layout='vertical', padding_all='md', background_color='#0284c7', contents=header),
+                BoxComponent(layout='vertical', padding_all='lg', spacing='sm', contents=[
+                    create_row("物業地址", "鼓山區裕誠路1065號7樓 (A102)", color='#111111', weight='bold'),
+                    create_row("結算月份", f"2026年 {month_str} 月"),
+                    create_row("匯款人", "黃蕙芬 (Sandy)", color='#333333', weight='bold'),
+                    create_row("匯出金額", f"${amount_str} 元", color='#0284c7', weight='bold'),
+                    create_row("用途說明", "個人帳戶扣繳房貸及合夥分攤", color='#475569'),
+                    SeparatorComponent(margin='md'),
+                    TextComponent(text=note_detail, size='xs', color='#64748b', wrap=True),
+                    SeparatorComponent(margin='md'),
+                    TextComponent(text="款項已順利匯至您的銀行帳戶，祝合夥愉快！", size='xxs', color='#94a3b8', align='center', margin='sm'),
+                ])
+            ])
+        )
+    )
+
 # ── Sandy 專屬房東管理選單 Flex 卡片 ──
 def create_admin_menu_flex(rent_m, current_m, is_test):
     mode_desc = "🛡️ 安全測試模式（卡片只發給自己）" if is_test else "🚀 正式上線模式（卡片發給租客/關係人）"
@@ -738,6 +856,7 @@ def create_admin_menu_flex(rent_m, current_m, is_test):
                 ]),
                 BoxComponent(layout='vertical', padding_all='lg', spacing='sm', contents=[
                     TextComponent(text="請選擇欲執行的管理功能：", size='xs', color='#666666'),
+                    ButtonComponent(action=MessageAction(label="🤝 裕誠路合夥人月結算清單", text="裕誠路結算"), style='primary', color='#0284c7', height='sm'),
                     ButtonComponent(action=MessageAction(label=f"💰 查詢 {rent_m}月租金未繳", text=f"查 {rent_m}月租金"), style='primary', color='#0d6efd', height='sm'),
                     ButtonComponent(action=MessageAction(label=f"🏢 查詢 {current_m}月管理費", text=f"查 {current_m}月管理費"), style='primary', color='#198754', height='sm'),
                     ButtonComponent(action=MessageAction(label=f"🏦 查詢 {current_m}月貸款", text=f"查 {current_m}月貸款"), style='primary', color='#6f42c1', height='sm'),
@@ -3856,6 +3975,64 @@ def handle_message(event):
                     text=f"✅ {target_m}月貸款已標記繳清！\n物件：{target_addr}\n金額：{amount_val} 元\n{push_info}"
                 ))
             return
+        # ── 3b. 【新增】裕誠路合夥人月結算清單查詢 ──
+        if any(kw in text for kw in ["裕誠路結算", "合夥人結算", "謝介文結算", "裕誠結算", "合夥結算", "合夥人月結算"]):
+            line_bot_api.reply_message(event.reply_token, create_yucheng_settlement_carousel(TEST_MODE))
+            return
+
+        # ── 3c. 【新增】匯款給謝介文確認並推播通知 ──
+        if text.startswith("匯款謝介文|") or text.startswith("匯款合夥人|"):
+            parts = text.split("|")
+            if len(parts) >= 2:
+                target_m = parts[1].strip()
+                amt_str = parts[2].strip() if len(parts) >= 3 else ("27389" if (int(target_m) if target_m.isdigit() else 9) % 2 == 1 else "24446")
+                clean_amt = clean_num(amt_str)
+
+                # 更新《支出追蹤》A102 裕誠路的貸款欄位為已繳
+                status_col_idx, amount_col_idx = get_expense_sheet_columns(target_m, "貸款")
+                sh_e = get_worksheet("支出追蹤")
+                if sh_e:
+                    try:
+                        exp_rows = sh_e.get_all_values()
+                        for idx, r in enumerate(exp_rows[1:], start=2):
+                            if len(r) > 0 and ("裕誠" in r[0] or "A102" in (r[1] if len(r)>1 else "")):
+                                sh_e.update_cell(idx, status_col_idx, "✔")
+                                if clean_amt > 0:
+                                    sh_e.update_cell(idx, amount_col_idx, clean_amt)
+                                break
+                    except Exception as e_sheet:
+                        print(f"更新裕誠路貸款支出追蹤失敗: {e_sheet}")
+
+                # 取得謝介文 LINE ID
+                partner_id = "Ub8322e921e932181db2c943fb1883ede"
+                contacts = load_contacts()
+                for c in contacts:
+                    if "謝" in c['line_name'] and c['line_id']:
+                        partner_id = c['line_id']
+                        break
+
+                target_send_id = MY_LINE_USER_ID if TEST_MODE else partner_id
+                card = create_yucheng_partner_notice_flex(target_m, f"{clean_amt:,}", is_test=TEST_MODE)
+                sent_ok = False
+                try:
+                    line_bot_api.push_message(target_send_id, card)
+                    sent_ok = True
+                except Exception as e_push:
+                    print(f"推播合夥款通知給謝介文失敗: {e_push}")
+
+                push_msg = "（🧪 測試模式，通知已傳至您手機）" if TEST_MODE else (
+                    f"（已發送對帳通知至謝介文 LINE）" if sent_ok else "（推播通知失敗，請確認謝介文LINE狀態）"
+                )
+
+                line_bot_api.reply_message(event.reply_token, TextSendMessage(
+                    text=f"✅ 裕誠路 A102 【{target_m}月份合夥款】已標記匯出！\n"
+                         f"• 結算月份：{target_m} 月\n"
+                         f"• 匯款金額：${clean_amt:,} 元\n"
+                         f"• 合夥對象：謝介文\n"
+                         f"{push_msg}\n\n"
+                         f"雲端試算表《支出追蹤》已同步更新為「✔ 已繳」！"
+                ))
+                return
 
         # ── 4. 查詢管理費或貸款（XX 或 ❌ 邏輯 + 發通知按鈕）──
         if "管理費" in text or "貸款" in text:
