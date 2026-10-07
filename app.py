@@ -3396,6 +3396,8 @@ def perform_auto_check_and_push():
         prop_map  = {p['room_no']: p for p in props}
 
         overdue_list = []
+        paid_list    = []
+        pending_list = []
         pushed_count = 0
 
         if rent_rows and len(rent_rows) > 1:
@@ -3408,45 +3410,58 @@ def perform_auto_check_and_push():
                 # 若繳租日超過當月最後一天（如31號在9月），以當月最後一天為有效截止日
                 last_day = calendar.monthrange(today.year, today.month)[1]
                 effective_due = min(prop['due_day'], last_day)
-                if current_day > effective_due:
-                    cell_idx    = status_col_idx - 1
-                    cell_status = row[cell_idx].strip() if len(row) > cell_idx else ""
-                    if not is_paid(cell_status):
-                        amt, amt_str, note_str, _ = get_rent_for_month(prop, check_month)
-                        overdue_list.append({'prop': prop, 'amt_str': amt_str, 'note_str': note_str})
-                        target_id = MY_LINE_USER_ID if TEST_MODE else (
-                            prop['line_id'] if prop['line_id'] else MY_LINE_USER_ID
-                        )
-                        card = create_reminder_flex(
-                            room_no=prop['room_no'], addr=prop['addr'],
-                            tenant=prop['tenant'],   month_str=check_month,
-                            amount_str=amt_str,      due_day=prop['due_day'],
-                            is_test=TEST_MODE,       note=note_str
-                        )
-                        try:
-                            line_bot_api.push_message(target_id, card)
-                            pushed_count += 1
-                        except Exception as pe:
-                            print(f"推播催繳失敗 {prop['room_no']}: {pe}")
+
+                cell_idx    = status_col_idx - 1
+                cell_status = row[cell_idx].strip() if len(row) > cell_idx else ""
+
+                if is_paid(cell_status):
+                    paid_list.append(prop)
+                elif current_day > effective_due:
+                    amt, amt_str, note_str, _ = get_rent_for_month(prop, check_month)
+                    overdue_list.append({'prop': prop, 'amt_str': amt_str, 'note_str': note_str})
+                    target_id = MY_LINE_USER_ID if TEST_MODE else (
+                        prop['line_id'] if prop['line_id'] else MY_LINE_USER_ID
+                    )
+                    card = create_reminder_flex(
+                        room_no=prop['room_no'], addr=prop['addr'],
+                        tenant=prop['tenant'],   month_str=check_month,
+                        amount_str=amt_str,      due_day=prop['due_day'],
+                        is_test=TEST_MODE,       note=note_str
+                    )
+                    try:
+                        line_bot_api.push_message(target_id, card)
+                        pushed_count += 1
+                    except Exception as pe:
+                        print(f"推播催繳失敗 {prop['room_no']}: {pe}")
+                else:
+                    # 尚未到期（例如今天 7 號，繳費日為 15~31 號）
+                    pending_list.append(prop)
 
         mode_label = "🧪 安全測試模式（全發給您）" if TEST_MODE else "🚀 正式模式（已發給租客）"
         summary = (
-            f"📢 【今日收租與合約自動檢查 {today.strftime('%m/%d')}】{mode_label}\n"
+            f"📢 【今日收租自動檢查 {today.strftime('%m/%d')}】{mode_label}\n"
             f"查詢月份：{check_month}月租金\n"
-            f"逾期筆數：{len(overdue_list)} 筆，已推播催繳：{pushed_count} 封\n"
+            f"• 實收已繳清：{len(paid_list)} 間\n"
+            f"• 尚未到繳期：{len(pending_list)} 間（繳費期限未到）\n"
+            f"• 逾期未繳：{len(overdue_list)} 間\n"
         )
         if overdue_list:
-            summary += "\n逾期清單：\n" + "\n".join(
-                f"• {item['prop']['room_no']} {item['prop']['tenant']}（{item['amt_str']} 元{' ' + item['note_str'] if item['note_str'] else ''}）"
+            summary += f"\n🚨【逾期催繳清單（已催繳 {pushed_count} 封）】：\n" + "\n".join(
+                f"• {item['prop']['room_no']} {item['prop']['tenant']}（{item['amt_str']} 元{' ' + item['note_str'] if item['note_str'] else ''}，繳費日：{item['prop']['due_day']}號）"
                 for item in overdue_list
             )
+        elif pending_list:
+            summary += f"\n⏳ 溫馨提示：本期（{check_month}月）各房繳費期限尚未到期（各房自 15 號起陸續截止），目前無逾期！"
         else:
-            summary += "\n🎉 所有房客皆已繳清，無逾期！"
+            summary += f"\n🎉 太棒了！本期（{check_month}月）所有房客皆已繳清，無逾期！"
 
         # 檢查 100 天內（約 3 個月 / 涵蓋本季底與年底）即將到期合約
-        expiring = get_expiring_contracts(days_threshold=100)
-        if expiring:
-            summary += "\n\n⏳【合約即將到期提醒（約3個月/年底前）】\n" + "\n".join(
+        # 依 Sandy 指示：改為兩週定期提醒（每月 1 號與 15 號）才主動推播
+        is_biweekly_contract_day = (current_day in [1, 15])
+        expiring = get_expiring_contracts(days_threshold=100) if is_biweekly_contract_day else []
+
+        if is_biweekly_contract_day and expiring:
+            summary += f"\n\n⏳【雙週合約體檢（每月 1 號 / 15 號定期提醒）】\n" + "\n".join(
                 f"• {c['room_no']} {c['tenant']}: {c['end_date']} (剩 {c['days_left']} 天)"
                 for c in expiring
             )
@@ -3454,14 +3469,14 @@ def perform_auto_check_and_push():
         # 1. 發送每日文字彙總
         line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(text=summary))
 
-        # 2. 若有 100 天內到期合約，自動加推圖文 Flex 卡片給 Sandy，不必手動點選
-        if expiring:
+        # 2. 僅在雙週合約體檢日（1 號與 15 號），若有到期合約才加推圖文 Flex 卡片
+        if is_biweekly_contract_day and expiring:
             try:
                 line_bot_api.push_message(MY_LINE_USER_ID, create_expiring_contracts_flex(expiring))
             except Exception as ce:
                 print(f"推播到期卡片失敗: {ce}")
 
-        return f"檢查完成，逾期:{len(overdue_list)}筆，推播:{pushed_count}封，即將到期:{len(expiring)}筆", 200
+        return f"檢查完成，已繳:{len(paid_list)}間，未到期:{len(pending_list)}間，逾期:{len(overdue_list)}間，推播:{pushed_count}封", 200
     except Exception as e:
         print(f"自動檢查發生異常: {e}")
         return f"檢查失敗: {str(e)}", 500
