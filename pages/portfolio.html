@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="房產財務體檢">
+  <title>Sandy 房地產全資產財務體檢報告</title>
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --primary-light: #eff6ff;
+      --primary-dark: #172554;
+      --gold: #d97706;
+      --gold-light: #fef3c7;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --accent-red: #ef4444;
+      --accent-green: #10b981;
+      --accent-yellow: #f59e0b;
+      --shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", sans-serif;
+      background-color: var(--bg);
+      color: var(--text-main);
+      line-height: 1.5;
+      padding-bottom: 90px;
+    }
+
+    header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+      color: #ffffff;
+      padding: 30px 20px 22px;
+      position: relative;
+      border-bottom-left-radius: 24px;
+      border-bottom-right-radius: 24px;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.15);
+    }
+
+    .badge-top {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(8px);
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: #93c5fd;
+    }
+
+    h1 {
+      font-size: 21px;
+      font-weight: 800;
+      line-height: 1.3;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: #cbd5e1;
+      margin-bottom: 16px;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .kpi-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 14px;
+      padding: 12px;
+      text-align: left;
+    }
+
+    .kpi-title {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-bottom: 3px;
+    }
+
+    .kpi-value {
+      font-size: 19px;
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    .kpi-sub {
+      font-size: 11px;
+      color: #38bdf8;
+      margin-top: 2px;
+      font-weight: 600;
+    }
+
+    /* Tab Navigation */
+    .tab-bar {
+      display: flex;
+      background: #ffffff;
+      margin: 16px 16px 0;
+      padding: 4px;
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 10px;
+      z-index: 100;
+      gap: 4px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px 2px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      border-radius: 10px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      touch-action: manipulation;
+      transition: all 0.2s;
+    }
+
+    .tab-btn.active {
+      background: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(30, 58, 138, 0.3);
+    }
+
+    .container {
+      padding: 16px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .tab-pane {
+      display: none;
+    }
+
+    .tab-pane.active {
+      display: block;
+      animation: fadeIn 0.25s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 8px;
+    }
+
+    .tag {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      display: inline-block;
+    }
+
+    .tag-green { background: #dcfce7; color: #166534; }
+    .tag-red { background: #fee2e2; color: #991b1b; }
+    .tag-yellow { background: #fef3c7; color: #92400e; }
+    .tag-blue { background: #e0f2fe; color: #075985; }
+    .tag-purple { background: #f3e8ff; color: #6b21a8; }
+
+    .prop-box {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 12px;
+      background: #ffffff;
+    }
+
+    .prop-box.gold-border {
+      border: 2px solid var(--gold);
+      background: #fffdfa;
+    }
+
+    .prop-box.green-border {
+      border: 2px solid var(--accent-green);
+      background: #f0fdf4;
+    }
+
+    .prop-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 8px;
+    }
+
+    .prop-name {
+      font-size: 15px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .prop-addr {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .data-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      background: #f8fafc;
+      padding: 10px;
+      border-radius: 10px;
+      margin-top: 8px;
+    }
+
+    .data-item {
+      text-align: center;
+    }
+
+    .data-label {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .data-val {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-top: 2px;
+    }
+
+    .data-val.pos { color: var(--accent-green); }
+    .data-val.neg { color: var(--accent-red); }
+    .data-val.gold { color: var(--gold); }
+
+    .analysis-text {
+      font-size: 12px;
+      color: #475569;
+      line-height: 1.6;
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px dashed #e2e8f0;
+    }
+
+    .callout {
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.6;
+      margin: 12px 0;
+    }
+
+    .callout-blue { background: #eff6ff; border-left: 4px solid #2563eb; color: #1e40af; }
+    .callout-gold { background: #fffbeb; border-left: 4px solid #d97706; color: #92400e; }
+    .callout-red { background: #fef2f2; border-left: 4px solid #ef4444; color: #991b1b; }
+    .callout-green { background: #f0fdf4; border-left: 4px solid #10b981; color: #166534; }
+
+    .bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #ffffff;
+      border-top: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.05);
+      z-index: 100;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .btn-action {
+      background: var(--primary);
+      color: #ffffff;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="badge-top">
+      <span>🏡 Sandy 宅安心全資產體檢</span>
+      <span>•</span>
+      <span>即時精準版</span>
+    </div>
+    <h1>房地產全資產財務總檢驗</h1>
+    <div class="subtitle">還原真實現金流・釐清增貸台積電槓桿・前後分租整併</div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-title">總房產市值</div>
+        <div class="kpi-value">8,850 萬</div>
+        <div class="kpi-sub">總增值 +3,671萬 (+70.9%)</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">月總租金實收</div>
+        <div class="kpi-value">$164,665</div>
+        <div class="kpi-sub">年收租近 200 萬元</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">純本業房產月淨流</div>
+        <div class="kpi-value" style="color: #4ade80;">+$8.7 萬/月</div>
+        <div class="kpi-sub">（排除增貸買台積電之月還款）</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">唯一實質失血物業</div>
+        <div class="kpi-value" style="color: #fca5a5;">僅 A102</div>
+        <div class="kpi-sub">裕誠路營登月虧 -$5,230</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Sticky Tab Bar -->
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="tab-truth">重大真相還原</button>
+    <button class="tab-btn" data-tab="tab-all">全物業診斷</button>
+    <button class="tab-btn" data-tab="tab-split">明華/昌盛雙租</button>
+    <button class="tab-btn" data-tab="tab-strategy">止血策略</button>
+  </div>
+
+  <div class="container">
+
+    <!-- TAB 1: 重大真相還原 -->
+    <div id="tab-truth" class="tab-pane active">
+
+      <div class="callout callout-green">
+        <strong>🎉 恭喜 Sandy！您的房地產王國根本沒有在賠錢！</strong><br>
+        釐清<strong>「A103 文成二路增貸買台積電」</strong>與<strong>「A107+A109 前後分租」</strong>之後，全盤財務真相大白：全體出租房產本業**每個月穩穩淨賺 8.7 萬元**，且台積電獲利豐厚！
+      </div>
+
+      <!-- 真相 1: A103 增貸買台積電 -->
+      <div class="card">
+        <div class="card-title">
+          <span>解密一：A103 台南文成二路 6.9 萬房貸真相</span>
+          <span class="tag tag-green">神級套利</span>
+        </div>
+        <div style="font-size:13px; line-height:1.7; color:#334155;">
+          • <strong>房產本業純租金</strong>：房租 $39,550 ＋ 車位 $2,300 = <strong>$41,850 元/月</strong><br>
+          • <strong>原始本業房貸</strong>：僅約 <strong>$35,000 元/月</strong>（管費 $5,157 由租客實質吸收）<br>
+          • <strong>原本物業本業現金流</strong>：<strong>+$1,693 元/月（自給自足且微賺！）</strong><br>
+          <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:10px; margin:10px 0;">
+            <strong style="color:#166534;">📈 額外 3.4 萬/月房貸的真相：增貸買「台積電」！</strong><br>
+            這筆錢不是房子虧錢，而是您用極低利率（約 2.x%）向銀行增貸，抄底買入護國神山台積電（資產總覽顯示持股 4 張，目前市值超過 800 萬，光是資本增值就暴賺數百萬）！這是<strong>教科書級別的「優質低利槓桿套利」</strong>，絕不能算成房地產賠錢！
+          </div>
+        </div>
+      </div>
+
+      <!-- 真相 2: A107 + A109 前後雙拼 -->
+      <div class="card">
+        <div class="card-title">
+          <span>解密二：A107 + A109 前後雙租整併</span>
+          <span class="tag tag-purple">高回報資產</span>
+        </div>
+        <div style="font-size:13px; line-height:1.7; color:#334155;">
+          • <strong>同一間 18 坪產權</strong>（明華路 271-1 號 & 昌盛路 271 號）前後分拆出租<br>
+          • <strong>前門 A107</strong>：林采葳 $17,800 /月<br>
+          • <strong>後門 A109</strong>：楊芸錚 $9,300 /月<br>
+          • <strong>合計月收</strong>：<strong>$27,100 元/月</strong>（扣管費 $1,190 後淨賺 <strong>+$25,910</strong>）<br>
+          • <strong>買入成本 580 萬，毛投報率高達 5.61%</strong>！無貸款、純收租金雞母！
+        </div>
+      </div>
+
+      <!-- 真相 3: 唯一虧錢的物業 -->
+      <div class="card">
+        <div class="card-title">
+          <span>解密三：全盤唯一真正虧損的物業</span>
+          <span class="tag tag-red">唯一失血點</span>
+        </div>
+        <div style="font-size:13px; line-height:1.7; color:#334155;">
+          • <strong>A102 高雄裕誠路</strong>：買 905 萬，月租均收 $28,966，房貸 $26,778，雙月管費分攤 $3,863。<br>
+          • 加上美業<strong>營業登記</strong>所衍生的房屋稅、地價稅、二代健保補充保費與所得稅（月均 $3,555）。<br>
+          • <strong>每月實質倒貼 -$5,230 元</strong>（您與合夥人謝介文各貼 -$2,615）。<br>
+          👉 <strong>全盤房地產中，就只有這間在賠錢！只要這間依手冊調約止血，您的房地產帝國就 100% 全面獲利！</strong>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TAB 2: 全物業診斷 -->
+    <div id="tab-all" class="tab-pane">
+
+      <div class="card">
+        <div class="card-title">
+          <span>8 大物業現況速覽</span>
+          <span style="font-size:12px; color:var(--text-muted); font-weight:normal;">依健康度排序</span>
+        </div>
+
+        <!-- A101 -->
+        <div class="prop-box green-border">
+          <div class="prop-header">
+            <div>
+              <div class="prop-name">A101 台北信義區福德街 3F</div>
+              <div class="prop-addr">林孟廷承租・30坪公寓</div>
+            </div>
+            <span class="tag tag-green">9% 超級金雞母</span>
+          </div>
+          <div class="data-grid">
+            <div class="data-item"><div class="data-label">成本 / 市值</div><div class="data-val">400萬 / 1500萬</div></div>
+            <div class="data-item"><div class="data-label">月收租金</div><div class="data-val pos">$30,000</div></div>
+            <div class="data-item"><div class="data-label">月淨現金流</div><div class="data-val pos">+$30,000</div></div>
+          </div>
+          <div class="analysis-text">增值 +1,100 萬，無貸款無管費，純收租巨額現金流。</div>
+        </div>
+
+        <!-- A106 -->
+        <div class="prop-box green-border">
+          <div class="prop-header">
+            <div>
+              <div class="prop-name">A106 高雄南屏路 12F-7</div>
+              <div class="prop-addr">汪晉宇承租・15坪巨蛋核心</div>
+            </div>
+            <span class="tag tag-green">9.46% 投報王</span>
+          </div>
+          <div class="data-grid">
+            <div class="data-item"><div class="data-label">成本 / 市值</div><div class="data-val">163萬 / 340萬</div></div>
+            <div class="data-item"><div class="data-label">月收租金</div><div class="data-val pos">$12,850</div></div>
+            <div class="data-item"><div class="data-label">月淨現金流</div><div class="data-val pos">+$12,185</div></div>
+          </div>
+          <div class="analysis-text">無貸款，半年管費月均 $665，以 163 萬成本看投報率逼近 10%！</div>
+        </div>
+
+        <!-- A107 + A109 -->
+        <div class="prop-box gold-border">
+          <div class="prop-header">
+            <div>
+              <div class="prop-name">A107 + A109 明華路/昌盛路（前後雙租）</div>
+              <div class="prop-addr">林采葳 + 楊芸錚・同一產權前後雙拆</div>
+            </div>
+            <span class="tag tag-purple">5.61% 雙拼王</span>
+          </div>
+          <div class="data-grid">
+            <div class="data-item"><div class="data-label">成本 / 市值</div><div class="data-val">580萬 / 950萬</div></div>
+            <div class="data-item"><div class="data-label">合計雙月租</div><div class="data-val pos">$27,100</div></div>
+            <div class="data-item"><div class="data-label">月淨現金流</div><div class="data-val pos">+$25,910</div></div>
+          </div>
+          <div class="analysis-text">無貸款，扣除管費 $1,190 後每月純落袋近 2.6 萬！</div>
+        </div>
+
+        <!-- A104 -->
+        <div class="prop-box">
+          <div class="prop-header">
+            <div>
+              <div class="prop-name">A104 高雄文信路 3F-6</div>
+              <div class="prop-addr">廖子勛承租・8坪套房</div>
+            </div>
+            <span class="tag tag-green">5.97% 穩定</span>
+          </div>
+          <div class="data-grid">
+            <div class="data-item"><div class="data-label">成本 / 市值</div><div class="data-val">193萬 / 320萬</div></div>
+            <div class="data-item"><div class="data-label">月收租金</div><div class="data-val pos">$9,600</div></div>
+            <div class="data-item"><div class="data-label">月淨現金流</div><div class="data-val pos">+$8,506</div></div>
+          </div>
+          <div class="analysis-text">無貸款，管費 $1,094，純賺正現金流。</div>
+        </div>
+
+        <!-- A105 -->
+        <div class="prop-box">
+          <div class="prop-header">
+            <div>
+              <div class="prop-name">A105 高雄文信路 11F-9</div>
+              <div class="prop-addr">李乃亘承租・12坪套房</div>
+            </div>
+            <span class="tag tag-green">5.81% 穩定</span>
+          </div>
+          <div class="data-grid">
+            <div class="data-item"><div class="data-label">成本 / 市值</div><div class="data-val">258萬 / 340萬</div></div>
+            <div class="data-item"><div class="data-label">月收租金</div><div class="data-val pos">$12,499</div></div>
+            <div class="data-item"><div class="data-label">月淨現金流</div><div class="data-val pos">+$11,279</div></div>
+          </div>
+          <div class="analysis-text">無貸款，管費 $1,220，純賺正現金流。</div>
+        </div>
+
+        <!-- A103 -->
+        <div class="prop-box">
+          <div class="prop-header">
+            <div>
+              <div class="prop-name">A103 台南文成2路 159號11F-2</div>
+              <div class="prop-addr">杜依陵承租・88坪大宅 (含車位B1-02陳又慈)</div>
+            </div>
+            <span class="tag tag-blue">本業平衡＋增貸股票</span>
+          </div>
+          <div class="data-grid">
+            <div class="data-item"><div class="data-label">成本 / 市值</div><div class="data-val">1180萬 / 2100萬</div></div>
+            <div class="data-item"><div class="data-label">房租+車位實收</div><div class="data-val pos">$41,850</div></div>
+            <div class="data-item"><div class="data-label">本業純房貸</div><div class="data-val">約 $35,000</div></div>
+          </div>
+          <div class="analysis-text">增值 +920 萬。扣除本業房貸與管費本業平衝微賺；額外 3.4 萬月付金為增貸買台積電之優質槓桿。</div>
+        </div>
+
+        <!-- A102 -->
+        <div class="prop-box" style="border:2px solid var(--accent-red); background:#fef2f2;">
+          <div class="prop-header">
+            <div>
+              <div class="prop-name">A102 高雄裕誠路 1065號7樓</div>
+              <div class="prop-addr">傅瑜（美業營登）・合夥人謝介文</div>
+            </div>
+            <span class="tag tag-red">唯一虧損待換約</span>
+          </div>
+          <div class="data-grid">
+            <div class="data-item"><div class="data-label">成本 / 市值</div><div class="data-val">905萬 / 1200萬</div></div>
+            <div class="data-item"><div class="data-label">月均租 / 房貸</div><div class="data-val">$28,966 / $26,778</div></div>
+            <div class="data-item"><div class="data-label">實質淨現金流</div><div class="data-val neg">-$5,230</div></div>
+          </div>
+          <div class="analysis-text">因雙月管費 $3,863 與營登稅負 $3,555，每月倒貼 -$5,230。亟需依手冊方案調租止血！</div>
+        </div>
+
+        <!-- A108 自住 -->
+        <div class="prop-box" style="background:#f8fafc;">
+          <div class="prop-header">
+            <div>
+              <div class="prop-name">A108 新北汐止莊敬街 130號</div>
+              <div class="prop-addr">Sandy 自住・50坪 (含車位周大哥租金1800)</div>
+            </div>
+            <span class="tag tag-blue">自住資產</span>
+          </div>
+          <div class="data-grid">
+            <div class="data-item"><div class="data-label">成本 / 市值</div><div class="data-val">1500萬 / 2100萬</div></div>
+            <div class="data-item"><div class="data-label">每月房貸</div><div class="data-val">$58,900</div></div>
+            <div class="data-item"><div class="data-label">每月管費</div><div class="data-val">$7,307</div></div>
+          </div>
+          <div class="analysis-text">增值 +600 萬，自住生活重心。</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 3: 明華/昌盛雙租專題 -->
+    <div id="tab-split" class="tab-pane">
+      <div class="card">
+        <div class="card-title">
+          <span>A107 + A109 前後分租整併剖析</span>
+          <span class="tag tag-purple">精采活化</span>
+        </div>
+
+        <div class="callout callout-gold">
+          <strong>🌟 房東的智慧：前後分租效益翻倍！</strong><br>
+          您將鼓山區 18 坪店面/住宅分割為前後兩側獨立出租，成功將原本單一承租戶的租金天花板打通，租金與報酬率全面翻倍！
+        </div>
+
+        <div style="background:#f1f5f9; border-radius:12px; padding:14px; margin-bottom:14px;">
+          <div style="font-size:14px; font-weight:800; margin-bottom:8px; color:#0f172a;">📍 同一產權雙租戶明細：</div>
+          <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #e2e8f0;">
+            <span>前側 A107（明華路 271-1 號）：林采葳</span>
+            <strong style="color:var(--primary);">$17,800 元/月</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #e2e8f0;">
+            <span>後側 A109（昌盛路 271 號）：楊芸錚</span>
+            <strong style="color:var(--primary);">$9,300 元/月</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding:10px 0 4px; font-size:15px;">
+            <strong>合計每月總收益</strong>
+            <strong style="color:var(--accent-green); font-size:17px;">$27,100 元/月</strong>
+          </div>
+        </div>
+
+        <table style="width:100%; border-collapse:collapse; font-size:13px; margin-top:10px;">
+          <tr style="background:#f8fafc; border-bottom:2px solid var(--border);">
+            <th style="padding:8px; text-align:left;">項目</th>
+            <th style="padding:8px; text-align:right;">若僅單純單租(A107)</th>
+            <th style="padding:8px; text-align:right;">前後分租合計(A107+A109)</th>
+          </tr>
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px;">月收租金</td>
+            <td style="padding:8px; text-align:right; color:#64748b;">$17,800</td>
+            <td style="padding:8px; text-align:right; font-weight:800; color:var(--accent-green);">$27,100 (+52%)</td>
+          </tr>
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px;">扣管費後淨落袋</td>
+            <td style="padding:8px; text-align:right; color:#64748b;">$16,610</td>
+            <td style="padding:8px; text-align:right; font-weight:800; color:var(--accent-green);">$25,910</td>
+          </tr>
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px;">年租金總收</td>
+            <td style="padding:8px; text-align:right; color:#64748b;">$213,600</td>
+            <td style="padding:8px; text-align:right; font-weight:800; color:var(--gold);">$325,200</td>
+          </tr>
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:8px;">成本毛投報率 (580萬)</td>
+            <td style="padding:8px; text-align:right; color:#64748b;">3.68%</td>
+            <td style="padding:8px; text-align:right; font-weight:800; color:var(--gold);">5.61% 🚀</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 4: 止血策略 -->
+    <div id="tab-strategy" class="tab-pane">
+      <div class="card">
+        <div class="card-title">
+          <span>全體物業唯一的作戰焦點</span>
+          <span class="tag tag-red">專注 A102</span>
+        </div>
+
+        <div style="font-size:13px; line-height:1.7; color:#334155;">
+          現在全盤情勢非常清晰：<br>
+          • <strong>台南 A103</strong>：本業健康，多出的房貸正在台積電股票裡為您賺大錢，不用動！<br>
+          • <strong>明華/昌盛 A107+A109</strong>：前後雙租每月進帳 2.7 萬，非常完美，保持現狀即可！<br>
+          • <strong>台北 A101、南屏 A106、文信 A104/105</strong>：全部是高投報正現金流金雞母！<br>
+          <br>
+          👉 <strong>您現在唯一的任務，就是專注搞定「A102 裕誠路」的續約調租！</strong><br>
+          只要依我們做好的決策手冊，跟謝介文取得共識後，向傅小姐推進「方案 B（租金 29,000 + 營登補貼 2,000，管費由其自繳）」，A102 就立刻從倒貼 -$5,230 轉為淨賺 +$4,222！
+        </div>
+
+        <div style="margin-top:16px; text-align:center;">
+          <a href="/a102_audit" class="btn-action" style="display:inline-flex; padding:12px 24px; font-size:14px;">
+            <span>👉 立即打開 A102 續約決策手冊</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Navigation Link back to A102 Audit -->
+  <div class="bottom-bar">
+    <div style="font-size:12px; color:var(--text-muted);">
+      <div>總房產增值 +3,671 萬</div>
+      <div style="font-weight:700; color:var(--accent-green);">本業月淨流入 +8.7 萬</div>
+    </div>
+    <a href="/a102_audit" class="btn-action">
+      <span>A102 決策手冊</span>
+      <span>➔</span>
+    </a>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const tabBtns = document.querySelectorAll('.tab-btn');
+      const tabPanes = document.querySelectorAll('.tab-pane');
+
+      tabBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          const targetId = this.getAttribute('data-tab');
+
+          tabBtns.forEach(b => b.classList.remove('active'));
+          tabPanes.forEach(p => p.classList.remove('active'));
+
+          this.classList.add('active');
+          const targetPane = document.getElementById(targetId);
+          if (targetPane) {
+            targetPane.classList.add('active');
+          }
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      });
+    });
+  </script>
+</body>
+</html>

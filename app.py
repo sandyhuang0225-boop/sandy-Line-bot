@@ -3397,6 +3397,14 @@ def serve_a102_audit():
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     return response
 
+@app.route("/portfolio")
+def serve_portfolio():
+    """Sandy 全房地產全資產財務體檢報告"""
+    path = os.path.join(os.path.dirname(__file__), "pages", "portfolio.html")
+    response = send_file(path, mimetype='text/html; charset=utf-8')
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    return response
+
 # ==================== 【修改九】自動逾期與到期合約排程（直接通知租客與Sandy）====================
 
 def perform_auto_check_and_push():
