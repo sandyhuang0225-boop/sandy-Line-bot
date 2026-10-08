@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="港深漫遊手冊">
+  <title>Sandy's 2026 港深漫遊隨身手冊</title>
+  <style>
+    :root {
+      --primary: #c99355;
+      --primary-light: #fdf8f2;
+      --primary-dark: #8c5d2b;
+      --bg: #f8f9fa;
+      --card-bg: #ffffff;
+      --text-main: #2d3748;
+      --text-muted: #718096;
+      --border: #e2e8f0;
+      --accent-red: #e53e3e;
+      --accent-green: #38a169;
+      --accent-blue: #3182ce;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang TC", "Heiti TC", "Microsoft JhengHei", sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding-bottom: 90px;
+    }
+
+    /* Header */
+    header {
+      background: linear-gradient(135deg, #1a202c, #2d3748);
+      color: #fff;
+      padding: 24px 20px 20px;
+      border-radius: 0 0 24px 24px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .badge-date {
+      background: rgba(201, 147, 85, 0.25);
+      color: #f7d794;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-weight: 600;
+      border: 1px solid rgba(201, 147, 85, 0.5);
+    }
+
+    h1 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .header-sub {
+      font-size: 12px;
+      color: #a0aec0;
+      margin-top: 4px;
+    }
+
+    /* Sticky Tab Bar (8個專屬純淨標籤) */
+    .tab-bar {
+      display: flex;
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 86px;
+      z-index: 90;
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .tab-bar::-webkit-scrollbar { display: none; }
+
+    .tab-item {
+      flex: 0 0 auto;
+      text-align: center;
+      padding: 12px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      position: relative;
+      white-space: nowrap;
+      transition: all 0.2s;
+      background: transparent;
+      border: none;
+      outline: none;
+      touch-action: manipulation;
+    }
+
+    .tab-item.active {
+      color: var(--primary-dark);
+      font-weight: 700;
+    }
+
+    .tab-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 15%;
+      width: 70%;
+      height: 3px;
+      background: var(--primary);
+      border-radius: 3px 3px 0 0;
+    }
+
+    /* Container */
+    .container {
+      padding: 16px;
+      max-width: 650px;
+      margin: 0 auto;
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(0,0,0,0.03);
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1a202c;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      border-bottom: 2px solid var(--primary-light);
+      padding-bottom: 8px;
+    }
+
+    .card-title .icon {
+      font-size: 18px;
+    }
+
+    /* Alerts */
+    .alert-box {
+      background: #fffaf0;
+      border-left: 4px solid var(--primary);
+      padding: 12px 14px;
+      border-radius: 0 10px 10px 0;
+      font-size: 13px;
+      margin-bottom: 14px;
+      color: #744210;
+      line-height: 1.5;
+    }
+
+    .alert-box.blue {
+      background: #ebf8ff;
+      border-left-color: var(--accent-blue);
+      color: #2b6cb0;
+    }
+
+    .alert-box.green {
+      background: #f0fff4;
+      border-left-color: var(--accent-green);
+      color: #22543d;
+    }
+
+    .alert-box.danger {
+      background: #fff5f5;
+      border-left-color: var(--accent-red);
+      color: #9b2c2c;
+    }
+
+    /* Timeline Day Items */
+    .timeline-day {
+      position: relative;
+      padding-left: 20px;
+      border-left: 2px solid #e2e8f0;
+      margin-left: 10px;
+      margin-bottom: 24px;
+    }
+
+    .day-marker {
+      position: absolute;
+      left: -9px;
+      top: 0;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--primary);
+      border: 3px solid #fff;
+      box-shadow: 0 0 0 2px var(--primary);
+    }
+
+    .day-header {
+      font-size: 15px;
+      font-weight: 700;
+      color: #2d3748;
+      margin-bottom: 4px;
+    }
+
+    .day-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: #edf2f7;
+      color: #4a5568;
+      margin-bottom: 10px;
+    }
+
+    .step-box {
+      background: #fff;
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+      border: 1px solid #edf2f7;
+    }
+
+    .step-time {
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--primary-dark);
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .step-desc {
+      font-size: 13px;
+      color: #4a5568;
+    }
+
+    .step-tips {
+      font-size: 12px;
+      color: #718096;
+      background: #f7fafc;
+      padding: 6px 10px;
+      border-radius: 6px;
+      margin-top: 6px;
+      border-left: 3px solid #cbd5e0;
+    }
+
+    /* Specs Grid & HQB item */
+    .hqb-item {
+      border: 1px solid #edf2f7;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 14px;
+      background: #fff;
+    }
+
+    .hqb-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .hqb-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1a202c;
+    }
+
+    .hqb-tag {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 20px;
+      background: #ebf8ff;
+      color: #2b6cb0;
+    }
+
+    .hqb-specs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      background: #f8fafc;
+      padding: 8px 10px;
+      border-radius: 8px;
+      margin-top: 8px;
+      font-size: 12px;
+    }
+
+    .bargain-tip {
+      font-size: 12px;
+      color: #c53030;
+      background: #fff5f5;
+      padding: 6px 10px;
+      border-radius: 6px;
+      margin-top: 8px;
+      font-weight: 500;
+    }
+
+    /* Checklist */
+    .checklist-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px dashed #edf2f7;
+      font-size: 13px;
+    }
+    .checklist-item:last-child { border-bottom: none; }
+    .check-icon { font-size: 16px; color: var(--accent-green); }
+
+    /* Floating Dock */
+    .quick-dock {
+      position: fixed;
+      bottom: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(26, 32, 44, 0.94);
+      backdrop-filter: blur(12px);
+      padding: 8px 20px;
+      border-radius: 30px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      display: flex;
+      gap: 20px;
+      z-index: 99;
+    }
+
+    .dock-btn {
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      cursor: pointer;
+    }
+
+    .dock-btn span { font-size: 16px; }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="header-top">
+      <span class="badge-date">2026/10/12 - 10/16 (5天4夜)</span>
+      <span style="font-size: 13px; color: #cbd5e0;">📱 離線便攜手冊</span>
+    </div>
+    <h1>Sandy 港深商務漫遊・極致純淨手冊</h1>
+    <div class="header-sub">尖沙咀滙豐・湯崎水療・華強北雙機擴容・福田優選住宿</div>
+  </header>
+
+  <!-- Navigation Bar: 8個清楚獨立的分類 + 報帳指引 -->
+  <nav class="tab-bar">
+    <button type="button" class="tab-item active" data-tab="itinerary">🗓️ 每日行程</button>
+    <button type="button" class="tab-item" data-tab="booking" style="color: #2b6cb0; font-weight: 700;">⚡ 一鍵訂票</button>
+    <button type="button" class="tab-item" data-tab="novartis" style="color: #c53030; font-weight: 700;">📋 諾華報帳</button>
+    <button type="button" class="tab-item" data-tab="hqb">🛍️ 華強北指南</button>
+    <button type="button" class="tab-item" data-tab="transit">🚇 航段1-6交通</button>
+    <button type="button" class="tab-item" data-tab="spa">♨️ 湯崎水療指南</button>
+    <button type="button" class="tab-item" data-tab="finance">🏦 滙豐理財&現金</button>
+    <button type="button" class="tab-item" data-tab="weather">🌤️ 天氣與穿搭</button>
+    <button type="button" class="tab-item" data-tab="backup">🎒 行前備份&漫遊</button>
+    <button type="button" class="tab-item" data-tab="hotel">🏨 住宿推薦清單</button>
+  </nav>
+
+  <div class="container">
+
+    <!-- ==================== TAB: ⚡ 一鍵直達訂票專區 ==================== -->
+    <section id="booking" class="tab-content">
+      <div class="alert-box blue">
+        ⚡ <strong>AI 智慧訂票輔助說明</strong>：
+        <br>因為涉及您的<strong>個人信用卡付款、簡訊 OTP 驗證碼、台胞證實名證件機密</strong>，依國際資安與金融法規，AI 不能直接在背景私自替您刷卡交易。
+        <br>但我已經為您<strong>備齊了所有精確官方直達訂票連結與「一鍵複製下單參數」</strong>！您只需點開連結、貼上資料，30 秒內即可輕鬆完成！
+      </div>
+
+      <!-- 1. 湯崎水療券 -->
+      <div class="card" style="border: 2px solid var(--accent-green);">
+        <div class="card-title" style="color: #22543d;"><span class="icon">♨️</span> 1. 湯崎・湯泉生活 (福田口岸店) 門票預訂</div>
+        <div style="font-size: 13px; margin-bottom: 10px;">
+          • <strong>認明方案：</strong> 【週日至週四 24 小時浴票 ＋ 日式/泰式按摩】<br>
+          • <strong>入場日期：</strong> 2026/10/12 (週一) 17:00 後入場
+        </div>
+        <a href="https://www.klook.com/zh-HK/activity/86971-tenz-hot-spring-spa-shen-zhen/" target="_blank" style="display:block; text-align:center; background:#38a169; color:#fff; font-weight:700; padding:12px; border-radius:10px; text-decoration:none; margin-bottom:8px;">
+          👉 點此直達 Klook 湯崎官方預訂頁面
+        </a>
+      </div>
+
+      <!-- 2. 機場快綫 -->
+      <div class="card" style="border: 2px solid var(--accent-blue);">
+        <div class="card-title" style="color: #2b6cb0;"><span class="icon">🚆</span> 2. 香港機場快綫車票 (香港機場 ➔ 九龍站)</div>
+        <div style="font-size: 13px; margin-bottom: 10px;">
+          • <strong>區間：</strong> 香港機場 ➔ 九龍站（單程）<br>
+          • <strong>使用方式：</strong> 付款後 Klook App 立即出 QR Code，出站直接掃描。
+        </div>
+        <a href="https://www.klook.com/zh-TW/activity/71-airport-express-hong-kong/" target="_blank" style="display:block; text-align:center; background:#3182ce; color:#fff; font-weight:700; padding:12px; border-radius:10px; text-decoration:none; margin-bottom:8px;">
+          👉 點此直達 Klook 機場快綫預訂頁面
+        </a>
+      </div>
+
+      <!-- 3. 香港西九龍至深圳高鐵 -->
+      <div class="card" style="border: 2px solid #805ad5;">
+        <div class="card-title" style="color: #6b46c1;"><span class="icon">🚅</span> 3. 高鐵車票 (香港西九龍 ➔ 深圳福田)</div>
+        <div style="font-size: 13px; margin-bottom: 10px;">
+          • <strong>搭乘日期：</strong> 2026/10/12 (週一) 下午約 16:00 ~ 16:30 班次<br>
+          • <strong>乘客填寫：</strong> 請準備好您的<strong>實體台胞證號碼與英文拼音</strong>，出票自動寫入證件！
+        </div>
+        <a href="https://www.klook.com/zh-TW/rails-32/1012-china/high-speed-rail/" target="_blank" style="display:block; text-align:center; background:#805ad5; color:#fff; font-weight:700; padding:12px; border-radius:10px; text-decoration:none; margin-bottom:8px;">
+          👉 點此直達 Klook 高鐵官方預訂頁面
+        </a>
+      </div>
+
+      <!-- 4. 國泰航空機票 -->
+      <div class="card" style="border: 2px solid #c99355;">
+        <div class="card-title" style="color: #8c5d2b;"><span class="icon">✈️</span> 4. 國泰航空機票 (台北 TPE ⇄ 香港 HKG)</div>
+        <div style="font-size: 13px; margin-bottom: 10px;">
+          • <strong>去程：</strong> 10/12 (週一) CX 407 (08:00 TPE ➔ 10:00 HKG)<br>
+          • <strong>回程：</strong> 10/16 (週五) CX 470 (18:45 HKG ➔ 20:45 TPE)
+        </div>
+        <a href="https://www.cathaypacific.com" target="_blank" style="display:block; text-align:center; background:#c99355; color:#fff; font-weight:700; padding:12px; border-radius:10px; text-decoration:none; margin-bottom:8px;">
+          👉 點此直達 國泰航空官網預訂 (自動發送電子收據)
+        </a>
+      </div>
+
+    </section>
+
+    <!-- ==================== TAB: 諾華福委會報帳需知 (極重要！) ==================== -->
+    <section id="novartis" class="tab-content">
+
+      <!-- 核心抬頭與統編 -->
+      <div class="card" style="border: 2px solid var(--accent-red); background: #fffaf0;">
+        <div class="card-title" style="color: #c53030;"><span class="icon">🏢</span> 台灣諾華福委會 20,000 元補助報帳基本資料</div>
+        <div style="font-size: 15px; font-weight: 700; color: #1a202c; line-height: 1.8;">
+          • <strong>買受人抬頭：</strong> <span style="background:#fee2e2; padding:2px 8px; border-radius:4px; color:#991b1b;">台灣諾華股份有限公司職工福利委員會</span><br>
+          • <strong>統一編號：</strong> <span style="background:#fee2e2; padding:2px 8px; border-radius:4px; color:#991b1b;">20091746</span><br>
+          • <strong>申請截止日：</strong> <strong>2026/10/31 以前</strong> 完成公司送審流程
+        </div>
+      </div>
+
+      <!-- 登機證與機票 -->
+      <div class="card">
+        <div class="card-title"><span class="icon">✈️</span> 1. 機票與登機證報帳規範（必備來回！）</div>
+        <div class="checklist-item">
+          <span class="check-icon">✓</span>
+          <div><strong>來回登機證：</strong> 必須保留 <strong>10/12 去程 ＋ 10/16 回程</strong> 的登機證。<br>
+          - <strong>紙本登機證：</strong> 請妥善保留<strong>「紙本登機證正本」</strong>，回台後連同<strong>「電子機票購票證明/電子機票收據（上面要有金額、訂位代號、Sandy 本名）」</strong>一起附上。<br>
+          - <strong>電子登機證：</strong> 若使用國泰手機 App 報到，請務必<strong>將電子登機證截圖儲存</strong>，搭配國泰官方電子機票收據。</div>
+        </div>
+        <div class="checklist-item">
+          <span class="check-icon">✓</span>
+          <div><strong>若是透過旅行社購票（如易遊網/雄獅/可樂）：</strong> 需請旅行社開立<strong>「代收轉付收據」</strong>，抬頭統編須正確，且<strong>代轉收據右邊的空白備註欄務必請旅行社加上 Sandy 的員工本名</strong>！</div>
+        </div>
+      </div>
+
+      <!-- 住宿證明與發票 -->
+      <div class="card">
+        <div class="card-title"><span class="icon">🏨</span> 2. 住宿證明與報帳關鍵（外部平台截圖不能算！）</div>
+        <div class="alert-box danger">
+          ⚠️ <strong>公司特別提醒：</strong> 外部平台（如 Agoda / Booking / 易遊網）的「訂單完成頁面截圖」<strong>不能</strong>完全作為住宿證明！
+        </div>
+        <div class="step-box">
+          <div class="step-time"><span>關鍵動作</span><span>退房時務必向飯店櫃檯索取「正式住宿證明 / 發票」</span></div>
+          <div class="step-desc">
+            • <strong>現場索取：</strong> 退房時請飯店前台櫃檯開具<strong>「住宿證明書（印有飯店官章、入住退房日期 10/13~10/16、房客姓名 Sandy Huang）」</strong>。<br>
+            • <strong>若透過第三方平台訂房（Agoda/Trip.com/Booking）：</strong> 請在平台上下載正式的「付款收據/憑證（Invoice）」，並要求備註或填入福委會統編 <code>20091746</code> 與抬頭。<br>
+            • <strong>若透過台灣旅行社代訂飯店：</strong> 最省事！直接請旅行社開立<strong>「代收轉付收據」</strong>（抬頭統編為諾華福委會，備註欄打上 Sandy 員工本名）。
+          </div>
+        </div>
+      </div>
+
+      <!-- 湊滿 20,000 元策略 -->
+      <div class="card">
+        <div class="card-title"><span class="icon">💡</span> 3. 如何輕鬆湊齊 20,000 元補助款？</div>
+        <div class="step-desc">
+          • <strong>單據日期必須連續：</strong> 所有報帳單據必須是 <strong>10/12 ~ 10/16</strong> 連續出遊期間。<br>
+          • <strong>機票 ＋ 住宿通常已超過 20,000 元：</strong><br>
+          - 國泰航空來回機票：約 NT$ 8,000 ~ 11,000<br>
+          - 深圳住宿（2~3 晚飯店）：約 NT$ 6,000 ~ 12,000<br>
+          👉 光是機票加飯店住宿證明，就已經直接超過 20,000 元上限，只要這兩樣文件完整，就能全額請領！<br>
+          • <strong>若住宿費不超過 10,000 元的規定：</strong> 依公司規定，若住宿金額未滿 1 萬，可再附上旅遊期間的交通（高鐵票/機場快綫）或餐飲發票補足。
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ==================== TAB 1: 每日行程 ==================== -->
+    <section id="itinerary" class="tab-content active">
+
+      <!-- DAY 1 -->
+      <div class="timeline-day">
+        <div class="day-marker"></div>
+        <div class="day-header">Day 1：10/12 (週一) 台北 ➔ 香港 ➔ 深圳福田</div>
+        <div class="day-badge">國泰早班機・尖沙咀滙豐辦公・直奔水療放鬆</div>
+
+        <div class="step-box">
+          <div class="step-time"><span>08:00 - 10:00</span><span>✈️ 飛行</span></div>
+          <div class="step-desc">搭乘國泰航空 <strong>CX 407</strong>（台北桃園 ➔ 香港國際）。抵達後搭乘機場快綫（至九龍站）或搭乘城巴 A21 直達尖沙咀。</div>
+        </div>
+
+        <div class="step-box">
+          <div class="step-time"><span>11:30 - 14:00</span><span>🏦 滙豐尖沙咀卓越理財中心</span></div>
+          <div class="step-desc">前往<strong>彌敦道 82-84 號尖沙咀滙豐大廈 2 樓及 3 樓</strong>：
+            <br>1. 與客戶經理辦理開通投資理財戶口。
+            <br>2. 臨櫃存入 15,000~18,000 人民幣現金至多幣種活期帳戶。
+          </div>
+        </div>
+
+        <div class="step-box">
+          <div class="step-time"><span>15:30 - 16:30</span><span>🚅 高鐵前往深圳</span></div>
+          <div class="step-desc">從尖沙咀前往「香港西九龍站」，憑<strong>台胞證</strong>感應進站，搭乘高鐵 14 分鐘直達<strong>「深圳福田站」</strong>（一地兩檢完成出入境）。</div>
+        </div>
+
+        <div class="step-box">
+          <div class="step-time"><span>17:00 起</span><span>♨️ 湯崎・湯泉生活（水療放鬆過夜）</span></div>
+          <div class="step-desc">抵達福田口岸旁<strong>「湯崎・湯泉生活」</strong>。大件行李交由禮賓部免費寄存，領取手環入館泡湯、精油按摩、品嚐哈根達斯與水果，夜宿沙發睡眠大廳。</div>
+        </div>
+      </div>
+
+      <!-- DAY 2 -->
+      <div class="timeline-day">
+        <div class="day-marker"></div>
+        <div class="day-header">Day 2：10/13 (週二) 預訂飯店寄存行李 ➔ 華強北輕裝擴容 ➔ 正式入住</div>
+        <div class="day-badge">優雅空手逛街・雙機擴容升級・入住福田飯店</div>
+
+        <div class="step-box">
+          <div class="step-time"><span>10:30 - 11:15</span><span>🏨 關鍵第一步：先到飯店寄放行李！</span></div>
+          <div class="step-desc">
+            湯崎退館領回大行李箱後，搭車約 10 分鐘直奔您決定入住的<strong>福田市中心飯店</strong>。
+            <br>向櫃檯寄放大行李箱拿到行李牌，整個人瞬間輕鬆，<strong>空手優雅前往華強北！</strong>
+          </div>
+        </div>
+
+        <div class="step-box">
+          <div class="step-time"><span>11:30 - 14:00</span><span>📱 遠望數碼商城（輕裝交機擴容）</span></div>
+          <div class="step-desc">前往「遠望數碼商城」二樓大檔口，將 <strong>iPhone 16 Pro Max (目標 1TB)</strong> 與 <strong>iPhone 13 Pro Max (目標 512GB/1TB)</strong> 交給專業師傅改裝。</div>
+          <div class="step-tips">💡 擴容耗時約 1.5~2 小時。空手在華強北散步超舒服，現場只驗證空機功能與容量，付現鈔！</div>
+        </div>
+
+        <div class="step-box">
+          <div class="step-time"><span>14:00 - 16:00</span><span>⌚ 曼哈數碼廣場 & 賽格市場</span></div>
+          <div class="step-desc">逛曼哈廣場挑選 1:1 Apple Watch Ultra 仿款錶（約 150 RMB）、CCD 復古小相機、超可愛迷你 iPhone 卡片機，以及賽格的美型磁吸配件。</div>
+        </div>
+
+        <div class="step-box">
+          <div class="step-time"><span>16:30 起</span><span>🏨 回飯店辦理入住 ➔ 啟動夜間 iCloud 還原</span></div>
+          <div class="step-desc">正式進房休息。連上飯店高速 Wi-Fi，將兩台 iPhone 啟動「從 iCloud 備份回復」，插上電源讓資料自動抓回一整晚！</div>
+        </div>
+      </div>
+
+      <!-- DAY 3 -->
+      <div class="timeline-day">
+        <div class="day-marker"></div>
+        <div class="day-header">Day 3：10/14 (週三) 深圳現代藝術美學 & 頂級商場慢活</div>
+        <div class="day-badge">當代藝術館・萬象天地・精緻粵菜</div>
+
+        <div class="step-box">
+          <div class="step-time"><span>10:30 - 13:00</span><span>🏛️ 深圳市當代藝術與城市規劃館</span></div>
+          <div class="step-desc">從飯店搭車約 8~10 分鐘抵達。國際大師設計之流線雕塑感雙館，光影絕美，非常適合個人拍照打卡與藝術鑑賞。</div>
+        </div>
+
+        <div class="step-box">
+          <div class="step-time"><span>13:30 - 17:00</span><span>🛍️ 萬象天地 (MixC World)</span></div>
+          <div class="step-desc">深圳最高端街區購物中心（大抱抱象地標）。品嚐精品咖啡、漫步生活美學館與精緻晚餐，返回飯店放鬆。</div>
+        </div>
+      </div>
+
+      <!-- DAY 4 -->
+      <div class="timeline-day">
+        <div class="day-marker"></div>
+        <div class="day-header">Day 4：10/15 (週四) 海濱文創 & 深圳灣絕美天際線</div>
+        <div class="day-badge">海上世界文化中心・深圳灣萬象城夜景</div>
+
+        <div class="step-box">
+          <div class="step-time"><span>11:00 - 15:00</span><span>🌊 海上世界文化藝術中心</span></div>
+          <div class="step-desc">槇文彥設計，面朝深圳灣大橋。館內常有國際服裝設計展、視覺藝術展，吹海風看海景，身心完全被治癒。</div>
+        </div>
+
+        <div class="step-box">
+          <div class="step-time"><span>17:00 - 20:00</span><span>🌆 深圳灣萬象城夜景</span></div>
+          <div class="step-desc">欣賞深圳春筍大廈地標與灣區夜景，享受典雅晚餐，回飯店整理行李與伴手禮。</div>
+        </div>
+      </div>
+
+      <!-- DAY 5 -->
+      <div class="timeline-day">
+        <div class="day-marker"></div>
+        <div class="day-header">Day 5：10/16 (週五) 深圳 ➔ 香港 ➔ 台北返家</div>
+        <div class="day-badge">從容賦歸・晚班機不匆忙・完美銜接10/17活動</div>
+
+        <div class="step-box">
+          <div class="step-time"><span>12:00</span><span>🏨 退房前往高鐵站</span></div>
+          <div class="step-desc">悠閒享用早午餐後辦理退房，搭計程車 5~8 分鐘抵達高鐵福田站。</div>
+        </div>
+
+        <div class="step-box">
+          <div class="step-time"><span>13:30 - 14:00</span><span>🚅 高鐵回香港西九龍 ➔ 機場快綫</span></div>
+          <div class="step-desc">高鐵 14 分鐘直達香港西九龍站。走連通道至九龍站轉乘機場快綫 22 分鐘直達香港國際機場一號客運大樓。</div>
+        </div>
+
+        <div class="step-box">
+          <div class="step-time"><span>15:00 - 18:45</span><span>✈️ 國泰航空登機返台</span></div>
+          <div class="step-desc">托運行李、機場免稅店逛街。搭乘 <strong>CX 470 (18:45 HKG ➔ 20:45 TPE)</strong> 順利回到台北，準備隔天 10/17 吉愛利乳癌講座！</div>
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- ==================== TAB 2: 華強北指南 ==================== -->
+    <section id="hqb" class="tab-content">
+
+      <!-- 華強北心法 -->
+      <div class="alert-box">
+        💡 <strong>華強北購物防坑心法</strong>：
+        <br>1. <strong>各樓分工精細：</strong> 擴容找遠望、手錶玩具找曼哈、攝影支架找賽格，切勿在路邊雜攤買。
+        <br>2. <strong>大膽開口、溫和問價：</strong> 詢價時說「老闆，一台實價多少？」，通常開價 220 元可談至 150~160 元。
+        <br>3. <strong>現場通電驗收：</strong> 當場拆封，現場用您的 iPhone 藍牙連線測試，確認觸控靈敏、螢幕正常再付款。
+        <br>4. <strong>付款方式：</strong> 攤商非常歡迎<strong>人民幣現鈔</strong>，亦可直接使用微信/支付寶掃碼。
+      </div>
+
+      <!-- 如何前往華強北 -->
+      <div class="card" style="border-left: 4px solid var(--accent-blue);">
+        <div class="card-title"><span class="icon">🚇</span> 如何抵達華強北（交通資訊）</div>
+        <div class="step-desc">
+          • <strong>從福田中心區飯店搭地鐵：</strong> 搭乘深圳地鐵 <strong>2 號線</strong> 直達<strong>「華強北站」</strong>，從 <strong>A 出口</strong> 搭手扶梯出來，正前方步行 100 公尺即抵達遠望數碼商城。<br>
+          • <strong>搭滴滴計程車：</strong> 在微信/支付寶滴滴輸入目的地：<strong>「遠望數碼商城」</strong>，車程約 10~15 分鐘，車資約 20~25 RMB。
+        </div>
+      </div>
+
+      <!-- 遠望數碼商城 -->
+      <div class="card">
+        <div class="card-title"><span class="icon">📱</span> 1. 遠望數碼商城 (iPhone 擴容大本營)</div>
+        <div style="font-size: 13px; color: #718096; margin-bottom: 10px;">地址：深圳市福田區華強北路2001號 | 地鐵2號線華強北站 A 出口</div>
+
+        <div class="hqb-item">
+          <div class="hqb-header">
+            <span class="hqb-name">iPhone 主機板硬體擴容 (NAND Flash)</span>
+            <span class="hqb-tag" style="background:#e6fffa; color:#234e52;">核心改裝</span>
+          </div>
+          <div class="hqb-details">
+            專業拆焊更換大廠高速記憶體晶片，重寫序號並刷入最新系統。
+          </div>
+          <div class="hqb-specs">
+            <div><strong>推薦樓層：</strong> 2 樓專業維修檔口</div>
+            <div><strong>耗時：</strong> 每台約 1~2 小時</div>
+            <div><strong>16 Pro Max (1TB)：</strong> 700 ~ 850 RMB</div>
+            <div><strong>13 Pro Max (512G/1T)：</strong> 450 ~ 600 RMB</div>
+          </div>
+          <div class="bargain-tip">
+            🗣️ <strong>交代師傅關鍵字：</strong>「老闆，兩台一起做算實價，要用長江存儲或海力士大廠原裝晶片，做完務必幫我重新封上原廠級防水膠圈！」現場只做空機功能驗收，付現鈔。
+          </div>
+        </div>
+      </div>
+
+      <!-- 曼哈數碼廣場 -->
+      <div class="card">
+        <div class="card-title"><span class="icon">⌚</span> 2. 曼哈數碼廣場 (網紅手錶與潮玩玩具)</div>
+        <div style="font-size: 13px; color: #718096; margin-bottom: 10px;">地址：華強北路2021號 (遠望隔壁) | 地鐵2號線華強北站 B 出口</div>
+
+        <div class="hqb-item">
+          <div class="hqb-header">
+            <span class="hqb-name">1:1 Apple Watch Ultra 仿款智能手錶</span>
+            <span class="hqb-tag">小紅書爆款</span>
+          </div>
+          <div class="hqb-details">
+            鈦金屬外觀、橙色按鍵 1:1 開模。可接聽電話、收 LINE/微信通知、測心率、計步，電力可維持 3~5 天。
+          </div>
+          <div class="hqb-specs">
+            <div><strong>推薦樓層：</strong> 1樓、2樓轉角檔口</div>
+            <div><strong>公道價：</strong> 130 ~ 180 RMB</div>
+            <div><strong>可否殺價：</strong> 可 (開價通常 220~250)</div>
+            <div><strong>伴手禮推薦：</strong> ⭐⭐⭐⭐⭐</div>
+          </div>
+        </div>
+
+        <div class="hqb-item">
+          <div class="hqb-header">
+            <span class="hqb-name">掌心超迷你 iPhone 卡片機 (名片機)</span>
+            <span class="hqb-tag" style="background:#faf5ff; color:#553c9e;">趣味萌物</span>
+          </div>
+          <div class="hqb-details">
+            僅悠遊卡大小（2.5~3吋螢幕），外殼完美複製 iPhone 鏡頭邊框。可插卡打電話、連 Wi-Fi、放包包當拍照道具。
+          </div>
+          <div class="hqb-specs">
+            <div><strong>推薦樓層：</strong> 1樓手錶與潮玩小檔口</div>
+            <div><strong>公道價：</strong> 100 ~ 160 RMB</div>
+            <div><strong>用途：</strong> 送禮、包包掛飾、備用機</div>
+          </div>
+        </div>
+
+        <div class="hqb-item">
+          <div class="hqb-header">
+            <span class="hqb-name">華強北頂配 AirPods Pro 2 (洛達晶片版)</span>
+            <span class="hqb-tag">經典必買</span>
+          </div>
+          <div class="hqb-details">
+            開蓋原廠彈窗動畫、真主動降噪（ANC）與通透模式，音質達原廠 85% 水準。
+          </div>
+          <div class="hqb-specs">
+            <div><strong>指名晶片：</strong> 洛達 1562AE 或恆玄</div>
+            <div><strong>公道價：</strong> 140 ~ 180 RMB</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 賽格電子市場 -->
+      <div class="card">
+        <div class="card-title"><span class="icon">🔌</span> 3. 賽格電子市場 (SEG Plaza)</div>
+        <div style="font-size: 13px; color: #718096; margin-bottom: 10px;">地址：深南中路與華強北路口 | 地鐵華強路站 A 出口</div>
+
+        <div class="hqb-item">
+          <div class="hqb-header">
+            <span class="hqb-name">跳舞專用 AI 人臉跟隨雲台 / 磁吸自拍棒</span>
+            <span class="hqb-tag" style="background:#fffaf0; color:#7b341e;">跳舞錄影必備</span>
+          </div>
+          <div class="hqb-details">
+            不需安裝 App，內建光學鏡頭追蹤，跳舞移動時鏡頭自動旋轉跟隨；超輕折疊碳纖維自拍架。
+          </div>
+          <div class="hqb-specs">
+            <div><strong>推薦樓層：</strong> 1樓、2樓攝影配件區</div>
+            <div><strong>公道價：</strong> 80 ~ 130 RMB</div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- ==================== TAB 3: 航段 1-6 交通地圖 ==================== -->
+    <section id="transit" class="tab-content">
+
+      <!-- KLOOK 票券核銷機制解密 -->
+      <div class="card" style="border: 2px solid var(--accent-blue); background: #f0f7ff;">
+        <div class="card-title" style="color: #2b6cb0;"><span class="icon">🎟️</span> Klook 買票進站解密：機場快綫 vs 高鐵完全不同！</div>
+        <div class="step-box" style="margin-bottom: 8px;">
+          <div class="step-time"><span>1. 機場快綫（香港機場 ➔ 九龍）</span><span style="color:var(--accent-green);">📲 手機直接掃 QR Code</span></div>
+          <div class="step-desc">
+            在 Klook 刷卡購買後取得 QR Code。機場上車不用刷卡；在九龍站出閘門時，對準閘門感應玻璃掃描 QR Code 即可出站！
+          </div>
+        </div>
+        <div class="step-box" style="margin-bottom: 0;">
+          <div class="step-time"><span>2. 高鐵車票（香港西九龍 ➔ 深圳福田）</span><span style="color:var(--accent-red);">🪪 刷「實體台胞證」，不是掃 QR Code！</span></div>
+          <div class="step-desc">
+            中國高鐵實名制，購票時填寫台胞證姓名與證號，出票後已<strong>自動寫入台胞證晶片</strong>！在西九龍站閘門直接感應<strong>實體台胞證＋人臉辨識</strong>即可通過。
+          </div>
+        </div>
+      </div>
+
+      <!-- 航段 1 -->
+      <div class="card">
+        <div class="card-title"><span class="icon">✈️ ➔ 🏦</span> 航段 1：香港機場 ➔ 尖沙咀彌敦道滙豐大廈</div>
+        
+        <div class="hqb-item" style="border-left: 4px solid var(--accent-green);">
+          <div class="hqb-header">
+            <span class="hqb-name">【方案 A】城巴 A21 雙層巴士（在地海景漫遊）</span>
+            <span class="hqb-tag" style="background:#f0fff4; color:#22543d;">悠閒・景觀第一</span>
+          </div>
+          <div class="hqb-specs">
+            <div><strong>💰 車資：</strong> HK$ 34.6 (約 NT$ 140)</div>
+            <div><strong>⏱️ 車程：</strong> 約 45 ~ 55 分鐘</div>
+            <div><strong>💳 付款：</strong> 信用卡感應 / 支付寶碼</div>
+            <div><strong>🚶 步行：</strong> 下車走 30 公尺直達</div>
+          </div>
+          <div class="hqb-details" style="margin-top:8px;">
+            出機場大廳跟隨「巴士 (Bus)」指標，搭乘 A21 坐在上層第一排看青馬大橋海景。坐到第 13 站「金馬倫道」下車，往前走 30 公尺即抵達彌敦道 82-84 號滙豐大廈！
+          </div>
+        </div>
+
+        <div class="hqb-item" style="border-left: 4px solid var(--primary-dark);">
+          <div class="hqb-header">
+            <span class="hqb-name">【方案 B】機場快綫 ➔ 港鐵柯士甸/尖東（極速準點鐵路）</span>
+            <span class="hqb-tag" style="background:#ebf8ff; color:#2b6cb0;">商務準點</span>
+          </div>
+          <div class="hqb-specs">
+            <div><strong>💰 車資：</strong> 約 HK$ 80~105 (約 NT$ 330~430)</div>
+            <div><strong>⏱️ 車程：</strong> 約 25 ~ 30 分鐘</div>
+          </div>
+          <div class="hqb-details" style="margin-top:8px;">
+            機場快綫 21 分鐘直達九龍站，轉港鐵 1 站至尖東站 N5 出口，全冷氣貫通，100% 絕對不塞車。
+          </div>
+        </div>
+
+        <div class="hqb-item" style="border-left: 4px solid var(--accent-red);">
+          <div class="hqb-header">
+            <span class="hqb-name">【方案 C】機場快綫(九龍站) ➔ 門口搭紅色的士</span>
+            <span class="hqb-tag" style="background:#fff5f5; color:#c53030;">省力直達</span>
+          </div>
+          <div class="hqb-details">
+            九龍站出站搭排班紅色的士（車資約 HK$ 40），司機協助搬行李，直接停在彌敦道大廈門口。
+          </div>
+        </div>
+      </div>
+
+      <!-- 航段 2 -->
+      <div class="card">
+        <div class="card-title"><span class="icon">🏦 ➔ 🚅</span> 航段 2：尖沙咀滙豐 ➔ 香港西九龍高鐵站</div>
+        <div class="hqb-item" style="border-left: 4px solid var(--accent-green);">
+          <div class="hqb-header">
+            <span class="hqb-name">【方案 A】港鐵屯馬線 1 站（在地日常・銅板價）</span>
+            <span class="hqb-tag" style="background:#f0fff4; color:#22543d;">推薦！</span>
+          </div>
+          <div class="hqb-specs">
+            <div><strong>💰 車資：</strong> HK$ 4.5 (約 NT$ 18)</div>
+            <div><strong>⏱️ 時間：</strong> 乘車3分鐘 + 步行5分鐘</div>
+          </div>
+          <div class="hqb-details" style="margin-top:8px;">
+            滙豐大廈旁走進港鐵尖東站，搭屯馬線 1 站至「柯士甸站」，走室內天橋電動步道直達高鐵檢票大廳。
+          </div>
+        </div>
+        <div class="hqb-item" style="border-left: 4px solid var(--primary-dark);">
+          <div class="hqb-header">
+            <span class="hqb-name">【方案 B】門口攔紅色的士</span>
+            <span class="hqb-tag">門對門</span>
+          </div>
+          <div class="hqb-details">車程 6~8 分鐘，車資約 HK$ 40~50，直達西九龍地下落客專區。</div>
+        </div>
+      </div>
+
+      <!-- 航段 3 -->
+      <div class="card">
+        <div class="card-title"><span class="icon">🚅 ➔ ♨️</span> 航段 3：深圳高鐵福田站 ➔ 湯崎・湯泉生活</div>
+        <div class="hqb-item" style="border-left: 4px solid var(--accent-green);">
+          <div class="hqb-header">
+            <span class="hqb-name">【推薦】高鐵站排班出租車 / 滴滴專車</span>
+            <span class="hqb-tag" style="background:#f0fff4; color:#22543d;">輕鬆省力</span>
+          </div>
+          <div class="hqb-specs">
+            <div><strong>💰 車資：</strong> 約 20 ~ 25 RMB (約 NT$ 90~110)</div>
+            <div><strong>⏱️ 時間：</strong> 僅 10 ~ 12 分鐘</div>
+          </div>
+          <div class="hqb-details" style="margin-top:8px;">
+            直達湯崎大門，門僮接過大行李箱，免拉行李換乘地鐵。
+          </div>
+        </div>
+      </div>
+
+      <!-- 航段 4 -->
+      <div class="card">
+        <div class="card-title"><span class="icon">♨️ ➔ 🏨</span> 航段 4：湯崎水療 ➔ 預訂飯店 (寄存行李)</div>
+        <div class="step-desc">
+          湯崎門口搭滴滴專車約 8~10 分鐘直達您預訂的福田市中心飯店，寄放大行李箱，空手優雅出發。
+        </div>
+      </div>
+
+      <!-- 航段 5 -->
+      <div class="card">
+        <div class="card-title"><span class="icon">🏨 ➔ 📱</span> 航段 5：飯店 ➔ 華強北遠望商城</div>
+        <div class="step-desc">
+          飯店門口搭地鐵 2 號線至「華強北站」A 出口（或搭滴滴 10 分鐘，約 20 RMB）直達遠望商城。
+        </div>
+      </div>
+
+      <!-- 航段 6 -->
+      <div class="card">
+        <div class="card-title"><span class="icon">🏨 ➔ ✈️</span> 航段 6：飯店 ➔ 福田高鐵站 ➔ 香港機場</div>
+        <div class="step-desc">
+          飯店搭車 5~8 分鐘至高鐵福田站 ➔ 搭 14 分鐘高鐵至香港西九龍 ➔ 連通道走至九龍站搭機場快綫 22 分鐘直達香港機場。
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- ==================== TAB 4: 湯崎水療指南 ==================== -->
+    <section id="spa" class="tab-content">
+
+      <div class="card">
+        <div class="card-title"><span class="icon">🎟️</span> Klook 票券挑選指引（不再頭昏）</div>
+        <div class="alert-box green">
+          您於 10/12 (週一) 17:00 後入館，隔天中午前退館，在館內時間約 16~18 小時。
+        </div>
+        <div class="step-box">
+          <div class="step-time"><span>首推方案</span><span>【週日至週四 24 小時浴票 ＋ 日式/泰式全身按摩】</span></div>
+          <div class="step-desc">
+            • <strong>必須是「週日至週四」：</strong> 週一屬平日價，比週末便宜。<br>
+            • <strong>必須選「24小時」：</strong> 8小時不夠過夜（超時會被加收昂貴超時費）。買24小時可待到隔天下午。<br>
+            • <strong>「浴票」包含什麼：</strong> 24hr 入館、裸湯泡澡、全套護膚沐浴戴森吹風機、浴袍、哈根達斯/鮮榨果汁/進口水果無限吃，以及<strong>【公共大廳免費睡覺】</strong>！<br>
+            • <strong>全身按摩：</strong> 進獨立芳療房做 60~80 分鐘精油經絡放鬆，掃除整天搭機乘車疲憊。
+          </div>
+        </div>
+        <div class="step-box">
+          <div class="step-time"><span>次選備案</span><span>【週日至週四 24 小時浴票 ＋ 大堂按摩兩項】</span></div>
+          <div class="step-desc">適合不想全身被按、只想在沙發上採耳（掏耳）或捏腳的旅客。</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">🧳</span> 隨身大行李寄存流程（安全放心）</div>
+        <div class="step-desc">
+          1. <strong>一樓禮賓台接管：</strong> 踏進大廳，門僮主動接過大行李箱，繫上防拆號牌並給您行李領取牌。<br>
+          2. <strong>專人封閉庫房：</strong> 大行李箱推進 24 小時監控庫房鎖好，比飯店還專業。<br>
+          3. <strong>隨身物品鎖更衣櫃：</strong> 領手環進女賓區，每人有獨立大型更衣櫃，隨身背包換洗衣物鎖入櫃中。<br>
+          4. <strong>隔天退館取件：</strong> 結帳後將行李牌交給禮賓台，1 分鐘內取回大行李箱。
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">📱</span> 手機攜帶與充電規定</div>
+        <div class="step-desc">
+          • <strong>公共休息區（90%區域可隨身攜帶）：</strong> 大廳、水果吧、餐廳、沙發睡眠大廳、太空艙、按摩室，<strong>所有人都是手機隨身攜帶使用</strong>！追劇看書拍照皆可。<br>
+          • <strong>充電極方便：</strong> 每個躺椅床頭都有專屬 USB/Type-C 插座。<br>
+          • <strong>嚴禁拿手機區域：</strong> 僅有<strong>「女賓裸湯泡澡區」與「淋浴更衣室」</strong>嚴格禁止拿出手機拍照。
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- ==================== TAB 5: 滙豐理財&現金 ==================== -->
+    <section id="finance" class="tab-content">
+
+      <div class="card">
+        <div class="card-title"><span class="icon">🏦</span> 尖沙咀滙豐卓越理財中心開通須知</div>
+        <div class="alert-box">
+          Sandy 您是 Premier 卓越理財貴賓，享專人貴賓室服務，無需排大眾隊伍！
+        </div>
+        <div class="checklist-item">
+          <span class="check-icon">✓</span>
+          <div><strong>分行地點：</strong> 尖沙咀彌敦道 82-84 號尖沙咀滙豐大廈 2 樓及 3 樓。</div>
+        </div>
+        <div class="checklist-item">
+          <span class="check-icon">✓</span>
+          <div><strong>預約方式：</strong> 透過 HSBC HK App 聯絡您的專屬客戶經理（RM）預約 10/12 下午時段。</div>
+        </div>
+        <div class="checklist-item">
+          <span class="check-icon">✓</span>
+          <div><strong>必備文件清單：</strong>
+            <br>1. 台灣護照（效期 6 個月以上）
+            <br>2. 台灣身分證正本
+            <br>3. 台胞證
+            <br>4. 最近 3 個月內載有英文/中文地址的信用卡帳單（證明汐止中正路地址）
+            <br>5. 手機已安裝並登入 HSBC HK App
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">💴</span> 20,000 人民幣現金分配策略</div>
+        <div class="hqb-specs" style="grid-template-columns: 1fr; gap: 8px;">
+          <div><strong>1. 存入滙豐（建議 15,000 ~ 18,000 元）：</strong><br>
+          在尖沙咀貴賓室直接交給 RM 存入多幣種戶頭，免手續費且能生息或轉定存。</div>
+          <div><strong>2. 隨身留存（約 2,000 ~ 3,000 元）：</strong><br>
+          放隨身皮夾帶進深圳，專門用來支付華強北兩台 iPhone 擴容費用（約 1,200~1,500 元）及小玩具。</div>
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- ==================== TAB 6: 天氣與穿搭 ==================== -->
+    <section id="weather" class="tab-content">
+
+      <div class="card">
+        <div class="card-title"><span class="icon">🌤️</span> 10/12 ~ 10/16 深圳 & 香港天氣概況</div>
+        <div class="hqb-specs" style="grid-template-columns: 1fr 1fr;">
+          <div><strong>🌡️ 氣溫區間：</strong> 23°C ~ 30°C</div>
+          <div><strong>🍃 氣候型態：</strong> 嶺南初秋・晴朗乾燥微風</div>
+          <div><strong>☀️ 紫外線指數：</strong> 中偏高 (指數 5 ~ 7)</div>
+          <div><strong>🌧️ 降雨機率：</strong> 極低 (秋高氣爽)</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="icon">👗</span> Sandy 專屬穿搭 & 防曬清單</div>
+        
+        <div class="step-box">
+          <div class="step-time"><span>1. 必帶一件薄外套 / 襯衫 / 絲巾</span><span>⚠️ 應對室內超強冷氣</span></div>
+          <div class="step-desc">
+            港深室內、地鐵、商場冷氣極強（常維持在 18~20°C）。隨身包包請務必帶一件<strong>針織開衫、亞麻長袖襯衫或薄披肩</strong>，避免進出溫差著涼。
+          </div>
+        </div>
+
+        <div class="step-box">
+          <div class="step-time"><span>2. 防曬與雨具準備</span><span>中度防曬</span></div>
+          <div class="step-desc">
+            • SPF 30~50 輕透防曬乳、太陽眼鏡。<br>
+            • 隨身包放一把<strong>超輕量晴雨兩用摺疊傘</strong>（中午遮陽為主，順便防備偶發小陣雨）。
+          </div>
+        </div>
+
+        <div class="step-box">
+          <div class="step-time"><span>3. 鞋著建議</span><span>好走休閒鞋</span></div>
+          <div class="step-desc">
+            請穿一雙<strong>穿慣的小白鞋或舒適休閒平底健走鞋</strong>（華強北與大型商場皆需健步如飛，切勿穿新鞋或跟鞋）。
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ==================== TAB 7: 行前備份&漫遊 ==================== -->
+    <section id="backup" class="tab-content">
+
+      <!-- iCloud 備份 -->
+      <div class="card">
+        <div class="card-title"><span class="icon">☁️</span> iPhone 擴容前「iCloud 2TB 備份作業」</div>
+        <div class="alert-box danger">
+          ⚠️ 擴容會將硬碟解焊抹除，未備份的資料無法找回！請出發前在台灣確實完成。
+        </div>
+        <div class="step-box">
+          <div class="step-time"><span>步驟 1</span><span>訂閱 2TB & 家人共享</span></div>
+          <div class="step-desc">用您的 16 Pro Max 訂閱一個月「iCloud+ 2TB（約 NT$ 300）」。到「設定 ➔ 家人共享」加入女兒 Apple ID 並開啟共享。</div>
+        </div>
+        <div class="step-box">
+          <div class="step-time"><span>步驟 2</span><span>執行完整雲端備份</span></div>
+          <div class="step-desc">兩台手機插充電線、連 Wi-Fi，進入「設定 ➔ 姓名 ➔ iCloud ➔ iCloud 備份 ➔ 立即備份」，務必看到顯示「上次備份成功」。</div>
+        </div>
+        <div class="step-box">
+          <div class="step-time"><span>步驟 3</span><span>現場交機前關閉「尋找」</span></div>
+          <div class="step-desc">走進華強北交機前，到「設定 ➔ 姓名 ➔ 尋找 ➔ 尋找我的 iPhone ➔ 關閉」，否則無法刷機。</div>
+        </div>
+      </div>
+
+      <!-- LINE 備份 -->
+      <div class="card">
+        <div class="card-title"><span class="icon">💬</span> LINE 聊天記錄獨立備份</div>
+        <div class="step-desc">
+          LINE 屬第三方加密軟體，必須單獨備份：<br>
+          打開 LINE ➔ 主頁右上角「設定（齒輪）」➔「備份聊天記錄」➔ 點選「馬上進行備份」，並牢記設定的 6 位數備份 PIN 碼。
+        </div>
+      </div>
+
+      <!-- 中華電信漫遊 -->
+      <div class="card">
+        <div class="card-title"><span class="icon">📶</span> 中華電信中港澳漫遊（出發前 3 分鐘開通）</div>
+        <div class="checklist-item">
+          <span class="check-icon">✓</span>
+          <div>手機直撥 <strong>800</strong> 或在中華電信 APP 預約<strong>「中港澳漫遊定量型」</strong>（建議 5GB 或 10GB 方案）。</div>
+        </div>
+        <div class="checklist-item">
+          <span class="check-icon">✓</span>
+          <div>生效時間設為 <strong>10/12 早上 07:00</strong>。</div>
+        </div>
+        <div class="checklist-item">
+          <span class="check-icon">✓</span>
+          <div><strong>不需換卡：</strong> 保留原台灣號碼隨時接收刷卡 OTP 簡訊；在深圳自動免翻牆，直連 LINE 與 Google！</div>
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- ==================== TAB 8: 住宿推薦清單 ==================== -->
+    <section id="hotel" class="tab-content">
+
+      <div class="alert-box">
+        🏨 <strong>Sandy 深圳精選住宿優缺點比較清單（共 5 家）</strong>：
+        <br>全數位於治安最佳、交通開闊的<strong>福田 CBD 中心區與車公廟商圈</strong>。供您慢慢評估比較，等您確認訂哪一家後再通知我更新行程！
+      </div>
+
+      <!-- 1. 四季酒店 -->
+      <div class="card" style="border: 2px solid var(--primary);">
+        <div class="card-title"><span class="icon">👑</span> 1. 深圳四季酒店 (Four Seasons Hotel Shenzhen)</div>
+        <div class="hqb-specs">
+          <div><strong>⭐ 級別：</strong> 國際頂級奢華五星</div>
+          <div><strong>💰 參考房價：</strong> 約 1,600 ~ 2,100 RMB (約 NT$ 7,200~9,500)</div>
+          <div><strong>📍 位置：</strong> 福田區福華三路138號 (正對會展中心)</div>
+          <div><strong>🚇 交通：</strong> 步行3分鐘至地鐵會展中心站 / 距高鐵福田站計程車5分鐘</div>
+        </div>
+        <div class="hqb-details" style="margin-top:8px;">
+          • <strong>👍 優點：</strong> 全深圳頂級服務標竿，客房床品被譽為「全深圳最好睡」，大理石深泡浴缸與高空景觀，女性獨旅安保最高等級。<br>
+          • <strong>👎 缺點：</strong> 房價為五家之中最高。<br>
+          • <strong>🎯 評價：</strong> 奢華犒賞自己首選。
+        </div>
+      </div>
+
+      <!-- 2. 無印良品酒店 -->
+      <div class="card">
+        <div class="card-title"><span class="icon">🌿</span> 2. 深圳無印良品酒店 (MUJI Hotel Shenzhen)</div>
+        <div class="hqb-specs">
+          <div><strong>⭐ 級別：</strong> 四星半 (全球首家 MUJI 旗艦)</div>
+          <div><strong>💰 參考房價：</strong> 約 650 ~ 850 RMB (約 NT$ 2,900~3,800)</div>
+          <div><strong>📍 位置：</strong> 福田區皇崗路5001號 深業上城內</div>
+          <div><strong>🚇 交通：</strong> 地鐵10號線冬瓜嶺站連通</div>
+        </div>
+        <div class="hqb-details" style="margin-top:8px;">
+          • <strong>👍 優點：</strong> 日式木質極簡風格，純棉床品、精油香氛，極度乾淨。出門即是深業上城彩色小鎮商場，極具文青氣息。<br>
+          • <strong>👎 缺點：</strong> 距離高鐵福田站車程約 12 分鐘，稍遠一點點。<br>
+          • <strong>🎯 評價：</strong> 文青放鬆、追求極致乾淨首選。
+        </div>
+      </div>
+
+      <!-- 3. 大中華喜來登酒店 -->
+      <div class="card">
+        <div class="card-title"><span class="icon">🏛️</span> 3. 深圳大中華喜來登酒店 (Sheraton Shenzhen Futian)</div>
+        <div class="hqb-specs">
+          <div><strong>⭐ 級別：</strong> 國際五星級 (萬豪集團)</div>
+          <div><strong>💰 參考房價：</strong> 約 750 ~ 950 RMB (約 NT$ 3,300~4,200)</div>
+          <div><strong>📍 位置：</strong> 福田區福華一路1號 (福田CBD核心)</div>
+          <div><strong>🚇 交通：</strong> 地鐵會展中心站直通地下室</div>
+        </div>
+        <div class="hqb-details" style="margin-top:8px;">
+          • <strong>👍 優點：</strong> 真正的地鐵上蓋！地下直接連通地鐵 1 號與 4 號線，免曬太陽免淋雨，大廳氣派、安保嚴密。<br>
+          • <strong>👎 缺點：</strong> 裝潢風格偏經典商務傳統，較無文青設計感。<br>
+          • <strong>🎯 評價：</strong> 交通樞紐第一名、老牌安心。
+        </div>
+      </div>
+
+      <!-- 4. 金茂 JW 萬豪酒店 -->
+      <div class="card">
+        <div class="card-title"><span class="icon">💎</span> 4. 深圳金茂 JW 萬豪酒店 (JW Marriott Hotel Shenzhen)</div>
+        <div class="hqb-specs">
+          <div><strong>⭐ 級別：</strong> 奢華五星級 (萬豪旗艦)</div>
+          <div><strong>💰 參考房價：</strong> 約 900 ~ 1,150 RMB (約 NT$ 4,000~5,100)</div>
+          <div><strong>📍 位置：</strong> 福田區深南大道6005號</div>
+          <div><strong>🚇 交通：</strong> 地鐵車公廟站步行 5 分鐘</div>
+        </div>
+        <div class="hqb-details" style="margin-top:8px;">
+          • <strong>👍 優點：</strong> 奢華水準接近四季但價格平實近半！車公廟商圈周邊美食極多，餐飲與服務口碑極佳。<br>
+          • <strong>👎 缺點：</strong> 離會展中心有兩站地鐵距離。<br>
+          • <strong>🎯 評價：</strong> 高性價比奢華首選。
+        </div>
+      </div>
+
+      <!-- 5. 桔子水晶酒店 -->
+      <div class="card">
+        <div class="card-title"><span class="icon">🍊</span> 5. 桔子水晶酒店・深圳福田會展中心店 (Crystal Orange)</div>
+        <div class="hqb-specs">
+          <div><strong>⭐ 級別：</strong> 高端精品四星 (華住集團)</div>
+          <div><strong>💰 參考房價：</strong> 約 450 ~ 580 RMB (約 NT$ 2,000~2,600)</div>
+          <div><strong>📍 位置：</strong> 福田CBD商圈</div>
+          <div><strong>🚇 交通：</strong> 近地鐵崗廈站 / 會展中心站</div>
+        </div>
+        <div class="hqb-details" style="margin-top:8px;">
+          • <strong>👍 優點：</strong> 房價最親民，新潮智能語音客控、香氛淋浴，退房零秒辦理，深受年輕商務客好評。<br>
+          • <strong>👎 缺點：</strong> 公共設施（泳池/大廳）無五星級飯店寬敞。<br>
+          • <strong>🎯 評價：</strong> 小資高 CP 值首選。
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <!-- Bottom Floating Quick Dock -->
+  <div class="quick-dock">
+    <a href="tel:+85222333322" class="dock-btn">
+      <span>📞</span>滙豐客服
+    </a>
+    <button type="button" class="dock-btn" data-tab="itinerary">
+      <span>🗓️</span>查行程
+    </button>
+    <button type="button" class="dock-btn" data-tab="hotel">
+      <span>🏨</span>看住宿
+    </button>
+    <button type="button" class="dock-btn" onclick="window.print()">
+      <span>📄</span>存PDF
+    </button>
+  </div>
+
+  <script>
+    function activateTab(tabId) {
+      if (!tabId) return;
+
+      const contents = document.querySelectorAll('.tab-content');
+      contents.forEach(content => {
+        content.classList.remove('active');
+      });
+
+      const targetContent = document.getElementById(tabId);
+      if (targetContent) {
+        targetContent.classList.add('active');
+      }
+
+      const tabItems = document.querySelectorAll('.tab-item');
+      tabItems.forEach(item => {
+        if (item.getAttribute('data-tab') === tabId) {
+          item.classList.add('active');
+          item.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        } else {
+          item.classList.remove('active');
+        }
+      });
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('[data-tab]').forEach(el => {
+        el.addEventListener('click', function(e) {
+          e.preventDefault();
+          const target = this.getAttribute('data-tab');
+          activateTab(target);
+        });
+      });
+    });
+
+    document.querySelectorAll('[data-tab]').forEach(el => {
+      el.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = this.getAttribute('data-tab');
+        activateTab(target);
+      });
+    });
+  </script>
+</body>
+</html>

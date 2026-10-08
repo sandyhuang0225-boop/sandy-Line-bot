@@ -5,7 +5,7 @@ import random
 import threading
 import calendar
 from datetime import datetime, timedelta
-from flask import Flask, request, abort, render_template_string, jsonify
+from flask import Flask, request, abort, render_template_string, jsonify, send_file
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import (
@@ -3378,6 +3378,24 @@ def open_tex():
 """)
 
 
+
+# ==================== 線上電子手冊路由（提供手機 Safari 最佳互動與主畫面捷徑） ====================
+
+@app.route("/travel")
+def serve_travel():
+    """Sandy 深圳香港商務漫遊手冊"""
+    path = os.path.join(os.path.dirname(__file__), "pages", "travel.html")
+    response = send_file(path, mimetype='text/html; charset=utf-8')
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    return response
+
+@app.route("/a102_audit")
+def serve_a102_audit():
+    """A102 裕誠路財務體檢與續約決策手冊"""
+    path = os.path.join(os.path.dirname(__file__), "pages", "a102_audit.html")
+    response = send_file(path, mimetype='text/html; charset=utf-8')
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    return response
 
 # ==================== 【修改九】自動逾期與到期合約排程（直接通知租客與Sandy）====================
 

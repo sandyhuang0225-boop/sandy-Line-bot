@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="A102決策手冊">
+  <title>A102 裕誠路・合夥資產財務體檢與續約策略手冊</title>
+  <style>
+    :root {
+      --primary: #2b6cb0;
+      --primary-light: #ebf8ff;
+      --primary-dark: #1a365d;
+      --gold: #d69e2e;
+      --bg: #f7fafc;
+      --card-bg: #ffffff;
+      --text-main: #2d3748;
+      --text-muted: #718096;
+      --border: #e2e8f0;
+      --accent-red: #e53e3e;
+      --accent-green: #38a169;
+      --shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      --radius: 16px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang TC", "Heiti TC", "Microsoft JhengHei", sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      line-height: 1.6;
+      padding-bottom: 90px;
+    }
+
+    /* Header */
+    header {
+      background: linear-gradient(135deg, #1a365d, #2b6cb0);
+      color: #fff;
+      padding: 24px 20px 20px;
+      border-radius: 0 0 24px 24px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .badge-status {
+      background: rgba(214, 158, 46, 0.25);
+      color: #fbd38d;
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-weight: 600;
+      border: 1px solid rgba(214, 158, 46, 0.5);
+    }
+
+    h1 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .header-sub {
+      font-size: 12px;
+      color: #bee3f8;
+      margin-top: 4px;
+    }
+
+    /* Sticky Tab Navigation */
+    .tab-bar {
+      display: flex;
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 86px;
+      z-index: 90;
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .tab-bar::-webkit-scrollbar { display: none; }
+
+    .tab-item {
+      flex: 0 0 auto;
+      min-width: 80px;
+      text-align: center;
+      padding: 12px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      position: relative;
+      white-space: nowrap;
+      transition: all 0.2s;
+      background: transparent;
+      border: none;
+      outline: none;
+      touch-action: manipulation;
+    }
+
+    .tab-item.active {
+      color: var(--primary);
+      font-weight: 700;
+    }
+
+    .tab-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 15%;
+      width: 70%;
+      height: 3px;
+      background: var(--primary);
+      border-radius: 3px 3px 0 0;
+    }
+
+    /* Container */
+    .container {
+      padding: 16px;
+      max-width: 650px;
+      margin: 0 auto;
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Card Component */
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(0,0,0,0.03);
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1a365d;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      border-bottom: 2px solid var(--primary-light);
+      padding-bottom: 8px;
+    }
+
+    .card-title .icon {
+      font-size: 18px;
+    }
+
+    /* Alerts */
+    .alert-box {
+      background: #ebf8ff;
+      border-left: 4px solid var(--primary);
+      padding: 12px 14px;
+      border-radius: 0 10px 10px 0;
+      font-size: 13px;
+      margin-bottom: 14px;
+      color: #2b6cb0;
+      line-height: 1.5;
+    }
+
+    .alert-box.danger {
+      background: #fff5f5;
+      border-left-color: var(--accent-red);
+      color: #9b2c2c;
+    }
+
+    .alert-box.green {
+      background: #f0fff4;
+      border-left-color: var(--accent-green);
+      color: #22543d;
+    }
+
+    /* Financial Data Grid */
+    .data-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .data-tile {
+      background: #f8fafc;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid #edf2f7;
+    }
+
+    .data-tile .label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
+
+    .data-tile .val {
+      font-size: 16px;
+      font-weight: 700;
+      color: #2d3748;
+    }
+
+    .data-tile .val.red { color: var(--accent-red); }
+    .data-tile .val.green { color: var(--accent-green); }
+
+    /* Comparison Table Card */
+    .plan-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 14px;
+      background: #fff;
+    }
+
+    .plan-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .plan-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1a365d;
+    }
+
+    .plan-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 20px;
+    }
+
+    .plan-details {
+      font-size: 13px;
+      color: #4a5568;
+      line-height: 1.6;
+    }
+
+    .plan-math {
+      background: #f7fafc;
+      padding: 10px 12px;
+      border-radius: 8px;
+      margin-top: 10px;
+      font-size: 12px;
+      color: #2d3748;
+      border-left: 3px solid var(--primary);
+    }
+
+    /* Dialogue Card */
+    .dialogue-box {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 12px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .dialogue-title {
+      font-weight: 700;
+      font-size: 14px;
+      color: #2b6cb0;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dialogue-text {
+      font-size: 13px;
+      color: #4a5568;
+      line-height: 1.7;
+    }
+
+    /* Floating Dock */
+    .quick-dock {
+      position: fixed;
+      bottom: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(26, 54, 93, 0.94);
+      backdrop-filter: blur(12px);
+      padding: 8px 20px;
+      border-radius: 30px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      display: flex;
+      gap: 20px;
+      z-index: 99;
+    }
+
+    .dock-btn {
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      cursor: pointer;
+    }
+
+    .dock-btn span { font-size: 16px; }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="header-top">
+      <span class="badge-status">持有 5 年・合資資產體檢</span>
+      <span style="font-size: 13px; color: #bee3f8;">雙房東專屬手冊</span>
+    </div>
+    <h1>A102 裕誠路・合資財務體檢與續約決策手冊</h1>
+    <div class="header-sub">合夥人：Sandy & 謝介文 ｜ 承租人：傅瑜（美業・含營業登記）</div>
+  </header>
+
+  <!-- Sticky Tabs -->
+  <nav class="tab-bar">
+    <button type="button" class="tab-item active" data-tab="audit">📊 財務真實體檢</button>
+    <button type="button" class="tab-item" data-tab="tax">📑 營業登記成本</button>
+    <button type="button" class="tab-item" data-tab="partner">🤝 與合夥人溝通</button>
+    <button type="button" class="tab-item" data-tab="plans">💡 3大平衡續約方案</button>
+    <button type="button" class="tab-item" data-tab="talk">🗣️ 與房客談判話術</button>
+    <button type="button" class="tab-item" data-tab="summary">📈 5年總投報成績</button>
+  </nav>
+
+  <div class="container">
+
+    <!-- ==================== TAB 1: 財務真實體檢 ==================== -->
+    <section id="audit" class="tab-content active">
+
+      <div class="alert-box danger">
+        ⚠️ <strong>核心診斷結論</strong>：<br>
+        表面上每月收租 2.8~2.9 萬，但因為<strong>「管理費少收 5,795 元」</strong>加上<strong>「營登衍生之額外房屋地價所得稅」</strong>，這間房子目前<strong>每年實質淨虧損高達 5.8 萬～7.5 萬元</strong>（平均每月淨虧 5,000~6,000 元），兩位合夥人每個月都在默默自掏腰包倒貼！
+      </div>
+
+      <!-- 基本資產盤點 -->
+      <div class="card">
+        <div class="card-title"><span class="icon">🏠</span> 物件基本資本資訊</div>
+        <div class="data-grid">
+          <div class="data-tile">
+            <div class="label">買進總價 (5年前)</div>
+            <div class="val">905 萬元</div>
+          </div>
+          <div class="data-tile">
+            <div class="label">目前市價 (實登8F)</div>
+            <div class="val green">約 1,050 萬元</div>
+          </div>
+          <div class="data-tile">
+            <div class="label">自備現金 (兩人各150萬)</div>
+            <div class="val">300 萬元</div>
+          </div>
+          <div class="data-tile">
+            <div class="label">銀行原始貸款</div>
+            <div class="val">約 605 萬元</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 現金流收支大剖析 -->
+      <div class="card">
+        <div class="card-title"><span class="icon">💸</span> 表面現金流收支表（以雙月為週期）</div>
+        
+        <div style="font-size: 13px; margin-bottom: 10px;">
+          • <strong>雙月租金實收：</strong> 奇數月 28,000 + 偶數月 29,931 = <strong style="color:var(--accent-green);">57,931 元</strong>（平均月收 28,966 元）<br>
+          • <strong>雙月房貸支出：</strong> 26,778 × 2 = <strong style="color:var(--accent-red);">-53,556 元</strong><br>
+          • <strong>雙月管理費支出：</strong> 實付管委會 <strong style="color:var(--accent-red);">-7,726 元</strong>（平均每月 3,863 元）
+        </div>
+
+        <div class="data-grid">
+          <div class="data-tile" style="background:#fff5f5;">
+            <div class="label">雙月表面現金赤字</div>
+            <div class="val red">-3,351 元 / 雙月</div>
+          </div>
+          <div class="data-tile" style="background:#fff5f5;">
+            <div class="label">每月表面現金赤字</div>
+            <div class="val red">-1,675 元 / 月</div>
+          </div>
+        </div>
+
+        <div style="font-size: 12px; color: #718096; background: #f8fafc; padding: 10px; border-radius: 8px;">
+          💡 <strong>管理費被忽略的真相：</strong><br>
+          大樓雙月管理費是 <strong>7,726 元</strong>，但租客偶數月只多付了 <code>29,931 - 28,000 = 1,931 元</code>。剩下 <strong>5,795 元（每個月近 2,900 元）全由房東默默在貼</strong>！
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- ==================== TAB 2: 營業登記成本 ==================== -->
+    <section id="tax" class="tab-content">
+
+      <div class="card">
+        <div class="card-title"><span class="icon">📑</span> 營業登記帶來的「三大額外稅負」</div>
+        <div class="alert-box danger">
+          房客設立美業營業登記，導致整間房屋完全無法享受自用住宅優惠，稅捐稽徵處與國稅局全面按照營業用課徵！
+        </div>
+
+        <!-- 稅負 1 -->
+        <div class="plan-card" style="border-left: 4px solid var(--accent-red);">
+          <div class="plan-header">
+            <span class="plan-name">1. 房屋稅暴增（每年多付 1.2 萬 ~ 1.5 萬元）</span>
+            <span class="plan-badge" style="background:#fed7d7; color:#9b2c2c;">增加約 2.5 倍</span>
+          </div>
+          <div class="plan-details">
+            • <strong>自住用稅率：</strong> 1.2%（年繳約 6,000～8,000 元）<br>
+            • <strong>營業用稅率：</strong> <strong>3% ～ 5%</strong>（非住家非營業 / 營業用）<br>
+            • <strong>實質年支出：</strong> 暴增至 <strong>約 18,000 ～ 22,000 元 / 年</strong>！
+          </div>
+        </div>
+
+        <!-- 稅負 2 -->
+        <div class="plan-card" style="border-left: 4px solid var(--accent-red);">
+          <div class="plan-header">
+            <span class="plan-name">2. 地價稅暴增（每年多付 5,000 ~ 7,000 元）</span>
+            <span class="plan-badge" style="background:#fed7d7; color:#9b2c2c;">直接暴增 5 倍</span>
+          </div>
+          <div class="plan-details">
+            • <strong>自用住宅用地：</strong> 優惠稅率 千分之 2（約 1,000~1,500 元）<br>
+            • <strong>營業一般用地：</strong> <strong>基本稅率 千分之 10 起跳</strong>（無自用優惠）<br>
+            • <strong>實質年支出：</strong> 暴增至 <strong>約 6,000 ～ 8,500 元 / 年</strong>！
+          </div>
+        </div>
+
+        <!-- 稅負 3 -->
+        <div class="plan-card" style="border-left: 4px solid var(--accent-red);">
+          <div class="plan-header">
+            <span class="plan-name">3. 租賃所得稅強制申報（每年多付 1.5 萬 ~ 2.5 萬元）</span>
+            <span class="plan-badge" style="background:#fed7d7; color:#9b2c2c;">無所遁形</span>
+          </div>
+          <div class="plan-details">
+            • 國稅局查核營登系統連線，租金年收 34.7 萬元必須申報租賃所得。<br>
+            • 扣除 43% 必要費用後，約 19.8 萬淨所得併入綜合所得稅，依房東級距（12%~20%）計算，<strong>年增稅約 15,000 ~ 25,000 元</strong>。
+          </div>
+        </div>
+
+        <!-- 稅負加總 -->
+        <div style="background:#fffaf0; padding:12px; border-radius:10px; border:1px solid #fbd38d; font-size:13px; color:#744210;">
+          💰 <strong>營業登記每年為房東帶來的額外稅金負擔：</strong><br>
+          房屋稅差額 + 地價稅差額 + 所得稅 ≈ <strong style="color:var(--accent-red); font-size:15px;">35,000 ～ 45,000 元 / 年</strong>！<br>
+          （換算平均每個月多出 <strong>約 3,000 ～ 3,800 元</strong> 的隱形稅金成本）
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- ==================== TAB 3: 與合夥人溝通 ==================== -->
+    <section id="partner" class="tab-content">
+
+      <div class="card">
+        <div class="card-title"><span class="icon">🤝</span> 與謝介文建立共識的 4 大重點</div>
+        <div class="alert-box">
+          兩位都是出資 150 萬的平權合夥人，溝通重點是「用數據說話，達成共識，一起讓資產止血轉正」。
+        </div>
+
+        <div class="dialogue-box">
+          <div class="dialogue-title">📌 重點 1：釐清過去 5 年的「雙重貼錢」現狀</div>
+          <div class="dialogue-text">
+            「介文，我們當初各出 150 萬買這間 905 萬的房子，目前每個月收 28,000~29,931 元。但因為：<br>
+            1. <strong>管理費：</strong>雙月 7,726 元，房客只多付 1,931 元，其餘 5,795 元都是我們房東在貼。<br>
+            2. <strong>營業登記：</strong>房客開美業設營登，我們每年的房屋稅、地價稅、所得稅多出將近 4 萬元。<br>
+            👉 算下來，我們兩個人每個月還要各自從口袋掏出 <strong>2,500～3,000 元</strong>貼補這間房子！」
+          </div>
+        </div>
+
+        <div class="dialogue-box">
+          <div class="dialogue-title">📌 重點 2：房客很優質，我們要在「留人」與「合理回報」間取平衡</div>
+          <div class="dialogue-text">
+            「傅小姐按時繳租、從不拖欠，美業環境維護得很乾淨，是難得的好租客，我們也想長久留住她。<br>
+            但我們<strong>不能繼續做賠本生意</strong>。市場上能設營登的商辦/住辦行情都在 3.6 萬以上，我們只要調到合理的 <strong>33,000 ~ 35,000 元</strong>，對她依然比重新找點裝潢划算，對我們也能止血轉正！」
+          </div>
+        </div>
+
+        <div class="dialogue-box">
+          <div class="dialogue-title">📌 重點 3：達成一致的續約談判底線</div>
+          <div class="dialogue-text">
+            「我們兩人要先有一致共識：<br>
+            • <strong>最理想目標：</strong> 調升至 <strong>35,000 元（包管理費與營登）</strong>。<br>
+            • <strong>底線防守：</strong> 最少也要 <strong>33,000 元</strong> 或 <strong>純租 28,500 元 + 管理費由她自理</strong>。<br>
+            絕不能再接受低於 31,000 元的方案，否則每過一個月我們都在虧錢。」
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- ==================== TAB 4: 3大平衡續約方案 ==================== -->
+    <section id="plans" class="tab-content">
+
+      <div class="alert-box green">
+        🎯 <strong>兼顧房客留存度與房東現金流的 3 大階梯方案</strong>：
+      </div>
+
+      <!-- 方案 A -->
+      <div class="plan-card" style="border: 2px solid var(--accent-green);">
+        <div class="plan-header">
+          <span class="plan-name">【方案 A：首推雙贏旗艦】一口價 34,800 元 (包管+營登)</span>
+          <span class="plan-badge" style="background:#c6f6d5; color:#22543d;">最省心・首選</span>
+        </div>
+        <div class="plan-details">
+          • <strong>收取方式：</strong> 每月固定 34,800 元（不再分奇偶數月，簡單清楚）。<br>
+          • <strong>包含內容：</strong> 租金 ＋ 大樓全額管理費（每月3,863）＋ 營業登記權益。<br>
+          • <strong>租客感受：</strong> 裕誠路有營登、電梯大樓行情約 36,000~40,000，開 34,800 非常公道，租客搬遷重裝潢成本至少 30 萬以上，留存意願極高！
+        </div>
+        <div class="plan-math">
+          📊 <strong>房東年收支試算：</strong><br>
+          年實收 417,600 - 房貸 321,336 - 管理費 46,356 - 稅金約 40,000 = <strong style="color:var(--accent-green);">每年淨賺 +10,000 元！</strong><br>
+          （現金流徹底由負轉正，不用再掏半毛錢倒貼！）
+        </div>
+      </div>
+
+      <!-- 方案 B -->
+      <div class="plan-card" style="border: 1px solid var(--primary);">
+        <div class="plan-header">
+          <span class="plan-name">【方案 B：明細拆分方案】純租 29,000 + 營登 2,000 + 管費自理</span>
+          <span class="plan-badge" style="background:#ebf8ff; color:#2b6cb0;">帳目最透明</span>
+        </div>
+        <div class="plan-details">
+          • <strong>收取方式：</strong> 房東每個月只收 <code>29,000 (租金) + 2,000 (營登稅補貼) = 31,000 元</code>。<br>
+          • <strong>管理費：</strong> 雙月 7,726 元由租客直接拿繳款單去超商/管委會繳納。<br>
+          • <strong>租客感受：</strong> 租客只覺得租金微漲 1,000 元，營登補貼合情合理，管理費本來就是使用者付費，心理抗拒感最小！
+        </div>
+        <div class="plan-math">
+          📊 <strong>房東年收支試算：</strong><br>
+          年實收 372,000 - 房貸 321,336 - 稅金約 40,000 = <strong style="color:var(--accent-green);">每年約 +10,664 元！</strong>
+        </div>
+      </div>
+
+      <!-- 方案 C -->
+      <div class="plan-card" style="border: 1px solid #cbd5e0;">
+        <div class="plan-header">
+          <span class="plan-name">【方案 C：最後妥協底線】32,800 元 (人情留客價)</span>
+          <span class="plan-badge" style="background:#edf2f7; color:#4a5568;">防守底線</span>
+        </div>
+        <div class="plan-details">
+          • <strong>收取方式：</strong> 包管理費與營登，一口價 32,800 元/月。<br>
+          • <strong>適用時機：</strong> 傅小姐若面有難色、表示美業景氣稍有起伏時的退讓底線。<br>
+          • <strong>房東效益：</strong> 雖然扣完稅金只剛好損益兩平（不賺不賠），但保證<strong>房東不再從口袋拿錢出來貼</strong>！
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- ==================== TAB 5: 與房客談判話術 ==================== -->
+    <section id="talk" class="tab-content">
+
+      <div class="card">
+        <div class="card-title"><span class="icon">🗣️</span> 與傅小姐溫和堅定之談話劇本</div>
+        <div class="alert-box">
+          出發點是「感謝支持、陳述客觀成本、給予選擇」，絕不帶情緒，維持極佳房東房客關係。
+        </div>
+
+        <div class="dialogue-box" style="border-left: 4px solid var(--accent-green);">
+          <div class="dialogue-title">💬 第一步：開場肯定，表達長期合作意願</div>
+          <div class="dialogue-text">
+            「傅小姐您好！這幾年合作真的非常愉快，您按時繳租、把房子打理得乾淨漂亮，我們和合夥人都非常感謝有您這樣的好房客，也真心希望您的美業事業在這邊長久穩定做下去！」
+          </div>
+        </div>
+
+        <div class="dialogue-box" style="border-left: 4px solid var(--gold);">
+          <div class="dialogue-title">💬 第二步：誠懇說明房東面臨的客觀壓力</div>
+          <div class="dialogue-text">
+            「這次合約即將到期，我們需要跟您誠懇溝通租金調整。過去五年我們一直非常支持您設立營業登記，但這幾年因為：<br>
+            1. <strong>營業登記稅負暴增：</strong> 房屋稅跳到營業用 3%、地價稅跳到一般用地 5 倍，加上租賃所得稅，我們每年額外負擔近 4 萬元稅金。<br>
+            2. <strong>管理費差額：</strong> 大樓每期實收是 7,726 元，過去我們每期幫忙貼補了 5,700 多元差額。<br>
+            3. <strong>銀行升息：</strong> 央行連續升息，我們每個月收的租金已經完全沒辦法打平房貸與各項硬支出，目前每個月都在倒貼。」
+          </div>
+        </div>
+
+        <div class="dialogue-box" style="border-left: 4px solid var(--primary);">
+          <div class="dialogue-title">💬 第三步：給予兩個超值的選擇方案</div>
+          <div class="dialogue-text">
+            「考量到目前裕誠路精華區能設立營業登記的同級大樓租金都在 3.6 萬～4 萬元，為了繼續支持您，我們提供兩個方案給您選擇：<br><br>
+            👉 <strong>方案 1（包套省心）：</strong> <strong>每月 34,800 元整</strong>（大樓全額管理費由我們繳，繼續享有營業登記權益）。<br>
+            👉 <strong>方案 2（明細拆分）：</strong> <strong>每月純租 29,000 元 ＋ 營登稅金補貼 2,000 元（共 31,000 元）</strong>，大樓管理費由您每期自行繳納。<br><br>
+            您可以評估看看哪種方式對您的店鋪記帳比較方便，我們提早把合約定下來，謝謝您的體諒與支持！」
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- ==================== TAB 6: 5年總投報成績 ==================== -->
+    <section id="summary" class="tab-content">
+
+      <div class="card">
+        <div class="card-title"><span class="icon">📈</span> 買進 5 年總結算：到底賺了多少？</div>
+        <div class="alert-box green">
+          🎉 <strong>請兩位合夥人放寬心！</strong> 雖然每個月現金流在倒貼，但房產的「資本增值」與「還本累積」讓這筆投資依然繳出亮麗成績！
+        </div>
+
+        <div class="data-grid">
+          <div class="data-tile">
+            <div class="label">5年房價增值 (1050萬-905萬)</div>
+            <div class="val green">+145 萬元</div>
+          </div>
+          <div class="data-tile">
+            <div class="label">5年房客幫忙還掉之房貸本金</div>
+            <div class="val green">+85 萬元</div>
+          </div>
+          <div class="data-tile">
+            <div class="label">5年自掏腰包貼之現金 (管費+稅金)</div>
+            <div class="val red">-18 萬元</div>
+          </div>
+          <div class="data-tile" style="background:#f0fff4;">
+            <div class="label">5 年全案累積實質淨利</div>
+            <div class="val green">+212 萬元</div>
+          </div>
+        </div>
+
+        <div style="background:#f8fafc; padding:12px; border-radius:10px; font-size:13px; line-height:1.7; border:1px solid #edf2f7;">
+          • <strong>Sandy 實質獲利：</strong> 投入 150 萬 ➔ <strong>獲利約 106 萬元</strong>！<br>
+          • <strong>謝介文實質獲利：</strong> 投入 150 萬 ➔ <strong>獲利約 106 萬元</strong>！<br>
+          • <strong>5年總資產報酬率 (ROI)：</strong> <strong>高達 70.6%（年化投報率約 14.1%）</strong>！<br>
+          👉 <strong>結論：</strong> 這是一隻<strong>很會長大的金雞母</strong>，現在唯一的缺點就是「飼料費（現金流）每個月在咬手」。只要趁這次續約把租金調整到 34,800 元，它就會變成<strong>「每個月生金蛋、房價繼續漲」</strong>的滿分資產！
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <!-- Bottom Floating Quick Dock -->
+  <div class="quick-dock">
+    <button type="button" class="dock-btn" data-tab="audit">
+      <span>📊</span>看體檢
+    </button>
+    <button type="button" class="dock-btn" data-tab="plans">
+      <span>💡</span>看方案
+    </button>
+    <button type="button" class="dock-btn" data-tab="talk">
+      <span>🗣️</span>看話術
+    </button>
+    <button type="button" class="dock-btn" onclick="window.print()">
+      <span>📄</span>存PDF
+    </button>
+  </div>
+
+  <script>
+    function activateTab(tabId) {
+      if (!tabId) return;
+
+      // 1. 切換內容區塊
+      const contents = document.querySelectorAll('.tab-content');
+      contents.forEach(content => {
+        content.classList.remove('active');
+      });
+
+      const targetContent = document.getElementById(tabId);
+      if (targetContent) {
+        targetContent.classList.add('active');
+      }
+
+      // 2. 切換導覽按鈕選中態
+      const tabItems = document.querySelectorAll('.tab-item');
+      tabItems.forEach(item => {
+        if (item.getAttribute('data-tab') === tabId) {
+          item.classList.add('active');
+          item.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        } else {
+          item.classList.remove('active');
+        }
+      });
+
+      // 3. 滾動回頂部
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // 綁定全域事件 (原生支援 iOS 觸控與 click)
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('[data-tab]').forEach(el => {
+        el.addEventListener('click', function(e) {
+          e.preventDefault();
+          const target = this.getAttribute('data-tab');
+          activateTab(target);
+        });
+      });
+    });
+
+    // 備援：若 DOMContentLoaded 已過直接綁定
+    document.querySelectorAll('[data-tab]').forEach(el => {
+      el.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = this.getAttribute('data-tab');
+        activateTab(target);
+      });
+    });
+  </script>
+</body>
+</html>
