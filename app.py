@@ -203,7 +203,8 @@ def load_properties():
             due_nums       = re.findall(r'\d+', due_day_str)
             due_day        = int(due_nums[0]) if due_nums else 31
             tenant_line_id = r[21].strip() if len(r) > 21 else ""
-            enable_notify  = r[22].strip().upper() if len(r) > 22 else "Y"
+            val_notify     = r[22].strip().upper() if len(r) > 22 else ""
+            enable_notify  = val_notify if val_notify in ['Y', 'N'] else "Y"
 
             if addr or room_no:
                 properties.append({
