@@ -214,9 +214,27 @@ def load_properties():
             due_day_str    = r[14].strip() if len(r) > 14 else ""
             due_nums       = re.findall(r'\d+', due_day_str)
             due_day        = int(due_nums[0]) if due_nums else 31
+
+            # Sandy 最新親自校正之繳款規律：
+            if 'A109' in room_no or '楊芸錚' in tenant_name:
+                due_day = 10
+            elif 'A107' in room_no or '林采葳' in tenant_name:
+                due_day = 31
+            elif 'A105' in room_no or '李乃亘' in tenant_name:
+                due_day = 31
+            elif 'A101' in room_no or '林孟廷' in tenant_name:
+                due_day = 31
+            elif 'A106' in room_no or '汪晉宇' in tenant_name:
+                due_day = 28  # 配合其習慣在 23~28 號之間繳款，寬限期設為 28 號
+            elif 'B1-03' in room_no or '周大哥' in tenant_name:
+                due_day = 1   # 季繳月初繳
+            elif 'B1-02' in room_no or '陳又慈' in tenant_name:
+                enable_notify = "N"  # 車位年繳一次，不按月催繳
+
             tenant_line_id = r[21].strip() if len(r) > 21 else ""
             val_notify     = r[22].strip().upper() if len(r) > 22 else ""
-            enable_notify  = val_notify if val_notify in ['Y', 'N'] else "Y"
+            if val_notify in ['Y', 'N'] and not ('B1-02' in room_no or '陳又慈' in tenant_name):
+                enable_notify = val_notify
 
             if addr or room_no:
                 properties.append({

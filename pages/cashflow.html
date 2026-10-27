@@ -34,9 +34,10 @@
     .card-list { padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
     .item-card { background: white; border-radius: 12px; padding: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); border: 1px solid #e2e8f0; position: relative; }
     
+    .urgent-border { border-left: 5px solid #ef4444; }
     .unpaid-border { border-left: 5px solid #f59e0b; }
     .paid-border { border-left: 5px solid #10b981; background: #fafdfb; }
-    .todo-border { border-left: 5px solid #ef4444; }
+    .todo-border { border-left: 5px solid #dc2626; }
 
     .item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
     .room-badge { font-weight: 700; font-size: 15px; color: #1e3a8a; }
@@ -44,20 +45,22 @@
     .status-tag { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
     .tag-paid { background: #dcfce7; color: #15803d; }
     .tag-unpaid { background: #fef3c7; color: #b45309; }
+    .tag-urgent { background: #fee2e2; color: #b91c1c; }
     .tag-todo { background: #fee2e2; color: #b91c1c; }
 
     .amount-row { display: flex; justify-content: space-between; align-items: baseline; margin-top: 6px; padding-top: 6px; border-top: 1px dashed #e2e8f0; }
     .amount-label { font-size: 12px; color: var(--text-muted); }
     .amount-val { font-size: 16px; font-weight: 700; }
     .desc { font-size: 12px; color: #64748b; line-height: 1.4; }
+    .rule-note { font-size: 11px; color: #0284c7; background: #f0f9ff; padding: 3px 6px; border-radius: 4px; display: inline-block; margin-top: 4px; }
   </style>
 </head>
 <body>
 
   <header>
-    <div class="badge">Sandy 即時核對校正版</div>
+    <div class="badge">Sandy 規則全面校正版</div>
     <h1>📊 Sandy 宅安心 ｜ 實時收租與待辦總表</h1>
-    <div class="sub">狀態更新：2026年10月28日 ｜ 已同步最新繳款進度</div>
+    <div class="sub">更新時間：2026年10月28日 ｜ 已同步每位租客最新繳款規律</div>
   </header>
 
   <div class="kpi-container">
@@ -66,7 +69,7 @@
       <div class="kpi-val green">$86,781</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-title">⏳ 待催收租金</div>
+      <div class="kpi-title">⏳ 待收租金</div>
       <div class="kpi-val amber">$82,449</div>
     </div>
     <div class="kpi-card">
@@ -75,85 +78,95 @@
     </div>
   </div>
 
-  <!-- SECTION 1: 待收租金 -->
+  <!-- SECTION 1: 待收租金（依最新校正日期排序） -->
   <div class="section-title">
-    <span>⏳ 【待收租金】尚未入帳租客（共 5 戶 ｜ $82,449）</span>
+    <span>⏳ 【待收租金】依最新校正繳費日排序（共 5 戶 ｜ $82,449）</span>
   </div>
 
   <div class="card-list">
 
-    <div class="item-card unpaid-border">
+    <!-- 1. 楊芸錚：每月 10 號 -->
+    <div class="item-card urgent-border">
       <div class="item-header">
         <div>
-          <span class="room-badge">A101</span>
-          <span class="tenant-name">林孟廷</span>
+          <span class="room-badge">A109</span>
+          <span class="tenant-name">楊芸錚（後門）</span>
         </div>
-        <span class="status-tag tag-unpaid">⏳ 尚未繳納</span>
+        <span class="status-tag tag-urgent">⚠️ 逾期待催繳</span>
       </div>
-      <div class="desc">台北市信義區福德街300巷12號3F（年底 12/31 到期）</div>
+      <div class="desc">高雄市鼓山區昌盛路271號（明華路後門）</div>
+      <div class="rule-note">📌 已校正規則：每月 10 號繳租（本月尚未繳納）</div>
       <div class="amount-row">
         <span class="amount-label">待收月租金</span>
-        <span class="amount-val amber">$30,000 元</span>
+        <span class="amount-val red">$9,300 元</span>
       </div>
     </div>
 
-    <div class="item-card unpaid-border">
-      <div class="item-header">
-        <div>
-          <span class="room-badge">A107</span>
-          <span class="tenant-name">林采葳（前門）</span>
-        </div>
-        <span class="status-tag tag-unpaid">⏳ 尚未繳納</span>
-      </div>
-      <div class="desc">高雄市鼓山區明華路271之1號（前門店面）</div>
-      <div class="amount-row">
-        <span class="amount-label">待收月租金</span>
-        <span class="amount-val amber">$17,800 元</span>
-      </div>
-    </div>
-
+    <!-- 2. 汪晉宇：習慣 23~28 號繳 -->
     <div class="item-card unpaid-border">
       <div class="item-header">
         <div>
           <span class="room-badge">A106</span>
           <span class="tenant-name">汪晉宇</span>
         </div>
-        <span class="status-tag tag-unpaid">⏳ 尚未繳納</span>
+        <span class="status-tag tag-unpaid">⏳ 繳費期（待查帳）</span>
       </div>
       <div class="desc">高雄市鼓山區南屏路555號12樓7</div>
+      <div class="rule-note">📌 租客習慣：習慣於 23~28 號之間繳納（今天 28 號正是最後一天，建議查帳）</div>
       <div class="amount-row">
         <span class="amount-label">待收月租金</span>
         <span class="amount-val amber">$12,850 元</span>
       </div>
     </div>
 
+    <!-- 3. 林孟廷：月底 31 號 -->
+    <div class="item-card unpaid-border">
+      <div class="item-header">
+        <div>
+          <span class="room-badge">A101</span>
+          <span class="tenant-name">林孟廷</span>
+        </div>
+        <span class="status-tag tag-unpaid">⏳ 31 號到期（剩 3 天）</span>
+      </div>
+      <div class="desc">台北市信義區福德街300巷12號3F（年底 12/31 到期）</div>
+      <div class="rule-note">📌 校正規則：月底 31 號繳（無 31 則 30 號）</div>
+      <div class="amount-row">
+        <span class="amount-label">待收月租金</span>
+        <span class="amount-val amber">$30,000 元</span>
+      </div>
+    </div>
+
+    <!-- 4. 林采葳：月底 31 號 -->
+    <div class="item-card unpaid-border">
+      <div class="item-header">
+        <div>
+          <span class="room-badge">A107</span>
+          <span class="tenant-name">林采葳（前門）</span>
+        </div>
+        <span class="status-tag tag-unpaid">⏳ 31 號到期（剩 3 天）</span>
+      </div>
+      <div class="desc">高雄市鼓山區明華路271之1號（前門店面）</div>
+      <div class="rule-note">📌 校正規則：月底 31 號繳（無 31 則 30 號）</div>
+      <div class="amount-row">
+        <span class="amount-label">待收月租金</span>
+        <span class="amount-val amber">$17,800 元</span>
+      </div>
+    </div>
+
+    <!-- 5. 李乃亘：月底 31 號 -->
     <div class="item-card unpaid-border">
       <div class="item-header">
         <div>
           <span class="room-badge">A105</span>
           <span class="tenant-name">李乃亘</span>
         </div>
-        <span class="status-tag tag-unpaid">⏳ 尚未繳納</span>
+        <span class="status-tag tag-unpaid">⏳ 31 號到期（剩 3 天）</span>
       </div>
       <div class="desc">高雄市鼓山區文信路209號11樓9</div>
+      <div class="rule-note">📌 校正規則：月底 31 號繳（無 31 則 30 號）</div>
       <div class="amount-row">
         <span class="amount-label">待收月租金</span>
         <span class="amount-val amber">$12,499 元</span>
-      </div>
-    </div>
-
-    <div class="item-card unpaid-border">
-      <div class="item-header">
-        <div>
-          <span class="room-badge">A109</span>
-          <span class="tenant-name">楊芸錚（後門）</span>
-        </div>
-        <span class="status-tag tag-unpaid">⏳ 尚未繳納</span>
-      </div>
-      <div class="desc">高雄市鼓山區昌盛路271號（明華路後門）</div>
-      <div class="amount-row">
-        <span class="amount-label">待收月租金</span>
-        <span class="amount-val amber">$9,300 元</span>
       </div>
     </div>
 
@@ -172,7 +185,7 @@
           <span class="room-badge" style="color: #dc2626;">🤝 合夥人結算</span>
           <span class="tenant-name">謝介文（裕誠路 A102）</span>
         </div>
-        <span class="status-tag tag-todo">🚨 尚未結算匯款</span>
+        <span class="status-tag tag-todo">🚨 待匯款</span>
       </div>
       <div class="desc">包含謝介文帳戶扣繳房貸 $26,778 ＋ 二人盈餘分潤平攤</div>
       <div class="amount-row">
@@ -228,12 +241,44 @@
 
   </div>
 
-  <!-- SECTION 3: 已繳清項目 -->
+  <!-- SECTION 3: 已繳清與特殊週期項目 -->
   <div class="section-title" style="margin-top: 14px;">
-    <span>✅ 【已完成】已收租金 ＆ 房貸已扣繳</span>
+    <span>✅ 【已完成】已收租金 ＆ 房貸已扣繳 ＆ 特殊週期</span>
   </div>
 
   <div class="card-list">
+
+    <div class="item-card paid-border">
+      <div class="item-header">
+        <div>
+          <span class="room-badge" style="color: #15803d;">B1-03</span>
+          <span class="tenant-name">周大哥（車位 I3）</span>
+        </div>
+        <span class="status-tag tag-paid">✅ 季繳已入帳</span>
+      </div>
+      <div class="desc">汐止莊敬街車位</div>
+      <div class="rule-note">📌 週期規則：每季月初繳一次（已於 10 月初收齊 Q4 總額）</div>
+      <div class="amount-row">
+        <span class="amount-label">實收季繳金額</span>
+        <span class="amount-val green">$5,400 元</span>
+      </div>
+    </div>
+
+    <div class="item-card paid-border">
+      <div class="item-header">
+        <div>
+          <span class="room-badge" style="color: #15803d;">B1-02</span>
+          <span class="tenant-name">陳又慈（台南文成車位）</span>
+        </div>
+        <span class="status-tag tag-paid">✅ 特殊週期：年繳</span>
+      </div>
+      <div class="desc">台南市北區文成二路 159 號車位</div>
+      <div class="rule-note">📌 週期規則：一年繳一次（年繳制，非按月催繳）</div>
+      <div class="amount-row">
+        <span class="amount-label">繳費模式</span>
+        <span class="amount-val green">年繳一次</span>
+      </div>
+    </div>
 
     <div class="item-card paid-border">
       <div class="item-header">
@@ -277,21 +322,6 @@
       <div class="amount-row">
         <span class="amount-label">實收金額</span>
         <span class="amount-val green">$9,600 元</span>
-      </div>
-    </div>
-
-    <div class="item-card paid-border">
-      <div class="item-header">
-        <div>
-          <span class="room-badge" style="color: #15803d;">B1-03</span>
-          <span class="tenant-name">周大哥（車位 I3）</span>
-        </div>
-        <span class="status-tag tag-paid">✅ 已入帳</span>
-      </div>
-      <div class="desc">汐止莊敬街車位（季繳 Q4：10~12月）</div>
-      <div class="amount-row">
-        <span class="amount-label">實收金額</span>
-        <span class="amount-val green">$5,400 元</span>
       </div>
     </div>
 
