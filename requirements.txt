@@ -3,3 +3,5 @@ line-bot-sdk
 gspread
 google-auth
 gunicorn
+requests
+Pillow

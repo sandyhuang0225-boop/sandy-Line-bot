@@ -1,0 +1,18 @@
+{
+  "profiles": {
+    "U2e78dd97b7bbbc84ea93d2070bb0565b": {
+      "hosp": "三軍總醫院",
+      "cancer": "早期乳癌",
+      "dose": 2,
+      "stock": 53,
+      "code": "KSQ-0001",
+      "pharmacy": "躍獅寶湖藥局",
+      "is_registered": true,
+      "state": null,
+      "last_purchase_date": "2026-10-06",
+      "last_purchase_time": "2026-10-06 08:00",
+      "last_purchase_pills": 53
+    }
+  },
+  "counter": 1
+}

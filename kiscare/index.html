@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>擊癌利病友存摺 ｜ Kisqali Passbook</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    .passbook-shadow { box-shadow: 0 10px 25px -5px rgba(220, 38, 38, 0.1), 0 8px 10px -6px rgba(220, 38, 38, 0.1); }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 p-4 md:p-8 min-h-screen flex justify-center items-start">
+
+  <div class="w-full max-w-xl bg-white rounded-2xl border border-slate-200 overflow-hidden passbook-shadow">
+    
+    <!-- 存摺封面頂部 -->
+    <div class="bg-gradient-to-r from-rose-700 via-rose-600 to-amber-600 text-white p-6 relative">
+      <div class="flex justify-between items-start">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-2xl">📕</span>
+            <h1 class="text-xl font-bold tracking-wide">擊癌利 病友存摺</h1>
+          </div>
+          <p class="text-xs text-rose-100 font-mono mt-0.5 tracking-wider">KISQALI PASSBOOK & PSP MANAGER</p>
+        </div>
+        <span class="bg-white/20 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-full font-medium border border-white/30">
+          台灣諾華 PSP 專案
+        </span>
+      </div>
+
+      <!-- 病友資料列與就醫醫院 -->
+      <div class="mt-4 pt-4 border-t border-white/20 flex flex-wrap justify-between items-center gap-2">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-rose-200">病友：</span>
+            <span class="font-bold text-sm" id="patient_name_txt">擊癌利專案病友</span>
+          </div>
+          <div class="flex items-center gap-1.5 mt-0.5">
+            <span class="text-xs text-rose-200">主治醫院：</span>
+            <span class="text-xs font-semibold bg-white/20 px-2 py-0.5 rounded text-white" id="patient_hosp_badge">三軍總醫院</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="openOnboardingModal()" class="bg-white/20 hover:bg-white/30 text-white text-xs rounded-lg px-3 py-1.5 border border-white/40 font-bold transition flex items-center gap-1.5 shadow-sm">
+            <span>⚙️ 重新建檔 / 切換醫院</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🌟 全期抗癌里程碑・自費目標達成率 Banner -->
+    <div class="bg-gradient-to-br from-amber-50 via-rose-50 to-orange-50 p-4 border-b border-rose-200">
+      <div class="flex justify-between items-center mb-1.5">
+        <div class="flex items-center gap-1.5">
+          <span class="text-lg">🎯</span>
+          <span class="text-xs font-bold uppercase tracking-wider text-amber-900" id="total_rate_label">全期自費達成率（EBC 3年期計畫）</span>
+        </div>
+        <div class="flex items-baseline gap-1">
+          <span class="text-2xl font-black text-rose-700 font-mono" id="total_rate_pct">36.4%</span>
+        </div>
+      </div>
+
+      <!-- 全期大進度條 -->
+      <div class="w-full bg-slate-200 rounded-full h-3.5 overflow-hidden p-0.5 border border-amber-200/80 shadow-inner">
+        <div id="total_rate_bar" class="bg-gradient-to-r from-amber-500 via-rose-500 to-rose-600 h-2.5 rounded-full transition-all duration-700 shadow" style="width: 36.4%;"></div>
+      </div>
+
+      <div class="flex justify-between items-center text-xs mt-1.5">
+        <span class="text-slate-600">已自費：<strong id="total_paid_boxes_txt" class="text-rose-700 font-bold">4</strong> / <span id="total_target_boxes_txt">11</span> 盒</span>
+        <span class="text-slate-500" id="total_boxes_remain_txt">再自購 7 盒即圓滿完成 3 年支持計畫</span>
+      </div>
+
+      <!-- 暖心衛教激勵小語 -->
+      <div id="encouragement_box" class="mt-2.5 bg-white/80 backdrop-blur-sm rounded-lg p-2.5 border border-rose-200/70 flex items-start gap-2 text-xs text-rose-900 shadow-sm">
+        <span class="text-base flex-shrink-0">💖</span>
+        <p class="font-medium" id="encouragement_txt">
+          太棒了！您已經完成超過 1/3 的自購里程！最辛苦的第一階段就快挺過囉，小管家陪您一起堅持！
+        </p>
+      </div>
+    </div>
+
+    <!-- 方案階段進度條 -->
+    <div class="bg-rose-50/70 p-4 border-b border-rose-100 flex flex-col gap-2">
+      <div class="flex justify-between items-center">
+        <div class="flex items-center gap-1.5">
+          <span class="text-base" id="stage_badge_icon">🏆</span>
+          <span class="text-sm font-bold text-rose-900" id="stage_title">第 1 階段：買 1 盒送 1 盒</span>
+        </div>
+        <span class="text-xs bg-rose-200/80 text-rose-800 font-semibold px-2 py-0.5 rounded-full" id="stage_ratio_badge">
+          自費補助比 1:1
+        </span>
+      </div>
+
+      <div>
+        <div class="flex justify-between text-xs text-slate-600 mb-1">
+          <span>當前階段晉級自費進度：<strong id="paid_boxes_txt" class="text-rose-700">4</strong> / 6 盒</span>
+          <span class="text-rose-600 font-medium" id="boxes_left_txt">再自購 2 盒晉級「買1送3」！</span>
+        </div>
+        <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+          <div id="stage_progress_bar" class="bg-gradient-to-r from-rose-500 to-amber-500 h-2.5 rounded-full transition-all duration-500" style="width: 66.6%;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="p-5 space-y-5">
+
+      <!-- 核心區塊 1: 當前醫囑劑量與調整按鍵 -->
+      <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+        <div class="flex justify-between items-center mb-2">
+          <div class="flex items-center gap-2">
+            <span class="text-base">💊</span>
+            <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">當前醫囑每日劑量</span>
+          </div>
+          <!-- 核心功能按鈕：醫師調整劑量 -->
+          <button onclick="openDoseModal()" class="inline-flex items-center gap-1 bg-white hover:bg-rose-50 text-rose-700 border border-rose-300 hover:border-rose-400 text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm transition">
+            <span>⚙️ 醫師調整劑量</span>
+          </button>
+        </div>
+
+        <div class="flex items-baseline gap-2">
+          <span class="text-2xl font-black text-slate-800" id="current_dose_txt">2 顆</span>
+          <span class="text-sm text-slate-600 font-medium" id="current_mg_txt">（400 mg / 天）</span>
+          <span class="text-xs bg-slate-200 text-slate-700 px-2 py-0.5 rounded ml-auto" id="cycle_info_txt">
+            吃 21 天 ＋ 休 7 天週期
+          </span>
+        </div>
+        <p class="text-xs text-slate-500 mt-1" id="dose_note_txt">
+          說明：若因白血球或肝指數等副作用，請點擊上方按鈕立即調整，系統將自動精準重新計算斷藥天數。
+        </p>
+      </div>
+
+      <!-- 核心區塊 2: 手邊存藥量與「2週安全庫存回診警報」 -->
+      <div id="alert_card" class="rounded-xl p-4 border transition-all duration-300 bg-amber-50 border-amber-300">
+        <div class="flex justify-between items-start">
+          <div>
+            <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">目前手邊實體存藥</span>
+            <div class="flex items-baseline gap-2 mt-1">
+              <span class="text-3xl font-black text-slate-900" id="stock_pills_txt">20</span>
+              <span class="text-sm font-semibold text-slate-600">顆</span>
+            </div>
+          </div>
+          <div class="text-right">
+            <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">以目前劑量預估可服</span>
+            <div class="flex items-baseline justify-end gap-1 mt-1">
+              <span class="text-2xl font-black text-amber-700" id="stock_days_txt">10</span>
+              <span class="text-sm font-semibold text-slate-600">天</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 警報提示條 -->
+        <div id="alert_msg_box" class="mt-3 pt-3 border-t border-amber-200 flex items-start gap-2 text-xs text-amber-900 font-medium">
+          <span class="text-base flex-shrink-0">⚠️</span>
+          <p id="alert_msg_txt">
+            【安全庫存提醒】：目前存藥僅剩 10 天份（不足兩週）！請務必於本次門診請醫師開立自費處方補藥，避免療程中斷！
+          </p>
+        </div>
+      </div>
+
+      <!-- 核心區塊 3: 零存整付存錢筒（滿 63 顆門檻 + 多餘顆數自動滾動） -->
+      <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+        <div class="flex justify-between items-center mb-3">
+          <div class="flex items-center gap-1.5">
+            <span class="text-base">🏦</span>
+            <h2 class="text-sm font-bold text-slate-800">零存整付存錢筒（滿 63 顆換 1 盒門檻）</h2>
+          </div>
+          <button onclick="openAddPillsModal()" class="text-xs bg-rose-600 hover:bg-rose-700 text-white font-semibold px-3 py-1 rounded-lg transition shadow-sm">
+            ＋ 登錄新買收據
+          </button>
+        </div>
+
+        <!-- 進度條 -->
+        <div class="space-y-1.5">
+          <div class="flex justify-between text-xs">
+            <span class="text-slate-600">本期累積自費顆數：<strong id="accum_pills_txt" class="text-rose-700 text-sm">73</strong> / 63 顆</span>
+            <span class="font-bold text-emerald-700" id="accum_status_txt">🎉 已達標 63 顆門檻！</span>
+          </div>
+          <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden border border-slate-200">
+            <div id="accum_progress_bar" class="bg-gradient-to-r from-emerald-500 to-teal-500 h-3 rounded-full transition-all duration-500" style="width: 100%;"></div>
+          </div>
+        </div>
+
+        <!-- 多餘顆數滾動提示卡片 -->
+        <div id="rollover_box" class="mt-3 bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 flex items-start gap-2 text-xs text-emerald-900">
+          <span class="text-base flex-shrink-0">✨</span>
+          <div class="flex-1">
+            <p class="font-bold">可申請本期贈藥：1 盒（63顆）！</p>
+            <p class="text-emerald-700 mt-0.5">
+              多出的 <strong id="rollover_pills_txt" class="underline">10 顆</strong> 已自動為您滾入下一期繼續累積，一顆都不浪費！
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 核心區塊 4: 永欣生技顧問審核 ＆ 專屬對應院外藥局 -->
+      <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-3">
+        <div class="flex justify-between items-center">
+          <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+            <span>📬</span>
+            <span>第三方審核 ＆ 贈藥領取流程</span>
+          </h3>
+          <span class="text-[11px] bg-rose-100 text-rose-800 font-semibold px-2 py-0.5 rounded-full">
+            審核單位：永欣生技顧問
+          </span>
+        </div>
+
+        <div class="space-y-2 text-xs">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked class="rounded text-rose-600 focus:ring-rose-500">
+            <span>1. 累積滿 63 顆收據 ＋ 填寫整本病患同意書（第一聯白色送審、第二聯粉紅自留）</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="chk_post" class="rounded text-rose-600 focus:ring-rose-500">
+            <span>2. 撕下封底雙面膠摺成免郵資信封，直接投遞郵筒寄出至【永欣生技】</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="chk_sms" class="rounded text-rose-600 focus:ring-rose-500">
+            <span>3. 等待約 7~10 個工作天，接獲「核定領藥 SMS 簡訊」</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="chk_pickup" class="rounded text-rose-600 focus:ring-rose-500">
+            <span>4. 攜帶簡訊與健保卡至指定【院外藥局】領取贈藥（3 個月內有效）</span>
+          </label>
+        </div>
+
+        <!-- 永欣生技顧問收件資訊小卡 -->
+        <div class="bg-white rounded-lg p-2.5 border border-slate-200 text-[11px] space-y-1">
+          <div class="flex items-center justify-between font-bold text-slate-700">
+            <span class="flex items-center gap-1">✉️ 同意書信封預印收件地址（免貼郵票）：</span>
+            <a href="tel:0287803236" class="text-rose-600 hover:underline">📞 02-8780-3236</a>
+          </div>
+          <p class="text-slate-600">
+            <strong>永欣生技顧問股份有限公司</strong><br>
+            110 台北市信義區忠孝東路五段410號6樓之一
+          </p>
+          <p class="text-[10px] text-slate-400">
+            💡 同意書封面已印妥回郵免貼郵票，將收據影本貼於指定處並摺疊黏貼後即可直接投入紅色/綠色郵筒寄出。
+          </p>
+        </div>
+
+        <!-- 動態對應之院外藥局專屬卡片 -->
+        <div class="mt-2 pt-2 border-t border-slate-200">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-xs font-bold text-slate-800 flex items-center gap-1">
+              <span>📍</span> 您的專屬領藥院外藥局
+            </span>
+            <span class="text-[10px] text-slate-500" id="pharmacy_match_hosp">對應：三軍總醫院</span>
+          </div>
+
+          <div class="bg-white rounded-lg p-3 border border-slate-200 shadow-sm space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-sm text-rose-900" id="pharmacy_name">躍獅寶湖藥局</span>
+              <a id="pharmacy_tel_btn" href="tel:0287928335" class="inline-flex items-center gap-1 text-[11px] bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold px-2 py-1 rounded border border-rose-200 transition">
+                <span>📞</span> 打電話
+              </a>
+            </div>
+            <p class="text-xs text-slate-600 flex items-start gap-1">
+              <span class="text-slate-400">🏢</span>
+              <span id="pharmacy_addr">114台北市內湖區寶湖里民權東路6段123巷28號</span>
+            </p>
+            <p class="text-xs text-slate-600 flex items-center gap-1">
+              <span class="text-slate-400">☎️</span>
+              <span id="pharmacy_phone">02-87928335</span>
+            </p>
+            <div id="pharmacy_note_box" class="pt-1.5 text-[11px] text-amber-700 border-t border-slate-100 hidden">
+              💡 <span id="pharmacy_note_txt">汐止國泰醫院目前由內湖躍獅寶湖藥局支援服務。</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 底部醫師看診切換按鈕 -->
+      <div class="pt-2">
+        <button onclick="toggleDoctorMode()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition shadow-md">
+          <span>🏥 門診亮給醫師看（大字醫師專用模式）</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal 1: 調整劑量彈跳視窗 -->
+  <div id="dose_modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-200 space-y-4">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="font-bold text-base text-slate-800 flex items-center gap-1.5">
+          <span>⚙️</span> 醫師調整劑量
+        </h3>
+        <button onclick="closeDoseModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+      </div>
+
+      <p class="text-xs text-slate-500">
+        請依主治醫師本次門診開立之最新醫囑選擇每日服用顆數：
+      </p>
+
+      <div class="space-y-2">
+        <label class="flex items-center justify-between p-3 border rounded-xl hover:bg-rose-50 cursor-pointer border-slate-200" id="lbl_dose_3">
+          <div class="flex items-center gap-2">
+            <input type="radio" name="dose_opt" value="3" class="text-rose-600">
+            <div>
+              <div class="font-bold text-sm text-slate-800">一天 3 顆（600 mg）</div>
+              <div class="text-xs text-slate-500">標準晚期起始劑量</div>
+            </div>
+          </div>
+        </label>
+
+        <label class="flex items-center justify-between p-3 border rounded-xl hover:bg-rose-50 cursor-pointer border-rose-400 bg-rose-50/50" id="lbl_dose_2">
+          <div class="flex items-center gap-2">
+            <input type="radio" name="dose_opt" value="2" checked class="text-rose-600">
+            <div>
+              <div class="font-bold text-sm text-slate-800">一天 2 顆（400 mg）</div>
+              <div class="text-xs text-slate-500">早期標準劑量 / 晚期一級減量</div>
+            </div>
+          </div>
+        </label>
+
+        <label class="flex items-center justify-between p-3 border rounded-xl hover:bg-rose-50 cursor-pointer border-slate-200" id="lbl_dose_1">
+          <div class="flex items-center gap-2">
+            <input type="radio" name="dose_opt" value="1" class="text-rose-600">
+            <div>
+              <div class="font-bold text-sm text-slate-800">一天 1 顆（200 mg）</div>
+              <div class="text-xs text-slate-500">二級減量（副作用耐受期）</div>
+            </div>
+          </div>
+        </label>
+
+        <label class="flex items-center justify-between p-3 border rounded-xl hover:bg-amber-50 cursor-pointer border-slate-200" id="lbl_dose_0">
+          <div class="flex items-center gap-2">
+            <input type="radio" name="dose_opt" value="0" class="text-amber-600">
+            <div>
+              <div class="font-bold text-sm text-amber-800">暫停服藥（0 顆）</div>
+              <div class="text-xs text-slate-500">副作用觀察中（不扣庫存）</div>
+            </div>
+          </div>
+        </label>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button onclick="closeDoseModal()" class="flex-1 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg">取消</button>
+        <button onclick="applyDoseChange()" class="flex-1 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg shadow-sm">確認更新劑量</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 2: 登錄新買藥品收據 -->
+  <div id="add_modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-200 space-y-4">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="font-bold text-base text-slate-800 flex items-center gap-1.5">
+          <span>🧾</span> 登錄零星購買收據
+        </h3>
+        <button onclick="closeAddPillsModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="font-semibold text-slate-700 block mb-1">本次自購顆數（例如 21 顆）：</label>
+          <input type="number" id="inp_new_pills" value="21" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:border-rose-500">
+        </div>
+        <div>
+          <label class="font-semibold text-slate-700 block mb-1">收據號碼／說明（選填）：</label>
+          <input type="text" id="inp_receipt_no" placeholder="例如：10/05 門診自費" class="w-full border border-slate-300 rounded-lg p-2 text-slate-700 focus:outline-none focus:border-rose-500">
+        </div>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button onclick="closeAddPillsModal()" class="flex-1 py-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg">取消</button>
+        <button onclick="applyAddPills()" class="flex-1 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg shadow-sm">確定加入存摺</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 大字醫師門診卡片 (全螢幕展示) -->
+  <div id="doctor_view" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-slate-200 max-h-[92vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl">🏥</span>
+          <div>
+            <h2 class="text-lg font-black text-slate-900">擊癌利門診速報卡</h2>
+            <p class="text-xs text-slate-500">出示供主治醫師快速評估療程</p>
+          </div>
+        </div>
+        <button onclick="toggleDoctorMode()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold px-3 py-1.5 rounded-lg">返回存摺</button>
+      </div>
+
+      <!-- 病患基本資訊 -->
+      <div class="flex justify-between items-center bg-slate-100 px-3 py-2 rounded-lg text-xs">
+        <div>
+          <span class="text-slate-500">病友代號：</span>
+          <span class="font-bold text-slate-800">KSQ-8821</span>
+        </div>
+        <div>
+          <span class="text-slate-500">主治醫院：</span>
+          <span class="font-bold text-rose-700" id="doc_hosp_txt">三軍總醫院</span>
+        </div>
+      </div>
+
+      <!-- 🎯 全期自費達成率 (亮給醫師重點) -->
+      <div class="bg-gradient-to-r from-amber-500 to-rose-600 p-3.5 rounded-xl text-white shadow-sm flex justify-between items-center">
+        <div>
+          <div class="text-[11px] font-bold text-amber-100 flex items-center gap-1">
+            <span>🎯</span> 全期自費達成率（支持計畫總里程）
+          </div>
+          <div class="text-xs font-medium text-white/90 mt-0.5" id="doc_rate_sub_txt">
+            EBC 3年期（已自購 4 / 11 盒）
+          </div>
+        </div>
+        <div class="text-2xl font-black font-mono tracking-tight" id="doc_rate_pct">
+          36.4%
+        </div>
+      </div>
+
+      <div class="bg-rose-50 p-4 rounded-xl border border-rose-200 space-y-2">
+        <div class="flex justify-between items-center">
+          <span class="text-xs font-semibold text-rose-800">當前方案階段</span>
+          <span class="text-base font-black text-rose-900" id="doc_stage_txt">第 1 年（買 1 送 1）</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-xs font-semibold text-rose-800">當前階段晉級進度</span>
+          <span class="text-sm font-bold text-rose-900" id="doc_boxes_txt">已自購 4 / 6 盒</span>
+        </div>
+      </div>
+
+      <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+        <div class="flex justify-between items-center">
+          <span class="text-xs font-semibold text-slate-600">當前醫囑劑量</span>
+          <span class="text-lg font-black text-slate-900" id="doc_dose_txt">每日 2 顆 (400mg)</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-xs font-semibold text-slate-600">手邊實體存藥</span>
+          <span class="text-lg font-black text-slate-900" id="doc_stock_txt">20 顆（剩 10 天份）</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-xs font-semibold text-slate-600">本次門診建議</span>
+          <span class="text-sm font-bold text-amber-700" id="doc_action_txt">⚠️ 存藥不足兩週，建議開立處方補藥</span>
+        </div>
+      </div>
+
+      <!-- 配合藥局資訊 -->
+      <div class="bg-amber-50/60 p-3 rounded-xl border border-amber-200 text-xs space-y-1">
+        <div class="font-bold text-amber-900 flex items-center gap-1">
+          <span>🏪</span>
+          <span>永欣配合院外取藥藥局：</span>
+        </div>
+        <div class="text-slate-700 pl-4" id="doc_pharmacy_txt">
+          躍獅寶湖藥局（02-87928335）<br>
+          台北市內湖區民權東路6段123巷28號
+        </div>
+      </div>
+
+      <button onclick="toggleDoctorMode()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl">
+        關閉速報卡
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal 0: 新病友加入建檔精靈 (Onboarding Wizard) -->
+  <div id="onboarding_modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="font-bold text-base text-slate-800 flex items-center gap-1.5">
+          <span>✨</span> 病友開戶建檔 ＆ 醫院設定
+        </h3>
+        <button onclick="closeOnboardingModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+      </div>
+
+      <p class="text-xs text-slate-500">
+        歡迎加入擊癌利小管家！請依主治醫師診斷、就醫醫院與處方設定，系統將自動為您鎖定專屬存摺與領藥藥局：
+      </p>
+
+      <!-- 步驟 1: 選擇主治醫院 -->
+      <div class="space-y-1.5">
+        <label class="text-xs font-bold text-slate-700 block">【步驟 1】就醫醫院（單一官方LINE通用）：</label>
+        <div class="space-y-1.5">
+          <label class="flex items-center justify-between p-2.5 border rounded-xl hover:bg-rose-50 cursor-pointer border-rose-400 bg-rose-50/50" id="lbl_hosp_tsgh">
+            <div class="flex items-center gap-2">
+              <input type="radio" name="ob_hosp" value="tsgh" checked class="text-rose-600">
+              <div>
+                <div class="font-bold text-xs text-slate-800">三軍總醫院（內湖、汀州、松山院區）</div>
+                <div class="text-[11px] text-slate-500">對應藥局：躍獅寶湖藥局（內湖民權東路六段）</div>
+              </div>
+            </div>
+          </label>
+          <label class="flex items-center justify-between p-2.5 border rounded-xl hover:bg-rose-50 cursor-pointer border-slate-200" id="lbl_hosp_cgmh">
+            <div class="flex items-center gap-2">
+              <input type="radio" name="ob_hosp" value="cgmh" class="text-rose-600">
+              <div>
+                <div class="font-bold text-xs text-slate-800">基隆長庚醫院（基隆院區、情人湖院區）</div>
+                <div class="text-[11px] text-slate-500">對應藥局：宏仁藥局（安樂區安樂路二段）</div>
+              </div>
+            </div>
+          </label>
+          <label class="flex items-center justify-between p-2.5 border rounded-xl hover:bg-rose-50 cursor-pointer border-slate-200" id="lbl_hosp_xg">
+            <div class="flex items-center gap-2">
+              <input type="radio" name="ob_hosp" value="xg" class="text-rose-600">
+              <div>
+                <div class="font-bold text-xs text-slate-800">汐止國泰醫院</div>
+                <div class="text-[11px] text-slate-500">目前由內湖躍獅寶湖藥局支援服務</div>
+              </div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- 步驟 2: 乳癌類型 -->
+      <div class="space-y-1.5 pt-1">
+        <label class="text-xs font-bold text-slate-700 block">【步驟 2】乳癌治療類型：</label>
+        <div class="grid grid-cols-1 gap-2">
+          <label class="flex items-start gap-2.5 p-2.5 border rounded-xl hover:bg-rose-50 cursor-pointer border-rose-400 bg-rose-50/50" id="lbl_type_ebc">
+            <input type="radio" name="ob_type" value="1" checked class="text-rose-600 mt-0.5">
+            <div>
+              <div class="font-bold text-xs text-slate-800">早期乳癌（3 年期支持方案）</div>
+              <div class="text-[11px] text-slate-500">第1年買1送1 ➔ 第2年買1送3 ➔ 第3年買1送5</div>
+            </div>
+          </label>
+          <label class="flex items-start gap-2.5 p-2.5 border rounded-xl hover:bg-rose-50 cursor-pointer border-slate-200" id="lbl_type_mbc">
+            <input type="radio" name="ob_type" value="2" class="text-rose-600 mt-0.5">
+            <div>
+              <div class="font-bold text-xs text-slate-800">轉移性／晚期乳癌（5 年期支持方案）</div>
+              <div class="text-[11px] text-slate-500">第1年買1送1 ➔ 第2年買1送3 ➔ 第3~5年買1送5</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- 步驟 3: 初始劑量 -->
+      <div class="space-y-1.5 pt-1">
+        <label class="text-xs font-bold text-slate-700 block">【步驟 3】醫師開立之每日起始劑量：</label>
+        <div class="grid grid-cols-3 gap-2">
+          <label class="p-2 border rounded-xl text-center hover:bg-rose-50 cursor-pointer border-slate-200 block">
+            <input type="radio" name="ob_dose" value="3" class="text-rose-600 mb-1">
+            <div class="font-bold text-xs text-slate-800">3 顆 / 天</div>
+            <div class="text-[10px] text-slate-500">600 mg</div>
+          </label>
+          <label class="p-2 border rounded-xl text-center hover:bg-rose-50 cursor-pointer border-rose-400 bg-rose-50/50 block">
+            <input type="radio" name="ob_dose" value="2" checked class="text-rose-600 mb-1">
+            <div class="font-bold text-xs text-slate-800">2 顆 / 天</div>
+            <div class="text-[10px] text-slate-500">400 mg</div>
+          </label>
+          <label class="p-2 border rounded-xl text-center hover:bg-rose-50 cursor-pointer border-slate-200 block">
+            <input type="radio" name="ob_dose" value="1" class="text-rose-600 mb-1">
+            <div class="font-bold text-xs text-slate-800">1 顆 / 天</div>
+            <div class="text-[10px] text-slate-500">200 mg</div>
+          </label>
+        </div>
+      </div>
+
+      <!-- 步驟 4: 目前手邊存藥與起始自費盒數 -->
+      <div class="space-y-2 pt-1">
+        <label class="text-xs font-bold text-slate-700 block">【步驟 4】目前起始狀態：</label>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div>
+            <span class="text-slate-600 block mb-1">手邊現有存藥（顆）：</span>
+            <input type="number" id="ob_stock_input" value="20" class="w-full border border-slate-300 rounded-lg p-2 font-bold text-slate-800">
+          </div>
+          <div>
+            <span class="text-slate-600 block mb-1">第一年已自購（盒）：</span>
+            <input type="number" id="ob_boxes_input" value="4" min="0" max="6" class="w-full border border-slate-300 rounded-lg p-2 font-bold text-slate-800">
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button onclick="closeOnboardingModal()" class="flex-1 py-2.5 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl">關閉</button>
+        <button onclick="applyOnboarding()" class="flex-1 py-2.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-sm">🚀 完成建檔，開啟存摺</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 醫院與院外藥局對應字典
+    const hospitalConfig = {
+      tsgh: {
+        name: "三軍總醫院",
+        campus: "（內湖、汀州、松山院區）",
+        pharmacyName: "躍獅寶湖藥局",
+        pharmacyAddr: "114 台北市內湖區寶湖里民權東路6段123巷28號",
+        pharmacyPhone: "02-87928335",
+        telLink: "tel:0287928335",
+        note: ""
+      },
+      cgmh: {
+        name: "基隆長庚醫院",
+        campus: "（基隆院區、情人湖院區）",
+        pharmacyName: "宏仁藥局",
+        pharmacyAddr: "基隆市安樂區安樂路2段130號",
+        pharmacyPhone: "02-24321739",
+        telLink: "tel:0224321739",
+        note: ""
+      },
+      xg: {
+        name: "汐止國泰醫院",
+        campus: "（汐止院區）",
+        pharmacyName: "躍獅寶湖藥局（內湖支援）",
+        pharmacyAddr: "114 台北市內湖區寶湖里民權東路6段123巷28號",
+        pharmacyPhone: "02-87928335",
+        telLink: "tel:0287928335",
+        note: "汐止國泰醫院目前由內湖躍獅寶湖藥局支援服務。"
+      }
+    };
+
+    // 核心數據狀態
+    let state = {
+      hospitalKey: "tsgh", // tsgh / cgmh / xg
+      patientType: "1",    // 1: 早期, 2: 晚期
+      stage: 1,            // 1: 買1送1, 2: 買1送3, 3: 買1送5
+      paidBoxes: 4,
+      totalBoxesNeeded: 6,
+      currentDose: 2,      // 顆/天
+      stockPills: 20,      // 手邊存藥
+      accumPills: 73,      // 零存整付累積自費
+    };
+
+    function recalculate() {
+      // 0. 全期自費達成率計算 (EBC 3年目標 11 盒 / MBC 5年目標 15 盒 - 選項 A 心理激勵模型)
+      let totalTarget = state.patientType === "1" ? 11 : 15;
+      let totalRatePct = Math.min(100, (state.paidBoxes / totalTarget) * 100);
+      let totalRatePctStr = totalRatePct.toFixed(1) + "%";
+      let boxesRemain = Math.max(0, totalTarget - state.paidBoxes);
+
+      document.getElementById('total_rate_pct').innerText = totalRatePctStr;
+      document.getElementById('total_rate_bar').style.width = `${Math.min(100, totalRatePct)}%`;
+      document.getElementById('total_paid_boxes_txt').innerText = state.paidBoxes;
+      document.getElementById('total_target_boxes_txt').innerText = totalTarget;
+      
+      let typeLabel = state.patientType === "1" ? "EBC 早期乳癌（3年期）" : "MBC 晚期乳癌（5年期）";
+      let yearGoal = state.patientType === "1" ? "3 年" : "5 年";
+      document.getElementById('total_rate_label').innerText = `全期自費達成率（${typeLabel}）`;
+      document.getElementById('total_boxes_remain_txt').innerText = boxesRemain > 0 
+        ? `再自購 ${boxesRemain} 盒即圓滿完成 ${yearGoal}支持計畫`
+        : `🎉 已圓滿達成全期自購目標！`;
+
+      // 暖心動態激勵小語
+      let encTxt = "";
+      if (totalRatePct >= 100) {
+        encTxt = `🏆 恭喜圓滿完成全期 ${yearGoal}支持計畫！您真的非常勇敢、非常了不起！`;
+      } else if (totalRatePct >= 75) {
+        encTxt = `🌟 已經邁入最後衝刺期！達成率高達 ${totalRatePctStr}，勝利就在眼前，為您的堅持喝采！`;
+      } else if (totalRatePct >= 50) {
+        encTxt = `🎉 恭喜突破一半大關（${totalRatePctStr}）！最辛苦的第一階段已經挺過，接下來藥物補助愈來愈多囉！`;
+      } else if (totalRatePct >= 30) {
+        encTxt = `💖 太棒了！您已經完成超過 1/3 的自購里程（${totalRatePctStr}）！離買1送3愈來愈近囉，繼續加油！`;
+      } else {
+        encTxt = `🌱 萬事起頭難，每一步都是為健康扎根！最辛苦的第一階段，小管家陪您一起堅持！`;
+      }
+      document.getElementById('encouragement_txt').innerText = encTxt;
+
+      // 1. 剩餘天數計算 (結合劑量，暫停服藥則不耗損)
+      let daysLeft = 0;
+      if (state.currentDose > 0) {
+        daysLeft = Math.floor(state.stockPills / state.currentDose);
+      } else {
+        daysLeft = 999; // 暫停服藥
+      }
+
+      document.getElementById('current_dose_txt').innerText = state.currentDose > 0 ? `${state.currentDose} 顆` : "暫停服藥";
+      document.getElementById('current_mg_txt').innerText = state.currentDose > 0 ? `（${state.currentDose * 200} mg / 天）` : "（0 mg / 副作用休養）";
+      document.getElementById('stock_pills_txt').innerText = state.stockPills;
+      document.getElementById('stock_days_txt').innerText = state.currentDose > 0 ? daysLeft : "暫停中";
+
+      // 2. 兩週安全庫存警報
+      let alertCard = document.getElementById('alert_card');
+      let alertMsgBox = document.getElementById('alert_msg_box');
+      let alertMsgTxt = document.getElementById('alert_msg_txt');
+
+      if (state.currentDose === 0) {
+        alertCard.className = "rounded-xl p-4 border transition-all duration-300 bg-slate-50 border-slate-200";
+        alertMsgBox.className = "mt-3 pt-3 border-t border-slate-200 flex items-start gap-2 text-xs text-slate-700 font-medium";
+        alertMsgTxt.innerText = "目前為醫師囑咐暫停服藥狀態，庫存不會消耗。回診時請遵照醫師指示恢復用藥。";
+      } else if (daysLeft <= 14) {
+        alertCard.className = "rounded-xl p-4 border transition-all duration-300 bg-amber-50 border-amber-300";
+        alertMsgBox.className = "mt-3 pt-3 border-t border-amber-200 flex items-start gap-2 text-xs text-amber-900 font-medium";
+        alertMsgTxt.innerText = `【安全庫存提醒】：目前存藥僅剩 ${daysLeft} 天份（不足兩週）！請務必於本次門診請醫師開立自費處方補藥，避免療程中斷！`;
+      } else {
+        alertCard.className = "rounded-xl p-4 border transition-all duration-300 bg-emerald-50 border-emerald-300";
+        alertMsgBox.className = "mt-3 pt-3 border-t border-emerald-200 flex items-start gap-2 text-xs text-emerald-900 font-medium";
+        alertMsgTxt.innerText = `【庫存充足】：目前存藥尚可服用 ${daysLeft} 天，存藥充足無虞。`;
+      }
+
+      // 3. 零存整付計算 (滿63顆門檻與滾動餘額)
+      document.getElementById('accum_pills_txt').innerText = state.accumPills;
+      let accumBar = document.getElementById('accum_progress_bar');
+      let rolloverBox = document.getElementById('rollover_box');
+      let accumStatusTxt = document.getElementById('accum_status_txt');
+      let rolloverPillsTxt = document.getElementById('rollover_pills_txt');
+
+      if (state.accumPills >= 63) {
+        let remainder = state.accumPills - 63;
+        accumBar.style.width = "100%";
+        accumStatusTxt.innerText = "🎉 已達標 63 顆門檻！";
+        accumStatusTxt.className = "font-bold text-emerald-700";
+        rolloverBox.classList.remove('hidden');
+        rolloverPillsTxt.innerText = `${remainder} 顆`;
+      } else {
+        let pct = (state.accumPills / 63) * 100;
+        accumBar.style.width = `${pct}%`;
+        accumStatusTxt.innerText = `還差 ${63 - state.accumPills} 顆達標`;
+        accumStatusTxt.className = "font-medium text-slate-500";
+        rolloverBox.classList.add('hidden');
+      }
+
+      // 4. 更新階段自費盒數進度條
+      let boxes = state.paidBoxes;
+      document.getElementById('paid_boxes_txt').innerText = boxes;
+      let left = Math.max(0, 6 - boxes);
+      document.getElementById('boxes_left_txt').innerText = left > 0 ? `再自購 ${left} 盒晉級「買1送3」！` : "已達標！即將晉級買1送3！";
+      document.getElementById('stage_progress_bar').style.width = `${(boxes / 6) * 100}%`;
+
+      // 5. 更新醫院與院外藥局對應資訊
+      let hospInfo = hospitalConfig[state.hospitalKey];
+      document.getElementById('patient_hosp_badge').innerText = hospInfo.name;
+      document.getElementById('pharmacy_match_hosp').innerText = `對應：${hospInfo.name}`;
+      document.getElementById('pharmacy_name').innerText = hospInfo.pharmacyName;
+      document.getElementById('pharmacy_addr').innerText = hospInfo.pharmacyAddr;
+      document.getElementById('pharmacy_phone').innerText = hospInfo.pharmacyPhone;
+      document.getElementById('pharmacy_tel_btn').href = hospInfo.telLink;
+
+      let noteBox = document.getElementById('pharmacy_note_box');
+      let noteTxt = document.getElementById('pharmacy_note_txt');
+      if (hospInfo.note) {
+        noteBox.classList.remove('hidden');
+        noteTxt.innerText = hospInfo.note;
+      } else {
+        noteBox.classList.add('hidden');
+      }
+
+      // 6. 同步更新醫師速報卡 (含全期達成率)
+      document.getElementById('doc_hosp_txt').innerText = hospInfo.name;
+      document.getElementById('doc_rate_pct').innerText = totalRatePctStr;
+      document.getElementById('doc_rate_sub_txt').innerText = `${state.patientType === "1" ? "EBC 3年期" : "MBC 5年期"}（已自購 ${state.paidBoxes} / ${totalTarget} 盒）`;
+      document.getElementById('doc_boxes_txt').innerText = `已自購 ${state.paidBoxes} / 6 盒`;
+      document.getElementById('doc_dose_txt').innerText = state.currentDose > 0 ? `每日 ${state.currentDose} 顆 (${state.currentDose * 200}mg)` : "暫停服藥中";
+      document.getElementById('doc_stock_txt').innerText = `${state.stockPills} 顆（剩 ${daysLeft} 天份）`;
+      document.getElementById('doc_action_txt').innerText = daysLeft <= 14 ? "⚠️ 存藥不足兩週，建議開立處方補藥" : "✅ 存藥充足（大於兩週）";
+      document.getElementById('doc_pharmacy_txt').innerHTML = `
+        <strong>${hospInfo.pharmacyName}</strong>（${hospInfo.pharmacyPhone}）<br>
+        ${hospInfo.pharmacyAddr}
+      `;
+    }
+
+    // Modal 控制
+    function openDoseModal() {
+      document.getElementById('dose_modal').classList.remove('hidden');
+    }
+    function closeDoseModal() {
+      document.getElementById('dose_modal').classList.add('hidden');
+    }
+    function applyDoseChange() {
+      let selected = document.querySelector('input[name="dose_opt"]:checked').value;
+      state.currentDose = parseInt(selected);
+      closeDoseModal();
+      recalculate();
+    }
+
+    function openAddPillsModal() {
+      document.getElementById('add_modal').classList.remove('hidden');
+    }
+    function closeAddPillsModal() {
+      document.getElementById('add_modal').classList.add('hidden');
+    }
+    function applyAddPills() {
+      let addVal = parseInt(document.getElementById('inp_new_pills').value) || 0;
+      state.stockPills += addVal;
+      state.accumPills += addVal;
+      closeAddPillsModal();
+      recalculate();
+    }
+
+    function toggleDoctorMode() {
+      let dv = document.getElementById('doctor_view');
+      dv.classList.toggle('hidden');
+    }
+
+    function openOnboardingModal() {
+      document.getElementById('ob_stock_input').value = state.stockPills;
+      document.getElementById('ob_boxes_input').value = state.paidBoxes;
+      
+      let hospRadio = document.querySelector(`input[name="ob_hosp"][value="${state.hospitalKey}"]`);
+      if (hospRadio) hospRadio.checked = true;
+      let typeRadio = document.querySelector(`input[name="ob_type"][value="${state.patientType}"]`);
+      if (typeRadio) typeRadio.checked = true;
+      let doseRadio = document.querySelector(`input[name="ob_dose"][value="${state.currentDose}"]`);
+      if (doseRadio) doseRadio.checked = true;
+
+      document.getElementById('onboarding_modal').classList.remove('hidden');
+    }
+    function closeOnboardingModal() {
+      document.getElementById('onboarding_modal').classList.add('hidden');
+    }
+    function applyOnboarding() {
+      let hosp = document.querySelector('input[name="ob_hosp"]:checked').value;
+      let type = document.querySelector('input[name="ob_type"]:checked').value;
+      let dose = parseInt(document.querySelector('input[name="ob_dose"]:checked').value);
+      let stock = parseInt(document.getElementById('ob_stock_input').value) || 0;
+      let boxes = parseInt(document.getElementById('ob_boxes_input').value) || 0;
+
+      state.hospitalKey = hosp;
+      state.patientType = type;
+      state.currentDose = dose;
+      state.stockPills = stock;
+      state.paidBoxes = boxes;
+      state.accumPills = stock;
+
+      if (type === "1") {
+        document.getElementById('stage_title').innerText = "第 1 階段：買 1 盒送 1 盒（早期專案，三年期）";
+      } else {
+        document.getElementById('stage_title').innerText = "第 1 階段：買 1 盒送 1 盒（轉移性專案，五年期）";
+      }
+
+      closeOnboardingModal();
+      recalculate();
+
+      // 同步更新瀏覽器 URL 參數，鎖定病友代號與保留存藥
+      let hospInfo = hospitalConfig[state.hospitalKey];
+      let typeLabel = state.patientType === '1' ? '早期乳癌' : '轉移性乳癌';
+      let code = state.patientCode || 'KSQ-0001';
+      let newUrl = `?code=${code}&hosp=${encodeURIComponent(hospInfo.name)}&cancer=${encodeURIComponent(typeLabel)}&dose=${state.currentDose}&stock=${state.stockPills}&boxes=${state.paidBoxes}`;
+      window.history.replaceState(null, '', newUrl);
+    }
+
+    // 初始化渲染並支援讀取 URL 參數
+    function initFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code') || 'KSQ-0001';
+      state.patientCode = code;
+      const hosp = params.get('hosp');
+      const cancer = params.get('cancer');
+      const dose = params.get('dose');
+      const stock = params.get('stock');
+      const boxes = params.get('boxes');
+
+      if (hosp) {
+        if (hosp.includes('長庚')) state.hospitalKey = 'cgmh';
+        else if (hosp.includes('國泰')) state.hospitalKey = 'xg';
+        else state.hospitalKey = 'tsgh';
+      }
+      if (cancer) {
+        state.patientType = cancer.includes('晚期') ? '2' : '1';
+      }
+      if (dose) {
+        state.currentDose = parseInt(dose) || 2;
+      }
+      if (stock) {
+        const sVal = parseInt(stock) || 0;
+        state.stockPills = sVal;
+        state.accumPills = sVal;
+      }
+      if (boxes !== null && boxes !== undefined) {
+        state.paidBoxes = parseInt(boxes) || 0;
+      } else if (stock) {
+        // 若未指定盒數，依輸入的顆數推估已購盒數 (每盒 63 顆)
+        state.paidBoxes = Math.min(6, Math.max(1, Math.ceil((parseInt(stock) || 0) / 63)));
+      }
+
+      const typeLabel = state.patientType === '1' ? '早期乳癌' : '轉移性乳癌';
+      document.getElementById('patient_name_txt').innerText = `病友（代號: ${code}）`;
+      if (state.patientType === '1') {
+        document.getElementById('stage_title').innerText = "第 1 階段：買 1 盒送 1 盒（早期專案，三年期）";
+      } else {
+        document.getElementById('stage_title').innerText = "第 1 階段：買 1 盒送 1 盒（轉移性專案，五年期）";
+      }
+
+      recalculate();
+    }
+
+    initFromUrl();
+  </script>
+</body>
+</html>

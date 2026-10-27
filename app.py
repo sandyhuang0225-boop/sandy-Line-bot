@@ -45,6 +45,18 @@ line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 app = Flask(__name__)
 
+# ==================== 【大樓雙門牌】獨立隔間掛載 KisCare 擊癌利小管家 ====================
+try:
+    from kiscare import kiscare_bp
+    app.register_blueprint(kiscare_bp, url_prefix="/kiscare")
+    print("[KisCare] Module loaded successfully on /kiscare")
+except Exception as e:
+    print(f"[KisCare] Mount error: {e}")
+
+@app.route("/health", methods=['GET'])
+def health():
+    return "OK (Sandy + KisCare Online)", 200
+
 # ==================== Google Sheets 連線設定（安全容錯延遲載入）====================
 _gc = None
 _spreadsheet = None
