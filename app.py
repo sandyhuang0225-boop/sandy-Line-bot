@@ -820,19 +820,19 @@ def create_yucheng_settlement_carousel(is_test=False):
                 create_row("房客實繳租金", "+28,000 元 (10月實收純租金)", color='#16a34a', weight='bold'),
                 create_row("大樓管委會費", "-7,726 元 (雙月總額，Sandy代繳)", color='#dc2626', weight='bold'),
                 create_row("銀行扣繳房貸", "-26,778 元 (謝介文帳戶扣繳)", color='#dc2626'),
-                create_row("管理費分攤折抵", "-3,252 元 (雙月管費倒貼二人平攤)", color='#64748b'),
+                create_row("管理費與匯費折抵", "-3,878 元 (管費分攤 3,863 + 匯費 15)", color='#64748b'),
                 SeparatorComponent(margin='md'),
                 BoxComponent(
                     layout='vertical', background_color='#fff7ed', border_color='#fed7aa', border_width='1px',
                     padding_all='md', corner_radius='md', contents=[
                         TextComponent(text="💵 Sandy 10月應匯給謝介文金額：", size='xs', color='#9a3412', weight='bold'),
-                        TextComponent(text="$23,526 元", size='xl', color='#c2410c', weight='bold', margin='xs'),
-                        TextComponent(text="（已扣除大樓管理費二人平攤款）", size='xxs', color='#64748b', margin='xs')
+                        TextComponent(text="$23,511 元", size='xl', color='#c2410c', weight='bold', margin='xs'),
+                        TextComponent(text="（已扣除大樓管理費二人平攤與匯費折抵）", size='xxs', color='#64748b', margin='xs')
                     ]
                 ),
                 SeparatorComponent(margin='md'),
                 ButtonComponent(
-                    action=MessageAction(label="📲 標記已匯 10月 $23,526 並發通知", text="匯款謝介文|10|23526"),
+                    action=MessageAction(label="📲 標記已匯 10月 $23,511 並發通知", text="匯款謝介文|10|23511"),
                     style='primary', color='#ea580c', height='sm'
                 ),
             ])
@@ -4291,7 +4291,7 @@ def handle_message(event):
             parts = text.split("|")
             if len(parts) >= 2:
                 target_m = parts[1].strip()
-                amt_str = parts[2].strip() if len(parts) >= 3 else ("27389" if (int(target_m) if target_m.isdigit() else 9) % 2 == 1 else "23526")
+                amt_str = parts[2].strip() if len(parts) >= 3 else ("27389" if (int(target_m) if target_m.isdigit() else 9) % 2 == 1 else "23511")
                 clean_amt = clean_num(amt_str)
 
                 # 更新《支出追蹤》A102 裕誠路的貸款欄位為已繳
