@@ -906,6 +906,67 @@ def create_yucheng_partner_notice_flex(month_str, amount_str, is_test=False):
 def create_admin_menu_flex(rent_m, current_m, is_test):
     mode_desc = "🛡️ 安全測試模式（卡片只發給自己）" if is_test else "🚀 正式上線模式（卡片發給租客/關係人）"
     mode_color = "#ffc107" if is_test else "#198754"
+
+    # 動態掃描過往月份是否有任何「漏繳/未繳」的管理費或貸款（歷史欠費偵測）
+    overdue_alerts = []
+    sh_e = get_worksheet("支出追蹤")
+    if sh_e:
+        try:
+            exp_rows = sh_e.get_all_values()
+            # 檢查 1 月至上個月份（例如目前 11 月，檢查 1~10 月）
+            for m in range(1, int(current_m)):
+                s_col_idx, _ = get_expense_sheet_columns(str(m), "管理費")
+                l_col_idx, _ = get_expense_sheet_columns(str(m), "貸款")
+                for r in exp_rows[1:]:
+                    room = r[1].strip() if len(r) > 1 else ""
+                    # 管理費
+                    c_idx = s_col_idx - 1
+                    c_st = r[c_idx].strip() if len(r) > c_idx else ""
+                    if is_expense_due(c_st):
+                        overdue_alerts.append(f"{m}月 {room} 管理費")
+                    # 貸款
+                    lc_idx = l_col_idx - 1
+                    lc_st = r[lc_idx].strip() if len(r) > lc_idx else ""
+                    if is_expense_due(lc_st):
+                        overdue_alerts.append(f"{m}月 {room} 貸款")
+        except Exception as e:
+            print(f"掃描過往支出欠款錯誤: {e}")
+
+    menu_contents = []
+
+    # 若有過往漏繳項目，在最上方插入醒目紅框警示！
+    if overdue_alerts:
+        alert_str = "、".join(overdue_alerts[:3])
+        if len(overdue_alerts) > 3:
+            alert_str += f" 等共 {len(overdue_alerts)} 筆"
+        menu_contents.append(
+            BoxComponent(
+                layout='vertical', background_color='#fee2e2', border_color='#f87171', border_width='1.5px',
+                padding_all='md', corner_radius='md', margin='sm', contents=[
+                    TextComponent(text="🚨 【注意！有過往未繳款項】", weight='bold', size='xs', color='#991b1b'),
+                    TextComponent(text=f"偵測到：{alert_str} 尚未標記繳納！", size='xxs', color='#b91c1c', margin='xs', wrap=True),
+                    ButtonComponent(
+                        action=MessageAction(label=f"👉 立即查看 {overdue_alerts[0].split('月')[0]}月未繳", text=f"查 {overdue_alerts[0].split('月')[0]}月管理費"),
+                        style='primary', color='#dc2626', height='sm', margin='sm'
+                    )
+                ]
+            )
+        )
+
+    menu_contents.extend([
+        TextComponent(text="請選擇欲執行的管理功能：", size='xs', color='#666666', margin='sm'),
+        ButtonComponent(action=MessageAction(label="🤝 裕誠路合夥人月結算清單", text="裕誠路結算"), style='primary', color='#0284c7', height='sm'),
+        ButtonComponent(action=MessageAction(label=f"💰 查詢 {rent_m}月租金未繳", text=f"查 {rent_m}月租金"), style='primary', color='#0d6efd', height='sm'),
+        ButtonComponent(action=MessageAction(label=f"🏢 查詢 {current_m}月管理費", text=f"查 {current_m}月管理費"), style='primary', color='#198754', height='sm'),
+        ButtonComponent(action=MessageAction(label=f"🏦 查詢 {current_m}月貸款", text=f"查 {current_m}月貸款"), style='primary', color='#6f42c1', height='sm'),
+        ButtonComponent(action=URIAction(label="⚡ 明華路水電分帳計算器", uri="https://sandy-line-bot.onrender.com/utility_calc"), style='primary', color='#fd7e14', height='sm'),
+        ButtonComponent(action=URIAction(label="👑 總裁財務與資產月報", uri="https://sandy-line-bot.onrender.com/executive_report?key=sandy0225"), style='primary', color='#212529', height='sm'),
+        ButtonComponent(action=MessageAction(label="🚄 總裁高鐵差旅秘書", text="高鐵"), style='primary', color='#ea580c', height='sm'),
+        ButtonComponent(action=MessageAction(label="⏳ 查即將到期合約（約3個月/年底）", text="查即將到期合約"), style='secondary', height='sm'),
+        ButtonComponent(action=MessageAction(label="🔄 2027 年度一鍵開局與歷史封存", text="2027開局確認"), style='secondary', height='sm'),
+        ButtonComponent(action=MessageAction(label="🔄 切換測試/正式模式", text="切換模式"), style='secondary', height='sm'),
+    ])
+
     return FlexSendMessage(
         alt_text="【Sandy宅安心 房東管理選單】",
         contents=BubbleContainer(
@@ -914,19 +975,7 @@ def create_admin_menu_flex(rent_m, current_m, is_test):
                     TextComponent(text="👑 Sandy 宅安心 ｜ 房東管理中心", weight='bold', size='md', color='#ffffff'),
                     TextComponent(text=mode_desc, size='xs', color=mode_color, margin='xs', weight='bold'),
                 ]),
-                BoxComponent(layout='vertical', padding_all='lg', spacing='sm', contents=[
-                    TextComponent(text="請選擇欲執行的管理功能：", size='xs', color='#666666'),
-                    ButtonComponent(action=MessageAction(label="🤝 裕誠路合夥人月結算清單", text="裕誠路結算"), style='primary', color='#0284c7', height='sm'),
-                    ButtonComponent(action=MessageAction(label=f"💰 查詢 {rent_m}月租金未繳", text=f"查 {rent_m}月租金"), style='primary', color='#0d6efd', height='sm'),
-                    ButtonComponent(action=MessageAction(label=f"🏢 查詢 {current_m}月管理費", text=f"查 {current_m}月管理費"), style='primary', color='#198754', height='sm'),
-                    ButtonComponent(action=MessageAction(label=f"🏦 查詢 {current_m}月貸款", text=f"查 {current_m}月貸款"), style='primary', color='#6f42c1', height='sm'),
-                    ButtonComponent(action=URIAction(label="⚡ 明華路水電分帳計算器", uri="https://sandy-line-bot.onrender.com/utility_calc"), style='primary', color='#fd7e14', height='sm'),
-                    ButtonComponent(action=URIAction(label="👑 總裁財務與資產月報", uri="https://sandy-line-bot.onrender.com/executive_report?key=sandy0225"), style='primary', color='#212529', height='sm'),
-                    ButtonComponent(action=MessageAction(label="🚄 總裁高鐵差旅秘書", text="高鐵"), style='primary', color='#ea580c', height='sm'),
-                    ButtonComponent(action=MessageAction(label="⏳ 查即將到期合約（約3個月/年底）", text="查即將到期合約"), style='secondary', height='sm'),
-                    ButtonComponent(action=MessageAction(label="🔄 2027 年度一鍵開局與歷史封存", text="2027開局確認"), style='secondary', height='sm'),
-                    ButtonComponent(action=MessageAction(label="🔄 切換測試/正式模式", text="切換模式"), style='secondary', height='sm'),
-                ]),
+                BoxComponent(layout='vertical', padding_all='lg', spacing='sm', contents=menu_contents)
             ])
         )
     )
