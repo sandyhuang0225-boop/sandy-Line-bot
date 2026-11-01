@@ -69,7 +69,19 @@ def get_spreadsheet():
         return _spreadsheet
     try:
         if not _gc:
-            _gc = gspread.service_account(filename="credentials.json")
+            env_creds = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON")
+            if env_creds:
+                import json
+                from google.oauth2.service_account import Credentials
+                creds_info = json.loads(env_creds)
+                scopes = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+                credentials = Credentials.from_service_account_info(creds_info, scopes=scopes)
+                _gc = gspread.authorize(credentials)
+            elif os.path.exists("credentials.json"):
+                _gc = gspread.service_account(filename="credentials.json")
+            else:
+                print("⚠️ 找不到 credentials.json 且未設定 GOOGLE_APPLICATION_CREDENTIALS_JSON")
+                return None
         _spreadsheet = _gc.open("V1sandy宅安心包租財務總覽")
         return _spreadsheet
     except Exception as e:
