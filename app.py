@@ -227,26 +227,35 @@ def load_properties():
             due_nums       = re.findall(r'\d+', due_day_str)
             due_day        = int(due_nums[0]) if due_nums else 31
 
-            # Sandy 最新親自校正之繳款規律：
+            # Sandy 親自校正之物業繳款週期與繳租日規則：
+            # 1. 楊芸錚（A109）：每月 10 號（從 11/10 開始繳租）
             if 'A109' in room_no or '楊芸錚' in tenant_name:
                 due_day = 10
-            elif 'A107' in room_no or '林采葳' in tenant_name:
-                due_day = 31
-            elif 'A105' in room_no or '李乃亘' in tenant_name:
-                due_day = 31
-            elif 'A101' in room_no or '林孟廷' in tenant_name:
-                due_day = 31
-            elif 'A106' in room_no or '汪晉宇' in tenant_name:
-                due_day = 28  # 配合其習慣在 23~28 號之間繳款，寬限期設為 28 號
+            # 2. 周大哥（B1-03 汐止車位）：季繳制（每季月初 1 號繳，1/4/7/10月）
             elif 'B1-03' in room_no or '周大哥' in tenant_name:
-                due_day = 1   # 季繳月初繳
+                due_day = 1
+            # 3. 陳又慈（B1-02 台南車位）：年繳制，每年 12/31 繳次年全年租金（平常月份免催繳）
             elif 'B1-02' in room_no or '陳又慈' in tenant_name:
-                enable_notify = "N"  # 車位年繳一次，不按月催繳
+                due_day = 31
+                enable_notify = "N"
+            # 4. 汪晉宇（A106）：依表單設定 31 號月底繳
+            elif 'A106' in room_no or '汪晉宇' in tenant_name:
+                due_day = 31
+            # 5. 其餘一般房客依表單設定（31 號自動視為當月月底）
+            elif due_nums:
+                due_day = int(due_nums[0])
+            else:
+                due_day = 31
 
             tenant_line_id = r[21].strip() if len(r) > 21 else ""
             val_notify     = r[22].strip().upper() if len(r) > 22 else ""
             if val_notify in ['Y', 'N'] and not ('B1-02' in room_no or '陳又慈' in tenant_name):
                 enable_notify = val_notify
+
+            # 計算當月實質截止日：31 號或超過當月天數者，動態視為該月最後一天（28/29/30/31號）
+            now_t = datetime.now()
+            max_day_this_month = calendar.monthrange(now_t.year, now_t.month)[1]
+            effective_due_day = min(due_day, max_day_this_month) if due_day >= 28 else due_day
 
             if addr or room_no:
                 properties.append({
@@ -259,10 +268,12 @@ def load_properties():
                     'total_rent_str': f"{total_rent:,}",
                     'pure_rent':      pure_rent,
                     'mgmt_fee':       mgmt_fee,
-                    'due_day':        due_day,
-                    'contract_end':   contract_end,
-                    'line_id':        tenant_line_id,
-                    'enable_notify':  enable_notify,
+                    'due_day':           due_day,
+                    'effective_due_day': effective_due_day,
+                    'due_desc':          "月底" if due_day >= 31 else f"{due_day}號",
+                    'contract_end':      contract_end,
+                    'line_id':           tenant_line_id,
+                    'enable_notify':     enable_notify,
                 })
     except Exception as e:
         print(f"讀取房客總表失敗: {e}")
@@ -1168,9 +1179,15 @@ def create_rent_carousel(month_str, unpaid_items):
     bubbles = []
     for item in unpaid_items:
         amt, amt_str, note_str, mgmt_fee_val = get_rent_for_month(item, month_str)
+        due_text = "每月月底繳" if item.get('due_day', 31) >= 31 else f"每月 {item.get('due_day')} 號"
+        if 'B1-02' in item.get('room_no', '') or '陳又慈' in item.get('tenant', ''):
+            due_text = "年繳（每年12/31繳）"
+        elif 'B1-03' in item.get('room_no', '') or '周大哥' in item.get('tenant', ''):
+            due_text = "季繳（每季月初1號繳）"
+
         info_rows = [
             create_row("應收總額", f"{amt_str} 元", color='#dc3545', weight='bold'),
-            create_row("繳租日",   f"每月 {item['due_day']} 號", color='#0d6efd', weight='bold'),
+            create_row("繳租日",   due_text, color='#0d6efd', weight='bold'),
         ]
         if note_str:
             info_rows.append(create_row("收費明細", note_str, color='#666666'))
