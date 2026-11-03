@@ -438,6 +438,10 @@ def get_already_registered_flex(user, user_id=None):
                     "action": {"type": "postback", "label": "📕 查看我的病友存摺", "data": "action=passbook"}
                 },
                 {
+                    "type": "button", "style": "primary", "color": "#4338CA", "height": "sm",
+                    "action": {"type": "postback", "label": "👨‍👩‍👧 我是家屬（綁定家人存摺）", "data": "action=caregiver_bind"}
+                },
+                {
                     "type": "button", "style": "secondary", "height": "sm",
                     "action": {"type": "postback", "label": "⚠️ 重新完整開戶（清除重設）", "data": "action=force_onboard"}
                 }
