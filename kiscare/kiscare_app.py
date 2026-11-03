@@ -101,22 +101,34 @@ if os.path.exists(PRELOADED_FILE):
 def find_preloaded_patient(text):
     """
     辨識使用者是否輸入預載名單中的姓名或代號：
-    支援：我是王秀蘭、王秀蘭、0002、2、KSQ-0002 等
+    支援：
+    1. 姓名：我是王秀蘭、王秀蘭、幫媽媽王秀蘭綁定
+    2. 專屬代號：0002、2、KSQ-0002、我是家屬代號0002、代號0002
     """
     if not text or not preloaded_patients:
         return None, None
     raw = text.strip()
-    clean_name = raw.replace("我是", "").replace("我叫", "").replace("病友", "").strip()
     
-    # 比對代號
+    # 1. 姓名比對 (病友姓名長度 >= 2)
+    for p_code, p_info in preloaded_patients.items():
+        name = p_info.get("name", "")
+        if name and len(name) >= 2 and name in raw:
+            return p_code, p_info
+
+    # 2. 精準代號比對
     norm_code = normalize_patient_code(raw)
     if norm_code and norm_code in preloaded_patients:
         return norm_code, preloaded_patients[norm_code]
         
-    # 比對姓名
-    for p_code, p_info in preloaded_patients.items():
-        if p_info["name"] == clean_name or p_info["name"] in clean_name:
-            return p_code, p_info
+    # 3. 句子內含代號比對（例如「我是家屬，代號 0002」、「病友是 0002」）
+    import re
+    matches = re.findall(r'(?:KSQ)?[-#\s]*(\d{1,4})', raw, re.IGNORECASE)
+    for num_str in matches:
+        num = int(num_str)
+        if 2 <= num <= 33:  # 基隆長庚專案病友代號區間 KSQ-0002 ~ KSQ-0033
+            cand_code = f"KSQ-{num:04d}"
+            if cand_code in preloaded_patients:
+                return cand_code, preloaded_patients[cand_code]
             
     return None, None
 
@@ -716,6 +728,45 @@ def get_duplicate_purchase_flex(last_pills, num, today_str, last_time):
     }
 
 # ----------------- 建檔步驟 1~4 -----------------
+def get_preloaded_step1_flex(p_info, matched_code, is_caregiver=False):
+    role_title = "👨‍👩‍👧 家屬協助對接" if is_caregiver else "🌸 擊癌利專屬存摺開戶"
+    role_desc = "家屬身分驗證成功" if is_caregiver else "基隆長庚專案病友"
+    return {
+        "type": "bubble",
+        "header": {
+            "type": "box", "layout": "vertical", "backgroundColor": "#991B1B",
+            "contents": [
+                {"type": "text", "text": role_title, "weight": "bold", "color": "#FFFFFF", "size": "md"},
+                {"type": "text", "text": f"{role_desc}：{p_info['name']} ｜ 代號：{matched_code}", "color": "#FEE2E2", "size": "xs", "margin": "xs"}
+            ]
+        },
+        "body": {
+            "type": "box", "layout": "vertical", "spacing": "sm",
+            "contents": [
+                {
+                    "type": "box",
+                    "layout": "vertical",
+                    "backgroundColor": "#F8FAFC",
+                    "cornerRadius": "md",
+                    "paddingAll": "sm",
+                    "spacing": "xs",
+                    "contents": [
+                        {"type": "text", "text": f"🏥 醫院：{p_info['hosp']}（{p_info['doctor']} 醫師）", "size": "xs", "color": "#1E293B", "weight": "bold"},
+                        {"type": "text", "text": f"🏪 藥局：{p_info['pharmacy']}", "size": "xs", "color": "#1E293B"},
+                        {"type": "text", "text": f"🎁 進度：{p_info['stage']}（{p_info['stage_desc']}）", "size": "xs", "color": "#047857", "weight": "bold"},
+                        {"type": "text", "text": f"📦 累計贈藥：已申請 {p_info['completed_cycles']} 盒", "size": "xs", "color": "#047857"}
+                    ]
+                },
+                {"type": "text", "text": "✅ 醫院、醫師與指定藥局已為您全數鎖定！", "size": "xs", "color": "#047857", "weight": "bold"},
+                {"type": "text", "text": "為啟動【14天安全領藥提醒】，請依序完成 3 個確認：", "size": "xs", "color": "#64748B"},
+                {"type": "separator", "margin": "xs"},
+                {"type": "text", "text": "👉【步驟 1/3】請點選治療類型：", "size": "xs", "weight": "bold", "color": "#991B1B"},
+                {"type": "button", "style": "primary", "color": "#059669", "height": "sm", "action": {"type": "postback", "label": "🌸 早期乳癌（EBC・3年方案）", "data": "set_cancer=早期乳癌", "displayText": "早期乳癌"}},
+                {"type": "button", "style": "primary", "color": "#D97706", "height": "sm", "action": {"type": "postback", "label": "🎗️ 轉移晚期乳癌（MBC・5年方案）", "data": "set_cancer=晚期乳癌", "displayText": "晚期乳癌"}}
+            ]
+        }
+    }
+
 def get_onboarding_step1_flex():
     return {
         "type": "bubble",
@@ -763,14 +814,14 @@ def get_onboarding_step3_flex(cancer_type):
         "header": {
             "type": "box", "layout": "vertical", "backgroundColor": "#991B1B",
             "contents": [
-                {"type": "text", "text": "✨ 新病友開戶建檔", "weight": "bold", "color": "#FFFFFF", "size": "md"},
-                {"type": "text", "text": f"已選類型：{cancer_type} ｜ 【步驟 3/4】每日劑量", "color": "#FEE2E2", "size": "xs", "margin": "xs"}
+                {"type": "text", "text": "✨ 擊癌利專屬存摺開戶", "weight": "bold", "color": "#FFFFFF", "size": "md"},
+                {"type": "text", "text": f"已選類型：{cancer_type} ｜ 【步驟 2/3】每日劑量", "color": "#FEE2E2", "size": "xs", "margin": "xs"}
             ]
         },
         "body": {
-            "type": "box", "layout": "vertical", "spacing": "md",
+            "type": "box", "layout": "vertical", "spacing": "sm",
             "contents": [
-                {"type": "text", "text": "請依醫師處方點選每日服用顆數：", "size": "xs", "color": "#64748B"},
+                {"type": "text", "text": "👉【步驟 2/3】請依醫師處方點選每日服用顆數：", "size": "xs", "weight": "bold", "color": "#991B1B"},
                 {"type": "button", "style": "primary", "color": "#1E293B", "height": "sm", "action": {"type": "postback", "label": "💊 每日 3 顆（600 mg 起始劑量）", "data": "set_dose=3", "displayText": "每日 3 顆"}},
                 {"type": "button", "style": "primary", "color": "#334155", "height": "sm", "action": {"type": "postback", "label": "💊 每日 2 顆（400 mg 標準/一級減量）", "data": "set_dose=2", "displayText": "每日 2 顆"}},
                 {"type": "button", "style": "primary", "color": "#475569", "height": "sm", "action": {"type": "postback", "label": "💊 每日 1 顆（200 mg 二級減量）", "data": "set_dose=1", "displayText": "每日 1 顆"}}
@@ -784,8 +835,8 @@ def get_onboarding_step4_flex(dose_str):
         "header": {
             "type": "box", "layout": "vertical", "backgroundColor": "#991B1B",
             "contents": [
-                {"type": "text", "text": "✨ 新病友開戶建檔", "weight": "bold", "color": "#FFFFFF", "size": "md"},
-                {"type": "text", "text": f"已選劑量：{dose_str} ｜ 【步驟 4/4】現有存藥", "color": "#FEE2E2", "size": "xs", "margin": "xs"}
+                {"type": "text", "text": "✨ 擊癌利專屬存摺開戶", "weight": "bold", "color": "#FFFFFF", "size": "md"},
+                {"type": "text", "text": f"已選劑量：{dose_str} ｜ 【步驟 3/3】現有存藥", "color": "#FEE2E2", "size": "xs", "margin": "xs"}
             ]
         },
         "body": {
@@ -793,7 +844,7 @@ def get_onboarding_step4_flex(dose_str):
             "contents": [
                 {
                     "type": "text",
-                    "text": "請直接在下方聊天室輸入您手邊「目前剩餘的確切顆數」：",
+                    "text": "👉【步驟 3/3】請直接在下方聊天室輸入手邊「目前剩餘的確切顆數」：",
                     "size": "sm",
                     "weight": "bold",
                     "color": "#0F172A",
@@ -927,9 +978,13 @@ def get_profile_summary_flex(user_id, is_caregiver=False):
     else:
         enc_txt = f"🌱 萬事起頭難，每一步都是為健康扎根！最辛苦的第一階段，小管家陪您一起堅持！"
 
+    stage_val = p.get("stage", "第 1 階段")
+    stage_desc = p.get("stage_desc", "買1送1")
+    completed_cycles = p.get("completed_cycles", 0)
+
     header_title = "📕 擊癌利存摺（家屬端）" if is_caregiver else "📕 擊癌利專屬存摺"
     badge_color = "#4338CA" if is_caregiver else ("#047857" if not is_alert else "#92400E")
-    badge_label = "家屬共同照護" if is_caregiver else "買1送1"
+    badge_label = "家屬共同照護" if is_caregiver else stage_desc
     sub_title = f"病友代號：{code} ｜ 家屬共同照護" if is_caregiver else f"病友代號：{code} ｜ 專屬綁定存摺"
 
     return {
@@ -993,7 +1048,7 @@ def get_profile_summary_flex(user_id, is_caregiver=False):
                     "type": "box", "layout": "horizontal",
                     "contents": [
                         {"type": "text", "text": "治療類型", "size": "xs", "color": "#64748B", "flex": 2},
-                        {"type": "text", "text": f"{cancer} (第1年 1:1補助)", "size": "xs", "color": "#0F172A", "flex": 4}
+                        {"type": "text", "text": f"{cancer}（{stage_desc}）", "size": "xs", "color": "#0F172A", "flex": 4}
                     ]
                 },
                 {
@@ -1021,9 +1076,10 @@ def get_profile_summary_flex(user_id, is_caregiver=False):
                 {
                     "type": "box", "layout": "vertical", "backgroundColor": "#F8FAFC", "cornerRadius": "md", "paddingAll": "sm", "spacing": "xs",
                     "contents": [
-                        {"type": "text", "text": f"📊 第一年自費晉級進度：第 {cur_box} / 6 盒", "size": "xs", "weight": "bold", "color": "#1E293B"},
+                        {"type": "text", "text": f"📊 方案進度：{stage_val}（{stage_desc}）", "size": "xs", "weight": "bold", "color": "#1E293B"},
+                        {"type": "text", "text": f"📦 累計贈藥：已申請 {completed_cycles} 盒贈藥", "size": "xxs", "color": "#047857", "weight": "bold"},
                         {"type": "text", "text": f"🪙 零存整付：再自費 {rem_to_box} 顆達標滿盒贈藥" if rem_to_box > 0 else "🪙 零存整付：已達標滿盒贈藥資格！", "size": "xxs", "color": "#D97706" if rem_to_box > 0 else "#059669", "weight": "bold"},
-                        {"type": "text", "text": f"👉 再自費 {left_boxes} 盒即可晉級第2年「買1送3」方案！" if left_boxes > 0 else "🎉 已達成 6 盒！即將晉級「買1送3」！", "size": "xxs", "color": "#64748B"}
+                        {"type": "text", "text": f"👉 目前自費累計 {cur_box} / {target_boxes} 盒" + (f"，再自購 {boxes_remain} 盒圓滿完成！" if boxes_remain > 0 else "，全期已圓滿！"), "size": "xxs", "color": "#64748B"}
                     ]
                 },
                 {
@@ -1358,19 +1414,32 @@ def handle_postback(event):
         # 步驟 2 點選治療類型
         elif data.startswith("set_cancer="):
             c_type = data.replace("set_cancer=", "").strip()
+            eff_user["cancer"] = c_type
             user["cancer"] = c_type
+            if is_caregiver and user.get("bound_patient_id"):
+                b_id = user["bound_patient_id"]
+                if b_id in user_profiles:
+                    user_profiles[b_id]["cancer"] = c_type
+            if user.get("code") and user.get("code") in user_profiles:
+                user_profiles[user["code"]]["cancer"] = c_type
+                
             user["state"] = "onboarding_step_3"
             save_data(user_profiles, patient_counter)
 
             flex = get_onboarding_step3_flex(c_type)
-            line_bot_api.reply_message(reply_token, FlexSendMessage(alt_text="✨ 請選擇每日劑量", contents=flex))
+            line_bot_api.reply_message(reply_token, FlexSendMessage(alt_text="✨ 請選擇每日劑量（步驟 2/3）", contents=flex))
 
         # 劑量選擇 (步驟 3 或日常調整劑量)
         elif data.startswith("set_dose="):
             dose_val = int(data.replace("set_dose=", "").strip())
             eff_user["dose"] = dose_val
-            if is_caregiver:
-                user["dose"] = dose_val
+            user["dose"] = dose_val
+            if is_caregiver and user.get("bound_patient_id"):
+                b_id = user["bound_patient_id"]
+                if b_id in user_profiles:
+                    user_profiles[b_id]["dose"] = dose_val
+            if user.get("code") and user.get("code") in user_profiles:
+                user_profiles[user["code"]]["dose"] = dose_val
 
             if eff_user.get("is_registered", False):
                 user["state"] = None
@@ -1384,9 +1453,13 @@ def handle_postback(event):
                 ])
             else:
                 user["state"] = "awaiting_initial_stock"
+                if is_caregiver and user.get("bound_patient_id"):
+                    b_id = user["bound_patient_id"]
+                    if b_id in user_profiles:
+                        user_profiles[b_id]["state"] = "awaiting_initial_stock"
                 save_data(user_profiles, patient_counter)
                 flex = get_onboarding_step4_flex(f"每日 {dose_val} 顆")
-                line_bot_api.reply_message(reply_token, FlexSendMessage(alt_text="✨ 請輸入現有存藥顆數", contents=flex))
+                line_bot_api.reply_message(reply_token, FlexSendMessage(alt_text="✨ 請輸入現有存藥顆數（步驟 3/3）", contents=flex))
 
         # 六宮格按鍵 1: 我的存摺
         elif data == "action=passbook":
@@ -1635,84 +1708,121 @@ def handle_text_message(event):
     now_time_str = get_taiwan_now_str()
 
     try:
-        # ==================== 【基隆長庚預載專案病友／家屬 1 秒直接對接】 ====================
-        matched_code, p_info = find_preloaded_patient(text)
+        # ==================== 【基隆長庚預載專案病友／家屬 方案 B 半自動精準導引】 ====================
+        # 若處於輸入顆數狀態，不觸發預載代號比對
+        matched_code, p_info = (None, None)
+        if user.get("state") not in ["awaiting_initial_stock", "awaiting_receipt_pills"]:
+            matched_code, p_info = find_preloaded_patient(text)
         if p_info:
             is_cg_intent = user.get("state") == "awaiting_caregiver_code" or any(kw in text for kw in ["家屬", "家人", "照護", "幫我媽", "幫我太太", "幫我先生", "代綁"])
             
-            if is_cg_intent:
-                # 家屬身分綁定
-                user["role"] = "caregiver"
-                user["is_registered"] = True
-                user["bound_patient_id"] = matched_code
-                user["bound_patient_code"] = matched_code
-                user["code"] = matched_code
-                user["name"] = p_info["name"]
-                user["hosp"] = p_info["hosp"]
-                user["doctor"] = p_info["doctor"]
-                user["pharmacy"] = p_info["pharmacy"]
-                user["dose"] = p_info["dose"]
-                user["cancer"] = p_info["cancer"]
-                user["stage"] = p_info["stage"]
-                user["stage_desc"] = p_info["stage_desc"]
-                user["completed_cycles"] = p_info["completed_cycles"]
-                user["stock"] = p_info.get("stock", 56)
-                user["state"] = None
+            # 檢查此預載病友是否已完成過開戶 3 題建檔
+            is_already_registered = False
+            if matched_code in user_profiles and user_profiles[matched_code].get("is_registered"):
+                is_already_registered = True
+            elif user.get("code") == matched_code and user.get("is_registered"):
+                is_already_registered = True
                 
-                # 同步寫入主檔
-                user_profiles[matched_code] = user.copy()
-                user_profiles[matched_code]["role"] = "patient"
-                save_data(user_profiles, patient_counter)
-                
-                success_msg = (
-                    f"🎉【家屬照護綁定成功！】\n"
-                    f"已成功驗證並連線為病友【{p_info['name']}】（{matched_code}）的照護家屬！\n\n"
-                    f"🏥 就診醫院：{p_info['hosp']}（{p_info['doctor']} 醫師）\n"
-                    f"💊 目前進度：{p_info['stage']}（{p_info['stage_desc']}）\n"
-                    f"📦 累計已領：{p_info['completed_cycles']} 盒贈藥\n"
-                    f"🏪 合作藥局：{p_info['pharmacy']}\n\n"
-                    f"即日起，您可隨時透過本小管家協助長輩追蹤存藥、登記購藥與領藥提醒！🌸"
-                )
-                flex = get_profile_summary_flex(matched_code, is_caregiver=True)
-                line_bot_api.reply_message(reply_token, [
-                    TextSendMessage(text=success_msg),
-                    FlexSendMessage(alt_text="🎉 家屬照護存摺已連線", contents=flex)
-                ])
-                return
+            if is_already_registered:
+                # 已建檔過，直接連線存摺
+                if is_cg_intent:
+                    user["role"] = "caregiver"
+                    user["is_registered"] = True
+                    user["bound_patient_id"] = matched_code
+                    user["bound_patient_code"] = matched_code
+                    user["code"] = matched_code
+                    user["name"] = p_info["name"]
+                    user["state"] = None
+                    save_data(user_profiles, patient_counter)
+                    
+                    p_data = user_profiles.get(matched_code, user)
+                    success_msg = (
+                        f"🎉【家屬照護綁定成功！】\n"
+                        f"已成功驗證並連線為病友【{p_info['name']}】（{matched_code}）的照護家屬！\n\n"
+                        f"🏥 就診醫院：{p_data.get('hosp', p_info['hosp'])}（{p_data.get('doctor', p_info['doctor'])} 醫師）\n"
+                        f"💊 每日劑量：每日 {p_data.get('dose', 2)} 顆\n"
+                        f"📦 目前存藥：{p_data.get('stock', 0)} 顆\n"
+                        f"🏪 合作藥局：{p_data.get('pharmacy', p_info['pharmacy'])}\n\n"
+                        f"即日起，您可隨時透過本小管家協助長輩追蹤存藥、登記購藥與領藥提醒！🌸"
+                    )
+                    flex = get_profile_summary_flex(matched_code, is_caregiver=True)
+                    line_bot_api.reply_message(reply_token, [
+                        TextSendMessage(text=success_msg),
+                        FlexSendMessage(alt_text="🎉 家屬照護存摺已連線", contents=flex)
+                    ])
+                    return
+                else:
+                    user["role"] = "patient"
+                    user["is_registered"] = True
+                    user["code"] = matched_code
+                    user["name"] = p_info["name"]
+                    user["state"] = None
+                    save_data(user_profiles, patient_counter)
+                    flex = get_profile_summary_flex(matched_code, is_caregiver=False)
+                    line_bot_api.reply_message(reply_token, [
+                        TextSendMessage(text=f"🌸【{p_info['name']} 女士/先生 您好！】\n歡迎回到【擊癌利專屬存摺】！"),
+                        FlexSendMessage(alt_text="🌸 擊癌利存摺", contents=flex)
+                    ])
+                    return
             else:
-                # 病友本人直接開戶對接
-                user["role"] = "patient"
-                user["is_registered"] = True
-                user["code"] = matched_code
-                user["name"] = p_info["name"]
-                user["hosp"] = p_info["hosp"]
-                user["doctor"] = p_info["doctor"]
-                user["pharmacy"] = p_info["pharmacy"]
-                user["dose"] = p_info["dose"]
-                user["cancer"] = p_info["cancer"]
-                user["stage"] = p_info["stage"]
-                user["stage_desc"] = p_info["stage_desc"]
-                user["completed_cycles"] = p_info["completed_cycles"]
-                user["stock"] = p_info.get("stock", 56)
-                user["state"] = None
-                user_profiles[user_id] = user
-                user_profiles[matched_code] = user
+                # 尚未完成 3 題引導（方案 B：半自動精準導引建檔）
+                # 1. 預填鎖定醫院、醫師、藥局、階段
+                patient_record = user_profiles.get(matched_code, {})
+                patient_record["code"] = matched_code
+                patient_record["name"] = p_info["name"]
+                patient_record["hosp"] = p_info["hosp"]
+                patient_record["doctor"] = p_info["doctor"]
+                patient_record["pharmacy"] = p_info["pharmacy"]
+                patient_record["stage"] = p_info["stage"]
+                patient_record["stage_desc"] = p_info["stage_desc"]
+                patient_record["completed_cycles"] = p_info["completed_cycles"]
+                patient_record["is_registered"] = False
+                user_profiles[matched_code] = patient_record
+                
+                if is_cg_intent:
+                    user["role"] = "caregiver"
+                    user["bound_patient_id"] = matched_code
+                    user["bound_patient_code"] = matched_code
+                    user["code"] = matched_code
+                    user["name"] = p_info["name"]
+                    user["hosp"] = p_info["hosp"]
+                    user["doctor"] = p_info["doctor"]
+                    user["pharmacy"] = p_info["pharmacy"]
+                    user["stage"] = p_info["stage"]
+                    user["stage_desc"] = p_info["stage_desc"]
+                    user["completed_cycles"] = p_info["completed_cycles"]
+                    user["is_registered"] = False
+                    user["state"] = "onboarding_step_2"
+                else:
+                    user["role"] = "patient"
+                    user["code"] = matched_code
+                    user["name"] = p_info["name"]
+                    user["hosp"] = p_info["hosp"]
+                    user["doctor"] = p_info["doctor"]
+                    user["pharmacy"] = p_info["pharmacy"]
+                    user["stage"] = p_info["stage"]
+                    user["stage_desc"] = p_info["stage_desc"]
+                    user["completed_cycles"] = p_info["completed_cycles"]
+                    user["is_registered"] = False
+                    user["state"] = "onboarding_step_2"
+                    
                 save_data(user_profiles, patient_counter)
                 
-                success_msg = (
-                    f"🌸【{p_info['name']} 女士/先生 您好！】\n"
-                    f"已成功為您直接開通【擊癌利專屬存摺】！\n\n"
+                # 發送精準導引步驟 1/3
+                flex = get_preloaded_step1_flex(p_info, matched_code, is_caregiver=is_cg_intent)
+                greeting_role = "（家屬協助建檔）" if is_cg_intent else ""
+                welcome_txt = (
+                    f"🌸【基隆長庚專案病友導引建檔{greeting_role}】\n"
+                    f"已為您成功對接病友【{p_info['name']}】（代號：{matched_code}）！\n\n"
                     f"🏥 就診醫院：{p_info['hosp']}（{p_info['doctor']} 醫師）\n"
-                    f"💊 目前進度：{p_info['stage']}（{p_info['stage_desc']}）\n"
-                    f"📦 累計已領：{p_info['completed_cycles']} 盒贈藥\n"
                     f"🏪 合作藥局：{p_info['pharmacy']}\n"
-                    f"🔢 您的專屬代號：{matched_code}\n\n"
-                    f"所有醫院與藥局資料均已為您設定完成，無需重新選擇，祝您治療順心、平安健康！✨"
+                    f"🎁 專案進度：{p_info['stage']}（{p_info['stage_desc']}・已領 {p_info['completed_cycles']} 盒贈藥）\n\n"
+                    f"✅ 責任醫院與指定藥局已為您全數鎖定，無需手動選擇！\n"
+                    f"為了啟動「14天安全領藥提醒」，請協助完成以下 3 個用藥確認："
                 )
-                flex = get_profile_summary_flex(user_id, is_caregiver=False)
                 line_bot_api.reply_message(reply_token, [
-                    TextSendMessage(text=success_msg),
-                    FlexSendMessage(alt_text="🌸 擊癌利存摺已開通", contents=flex)
+                    TextSendMessage(text=welcome_txt),
+                    FlexSendMessage(alt_text="🌸 請確認治療類型（步驟 1/3）", contents=flex)
                 ])
                 return
 
@@ -1751,18 +1861,62 @@ def handle_text_message(event):
 
             # 情況 1：尚未建檔
             if not eff_user.get("is_registered", False):
-                if user.get("state") == "awaiting_initial_stock":
-                    # 正確完成步驟 4，輸入初始顆數
+                if user.get("state") == "awaiting_initial_stock" or eff_user.get("state") == "awaiting_initial_stock":
+                    # 正確完成步驟 3/3，輸入初始顆數
+                    eff_user["stock"] = num
+                    eff_user["is_registered"] = True
+                    eff_user["state"] = None
+                    eff_user["last_purchase_date"] = today_str
+                    eff_user["last_purchase_time"] = now_time_str
+                    eff_user["last_purchase_pills"] = num
+
                     user["stock"] = num
                     user["is_registered"] = True
                     user["state"] = None
                     user["last_purchase_date"] = today_str
                     user["last_purchase_time"] = now_time_str
                     user["last_purchase_pills"] = num
+
+                    if is_caregiver and user.get("bound_patient_id"):
+                        b_id = user["bound_patient_id"]
+                        if b_id in user_profiles:
+                            user_profiles[b_id]["stock"] = num
+                            user_profiles[b_id]["is_registered"] = True
+                            user_profiles[b_id]["state"] = None
+                            user_profiles[b_id]["last_purchase_date"] = today_str
+                            user_profiles[b_id]["last_purchase_time"] = now_time_str
+                            user_profiles[b_id]["last_purchase_pills"] = num
+
+                    if user.get("code") and user.get("code") in user_profiles:
+                        c_id = user["code"]
+                        user_profiles[c_id]["stock"] = num
+                        user_profiles[c_id]["is_registered"] = True
+                        user_profiles[c_id]["state"] = None
+                        user_profiles[c_id]["last_purchase_date"] = today_str
+                        user_profiles[c_id]["last_purchase_time"] = now_time_str
+                        user_profiles[c_id]["last_purchase_pills"] = num
+
                     save_data(user_profiles, patient_counter)
 
-                    flex = get_profile_summary_flex(user_id)
-                    line_bot_api.reply_message(reply_token, FlexSendMessage(alt_text="🎉 建檔完成！您的專屬擊癌利存摺", contents=flex))
+                    daily_dose = eff_user.get("dose", 2)
+                    days_left = num // daily_dose if daily_dose > 0 else 0
+                    role_str = "（家屬代為建檔）" if is_caregiver else ""
+
+                    congrat_text = (
+                        f"🎉【開戶建檔完成！{role_str}】\n"
+                        f"恭喜您已正式啟用【擊癌利專屬存摺】！\n\n"
+                        f"🏥 就診醫院：{eff_user.get('hosp', '基隆長庚紀念醫院')}（{eff_user.get('doctor', '主治醫師')} 醫師）\n"
+                        f"💊 每日劑量：{daily_dose} 顆\n"
+                        f"📦 目前庫存：{num} 顆（約可服用 {days_left} 天）\n"
+                        f"🎁 專案進度：{eff_user.get('stage', '第 1 階段')}（{eff_user.get('stage_desc', '買一送一')}）\n\n"
+                        f"🔔【14 天領藥雷達已全面啟動】\n"
+                        f"當剩餘存藥小於或等於 14 天時，小管家會自動提醒您回診或預約領藥！🌸"
+                    )
+                    flex = get_profile_summary_flex(eff_user_id, is_caregiver=is_caregiver)
+                    line_bot_api.reply_message(reply_token, [
+                        TextSendMessage(text=congrat_text),
+                        FlexSendMessage(alt_text="🎉 建檔完成！您的專屬擊癌利存摺", contents=flex)
+                    ])
                 else:
                     # 使用者未走完步驟 1~3 就直接打數字，引導建檔
                     flex = get_unregistered_prompt_flex("開戶建檔")
