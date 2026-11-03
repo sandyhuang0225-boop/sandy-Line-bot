@@ -86,6 +86,40 @@ def save_data(profiles, counter):
 
 user_profiles, patient_counter = load_data()
 
+# 載入預載病友總表（基隆長庚等舊專案病友）
+PRELOADED_FILE = os.path.join(BASE_DIR, "preloaded_patients.json")
+preloaded_patients = {}
+if os.path.exists(PRELOADED_FILE):
+    try:
+        with open(PRELOADED_FILE, "r", encoding="utf-8") as f:
+            preloaded_patients = json.load(f)
+    except Exception as e:
+        logger.error(f"Error loading preloaded_patients.json: {e}")
+
+
+
+def find_preloaded_patient(text):
+    """
+    辨識使用者是否輸入預載名單中的姓名或代號：
+    支援：我是王秀蘭、王秀蘭、0002、2、KSQ-0002 等
+    """
+    if not text or not preloaded_patients:
+        return None, None
+    raw = text.strip()
+    clean_name = raw.replace("我是", "").replace("我叫", "").replace("病友", "").strip()
+    
+    # 比對代號
+    norm_code = normalize_patient_code(raw)
+    if norm_code and norm_code in preloaded_patients:
+        return norm_code, preloaded_patients[norm_code]
+        
+    # 比對姓名
+    for p_code, p_info in preloaded_patients.items():
+        if p_info["name"] == clean_name or p_info["name"] in clean_name:
+            return p_code, p_info
+            
+    return None, None
+
 def normalize_patient_code(raw_text):
     """
     智慧模糊辨識病友代號：
@@ -1601,6 +1635,87 @@ def handle_text_message(event):
     now_time_str = get_taiwan_now_str()
 
     try:
+        # ==================== 【基隆長庚預載專案病友／家屬 1 秒直接對接】 ====================
+        matched_code, p_info = find_preloaded_patient(text)
+        if p_info:
+            is_cg_intent = user.get("state") == "awaiting_caregiver_code" or any(kw in text for kw in ["家屬", "家人", "照護", "幫我媽", "幫我太太", "幫我先生", "代綁"])
+            
+            if is_cg_intent:
+                # 家屬身分綁定
+                user["role"] = "caregiver"
+                user["is_registered"] = True
+                user["bound_patient_id"] = matched_code
+                user["bound_patient_code"] = matched_code
+                user["code"] = matched_code
+                user["name"] = p_info["name"]
+                user["hosp"] = p_info["hosp"]
+                user["doctor"] = p_info["doctor"]
+                user["pharmacy"] = p_info["pharmacy"]
+                user["dose"] = p_info["dose"]
+                user["cancer"] = p_info["cancer"]
+                user["stage"] = p_info["stage"]
+                user["stage_desc"] = p_info["stage_desc"]
+                user["completed_cycles"] = p_info["completed_cycles"]
+                user["stock"] = p_info.get("stock", 56)
+                user["state"] = None
+                
+                # 同步寫入主檔
+                user_profiles[matched_code] = user.copy()
+                user_profiles[matched_code]["role"] = "patient"
+                save_data(user_profiles, patient_counter)
+                
+                success_msg = (
+                    f"🎉【家屬照護綁定成功！】\n"
+                    f"已成功驗證並連線為病友【{p_info['name']}】（{matched_code}）的照護家屬！\n\n"
+                    f"🏥 就診醫院：{p_info['hosp']}（{p_info['doctor']} 醫師）\n"
+                    f"💊 目前進度：{p_info['stage']}（{p_info['stage_desc']}）\n"
+                    f"📦 累計已領：{p_info['completed_cycles']} 盒贈藥\n"
+                    f"🏪 合作藥局：{p_info['pharmacy']}\n\n"
+                    f"即日起，您可隨時透過本小管家協助長輩追蹤存藥、登記購藥與領藥提醒！🌸"
+                )
+                flex = get_profile_summary_flex(matched_code, is_caregiver=True)
+                line_bot_api.reply_message(reply_token, [
+                    TextSendMessage(text=success_msg),
+                    FlexSendMessage(alt_text="🎉 家屬照護存摺已連線", contents=flex)
+                ])
+                return
+            else:
+                # 病友本人直接開戶對接
+                user["role"] = "patient"
+                user["is_registered"] = True
+                user["code"] = matched_code
+                user["name"] = p_info["name"]
+                user["hosp"] = p_info["hosp"]
+                user["doctor"] = p_info["doctor"]
+                user["pharmacy"] = p_info["pharmacy"]
+                user["dose"] = p_info["dose"]
+                user["cancer"] = p_info["cancer"]
+                user["stage"] = p_info["stage"]
+                user["stage_desc"] = p_info["stage_desc"]
+                user["completed_cycles"] = p_info["completed_cycles"]
+                user["stock"] = p_info.get("stock", 56)
+                user["state"] = None
+                user_profiles[user_id] = user
+                user_profiles[matched_code] = user
+                save_data(user_profiles, patient_counter)
+                
+                success_msg = (
+                    f"🌸【{p_info['name']} 女士/先生 您好！】\n"
+                    f"已成功為您直接開通【擊癌利專屬存摺】！\n\n"
+                    f"🏥 就診醫院：{p_info['hosp']}（{p_info['doctor']} 醫師）\n"
+                    f"💊 目前進度：{p_info['stage']}（{p_info['stage_desc']}）\n"
+                    f"📦 累計已領：{p_info['completed_cycles']} 盒贈藥\n"
+                    f"🏪 合作藥局：{p_info['pharmacy']}\n"
+                    f"🔢 您的專屬代號：{matched_code}\n\n"
+                    f"所有醫院與藥局資料均已為您設定完成，無需重新選擇，祝您治療順心、平安健康！✨"
+                )
+                flex = get_profile_summary_flex(user_id, is_caregiver=False)
+                line_bot_api.reply_message(reply_token, [
+                    TextSendMessage(text=success_msg),
+                    FlexSendMessage(alt_text="🌸 擊癌利存摺已開通", contents=flex)
+                ])
+                return
+
         # 情況 A：家屬正在綁定輸入病友代號 (state == awaiting_caregiver_code)
         if user.get("state") == "awaiting_caregiver_code":
             norm_code = normalize_patient_code(text)
