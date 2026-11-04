@@ -122,7 +122,7 @@ def find_preloaded_patient(text):
         
     # 3. 句子內含代號比對（例如「我是家屬，代號 0002」、「病友是 0002」）
     import re
-    matches = re.findall(r'(?:KSQ)?[-#\s]*(\d{1,4})', raw, re.IGNORECASE)
+    matches = re.findall(r'(?:KSQ)?[-#\s]*(\d+)', raw, re.IGNORECASE)
     for num_str in matches:
         num = int(num_str)
         if 2 <= num <= 33:  # 基隆長庚專案病友代號區間 KSQ-0002 ~ KSQ-0033
