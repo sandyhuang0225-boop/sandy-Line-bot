@@ -1714,7 +1714,7 @@ def handle_text_message(event):
         if user.get("state") not in ["awaiting_initial_stock", "awaiting_receipt_pills"]:
             matched_code, p_info = find_preloaded_patient(text)
         if p_info:
-            is_cg_intent = user.get("state") == "awaiting_caregiver_code" or any(kw in text for kw in ["家屬", "家属", "家人", "照護", "照顾", "幫我媽", "幫我太太", "幫我先生", "代綁", "代辦", "代办"])
+            is_cg_intent = user.get("state") == "awaiting_caregiver_code" or any(kw in text for kw in ["家屬", "家属", "家人", "照護", "照顾", "照顧", "幫我媽", "幫媽媽", "幫爸爸", "幫我太太", "幫我先生", "代綁", "代辦", "代办", "女兒", "女儿", "兒子", "儿子", "先生", "太太", "媽媽", "妈妈", "爸爸"])
             
             # 檢查此預載病友是否已完成過開戶 3 題建檔
             is_already_registered = False
