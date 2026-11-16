@@ -900,8 +900,52 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             return null;
         }
 
+                function normalizeMedicalSpeech(text) {
+            if (!text) return "";
+            let s = text;
+            
+            // 0. English number words
+            const numWords = [
+                [/\bzero\b/gi, '0'],
+                [/\bone\b/gi, '1'],
+                [/\btwo\b/gi, '2'],
+                [/\btoo\b/gi, '2'],
+                [/\bthree\b/gi, '3'],
+                [/\bfour\b/gi, '4'],
+                [/\bfive\b/gi, '5'],
+                [/\bsix\b/gi, '6'],
+                [/\bseven\b/gi, '7'],
+                [/\beight\b/gi, '8'],
+                [/\bnine\b/gi, '9'],
+                [/\bten\b/gi, '10']
+            ];
+            numWords.forEach(([p, r]) => { s = s.replace(p, r); });
+
+            // 1. Normalize T Staging: T1, T2, T3, T4
+            // Handles: T2, t2, T 2, T-2, T二, T兩, T两, T two, T 2.0
+            s = s.replace(/\b[tT]\s*[-_]?\s*(?:4|四)\b|[tT]\s*[-_]?\s*(?:4|四)/gi, ' T4 ');
+            s = s.replace(/\b[tT]\s*[-_]?\s*(?:3|三)\b|[tT]\s*[-_]?\s*(?:3|三)/gi, ' T3 ');
+            s = s.replace(/\b[tT]\s*[-_]?\s*(?:2|二|兩|两)\b|[tT]\s*[-_]?\s*(?:2|二|兩|两)/gi, ' T2 ');
+            s = s.replace(/\b[tT]\s*[-_]?\s*(?:1|一)\b|[tT]\s*[-_]?\s*(?:1|一)/gi, ' T1 ');
+
+            // 2. Normalize N Staging: N0, N1, N2, N3
+            // Handles: N1, n1, N 1, N-1, N一, N E, NE, Ne, pN1, pN1a, N one
+            s = s.replace(/(?:p)?[nN]\s*[-_]?\s*(?:3|三)\b|(?:p)?[nN]\s*[-_]?\s*(?:3|三)/gi, ' N3 ');
+            s = s.replace(/(?:p)?[nN]\s*[-_]?\s*(?:2|二|兩|两)\b|(?:p)?[nN]\s*[-_]?\s*(?:2|二|兩|两)/gi, ' N2 ');
+            // Crucial: N + E / e / 1 / 一 (phonetic sound-alike for '一' yi -> E)
+            s = s.replace(/(?:p)?[nN]\s*[-_]?\s*(?:1|一|[eE])\b|(?:p)?[nN]\s*[-_]?\s*(?:1|一|[eE])/gi, ' N1 ');
+            s = s.replace(/(?:p)?[nN]\s*[-_]?\s*(?:0|零|[oO])\b|(?:p)?[nN]\s*[-_]?\s*(?:0|零|[oO])/gi, ' N0 ');
+
+            // 3. Normalize Grade: Grade 1, 2, 3
+            s = s.replace(/[gG]\s*[-_]?\s*(?:3|三)\b|Grade\s*[-_]?\s*(?:3|三)\b|第\s*3\s*級|第三級/gi, ' Grade 3 ');
+            s = s.replace(/[gG]\s*[-_]?\s*(?:2|二)\b|Grade\s*[-_]?\s*(?:2|二)\b|第\s*2\s*級|第二級/gi, ' Grade 2 ');
+            s = s.replace(/[gG]\s*[-_]?\s*(?:1|一|[eE])\b|Grade\s*[-_]?\s*(?:1|一|[eE])\b|第\s*1\s*級|第一級/gi, ' Grade 1 ');
+
+            return s.replace(/\s+/g, ' ').trim();
+        }
+
         function evaluateClinicalQuery(query) {
-            const raw = query.trim();
+            const raw = normalizeMedicalSpeech(query);
             const cnMap = {'零': 0, '一': 1, '二': 2, '兩': 2, '两': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9, '十': 10};
 
             // Scenario: Pre-menopausal Metastatic (停經前晚期一線)
