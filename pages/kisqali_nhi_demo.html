@@ -179,6 +179,13 @@
                             </div>
                             <small class="text-muted d-block mt-1">二線後線雙藥送審（長庚東洋伏斯壯 / 三總法洛德）</small>
                         </button>
+                        <button class="btn btn-outline-secondary btn-scenario" onclick="setScenario(6, this)">
+                            <div class="d-flex justify-content-between">
+                                <strong>📈 6. 用藥滿 24 個月 (2年) 無惡化續約展延</strong>
+                                <span class="badge bg-success">無惡化續約展延</span>
+                            </div>
+                            <small class="text-muted d-block mt-1">檢附 RECIST 影像評估 non-PD，申請繼續給付至惡化為止</small>
+                        </button>
                     </div>
                 </div>
 
@@ -519,6 +526,26 @@
                         <td>每次 500mg (2支) 雙側臀部肌肉注射 (D1, D15, D29及後續每月1次)。<br><strong>申請數量：16 支 (24週用量)</strong></td>
                     </tr>
                 `;
+            } else if (currentScenario === 6) { // 24 months renewal
+                tbody.innerHTML = `
+                    <tr>
+                        <td class="text-center">1</td>
+                        <td><strong class="text-success">C50R1 (續評展延)</strong><br><small class="text-muted">原核准案號展延申請</small></td>
+                        <td><strong>擊癌利膜衣錠 200毫克</strong><br><small class="text-muted">台灣諾華 (Novartis)</small></td>
+                        <td>200mg/錠，每日口服一次，<strong>每次 3 粒 (600mg)</strong>，服21天停7天。<br><strong>申請數量：378 粒 (24週用量)</strong></td>
+                    </tr>
+                `;
+                document.getElementById("viewReason").textContent = 
+                    "【用藥滿 24 個月無惡化續約展延申請理由】：\n" +
+                    "1. 診斷：轉移性乳癌 (Stage IV)。原事前審查核准文號：(填入前次核准函文號)。\n" +
+                    "2. 治療病程與療效評估：\n" +
+                    "   • 病患規律接受 ribociclib (擊癌利) 合併內分泌治療，目前已順利且規律用藥滿 24 個月 (2 年)。\n" +
+                    "   • 檢附近 4 週內之胸腹部電腦斷層 (CT) 掃描及全身骨骼掃描 (Bone scan) 影像追蹤報告。\n" +
+                    "   • 依據 RECIST 1.1 評估：標靶病灶維持【疾病穩定 (SD)】或【部分緩解 (PR)】，確認【無疾病惡化 (No Progressive Disease, non-PD)】。\n" +
+                    "3. 健保給付合規比對：\n" +
+                    "   依據全民健康保險藥品給付規定 9.72 第 5 點及第 7 點規定，核准後每 24 週檢附療效評估資料，疾病無惡化得繼續申請使用本類藥品。\n" +
+                    "4. 特此提出展延事前審查申請，核發後續之 24 週用藥。";
+                setAIResult(true, "C50R1 (展延續審)", "已規律用藥滿 24 個月 (2年)，檢附最新影像評估無惡化 (non-PD)，依法享有繼續給付至惡化為止！");
             }
         }
 
