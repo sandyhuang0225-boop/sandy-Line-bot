@@ -605,7 +605,8 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
         }
 
         // ==========================================
-        // 🎙️ DOCTOR VOICE CONSULTATION & TTS ENGINE (ENHANCED)
+        // ==========================================
+        // 🎙️ DOCTOR VOICE CONSULTATION & TTS ENGINE (CLINICAL TNM GRADE ENGINE)
         // ==========================================
         let recognition = null;
         let isRecording = false;
@@ -614,10 +615,32 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
         let silenceTimer = null;
         let lastSpokenReply = "";
 
+        // Web Audio Chime: Unlocks mobile Safari/Android hardware immediately on tap
+        function playBeep(freq = 750, duration = 0.12) {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                const ctx = new AudioCtx();
+                if (ctx.state === 'suspended') ctx.resume();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                gain.gain.setValueAtTime(0.25, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + duration);
+            } catch(e) {
+                console.log('AudioContext chime:', e);
+            }
+        }
+
         function unlockMobileAudio() {
+            playBeep(880, 0.05);
             if ('speechSynthesis' in window) {
                 try {
-                    window.speechSynthesis.cancel();
                     const dummy = new SpeechSynthesisUtterance(' ');
                     dummy.volume = 0.01;
                     window.speechSynthesis.speak(dummy);
@@ -627,7 +650,8 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
 
         function testAudioVoice() {
             unlockMobileAudio();
-            speakText("醫師您好！已為您開啟語音功能。請直接口述病人條件，我會即時為您判讀健保給付！");
+            playBeep(880, 0.15);
+            speakText("醫師您好！我是擊癌利健保事前審查 AI 語音助理。請點擊麥克風口述病況，或直接在文字框輸入，我會即時為您分析 12 月 1 日健保給付！");
         }
 
         function toggleSpeechOutput() {
@@ -654,79 +678,98 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
 
         function speakText(text) {
             lastSpokenReply = text;
-            if (!ttsEnabled || !('speechSynthesis' in window)) return;
+            if (!ttsEnabled) return;
+            
+            playBeep(880, 0.1);
+
+            if (!('speechSynthesis' in window)) return;
             try {
                 window.speechSynthesis.cancel();
-                const utter = new SpeechSynthesisUtterance(text);
-                utter.lang = 'zh-TW';
-                utter.rate = 1.0;
-                utter.pitch = 1.0;
-                utter.volume = 1.0;
-                
-                const voices = window.speechSynthesis.getVoices();
-                if (voices && voices.length > 0) {
-                    const twVoice = voices.find(v => v.lang === 'zh-TW' || v.lang === 'zh_TW' || (v.lang.startsWith('zh') && v.name.includes('Taiwan')));
-                    if (twVoice) utter.voice = twVoice;
-                }
-                window.speechSynthesis.speak(utter);
+                // 60ms delay prevents iOS Safari speech drop bug
+                setTimeout(() => {
+                    const utter = new SpeechSynthesisUtterance(text);
+                    utter.lang = 'zh-TW';
+                    utter.rate = 1.05;
+                    utter.pitch = 1.0;
+                    utter.volume = 1.0;
+
+                    const voices = window.speechSynthesis.getVoices();
+                    if (voices && voices.length > 0) {
+                        const twVoice = voices.find(v => v.lang === 'zh-TW' || v.lang === 'zh_TW' || (v.lang.startsWith('zh') && (v.name.includes('Taiwan') || v.name.includes('Mei-Jia') || v.name.includes('Yating'))));
+                        if (twVoice) utter.voice = twVoice;
+                    }
+                    window.speechSynthesis.speak(utter);
+                }, 60);
             } catch(e) {
                 console.error("SpeechSynthesis error:", e);
             }
         }
 
+        // ==========================================
+        // 🎙️ WEB SPEECH RECOGNITION (UNRESTRICTED DURATION)
+        // ==========================================
         function initVoiceRecognition() {
             const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (!SpeechRec) return null;
             const rec = new SpeechRec();
             rec.lang = 'zh-TW';
-            rec.continuous = false; // MUST be false for iOS Safari compatibility!
+            rec.continuous = true;
             rec.interimResults = true;
+            rec.maxAlternatives = 1;
 
             rec.onstart = function() {
-                // UI is already set in startVoiceRecordingUI()
+                console.log("Speech recognition active");
             };
 
             rec.onresult = function(event) {
-                let interim = "";
                 let finalStr = "";
+                let interimStr = "";
                 for (let i = 0; i < event.results.length; ++i) {
                     if (event.results[i].isFinal) {
                         finalStr += event.results[i][0].transcript;
                     } else {
-                        interim += event.results[i][0].transcript;
+                        interimStr += event.results[i][0].transcript;
                     }
                 }
-                const newText = (finalStr + " " + interim).trim();
-                if (newText) {
-                    accumulatedTranscript = newText;
+                const fullText = (finalStr + " " + interimStr).trim();
+                if (fullText) {
+                    accumulatedTranscript = fullText;
+                    document.getElementById("spokenTextBox").classList.remove("d-none");
                     document.getElementById("spokenTextContent").textContent = "「" + accumulatedTranscript + "」";
+                    document.getElementById("spokenConfidence").className = "badge bg-success";
+                    document.getElementById("spokenConfidence").textContent = "即時辨識中";
                 }
 
-                // Generous silence detection: 3.5 seconds of silence auto-completes
+                // Generous 4.5s silence auto-complete ONLY if speech exists
                 clearTimeout(silenceTimer);
-                silenceTimer = setTimeout(() => {
-                    if (isRecording && accumulatedTranscript.length >= 4) {
-                        stopVoiceRecordingAndProcess();
-                    }
-                }, 3500);
+                if (accumulatedTranscript.length >= 4) {
+                    silenceTimer = setTimeout(() => {
+                        if (isRecording) {
+                            stopVoiceRecordingAndProcess();
+                        }
+                    }, 4500);
+                }
             };
 
             rec.onerror = function(event) {
                 console.warn("Speech recognition notice:", event.error);
-                if (event.error === 'not-allowed') {
+                if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
                     stopVoiceRecognitionUI();
-                    alert("麥克風權限提示：請在手機/瀏覽器設定中允許使用麥克風，或使用下方的「鍵盤輸入/語音輸入」或「快捷情境」！");
+                    alert("麥克風權限提示：\n請允許瀏覽器使用麥克風。若使用 LINE 開啟，請點右上角選『以 Safari/Chrome 開啟』。\n您也可以直接使用下方文字輸入框，以手機鍵盤麥克風口述！");
+                } else if (event.error === 'no-speech') {
+                    // NEVER stop on temporary no-speech! Keep listening while user thinks!
+                    console.log("Temporary pause in speech, continuing listening...");
                 }
             };
 
             rec.onend = function() {
-                // If user is still recording, auto-restart listening across brief pauses
+                // If user hasn't clicked stop, auto-restart safely
                 if (isRecording) {
-                    try {
-                        rec.start();
-                    } catch(e) {
-                        stopVoiceRecordingAndProcess();
-                    }
+                    setTimeout(() => {
+                        if (isRecording && recognition) {
+                            try { recognition.start(); } catch(e) {}
+                        }
+                    }, 300);
                 }
             };
 
@@ -736,22 +779,26 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
         function startVoiceRecordingUI() {
             isRecording = true;
             accumulatedTranscript = "";
-            document.getElementById("micIcon").className = "fa-solid fa-stop me-2 fs-5";
-            document.getElementById("voiceStatusText").textContent = "⏹️ 說話中... 講完點我結束";
-            document.getElementById("btnVoiceRecord").classList.replace("btn-success", "btn-danger");
+            const btn = document.getElementById("btnVoiceRecord");
+            btn.className = "btn btn-danger flex-grow-1 py-2 fw-bold d-flex align-items-center justify-content-center shadow-lg border-2 border-white";
+            btn.innerHTML = '<span class="spinner-grow spinner-grow-sm me-2 text-white"></span><span class="fs-6">⏹️ 說話中... 講完點我結束判讀</span>';
+            
             document.getElementById("recordingGuide").classList.remove("d-none");
             document.getElementById("spokenTextBox").classList.remove("d-none");
-            document.getElementById("spokenTextContent").textContent = "（請開始說話，辨識字詞將即時出現...）";
-            document.getElementById("spokenConfidence").textContent = "收音中";
+            document.getElementById("spokenTextContent").textContent = "（正在收音中，請放慢速度口述病患狀況...）";
+            document.getElementById("spokenConfidence").className = "badge bg-danger";
+            document.getElementById("spokenConfidence").textContent = "錄音中";
         }
 
         function stopVoiceRecognitionUI() {
             isRecording = false;
             clearTimeout(silenceTimer);
-            document.getElementById("micIcon").className = "fa-solid fa-microphone me-2 fs-5";
-            document.getElementById("voiceStatusText").textContent = "🎙️ 點此開始口述問答";
-            document.getElementById("btnVoiceRecord").classList.replace("btn-danger", "btn-success");
+            const btn = document.getElementById("btnVoiceRecord");
+            btn.className = "btn btn-success flex-grow-1 py-2 fw-bold d-flex align-items-center justify-content-center shadow-sm";
+            btn.innerHTML = '<i class="fa-solid fa-microphone me-2 fs-5" id="micIcon"></i><span id="voiceStatusText" class="fs-6">🎙️ 點此開始口述問答</span>';
+            
             document.getElementById("recordingGuide").classList.add("d-none");
+            document.getElementById("spokenConfidence").className = "badge bg-info text-dark";
             document.getElementById("spokenConfidence").textContent = "辨識完成";
         }
 
@@ -761,13 +808,14 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                 try { recognition.stop(); } catch(e) {}
             }
             const query = accumulatedTranscript.trim();
-            if (!query || query.length < 3) {
+            if (!query || query.length < 2) {
                 document.getElementById("voiceAiResponseCard").classList.remove("d-none");
                 document.getElementById("voiceRespBadge").className = "badge bg-warning text-dark fs-6";
-                document.getElementById("voiceRespBadge").textContent = "⚠️ 說話時間過短";
-                document.getElementById("voiceRespCode").textContent = "未完整收到";
-                document.getElementById("voiceRespText").textContent = "未能清楚接收到您的病況描述。請再點擊一次麥克風說話（或直接在下方輸入框使用手機鍵盤語音輸入）。";
-                speakText("未聽清楚病況，請再按一次麥克風說話。");
+                document.getElementById("voiceRespBadge").textContent = "⚠️ 未偵測到清晰語音";
+                document.getElementById("voiceRespCode").textContent = "請再試一次";
+                document.getElementById("voiceRespText").innerHTML = "<div class='fw-bold'>未收到清楚的病況描述。請再點一次麥克風說話，或直接在下方輸入框使用手機鍵盤口述！</div>";
+                speakText("未聽清楚病況，請再按一次麥克風說話，或使用下方鍵盤口述。已為您開啟輸入框。");
+                document.getElementById("manualOralInput").focus();
                 return;
             }
             processVoiceQuery(query);
@@ -775,12 +823,13 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
 
         function toggleVoiceRecording() {
             unlockMobileAudio();
+            playBeep(660, 0.1);
             if (isRecording) {
                 stopVoiceRecordingAndProcess();
                 return;
             }
 
-            // Immediately change button to RED for instant visual feedback!
+            // Immediately switch button to RED for instant visual feedback
             startVoiceRecordingUI();
 
             if (!recognition) {
@@ -788,148 +837,326 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             }
             if (!recognition) {
                 stopVoiceRecognitionUI();
-                alert("您目前的瀏覽器未支援內建 Web 麥克風（若在 LINE 中開啟，請點右上角「以 Safari/Chrome 開啟」）。您亦可直接在下方輸入框使用手機鍵盤的麥克風語音輸入，或點擊下方快捷按鈕！");
+                alert("您的瀏覽器未支援內建 Web 語音辨識（若在 LINE 中開啟，請點右上角選『以 Safari/Chrome 開啟』）。\n\n已為您聚焦下方輸入框，您可以直接使用手機鍵盤的麥克風語音輸入！");
+                document.getElementById("manualOralInput").focus();
                 return;
             }
 
             try {
                 recognition.start();
             } catch(e) {
-                console.warn("Recognition start restart:", e);
+                console.warn("Recognition start retry:", e);
                 try {
                     recognition.stop();
-                    setTimeout(() => recognition.start(), 200);
+                    setTimeout(() => { if (isRecording) recognition.start(); }, 250);
                 } catch(err) {}
             }
         }
 
         function submitManualOralInput() {
             unlockMobileAudio();
+            playBeep(880, 0.12);
             const input = document.getElementById("manualOralInput");
             const text = input.value.trim();
             if (!text) {
-                alert("請先輸入或用手機鍵盤口述病患狀況！");
+                alert("請先在此輸入或使用手機鍵盤麥克風說話！");
+                input.focus();
                 return;
             }
             input.value = "";
-            simulateVoiceQuery(text);
+            processVoiceQuery(text);
         }
 
         function simulateVoiceQuery(text) {
             unlockMobileAudio();
-            accumulatedTranscript = text;
+            playBeep(880, 0.12);
             processVoiceQuery(text);
         }
 
+        // ==========================================
+        // 🧠 CLINICAL TNM & NATURAL LANGUAGE PARSER & EVALUATOR
+        // Supports: Chinese Numerals (一二兩两三四五六七八九十零點点), TNM (T1-T4, N0-N3), Grades (1-3)
+        // Strictly adheres to Taiwan NHI 115/12/1 Early Breast Cancer Kisqali Rules
+        // ==========================================
+        function evaluateClinicalQuery(query) {
+            const raw = query.trim();
+            const cnMap = {'零': 0, '一': 1, '二': 2, '兩': 2, '两': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9, '十': 10};
+
+            // Scenario: Pre-menopausal Metastatic (停經前晚期一線)
+            if (/停經前|停經針|Zoladex|Leuplin|諾曼諾|轉移性乳癌|晚期乳癌/i.test(raw)) {
+                return {
+                    scenario: 3,
+                    eligible: true,
+                    badgeClass: "badge bg-info text-dark fs-6",
+                    badgeText: "✅ 健保【有給付】！",
+                    code: "事審代碼：C50R1 + 停經針",
+                    borderClass: "border-info",
+                    spoken: "報告醫師，停經前轉移性乳癌，健保全額給付擊癌利每日 3 粒合併芳香環轉化酶抑制劑及停經針 Zoladex，事前審查代碼 C50R1，每次核准 24 週。已自動為您產出雙藥事審申請書！",
+                    details: "【停經前轉移性乳癌】：\n• 給付項目：擊癌利 (每日 3 粒 / 600mg) + AI + LHRH 類似劑 (Zoladex)\n• 事審代碼：C50R1 + 停經針\n• 每次核准效期：24 週（滿 24 週檢附 non-PD 報告展延）",
+                    size: 3.5, nodes: 4, grade: 2
+                };
+            }
+
+            // Scenario: 24 Months Renewal (續審展延)
+            if (/24\s*個月|兩年|2年|二年|續約|展延|續審|non-PD/i.test(raw)) {
+                return {
+                    scenario: 6,
+                    eligible: true,
+                    badgeClass: "badge bg-success fs-6",
+                    badgeText: "✅ 健保【展延續審給付】！",
+                    code: "事審代碼：C50R1 (展延)",
+                    borderClass: "border-success",
+                    spoken: "報告醫師，用藥滿 24 個月無惡化續約，檢附近期電腦斷層及骨骼掃描確認疾病無惡化（non-PD），依健保 9.72 規定得繼續申請給付。已為您備妥展延申請書！",
+                    details: "【24 個月展延續審】：\n• 判定依據：用藥滿 24 個月且影像學檢查無疾病進展 (non-PD)\n• 事審代碼：C50R1\n• 已自動匯入展延追蹤審查表",
+                    size: 3.0, nodes: 2, grade: 2
+                };
+            }
+
+            // 1. Histologic Grade Parsing
+            let grade = null;
+            let gradeDesc = "";
+            if (/grade\s*3|g3|第\s*3\s*級|第三級|3\s*級|3級|poorly/i.test(raw)) {
+                grade = 3;
+                gradeDesc = "Grade 3（第 3 級 / 分化不良）";
+            } else if (/grade\s*1|g1|第\s*1\s*級|第一級|1\s*級|1級|well/i.test(raw)) {
+                grade = 1;
+                gradeDesc = "Grade 1（第 1 級 / 分化良好）";
+            } else if (/grade\s*2|g2|第\s*2\s*級|第二級|2\s*級|2級|moderate/i.test(raw)) {
+                grade = 2;
+                gradeDesc = "Grade 2（第 2 級 / 中度分化）";
+            }
+
+            // 2. Nodal Staging (N) & Lymph Node Count Parsing
+            // AJCC 8th: N0=0, N1=1-3, N2=4-9, N3>=10
+            let nStage = null;
+            let nodeCount = null;
+            let nodeDesc = "";
+
+            // Check explicit counts with Chinese or Arabic numbers
+            const nodeCountMatch = raw.match(/(?<![tTpNn])(\d+|[零一二兩两三四五六七八九十])\s*(?:顆|粒|個)(?:陽性|轉移)?(?:淋巴)?|淋巴(?:結)?\s*(?:陽性|轉移)?\s*(\d+|[零一二兩两三四五六七八九十])\s*(?:顆|粒|個)?/i);
+            if (nodeCountMatch) {
+                const valStr = nodeCountMatch[1] || nodeCountMatch[2];
+                nodeCount = /^\d+$/.test(valStr) ? parseInt(valStr) : (cnMap[valStr] !== undefined ? cnMap[valStr] : 0);
+                if (nodeCount === 0) {
+                    nStage = "N0";
+                    nodeDesc = "淋巴結 0 顆（N0 / 無轉移）";
+                } else if (nodeCount >= 1 && nodeCount <= 3) {
+                    nStage = "N1";
+                    nodeDesc = "淋巴結 " + nodeCount + " 顆（N1 範圍：1–3 顆）";
+                } else if (nodeCount >= 4 && nodeCount <= 9) {
+                    nStage = "N2";
+                    nodeDesc = "淋巴結 " + nodeCount + " 顆（N2 範圍：4–9 顆）";
+                } else if (nodeCount >= 10) {
+                    nStage = "N3";
+                    nodeDesc = "淋巴結 " + nodeCount + " 顆（N3 範圍：≧10 顆）";
+                }
+            } else if (/N3|n3|pN3/i.test(raw)) {
+                nStage = "N3";
+                nodeCount = 10;
+                nodeDesc = "N3（淋巴結 10 顆以上）";
+            } else if (/N2|n2|pN2/i.test(raw)) {
+                nStage = "N2";
+                nodeCount = 4;
+                nodeDesc = "N2（淋巴結 4 到 9 顆）";
+            } else if (/N1|n1|pN1/i.test(raw)) {
+                nStage = "N1";
+                nodeCount = 2; // Representative value for form
+                nodeDesc = "N1（淋巴結 1 到 3 顆）";
+            } else if (/N0|n0|pN0|無轉移|没有转移|無淋巴|0\s*顆|零顆/i.test(raw)) {
+                nStage = "N0";
+                nodeCount = 0;
+                nodeDesc = "N0（淋巴結 0 顆 / 無轉移）";
+            }
+
+            // 3. Tumor Size (T) & T Staging Parsing
+            // AJCC 8th: T1<=2cm, T2>2cm & <=5cm, T3>5cm, T4 direct extension to chest wall/skin or inflammatory
+            let tStage = null;
+            let sizeCm = null;
+            let sizeDesc = "";
+            let isT4 = false;
+
+            if (/T4|t4|局部侵犯|胸壁侵犯|皮膚侵犯|發炎性/i.test(raw)) {
+                isT4 = true;
+                tStage = "T4";
+                sizeCm = 5.5;
+                sizeDesc = "T4（局部侵犯胸壁/皮膚或發炎性乳癌）";
+            }
+
+            // Check exact size e.g. 五公分, 5公分, 2.4cm, 兩公分, 3.5 公分
+            const sizeMatch = raw.match(/(\d+(?:\.\d+)?|[零一二兩两三四五六七八九十點点]+)\s*(?:公分|厘米|cm)/i);
+            if (sizeMatch) {
+                const sv = sizeMatch[1];
+                if (/^\d+(?:\.\d+)?$/.test(sv)) {
+                    sizeCm = parseFloat(sv);
+                } else if (sv.includes('點') || sv.includes('点')) {
+                    const parts = sv.split(/[點点]/);
+                    const ip = cnMap[parts[0]] !== undefined ? cnMap[parts[0]] : 0;
+                    const dp = cnMap[parts[1]] !== undefined ? cnMap[parts[1]] : 0;
+                    sizeCm = parseFloat(ip + '.' + dp);
+                } else if (cnMap[sv] !== undefined) {
+                    sizeCm = parseFloat(cnMap[sv]);
+                } else {
+                    sizeCm = 2.0;
+                }
+
+                if (sizeCm <= 2.0) {
+                    tStage = tStage || "T1";
+                    sizeDesc = sizeCm + " 公分（T1：≦ 2cm）";
+                } else if (sizeCm > 2.0 && sizeCm <= 5.0) {
+                    tStage = tStage || "T2";
+                    sizeDesc = sizeCm + " 公分（T2：> 2cm 且 ≦ 5cm）";
+                } else if (sizeCm > 5.0) {
+                    tStage = tStage || "T3";
+                    sizeDesc = sizeCm + " 公分（T3：> 5cm）";
+                }
+            } else if (/T3|t3/i.test(raw)) {
+                tStage = "T3";
+                sizeCm = 5.5;
+                sizeDesc = "T3（腫瘤大於 5 公分）";
+            } else if (/T2|t2/i.test(raw)) {
+                tStage = "T2";
+                sizeCm = 3.0;
+                sizeDesc = "T2（腫瘤大於 2 公分且 ≦ 5 公分）";
+            } else if (/T1|t1/i.test(raw)) {
+                tStage = "T1";
+                sizeCm = 1.8;
+                sizeDesc = "T1（腫瘤 ≦ 2 公分）";
+            }
+
+            // Display text representation
+            const displaySize = sizeDesc || (sizeCm !== null ? sizeCm + " 公分" : "未特別指明腫瘤大小");
+            const displayNodes = nodeDesc || (nodeCount !== null ? nodeCount + " 顆" : "未特別指明淋巴結顆數");
+            const displayGrade = gradeDesc || (grade ? "Grade " + grade : "未特別指明分化等級（預設 Grade 2）");
+
+            // Form synchronization values (realistic representation)
+            const formSize = sizeCm !== null ? sizeCm : (isT4 ? 5.5 : 2.0);
+            const formNodes = nodeCount !== null ? nodeCount : 0;
+            const formGrade = grade !== null ? grade : 2;
+
+            // 4. Clinical Reimbursement Evaluation (115/12/1 NHI Rules)
+            let conditionMet = null;
+            let conditionReason = "";
+            let spokenReply = "";
+
+            // Condition I: pN2 or pN3 (positive ALN >= 4), any tumor size, any grade
+            if (nStage === "N2" || nStage === "N3" || (nodeCount !== null && nodeCount >= 4)) {
+                conditionMet = "條件 I";
+                conditionReason = "淋巴結轉移 ≧ 4 顆（" + displayNodes + "），符合 12 月 1 日規章「不限腫瘤大小、不限分化等級」全額給付門檻！";
+                spokenReply = "報告醫師，完全符合健保給付！病患為 " + displayNodes + "，符合 12 月 1 日早期高復發條件 I，規章明訂不限腫瘤大小與分化等級即享全額給付！事前審查代碼 C50P1，每日處方 2 粒，終生給付上限 36 個月。已為您自動備妥事前審查申請書！";
+            }
+            // Condition III: pN1 (1-3 nodes) AND Grade 3, ANY tumor size (even T1 <= 2cm!)
+            else if (nStage === "N1" && grade === 3) {
+                conditionMet = "條件 III";
+                conditionReason = "淋巴結 1–3 顆（" + displayNodes + "）且 組織學分化第 3 級（Grade 3），符合 12 月 1 日規章「不限腫瘤大小（即使腫瘤 2 公分或更小）」全額給付門檻！";
+                spokenReply = "報告醫師，完全符合健保給付！病患為 " + displayNodes + " 且組織學分化為 Grade 3，符合 12 月 1 日早期高復發條件 III！健保規章明訂此條件不限腫瘤大小，即使兩公分亦依法給付！事前審查代碼 C50P1，每日處方 2 粒，終生上限 36 個月。已為您備妥申請書！";
+            }
+            // Condition II: pN1 (1-3 nodes) AND Tumor > 2cm (T2, T3, T4)
+            else if (nStage === "N1" && (tStage === "T2" || tStage === "T3" || tStage === "T4" || isT4 || (sizeCm !== null && sizeCm > 2.0))) {
+                conditionMet = "條件 II";
+                conditionReason = "淋巴結 1–3 顆（" + displayNodes + "）且 腫瘤大於 2 公分（" + displaySize + "），符合早期高復發條件 II！";
+                spokenReply = "報告醫師，完全符合健保給付！病患為 " + displayNodes + " 且腫瘤大於 2 公分（" + displaySize + "），符合 12 月 1 日早期高復發條件 II！事前審查代碼 C50P1，每日處方 2 粒，終生上限 36 個月。已為您備妥申請書！";
+            }
+            // Condition IV: T4 local extension OR (N0 AND Tumor > 5cm / T3)
+            else if (isT4 || tStage === "T4") {
+                conditionMet = "條件 IV";
+                conditionReason = "符合早期乳癌高復發條件 IV 之「T4 局部侵犯」（胸壁/皮膚侵犯/發炎性乳癌），即使淋巴結無轉移亦全額給付！";
+                spokenReply = "報告醫師，完全符合健保給付！病患為 T4 局部侵犯（胸壁侵犯、皮膚侵犯或發炎性乳癌），符合 12 月 1 日早期高復發條件 IV，即使淋巴無轉移亦享給付！事前審查代碼 C50P1，每日處方 2 粒，終生上限 36 個月。已為您備妥申請書！";
+            } else if ((nStage === "N0" || nodeCount === 0) && (tStage === "T3" || (sizeCm !== null && sizeCm > 5.0))) {
+                conditionMet = "條件 IV";
+                conditionReason = "淋巴結無轉移（N0）但腫瘤大於 5 公分（" + displaySize + " / T3），符合早期高復發條件 IV！";
+                spokenReply = "報告醫師，完全符合健保給付！病患為淋巴結無轉移（N0）但腫瘤大於 5 公分（" + displaySize + "），符合 12 月 1 日早期高復發條件 IV！事前審查代碼 C50P1，每日處方 2 粒，終生上限 36 個月。已為您備妥申請書！";
+            }
+
+            if (conditionMet) {
+                return {
+                    scenario: 1,
+                    eligible: true,
+                    badgeClass: "badge bg-success fs-6",
+                    badgeText: "✅ 健保【有給付】！",
+                    code: "事審代碼：C50P1",
+                    borderClass: "border-success",
+                    spoken: spokenReply,
+                    details: "符合早期高復發【" + conditionMet + "】：\n• 判定依據：" + conditionReason + "\n• 辨識指標：腫瘤 " + displaySize + "、" + displayNodes + "、分化 " + displayGrade,
+                    size: formSize, nodes: formNodes, grade: formGrade, isT4: isT4
+                };
+            } else {
+                // Not eligible - precise medical explanation preventing rejection
+                let rejectReason = "";
+                if (nStage === "N0" || nodeCount === 0) {
+                    if (sizeCm !== null && sizeCm === 5.0) {
+                        rejectReason = "病患為淋巴結無轉移（N0），腫瘤大小剛好為 5.0 公分（T2）。健保條件 IV 明確規定腫瘤必須「大於 5 公分（>5cm / T3）」才符合給付門檻。";
+                    } else {
+                        rejectReason = "病患為淋巴結無轉移（N0），且腫瘤（" + displaySize + "）未達條件 IV 大於 5 公分（T3）之門檻。";
+                    }
+                } else if (nStage === "N1" && (sizeCm !== null && sizeCm <= 2.0) && grade !== 3) {
+                    rejectReason = "病患為淋巴結 1–3 顆（N1），但腫瘤（" + displaySize + "）未大於 2 公分（T1），且分化等級（" + displayGrade + "）未達 Grade 3。未達條件 II 或條件 III 門檻。";
+                } else {
+                    rejectReason = "目前條件（腫瘤 " + displaySize + "、" + displayNodes + "、分化 " + displayGrade + "）未達 12 月 1 日高復發門檻。";
+                }
+
+                const rejectSpoken = "報告醫師，目前暫不符合 12 月 1 日健保給付門檻！" + rejectReason + "若直接送審將遭健保署退件！建議向病人說明並引導加入擊癌利自費存摺專案買一送一！";
+
+                return {
+                    scenario: 1,
+                    eligible: false,
+                    badgeClass: "badge bg-danger fs-6",
+                    badgeText: "❌ 健保【暫無給付】(已攔截防退件)",
+                    code: "未符門檻",
+                    borderClass: "border-danger",
+                    spoken: rejectSpoken,
+                    details: "⚠️【AI 健保防退件攔截】：\n• 退件原因：" + rejectReason + "\n• 臨床處置：避免無效事審送審，建議引導病人加入擊癌利自費存摺專案（買一送一/買四送八）！\n• 辨識指標：腫瘤 " + displaySize + "、" + displayNodes + "、分化 " + displayGrade,
+                    size: formSize, nodes: formNodes, grade: formGrade, isT4: isT4
+                };
+            }
+        }
+
         function processVoiceQuery(query) {
+            const raw = query.trim();
+            if (!raw) return;
+
+            // 1. Show raw transcribed text in the UI box
             document.getElementById("spokenTextBox").classList.remove("d-none");
-            document.getElementById("spokenTextContent").textContent = "「" + query + "」";
-            
+            document.getElementById("spokenTextContent").textContent = "「" + raw + "」";
+            document.getElementById("spokenConfidence").className = "badge bg-primary";
+            document.getElementById("spokenConfidence").textContent = "辨識完成";
+
+            // 2. Evaluate Clinical Rules
+            const res = evaluateClinicalQuery(raw);
+
+            // 3. Update Voice AI Response Card with high visibility
             const card = document.getElementById("voiceAiResponseCard");
             card.classList.remove("d-none");
+            card.className = "p-3 border rounded mb-2 border-start border-4 " + res.borderClass + " bg-white shadow-sm";
+
             const badge = document.getElementById("voiceRespBadge");
+            badge.className = res.badgeClass;
+            badge.textContent = res.badgeText;
+
             const codeEl = document.getElementById("voiceRespCode");
+            codeEl.textContent = res.code;
+
             const descEl = document.getElementById("voiceRespText");
+            descEl.innerHTML = `
+                <div class="fw-bold mb-1" style="font-size: 0.95rem; color: #1e293b;">${res.spoken}</div>
+                <div class="p-2 mt-2 rounded bg-light border text-secondary" style="font-size: 0.76rem; white-space: pre-line; line-height: 1.5;">${res.details}</div>
+            `;
 
-            // 1. Check Metastatic / Partner drug cases
-            if (query.includes("停經前") || query.includes("停經針") || query.includes("Zoladex") || query.includes("Leuplin")) {
-                setScenario(3);
-                badge.className = "badge bg-info text-dark fs-6";
-                badge.textContent = "✅ 健保【有給付】！";
-                codeEl.textContent = "事審代碼：C50R1 + 停經針";
-                card.className = "p-2 border rounded small mb-2 border-start border-4 border-info bg-white shadow-sm";
-                const reply = "報告醫師，停經前轉移性乳癌，健保給付擊癌利每日 3 粒合併芳香環轉化酶抑制劑及停經針 Zoladex，事前審查代碼 C50R1，每次核准 24 週。已自動為您產出雙藥事審申請書！";
-                descEl.textContent = reply;
-                speakText(reply);
-                return;
-            }
+            // Auto scroll response card smoothly into user's view
+            card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-            if (query.includes("24個月") || query.includes("兩年") || query.includes("續約") || query.includes("展延")) {
-                setScenario(6);
-                badge.className = "badge bg-success fs-6";
-                badge.textContent = "✅ 健保【展延續審給付】！";
-                codeEl.textContent = "事審代碼：C50R1 (展延)";
-                card.className = "p-2 border rounded small mb-2 border-start border-4 border-success bg-white shadow-sm";
-                const reply = "報告醫師，用藥滿 24 個月無惡化續約，檢附近期電腦斷層及骨骼掃描確認 non-PD，依健保 9.72 規定得繼續申請給付。已自動為您備妥展延申請書！";
-                descEl.textContent = reply;
-                speakText(reply);
-                return;
-            }
+            // 4. Play audio chime and speak response
+            speakText(res.spoken);
 
-            // 2. Early Breast Cancer Parameter Extraction
-            let size = 2.4;
-            const sizeMatch = query.match(/(\d+(?:\.\d+)?)\s*(?:公分|cm)/i);
-            if (sizeMatch) size = parseFloat(sizeMatch[1]);
-
-            let nodes = 0;
-            if (query.includes("沒有轉移") || query.includes("無轉移") || query.includes("N0") || query.includes("0 顆") || query.includes("0顆")) {
-                nodes = 0;
-            } else {
-                const nodeMatch = query.match(/(\d+)\s*(?:顆|粒|個|淋巴)/i);
-                if (nodeMatch) nodes = parseInt(nodeMatch[1]);
-            }
-
-            let grade = 2;
-            if (query.includes("Grade 3") || query.includes("第 3 級") || query.includes("第三級") || query.includes("3級") || query.includes("3 級")) {
-                grade = 3;
-            } else if (query.includes("Grade 1") || query.includes("第 1 級") || query.includes("第一級")) {
-                grade = 1;
-            }
-
-            const isT4 = /T4|t4|局部侵犯|胸壁侵犯|皮膚侵犯|發炎性/i.test(query);
-            if (isT4) {
-                size = 5.5;
-            }
-
-            // Sync with Inspector inputs
-            document.getElementById("inTumorSize").value = size;
-            document.getElementById("inNodes").value = nodes;
-            document.getElementById("inGrade").value = grade;
+            // 5. Synchronize Form Inputs
+            if (res.size !== undefined) document.getElementById("inTumorSize").value = res.size;
+            if (res.nodes !== undefined) document.getElementById("inNodes").value = res.nodes;
+            if (res.grade !== undefined) document.getElementById("inGrade").value = res.grade;
             document.getElementById("inER").value = 85;
             document.getElementById("inPR").value = 70;
             document.getElementById("inHER2").value = "negative";
 
-            // Evaluate
-            setScenario(1);
-            let conditionMet = null;
-            let conditionReason = "";
-
-            if (nodes >= 4) {
-                conditionMet = "條件 I";
-                conditionReason = "淋巴結 ≧ 4 顆 (本例 " + nodes + " 顆)";
-            } else if (nodes >= 1 && nodes <= 3 && size > 2.0) {
-                conditionMet = "條件 II";
-                conditionReason = "淋巴結 1-3 顆 (本例 " + nodes + " 顆) 且 腫瘤大於 2 公分 (本例 " + size + "cm)";
-            } else if (nodes >= 1 && nodes <= 3 && grade === 3) {
-                conditionMet = "條件 III";
-                conditionReason = "淋巴結 1-3 顆 (本例 " + nodes + " 顆) 且 組織學分化第 3 級 (Grade 3)";
-            } else if (isT4) {
-                conditionMet = "條件 IV";
-                conditionReason = "符合早期乳癌高復發條件 IV 之「T4 局部侵犯」（胸壁/皮膚侵犯/發炎性乳癌）";
-            } else if (nodes === 0 && size > 5.0) {
-                conditionMet = "條件 IV";
-                conditionReason = "淋巴結無轉移但腫瘤大於 5 公分 (本例 " + size + "cm)";
-            }
-
-            if (conditionMet) {
-                badge.className = "badge bg-success fs-6";
-                badge.textContent = "✅ 健保【有給付】！";
-                codeEl.textContent = "事審代碼：C50P1";
-                card.className = "p-2 border rounded small mb-2 border-start border-4 border-success bg-white shadow-sm";
-                const spokenMsg = "報告醫師，完全符合健保給付！符合 12 月 1 日早期高復發" + conditionMet + "，" + conditionReason + "。事前審查代碼 C50P1，每日處方 2 粒，終生給付上限 36 個月。右側已為您自動備妥事前審查申請書！";
-                descEl.textContent = spokenMsg;
-                speakText(spokenMsg);
-            } else {
-                badge.className = "badge bg-danger fs-6";
-                badge.textContent = "❌ 健保【暫無給付】(已攔截防退件)";
-                codeEl.textContent = "未符門檻";
-                card.className = "p-2 border rounded small mb-2 border-start border-4 border-danger bg-white shadow-sm";
-                const spokenMsg = "報告醫師，目前暫不符合 12 月 1 日健保給付門檻！本例腫瘤 " + size + " 公分、淋巴結 " + nodes + " 顆，未達高復發條件。若直接送審將被退件，建議引導病人加入擊癌利自費存摺專案買一送一！";
-                descEl.textContent = spokenMsg;
-                speakText(spokenMsg);
-            }
-
-            recalculateFromInputs();
+            // 6. Set Scenario & Update Prior Authorization Application Form
+            setScenario(res.scenario);
         }
 
         function setScenario(scId, btn) {
