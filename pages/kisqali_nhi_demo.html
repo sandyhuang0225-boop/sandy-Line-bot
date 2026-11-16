@@ -108,6 +108,71 @@
             <!-- Left Control Panel -->
             <div class="col-lg-5 col-xl-4 no-print">
                 
+                <!-- 0. Doctor Voice Outpatient Assistant (Instant Oral NHI Query - TOP PRIORITY) -->
+                <div class="card card-custom p-3 mb-3 border-2 border-primary shadow-sm" style="background: linear-gradient(180deg, #F0FDF4 0%, #FFFFFF 100%);">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <h6 class="fw-bold text-dark mb-0">
+                            <i class="fa-solid fa-microphone-lines text-success me-2 fs-5"></i>醫師門診語音助理（口述秒判健保）
+                        </h6>
+                        <span class="badge bg-success text-white">門診語音即時判讀</span>
+                    </div>
+                    <p class="text-muted small mb-2" style="font-size: 0.76rem;">
+                        門診不用花時間查規章，直接按住麥克風口述（或點擊下方快捷按鈕），AI 即時語音朗讀、判定給付並自動備妥申請書！
+                    </p>
+
+                    <!-- Voice Input Button & Audio Output Toggle -->
+                    <div class="d-flex gap-2 mb-2">
+                        <button id="btnVoiceRecord" class="btn btn-success flex-grow-1 py-2 fw-bold d-flex align-items-center justify-content-center shadow-sm" onclick="toggleVoiceRecording()">
+                            <i class="fa-solid fa-microphone me-2 fs-5" id="micIcon"></i>
+                            <span id="voiceStatusText" class="fs-6">🎙️ 點此開始口述問答（或長按）</span>
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm px-2" onclick="toggleSpeechOutput()" id="btnTtsToggle" title="AI 語音朗讀開關">
+                            <i class="fa-solid fa-volume-high text-success fs-5" id="ttsIcon"></i>
+                        </button>
+                    </div>
+
+                    <!-- Spoken Transcript Box -->
+                    <div id="spokenTextBox" class="p-2 border rounded bg-white small mb-2 d-none">
+                        <div class="d-flex justify-content-between align-items-center text-muted" style="font-size: 0.7rem;">
+                            <span><i class="fa-solid fa-comment-dots text-primary me-1"></i>醫師口述辨識內容：</span>
+                            <span class="badge bg-info text-dark" id="spokenConfidence">語意辨識完成</span>
+                        </div>
+                        <div id="spokenTextContent" class="fw-bold text-dark mt-1" style="font-size: 0.85rem;"></div>
+                    </div>
+
+                    <!-- Instant Voice AI Response Card -->
+                    <div id="voiceAiResponseCard" class="p-2 border rounded small mb-2 d-none">
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <span class="badge bg-success fs-6" id="voiceRespBadge">✅ 健保【有給付】！</span>
+                            <span class="badge badge-code" id="voiceRespCode">事審代碼：C50P1</span>
+                        </div>
+                        <div id="voiceRespText" class="text-dark fw-bold mt-1" style="font-size: 0.82rem; line-height: 1.4;"></div>
+                    </div>
+
+                    <!-- Quick Voice Simulation Pills -->
+                    <div class="text-muted small mb-1 fw-bold" style="font-size: 0.72rem;">門診常見口述情境（點擊直接模擬測試）：</div>
+                    <div class="d-grid gap-1">
+                        <button class="btn btn-outline-primary btn-sm py-1 px-2 text-start" style="font-size: 0.75rem;" onclick="simulateVoiceQuery('腫瘤 3.5 公分、淋巴結 4 顆、ER/PR 大於 30%，健保有給付嗎？')">
+                            🗣️ <strong>腫瘤 3.5cm、淋巴結 4 顆</strong> ➔ <span class="badge bg-success">條件I 給付</span>
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm py-1 px-2 text-start" style="font-size: 0.75rem;" onclick="simulateVoiceQuery('病人腫瘤 2.4 公分，淋巴結 2 顆，Grade 2，HER2 陰性，健保有給付嗎？')">
+                            🗣️ <strong>腫瘤 2.4cm、淋巴結 2 顆</strong> ➔ <span class="badge bg-success">條件II 給付</span>
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm py-1 px-2 text-start" style="font-size: 0.75rem;" onclick="simulateVoiceQuery('腫瘤 1.6 公分，淋巴結 1 顆，分化第 3 級 Grade 3，健保會過嗎？')">
+                            🗣️ <strong>腫瘤 1.6cm、淋巴結 1 顆、Grade 3</strong> ➔ <span class="badge bg-success">條件III 給付</span>
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm py-1 px-2 text-start" style="font-size: 0.75rem;" onclick="simulateVoiceQuery('淋巴結 0 顆，腫瘤 5.5 公分，ER 陽性，健保給不給？')">
+                            🗣️ <strong>腫瘤 5.5cm、淋巴結 0 顆 (N0)</strong> ➔ <span class="badge bg-success">條件IV 給付</span>
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm py-1 px-2 text-start" style="font-size: 0.75rem;" onclick="simulateVoiceQuery('病人腫瘤 3 公分，淋巴結沒有轉移 N0，健保有給付嗎？')">
+                            🗣️ <strong>腫瘤 3cm、淋巴結 0 顆 (N0)</strong> ➔ <span class="badge bg-danger">不符-防退件/引導自費</span>
+                        </button>
+                        <button class="btn btn-outline-info text-dark btn-sm py-1 px-2 text-start" style="font-size: 0.75rem;" onclick="simulateVoiceQuery('停經前晚期轉移，ER 陽性，可不可以報停經針加擊癌利？')">
+                            🗣️ <strong>停經前晚期一線 + 停經針</strong> ➔ <span class="badge bg-info text-dark">雙藥送審給付</span>
+                        </button>
+                    </div>
+                </div>
+
                 <!-- 1. Hospital, Dept & Doctor Setting -->
                 <div class="card card-custom p-3 mb-3">
                     <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-hospital text-danger me-2"></i>醫事機構、科別與主治醫師（個管師/NP台）</h6>
@@ -140,71 +205,6 @@
 
                     <div class="mt-2 text-muted" style="font-size: 0.75rem;">
                         <i class="fa-solid fa-circle-check text-success me-1"></i>已即時聯動帶入官方醫事機構代碼與醫師姓名
-                    </div>
-                </div>
-
-                <!-- 1.5 Doctor Voice Outpatient Assistant (Instant Oral NHI Query) -->
-                <div class="card card-custom p-3 mb-3 border-2 border-primary" style="background: linear-gradient(180deg, #F0FDF4 0%, #FFFFFF 100%);">
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <h6 class="fw-bold text-dark mb-0">
-                            <i class="fa-solid fa-microphone-lines text-success me-2"></i>醫師門診語音助理（口述秒判健保）
-                        </h6>
-                        <span class="badge bg-success-subtle text-success border border-success-subtle">門診即時語音</span>
-                    </div>
-                    <p class="text-muted small mb-2" style="font-size: 0.76rem;">
-                        門診不用花時間查規章，直接按住麥克風口述（或點擊快捷口述），AI 即時語音朗讀、判定給付並自動備妥申請書！
-                    </p>
-
-                    <!-- Voice Input Button & Audio Output Toggle -->
-                    <div class="d-flex gap-2 mb-2">
-                        <button id="btnVoiceRecord" class="btn btn-success flex-grow-1 py-2 fw-bold d-flex align-items-center justify-content-center shadow-sm" onclick="toggleVoiceRecording()">
-                            <i class="fa-solid fa-microphone me-2" id="micIcon"></i>
-                            <span id="voiceStatusText">🎙️ 點此開始口述問答（或長按）</span>
-                        </button>
-                        <button class="btn btn-outline-secondary btn-sm px-2" onclick="toggleSpeechOutput()" id="btnTtsToggle" title="AI 語音朗讀開關">
-                            <i class="fa-solid fa-volume-high text-success" id="ttsIcon"></i>
-                        </button>
-                    </div>
-
-                    <!-- Spoken Transcript Box -->
-                    <div id="spokenTextBox" class="p-2 border rounded bg-white small mb-2 d-none">
-                        <div class="d-flex justify-content-between align-items-center text-muted" style="font-size: 0.7rem;">
-                            <span><i class="fa-solid fa-comment-dots text-primary me-1"></i>醫師口述辨識內容：</span>
-                            <span class="badge bg-info text-dark" id="spokenConfidence">語意辨識完成</span>
-                        </div>
-                        <div id="spokenTextContent" class="fw-bold text-dark mt-1" style="font-size: 0.85rem;"></div>
-                    </div>
-
-                    <!-- Instant Voice AI Response Card -->
-                    <div id="voiceAiResponseCard" class="p-2 border rounded small mb-2 d-none">
-                        <div class="d-flex align-items-center justify-content-between mb-1">
-                            <span class="badge bg-success fs-6" id="voiceRespBadge">✅ 健保【有給付】！</span>
-                            <span class="badge badge-code" id="voiceRespCode">事審代碼：C50P1</span>
-                        </div>
-                        <div id="voiceRespText" class="text-dark fw-bold mt-1" style="font-size: 0.82rem; line-height: 1.4;"></div>
-                    </div>
-
-                    <!-- Quick Voice Simulation Pills -->
-                    <div class="text-muted small mb-1 fw-bold" style="font-size: 0.72rem;">門診常見口述情境（點擊直接模擬測試）：</div>
-                    <div class="d-flex flex-wrap gap-1">
-                        <button class="btn btn-outline-primary btn-sm py-0 px-2" style="font-size: 0.72rem;" onclick="simulateVoiceQuery('腫瘤 3.5 公分、淋巴結 4 顆、ER/PR 大於 30%，健保有給付嗎？')">
-                            🗣️ 腫瘤 3.5cm、淋巴結 4 顆、ER/PR>30% (給付)
-                        </button>
-                        <button class="btn btn-outline-primary btn-sm py-0 px-2" style="font-size: 0.72rem;" onclick="simulateVoiceQuery('病人腫瘤 2.4 公分，淋巴結 2 顆，Grade 2，HER2 陰性，健保有給付嗎？')">
-                            🗣️ 腫瘤 2.4cm、淋巴結 2 顆 (條件II 給付)
-                        </button>
-                        <button class="btn btn-outline-primary btn-sm py-0 px-2" style="font-size: 0.72rem;" onclick="simulateVoiceQuery('腫瘤 1.6 公分，淋巴結 1 顆，分化第 3 級 Grade 3，健保會過嗎？')">
-                            🗣️ 腫瘤 1.6cm、淋巴結 1 顆、Grade 3 (條件III 給付)
-                        </button>
-                        <button class="btn btn-outline-primary btn-sm py-0 px-2" style="font-size: 0.72rem;" onclick="simulateVoiceQuery('淋巴結 0 顆，腫瘤 5.5 公分，ER 陽性，健保給不給？')">
-                            🗣️ 腫瘤 5.5cm、N0 (條件IV 給付)
-                        </button>
-                        <button class="btn btn-outline-danger btn-sm py-0 px-2" style="font-size: 0.72rem;" onclick="simulateVoiceQuery('病人腫瘤 3 公分，淋巴結沒有轉移 N0，健保有給付嗎？')">
-                            🗣️ 腫瘤 3cm、淋巴結 0 顆 (不符-攔截)
-                        </button>
-                        <button class="btn btn-outline-info text-dark btn-sm py-0 px-2" style="font-size: 0.72rem;" onclick="simulateVoiceQuery('停經前晚期轉移，ER 陽性，可不可以報停經針加擊癌利？')">
-                            🗣️ 停經前晚期一線 + 停經針 (雙藥給付)
-                        </button>
                     </div>
                 </div>
 

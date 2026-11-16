@@ -28,8 +28,8 @@
       "stage": "階段三",
       "stage_desc": "買一盒送五盒",
       "completed_cycles": 18,
-      "last_purchase_date": "2026-11-03",
-      "last_purchase_time": "2026-11-03 23:15",
+      "last_purchase_date": "2026-11-04",
+      "last_purchase_time": "2026-11-04 10:57",
       "last_purchase_pills": 42
     },
     "KSQ-0002": {
@@ -46,8 +46,8 @@
       "dose": 2,
       "stock": 42,
       "state": null,
-      "last_purchase_date": "2026-11-03",
-      "last_purchase_time": "2026-11-03 23:15",
+      "last_purchase_date": "2026-11-04",
+      "last_purchase_time": "2026-11-04 10:57",
       "last_purchase_pills": 42
     },
     "test_user_option_b_caregiver": {
@@ -81,8 +81,8 @@
       "stage": "階段二",
       "stage_desc": "買一盒送三盒",
       "completed_cycles": 9,
-      "last_purchase_date": "2026-11-03",
-      "last_purchase_time": "2026-11-03 23:15",
+      "last_purchase_date": "2026-11-04",
+      "last_purchase_time": "2026-11-04 10:57",
       "last_purchase_pills": 63
     },
     "KSQ-0003": {
@@ -99,10 +99,10 @@
       "dose": 3,
       "state": null,
       "stock": 63,
-      "last_purchase_date": "2026-11-03",
-      "last_purchase_time": "2026-11-03 23:15",
+      "last_purchase_date": "2026-11-04",
+      "last_purchase_time": "2026-11-04 10:57",
       "last_purchase_pills": 63
     }
   },
-  "counter": 9
+  "counter": 15
 }
