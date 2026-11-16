@@ -115,7 +115,7 @@
                             <h6 class="fw-bold text-dark mb-0">
                                 <i class="fa-solid fa-microphone-lines text-success me-2 fs-5"></i>醫師門診語音助理
                             </h6>
-                            <span class="badge bg-danger text-white ms-1 fw-bold" style="font-size: 0.68rem;" id="versionBadge">v3.4 條件IV解禁已更新 (02:50)</span>
+                            <span class="badge bg-danger text-white ms-1 fw-bold" style="font-size: 0.68rem;" id="versionBadge">v3.5 申請書即時全連動 (03:00)</span>
                         </div>
                         <div class="d-flex gap-1">
                             <button class="btn btn-outline-danger btn-sm py-0 px-2 fw-bold" onclick="forceHardRefresh()" style="font-size: 0.72rem;" title="手機若無更新請點此強制清除快取">
@@ -1236,7 +1236,12 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
 
             // 6. Set Scenario & Update Prior Authorization Application Form
             setScenario(res.scenario);
-            if (res.scenario === 1) recalculateFromInputs();
+            if (res.scenario === 1) {
+                recalculateFromInputs();
+                syncApplicationFormReason(res);
+            } else {
+                syncApplicationFormReason(res);
+            }
         }
 
         function setScenario(scId, btn) {
@@ -1400,6 +1405,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                     "   完全符合 115 年 12 月 1 日健保修訂規定 9.72 第 4 點之早期乳癌高復發風險【" + conditionMet + "】（" + conditionDesc + "）。\n" +
                     "4. 特此提出事前審查申請 ribociclib (代碼：C50P1，每日 2 粒，400mg) 進行術後輔助治療，終生給付上限 36 個月。";
                 setAIResult(true, "C50P1", "符合早期高復發風險【" + conditionMet + "】（" + conditionDesc + "）。每日核發 2 粒，終生 36 個月。");
+                syncApplicationFormReason();
             } else {
                 document.getElementById("viewReason").textContent = 
                     "⚠️【AI 健保防退件警報】：\n" +
@@ -1469,7 +1475,130 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             descEl.textContent = desc;
         }
 
-        function renderPreview() {
+                // ==========================================
+        // 📋 DYNAMIC PRIOR AUTHORIZATION FORM REASON GENERATOR
+        // Real-time synchronization between Doctor Oral Input and Official Application Form
+        // ==========================================
+        function syncApplicationFormReason(customData) {
+            const viewReasonEl = document.getElementById("viewReason");
+            if (!viewReasonEl) return;
+
+            if (currentScenario === 6) {
+                // Scenario 6: 24 Months Renewal
+                viewReasonEl.innerHTML = `
+<strong>【用藥滿 24 個月無惡化續約展延申請理由】：</strong>
+1. 診斷：轉移性乳癌 (Stage IV)。原事前審查核准文號：(填入前次核准函文號)。
+2. 治療病程與療效評估：
+   • 病患規律接受 ribociclib (擊癌利) 合併內分泌治療，目前已順利且規律用藥滿 24 個月 (2 年)。
+   • 檢附近 4 週內之胸腹部電腦斷層 (CT) 掃描及全身骨骼掃描 (Bone scan) 影像追蹤報告。
+   • 依據 RECIST 1.1 評估：標靶病灶維持【疾病穩定 (SD)】或【部分緩解 (PR)】，確認【無疾病惡化 (No Progressive Disease, non-PD)】。
+3. 健保給付合規比對：
+   依據全民健康保險藥品給付規定 9.72 第 5 點及第 7 點規定，核准後每 24 週檢附療效評估資料，疾病無惡化得繼續申請使用本類藥品。
+4. 特此提出展延事前審查申請，核發後續之 24 週用藥 (378 粒)。
+                `.trim();
+                return;
+            }
+
+            if (currentScenario === 3 || currentScenario === 4) {
+                // Scenario 3/4: Pre-menopausal Metastatic + Zoladex
+                viewReasonEl.innerHTML = `
+<strong>【停經前轉移性乳癌雙藥事前審查申請理由】：</strong>
+1. 診斷：停經前荷爾蒙受體陽性 (ER/PR 陽性)、HER2 陰性之晚期/轉移性乳癌 (Stage IV)。
+2. 病理與臨床指標：病患經確認為停經前狀態，ER 陽性 (85%)、PR 陽性 (70%)，HER2 陰性。
+3. 健保給付合規依據：
+   完全符合全民健康保險藥品給付規定 9.72 第 2 點：停經前患者第一線使用 CDK4/6 抑制劑 (ribociclib，事審代碼：C50R1)，健保全額給付合併芳香環轉化酶抑制劑 (AI) 及 LHRH 類似劑 (Zoladex 停經針，健保碼：B018244243)。
+4. 處方劑量與申請用量：
+   • 擊癌利 (ribociclib)：每日 3 粒 (600mg)，服 21 天停 7 天，申請 378 粒 (24 週用量)。
+   • 諾曼德 (Zoladex)：每 28 天皮下注射 1 劑 (3.6mg)，申請 6 支 (24 週用量)。
+5. 特此提出雙藥事前審查初次申請。
+                `.trim();
+                return;
+            }
+
+            if (currentScenario === 5) {
+                // Scenario 5: 2nd line Fulvestrant
+                viewReasonEl.innerHTML = `
+<strong>【二線惡化後解禁申請理由 (115/12/1 擴大給付)】：</strong>
+1. 診斷：轉移性乳癌 (Stage IV)，荷爾蒙受體陽性、HER2 陰性。
+2. 治療史：病患前線曾接受芳香環轉化酶抑制劑 (AI) 治療後產生疾病惡化。
+3. 健保給付合規依據：
+   完全符合 115 年 12 月 1 日健保修訂規定 9.72 第 3 點：第一線使用 AI 惡化後，得第二線合併使用 Fulvestrant (事審代碼：C50R2) 及 CDK4/6 抑制劑 ribociclib。
+4. 處方藥品：
+   • 擊癌利 (ribociclib)：每日口服 3 粒 (600mg)，申請 378 粒 (24 週)。
+   • 法洛德 (Fulvestrant)：每月肌注 500mg，申請 16 支 (24 週)。
+                `.trim();
+                return;
+            }
+
+            // Scenario 1: Early Breast Cancer (EBC) - Dynamic values from voice/inputs
+            let size = customData && customData.size !== undefined ? customData.size : (parseFloat(document.getElementById("inTumorSize").value) || 2.4);
+            let nodes = customData && customData.nodes !== undefined ? customData.nodes : (parseInt(document.getElementById("inNodes").value) || 0);
+            let grade = customData && customData.grade !== undefined ? customData.grade : (parseInt(document.getElementById("inGrade").value) || 2);
+            let isT4 = customData && customData.isT4 !== undefined ? customData.isT4 : (document.getElementById("inTumorSize").value >= 5.5 && nodes === 0);
+            
+            const er = document.getElementById("inER") ? document.getElementById("inER").value : 85;
+            const pr = document.getElementById("inPR") ? document.getElementById("inPR").value : 70;
+
+            let stagingText = "";
+            if (isT4) {
+                stagingText = "T4 (局部晚期侵犯胸壁/皮膚/發炎性乳癌)";
+            } else if (size > 5.0) {
+                stagingText = `T3 (腫瘤最大徑 ${size}cm > 5cm)`;
+            } else if (size > 2.0) {
+                stagingText = `T2 (腫瘤最大徑 ${size}cm > 2cm 且 ≦ 5cm)`;
+            } else {
+                stagingText = `T1 (腫瘤最大徑 ${size}cm ≦ 2cm)`;
+            }
+
+            let nodeStaging = "";
+            if (nodes >= 10) nodeStaging = `pN3 (陽性淋巴結 ${nodes} 顆 ≧ 10 顆)`;
+            else if (nodes >= 4) nodeStaging = `pN2 (陽性淋巴結 ${nodes} 顆，4-9 顆)`;
+            else if (nodes >= 1) nodeStaging = `pN1 (陽性淋巴結 ${nodes} 顆，1-3 顆)`;
+            else nodeStaging = `pN0 (陽性淋巴結 0 顆 / 無轉移)`;
+
+            let conditionTitle = "";
+            let conditionRationale = "";
+
+            if (nodes >= 4) {
+                conditionTitle = "條件 I (淋巴結 ≧ 4 顆)";
+                conditionRationale = `病患腋下陽性淋巴結達 ${nodes} 顆 (${nodeStaging})，符合 115/12/1 規章明訂「不限腫瘤大小與分化等級」之全額給付門檻。`;
+            } else if (isT4) {
+                conditionTitle = "條件 IV (T4 局部侵犯)";
+                conditionRationale = `病患為 T4 局部侵犯（胸壁侵犯、皮膚侵犯或發炎性乳癌），符合規章明訂即使腋下淋巴結無轉移 (N0) 依然享有全額給付。`;
+            } else if (size > 5.0) {
+                conditionTitle = "條件 IV (腫瘤 > 5cm / T3，即使 N0 給付)";
+                conditionRationale = `病患腫瘤最大徑達 ${size}cm (T3 > 5cm)，符合規章第 4 點明訂「腫瘤大於 5 公分，即使腋下淋巴結為 0 顆 (N0)」依然享有全額給付！`;
+            } else if (nodes >= 1 && nodes <= 3 && grade === 3) {
+                conditionTitle = "條件 III (淋巴結 1-3 顆 且 Grade 3)";
+                conditionRationale = `病患為陽性淋巴結 ${nodes} 顆 (pN1) 且 組織學分化第 3 級 (Grade 3)，符合規章明訂「不限腫瘤大小（即使腫瘤 ≦ 2cm）」之全額給付門檻。`;
+            } else if (nodes >= 1 && nodes <= 3 && size > 2.0) {
+                conditionTitle = "條件 II (淋巴結 1-3 顆 且 腫瘤 > 2cm)";
+                conditionRationale = `病患陽性淋巴結 ${nodes} 顆 (pN1) 且 腫瘤最大徑 ${size}cm (T2 > 2cm)，符合早期高復發條件 II 之給付門檻。`;
+            } else {
+                conditionTitle = "⚠️ 未達高復發門檻 (防退件攔截)";
+                conditionRationale = `病患目前數值（腫瘤最大徑 ${size}cm、陽性淋巴結 ${nodes} 顆、Grade ${grade}）未達 115/12/1 健保 4 大高復發門檻。若送審將被退件，建議引導加入擊癌利自費存摺專案 (買一送一)。`;
+            }
+
+            viewReasonEl.innerHTML = `
+<strong>【病歷摘要與健保合規使用理由 (即時連動口述與病理數值)】：</strong>
+1. 臨床診斷：侵襲性乳癌 (Invasive Breast Carcinoma, ${stagingText}, ${nodeStaging})。
+2. 病理切片詳細數值：
+   • 腫瘤最大徑：<strong>${size} cm</strong> (${stagingText})
+   • 陽性腋下淋巴結：<strong>${nodes} 顆</strong> (${nodeStaging})
+   • 組織學分化等級：<strong>Grade ${grade}</strong>
+   • 荷爾蒙受體：ER ${er}%、PR ${pr}% (均 ≧ 30%)，HER2 檢測為陰性 (IHC 1+ / FISH non-amplified)
+3. 健保給付合規比對依據：
+   完全符合 115 年 12 月 1 日健保修訂規定 9.72 第 4 點之早期乳癌高復發風險<strong>【${conditionTitle}】</strong>。
+   • 法規依據：${conditionRationale}
+4. 處方藥品與療程規劃：
+   病患已接受手術切除輔助治療，特此提出全民健保事前審查申請：
+   • 事審代碼：<strong>C50P1</strong> (擊癌利膜衣錠 ribociclib 200mg，健保代碼：KC01004100)
+   • 處方劑量：每日口服一次，<strong>每次 2 粒 (400mg)</strong>，連續服用 21 天後停藥 7 天 (28天/週期)。
+   • 申請數量：<strong>252 粒</strong> (24 週用量，終生給付上限 36 個月)。
+            `.trim();
+        }
+
+function renderPreview() {
             const hKey = document.getElementById("selHospital").value;
             const dKey = document.getElementById("selDept").value;
             const h = HOSPITAL_DATA[hKey];
@@ -1552,6 +1681,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                     "4. 特此提出展延事前審查申請，核發後續之 24 週用藥。";
                 setAIResult(true, "C50R1 (展延續審)", "已規律用藥滿 24 個月 (2年)，檢附最新影像評估無惡化 (non-PD)，依法享有繼續給付至惡化為止！");
             }
+            syncApplicationFormReason();
         }
 
         // Initialize on load
