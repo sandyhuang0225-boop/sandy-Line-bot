@@ -1057,18 +1057,97 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             const raw = normalizeMedicalSpeech(query);
             const cnMap = {'零': 0, '一': 1, '二': 2, '兩': 2, '两': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9, '十': 10};
 
-            // Scenario: Pre-menopausal Metastatic (停經前晚期一線)
-            if (/停經前|停經針|Zoladex|Leuplin|諾曼諾|轉移性乳癌|晚期乳癌/i.test(raw)) {
+            // ========================================================
+            // CRITICAL NHI 9.72 METSTATIC BREAST CANCER (MBC) INTERCEPTIONS
+            // ========================================================
+
+            // 1. CNS / Brain Metastasis Interception (健保 9.72 明訂排除中樞神經系統轉移)
+            if (/腦轉移|中樞神經|腦部轉移|CNS/i.test(raw)) {
+                return {
+                    scenario: 1,
+                    eligible: false,
+                    badgeClass: "badge bg-danger fs-6",
+                    badgeText: "❌ 健保【不給付】(排除腦/中樞神經轉移)",
+                    code: "未符健保 9.72",
+                    borderClass: "border-danger",
+                    spoken: "報告醫師，健保 9.72 明文規定排除中樞神經系統腦轉移！病患若有腦轉移或尚未控制穩定，健保不給付擊癌利，送審必遭退件。建議優先由放腫科進行腦部局部治療！",
+                    details: "⚠️【健保 9.72 防退件攔截】：\n• 攔截原因：健保 9.72 條文明定「無中樞神經系統 (CNS) 轉移」為必要前提。\n• 臨床處置：病患腦轉移（特別是未控制穩定者）未達給付標準，請勿送審避免退件核扣；建議優先評估放療 (SRS/WBRT)。",
+                    size: 2.0, nodes: 0, grade: 2
+                };
+            }
+
+            // 2. Visceral Crisis Interception (健保 9.72 明訂排除器官轉移危急症狀)
+            if (/內臟危象|器官轉移危急|visceral\s*crisis|器官衰竭/i.test(raw)) {
+                return {
+                    scenario: 1,
+                    eligible: false,
+                    badgeClass: "badge bg-danger fs-6",
+                    badgeText: "❌ 健保【不給付】(排除內臟危象，需優先化療)",
+                    code: "未符健保 9.72",
+                    borderClass: "border-danger",
+                    spoken: "報告醫師，健保 9.72 明訂排除器官轉移危急症狀（Visceral Crisis）！病患目前重要內臟器官功能嚴重受損有立即危險，健保不給付 CDK4/6，臨床需優先以化學治療救急！",
+                    details: "⚠️【健保 9.72 防退件攔截】：\n• 攔截原因：健保明訂「未出現器官轉移危急症狀 (Visceral Crisis)」方可給付。\n• 臨床處置：重大器官（肝、肺等）嚴重衰竭之內臟危象具立即生命危險，臨床指引要求優先以迅速起效之化學治療救急解除危機，不符合內分泌標靶事前審查。",
+                    size: 2.0, nodes: 0, grade: 2
+                };
+            }
+
+            // 3. Bone-only Metastasis Interception (健保 9.72 明訂：骨轉移不可為唯一轉移部位！)
+            if (/骨轉移/i.test(raw) && !/肝|肺|肋膜|腹膜|內臟|軟組織|淋巴結/i.test(raw) && (/單純|只有|僅有|單一|純|晚期|轉移/i.test(raw) || !/顆/i.test(raw))) {
+                return {
+                    scenario: 1,
+                    eligible: false,
+                    badgeClass: "badge bg-danger fs-6",
+                    badgeText: "❌ 健保【不給付】(骨轉移不可為唯一部位)",
+                    code: "未符健保 9.72",
+                    borderClass: "border-danger",
+                    spoken: "報告醫師，健保 9.72 條文明文規定：骨轉移不可為唯一轉移部位！病患若為單純骨轉移，健保不予給付擊癌利，送審必遭退件！建議引導病患加入自費存摺專案或單純內分泌治療！",
+                    details: "⚠️【健保 9.72 防退件攔截】：\n• 攔截原因：健保規定「骨轉移不可為唯一轉移部位（Bone-only metastasis 健保不給付）」。\n• 臨床處置：若只有骨轉移，不得送審 CDK4/6 抑制劑；須同時伴隨符合規定之內臟或軟組織轉移。建議病友加入擊癌利自費存摺專案 (買一送一) 或採用單純 AI 治療。",
+                    size: 2.0, nodes: 0, grade: 2
+                };
+            }
+
+            // 4. Endocrine Resistance / 2nd Line Progression (115/12/1 擴大給付二線解禁)
+            if (/內分泌(?:治療)?(?:無效|失敗)|前線(?:失敗|惡化)|AI惡化|二線|第二線|fulvestrant|法洛德/i.test(raw)) {
+                return {
+                    scenario: 5,
+                    eligible: true,
+                    badgeClass: "badge bg-warning text-dark fs-6",
+                    badgeText: "✅ 健保【二線解禁有給付】！",
+                    code: "事審代碼：C50R2 (二線解禁)",
+                    borderClass: "border-warning",
+                    spoken: "報告醫師，115 年 12 月 1 日健保新制正式解禁二線！前線使用 AI 惡化之內分泌治療無效轉移性乳癌，健保給付擊癌利合併法洛德 Fulvestrant，事審代碼 C50R2！",
+                    details: "【115/12/1 二線惡化解禁】：\n• 給付項目：擊癌利 (每日 3 粒 / 600mg) + 法洛德 Fulvestrant (每月 500mg 肌注)\n• 事審代碼：C50R2\n• 適用對象：晚期轉移性乳癌且前線使用內分泌治療 (AI) 惡化者",
+                    size: 3.0, nodes: 2, grade: 2
+                };
+            }
+
+            // 5. Scenario: Pre-menopausal Metastatic (停經前晚期一線)
+            if (/停經前|停經針|Zoladex|Leuplin|諾曼德/i.test(raw)) {
                 return {
                     scenario: 3,
                     eligible: true,
                     badgeClass: "badge bg-info text-dark fs-6",
-                    badgeText: "✅ 健保【有給付】！",
+                    badgeText: "✅ 健保【停經前有給付】！",
                     code: "事審代碼：C50R1 + 停經針",
                     borderClass: "border-info",
-                    spoken: "報告醫師，停經前轉移性乳癌，健保全額給付擊癌利每日 3 粒合併芳香環轉化酶抑制劑及停經針 Zoladex，事前審查代碼 C50R1，每次核准 24 週。已自動為您產出雙藥事審申請書！",
-                    details: "【停經前轉移性乳癌】：\n• 給付項目：擊癌利 (每日 3 粒 / 600mg) + AI + LHRH 類似劑 (Zoladex)\n• 事審代碼：C50R1 + 停經針\n• 每次核准效期：24 週（滿 24 週檢附 non-PD 報告展延）",
+                    spoken: "報告醫師，停經前轉移性乳癌（無內臟危象、無腦轉移且非單純骨轉移），健保給付擊癌利每日 3 粒合併 AI 及停經針 Zoladex，事審代碼 C50R1 併申請停經針。已為您產出雙藥事審申請書！",
+                    details: "【停經前轉移性乳癌 (MBC)】：\n• 給付項目：擊癌利 (每日 3 粒 / 600mg) + AI + LHRH 類似劑 (Zoladex 停經針)\n• 排除條件確認：無 Visceral Crisis、無 CNS 腦轉移、非單純骨轉移\n• 事審代碼：C50R1 + 停經針 (B018244243)",
                     size: 3.5, nodes: 4, grade: 2
+                };
+            }
+
+            // 6. Scenario: Post-menopausal Metastatic (停經後晚期一線)
+            if (/停經後|晚期乳癌|轉移性乳癌|(?:骨轉移.*(?:肝|肺|內臟))|(?:(?:肝|肺|內臟).*轉移)/i.test(raw)) {
+                return {
+                    scenario: 2,
+                    eligible: true,
+                    badgeClass: "badge bg-success fs-6",
+                    badgeText: "✅ 健保【晚期一線有給付】！",
+                    code: "事審代碼：C50R1",
+                    borderClass: "border-success",
+                    spoken: "報告醫師，停經後轉移性乳癌（無內臟危象、無腦轉移且非單純骨轉移），健保全額給付第一線擊癌利每日 3 粒合併芳香環轉化酶抑制劑 AI，事前審查代碼 C50R1，每次核准 24 週！",
+                    details: "【停經後轉移性乳癌 (MBC)】：\n• 給付項目：擊癌利 (每日 3 粒 / 600mg) + AI (Letrozole / Anastrozole)\n• 排除條件確認：無器官轉移危急症狀 (Visceral Crisis)、無中樞神經系統轉移、骨轉移非唯一轉移部位\n• 事審代碼：C50R1，終生以 24 個月為上限",
+                    size: 3.5, nodes: 2, grade: 2
                 };
             }
 
