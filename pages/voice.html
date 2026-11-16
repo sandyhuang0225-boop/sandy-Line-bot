@@ -114,7 +114,9 @@
                         <h6 class="fw-bold text-dark mb-0">
                             <i class="fa-solid fa-microphone-lines text-success me-2 fs-5"></i>醫師門診語音助理（口述秒判健保）
                         </h6>
-                        <span class="badge bg-success text-white">門診語音即時判讀</span>
+                        <button class="btn btn-outline-success btn-sm py-0 px-2 fw-bold" onclick="testAudioVoice()" style="font-size: 0.72rem;">
+                            <i class="fa-solid fa-volume-high me-1"></i>試聽 AI 語音
+                        </button>
                     </div>
                     <p class="text-muted small mb-2" style="font-size: 0.76rem;">
                         門診不用花時間查規章，直接按住麥克風口述（或點擊下方快捷按鈕），AI 即時語音朗讀、判定給付並自動備妥申請書！
@@ -131,10 +133,19 @@
                         </button>
                     </div>
 
+                    <!-- Direct Voice/Text Input Bar (100% Reliable for all phone keyboards) -->
+                    <div class="input-group input-group-sm mb-2 shadow-sm">
+                        <span class="input-group-text bg-white border-primary-subtle"><i class="fa-solid fa-keyboard text-muted"></i></span>
+                        <input type="text" id="manualOralInput" class="form-control border-primary-subtle" placeholder="或在此輸入/用手機鍵盤麥克風說話..." onkeydown="if(event.key==='Enter') submitManualOralInput()">
+                        <button class="btn btn-primary fw-bold" onclick="submitManualOralInput()">
+                            <i class="fa-solid fa-paper-plane me-1"></i>送出判讀
+                        </button>
+                    </div>
+
                     <!-- Recording Visual Guide (Shown only when recording) -->
                     <div id="recordingGuide" class="p-2 mb-2 rounded bg-danger-subtle border border-danger text-danger small text-center d-none">
                         <div class="fw-bold"><i class="fa-solid fa-circle text-danger fa-beat me-1"></i> 麥克風正在收音中...</div>
-                        <div style="font-size: 0.72rem;">請放慢速度口述病況，講完請點擊上方紅色按鈕結束（或停頓 3 秒自動判讀）</div>
+                        <div style="font-size: 0.72rem;">請放慢速度口述病況，講完請點擊上方紅色按鈕結束（或停頓 3.5 秒自動判讀）</div>
                     </div>
 
                     <!-- Spoken Transcript Box -->
@@ -612,13 +623,11 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                     window.speechSynthesis.speak(dummy);
                 } catch(e) {}
             }
-            try {
-                const AudioCtx = window.AudioContext || window.webkitAudioContext;
-                if (AudioCtx) {
-                    const ctx = new AudioCtx();
-                    if (ctx.state === 'suspended') ctx.resume();
-                }
-            } catch(e) {}
+        }
+
+        function testAudioVoice() {
+            unlockMobileAudio();
+            speakText("醫師您好！已為您開啟語音功能。請直接口述病人條件，我會即時為您判讀健保給付！");
         }
 
         function toggleSpeechOutput() {
@@ -639,16 +648,15 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                 unlockMobileAudio();
                 speakText(lastSpokenReply);
             } else {
-                speakText("請先按麥克風說話，AI 將立即為您語音判讀！");
+                testAudioVoice();
             }
         }
 
         function speakText(text) {
             lastSpokenReply = text;
             if (!ttsEnabled || !('speechSynthesis' in window)) return;
-            window.speechSynthesis.cancel();
-            
-            setTimeout(() => {
+            try {
+                window.speechSynthesis.cancel();
                 const utter = new SpeechSynthesisUtterance(text);
                 utter.lang = 'zh-TW';
                 utter.rate = 1.0;
@@ -656,11 +664,14 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                 utter.volume = 1.0;
                 
                 const voices = window.speechSynthesis.getVoices();
-                const twVoice = voices.find(v => v.lang === 'zh-TW' || v.lang === 'zh_TW' || (v.lang.startsWith('zh') && v.name.includes('Taiwan')));
-                if (twVoice) utter.voice = twVoice;
-                
+                if (voices && voices.length > 0) {
+                    const twVoice = voices.find(v => v.lang === 'zh-TW' || v.lang === 'zh_TW' || (v.lang.startsWith('zh') && v.name.includes('Taiwan')));
+                    if (twVoice) utter.voice = twVoice;
+                }
                 window.speechSynthesis.speak(utter);
-            }, 100);
+            } catch(e) {
+                console.error("SpeechSynthesis error:", e);
+            }
         }
 
         function initVoiceRecognition() {
@@ -668,19 +679,11 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             if (!SpeechRec) return null;
             const rec = new SpeechRec();
             rec.lang = 'zh-TW';
-            rec.continuous = true;       // Keep listening across pauses!
-            rec.interimResults = true;   // Live transcription as you speak!
+            rec.continuous = false; // MUST be false for iOS Safari compatibility!
+            rec.interimResults = true;
 
             rec.onstart = function() {
-                isRecording = true;
-                accumulatedTranscript = "";
-                document.getElementById("micIcon").className = "fa-solid fa-stop me-2 fs-5";
-                document.getElementById("voiceStatusText").textContent = "⏹️ 說話中... 講完點我結束";
-                document.getElementById("btnVoiceRecord").classList.replace("btn-success", "btn-danger");
-                document.getElementById("recordingGuide").classList.remove("d-none");
-                document.getElementById("spokenTextBox").classList.remove("d-none");
-                document.getElementById("spokenTextContent").textContent = "（請開始說話，辨識字詞將即時出現於此...）";
-                document.getElementById("spokenConfidence").textContent = "即時收音中";
+                // UI is already set in startVoiceRecordingUI()
             };
 
             rec.onresult = function(event) {
@@ -693,37 +696,53 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                         interim += event.results[i][0].transcript;
                     }
                 }
-                accumulatedTranscript = (finalStr + " " + interim).trim();
-                if (accumulatedTranscript) {
+                const newText = (finalStr + " " + interim).trim();
+                if (newText) {
+                    accumulatedTranscript = newText;
                     document.getElementById("spokenTextContent").textContent = "「" + accumulatedTranscript + "」";
                 }
 
-                // Generous silence detection: 3.2 seconds of silence after talking auto-completes
+                // Generous silence detection: 3.5 seconds of silence auto-completes
                 clearTimeout(silenceTimer);
                 silenceTimer = setTimeout(() => {
                     if (isRecording && accumulatedTranscript.length >= 4) {
                         stopVoiceRecordingAndProcess();
                     }
-                }, 3200);
+                }, 3500);
             };
 
             rec.onerror = function(event) {
-                console.error("Speech recognition error:", event.error);
-                if (event.error !== 'no-speech') {
+                console.warn("Speech recognition notice:", event.error);
+                if (event.error === 'not-allowed') {
                     stopVoiceRecognitionUI();
-                    alert("語音提示：" + (event.error === 'not-allowed' ? "請在瀏覽器設定中允許麥克風權限以使用語音問答。" : "收音中斷，請點擊重試或使用下方快捷情境按鈕。"));
+                    alert("麥克風權限提示：請在手機/瀏覽器設定中允許使用麥克風，或使用下方的「鍵盤輸入/語音輸入」或「快捷情境」！");
                 }
             };
 
             rec.onend = function() {
+                // If user is still recording, auto-restart listening across brief pauses
                 if (isRecording) {
-                    stopVoiceRecordingAndProcess();
-                } else {
-                    stopVoiceRecognitionUI();
+                    try {
+                        rec.start();
+                    } catch(e) {
+                        stopVoiceRecordingAndProcess();
+                    }
                 }
             };
 
             return rec;
+        }
+
+        function startVoiceRecordingUI() {
+            isRecording = true;
+            accumulatedTranscript = "";
+            document.getElementById("micIcon").className = "fa-solid fa-stop me-2 fs-5";
+            document.getElementById("voiceStatusText").textContent = "⏹️ 說話中... 講完點我結束";
+            document.getElementById("btnVoiceRecord").classList.replace("btn-success", "btn-danger");
+            document.getElementById("recordingGuide").classList.remove("d-none");
+            document.getElementById("spokenTextBox").classList.remove("d-none");
+            document.getElementById("spokenTextContent").textContent = "（請開始說話，辨識字詞將即時出現...）";
+            document.getElementById("spokenConfidence").textContent = "收音中";
         }
 
         function stopVoiceRecognitionUI() {
@@ -747,7 +766,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                 document.getElementById("voiceRespBadge").className = "badge bg-warning text-dark fs-6";
                 document.getElementById("voiceRespBadge").textContent = "⚠️ 說話時間過短";
                 document.getElementById("voiceRespCode").textContent = "未完整收到";
-                document.getElementById("voiceRespText").textContent = "未能清楚接收到您的病況描述。請再點擊一次麥克風說話（例如：「腫瘤 3.5 公分、淋巴結 4 顆，健保有給付嗎？」）。";
+                document.getElementById("voiceRespText").textContent = "未能清楚接收到您的病況描述。請再點擊一次麥克風說話（或直接在下方輸入框使用手機鍵盤語音輸入）。";
                 speakText("未聽清楚病況，請再按一次麥克風說話。");
                 return;
             }
@@ -756,26 +775,44 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
 
         function toggleVoiceRecording() {
             unlockMobileAudio();
+            if (isRecording) {
+                stopVoiceRecordingAndProcess();
+                return;
+            }
+
+            // Immediately change button to RED for instant visual feedback!
+            startVoiceRecordingUI();
+
             if (!recognition) {
                 recognition = initVoiceRecognition();
             }
             if (!recognition) {
-                alert("您的手機瀏覽器暫不支援 Web Speech 麥克風錄音，您可直接點擊下方的「門診常見口述情境」快捷按鈕進行完整語音即時測試！");
+                stopVoiceRecognitionUI();
+                alert("您目前的瀏覽器未支援內建 Web 麥克風（若在 LINE 中開啟，請點右上角「以 Safari/Chrome 開啟」）。您亦可直接在下方輸入框使用手機鍵盤的麥克風語音輸入，或點擊下方快捷按鈕！");
                 return;
             }
-            if (isRecording) {
-                stopVoiceRecordingAndProcess();
-            } else {
+
+            try {
+                recognition.start();
+            } catch(e) {
+                console.warn("Recognition start restart:", e);
                 try {
-                    accumulatedTranscript = "";
-                    recognition.start();
-                } catch(e) {
-                    try {
-                        recognition.stop();
-                        setTimeout(() => recognition.start(), 200);
-                    } catch(err) {}
-                }
+                    recognition.stop();
+                    setTimeout(() => recognition.start(), 200);
+                } catch(err) {}
             }
+        }
+
+        function submitManualOralInput() {
+            unlockMobileAudio();
+            const input = document.getElementById("manualOralInput");
+            const text = input.value.trim();
+            if (!text) {
+                alert("請先輸入或用手機鍵盤口述病患狀況！");
+                return;
+            }
+            input.value = "";
+            simulateVoiceQuery(text);
         }
 
         function simulateVoiceQuery(text) {
