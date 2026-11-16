@@ -115,7 +115,7 @@
                             <h6 class="fw-bold text-dark mb-0">
                                 <i class="fa-solid fa-microphone-lines text-success me-2 fs-5"></i>醫師門診語音助理
                             </h6>
-                            <span class="badge bg-danger text-white ms-1 fw-bold" style="font-size: 0.68rem;" id="versionBadge">v3.5 申請書即時全連動 (03:00)</span>
+                            <span class="badge bg-danger text-white ms-1 fw-bold" style="font-size: 0.68rem;" id="versionBadge">v3.6 門診清爽極簡版 (03:10)</span>
                         </div>
                         <div class="d-flex gap-1">
                             <button class="btn btn-outline-danger btn-sm py-0 px-2 fw-bold" onclick="forceHardRefresh()" style="font-size: 0.72rem;" title="手機若無更新請點此強制清除快取">
@@ -182,37 +182,7 @@
                         </div>
                     </div>
 
-                    <!-- Quick Voice Simulation Pills -->
-                    <div class="text-muted small mb-1 fw-bold" style="font-size: 0.72rem;">門診常見口述情境（點擊直接模擬測試）：</div>
-                    <div class="d-grid gap-1">
-                        <button class="btn btn-outline-success btn-sm py-1 px-2 text-start border-2 fw-bold" style="font-size: 0.76rem;" onclick="simulateVoiceQuery('病患腫瘤七公分、淋巴結零顆，健保有給付')">
-                            🗣️ <strong>「腫瘤六公分、N0 (或 T3N0 / T4N0)」</strong> ➔ <span class="badge bg-success">條件IV 全額給付</span>
-                        </button>
-                        <button class="btn btn-outline-success btn-sm py-1 px-2 text-start border-2 fw-bold" style="font-size: 0.76rem;" onclick="simulateVoiceQuery('病患腫瘤七公分、淋巴結零顆，健保有給付')">
-                            🗣️ <strong>「腫瘤七公分、淋巴結零顆」</strong> ➔ <span class="badge bg-success">條件IV 全額給付</span>
-                        </button>
-                        <button class="btn btn-outline-success btn-sm py-1 px-2 text-start border-2 fw-bold" style="font-size: 0.76rem;" onclick="simulateVoiceQuery('病患 T2N1，健保給付嗎')">
-                            🗣️ <strong>「病患 T2N1（或 T2NE 語音）」</strong> ➔ <span class="badge bg-success">條件II 全額給付</span>
-                        </button>
-                        <button class="btn btn-outline-primary btn-sm py-1 px-2 text-start" style="font-size: 0.75rem;" onclick="simulateVoiceQuery('腫瘤 3.5 公分、淋巴結 4 顆、ER/PR 大於 30%，健保有給付嗎？')">
-                            🗣️ <strong>腫瘤 3.5cm、淋巴結 4 顆</strong> ➔ <span class="badge bg-success">條件I 給付</span>
-                        </button>
-                        <button class="btn btn-outline-primary btn-sm py-1 px-2 text-start" style="font-size: 0.75rem;" onclick="simulateVoiceQuery('病人腫瘤 2.4 公分，淋巴結 2 顆，Grade 2，HER2 陰性，健保有給付嗎？')">
-                            🗣️ <strong>腫瘤 2.4cm、淋巴結 2 顆</strong> ➔ <span class="badge bg-success">條件II 給付</span>
-                        </button>
-                        <button class="btn btn-outline-primary btn-sm py-1 px-2 text-start" style="font-size: 0.75rem;" onclick="simulateVoiceQuery('腫瘤 1.6 公分，淋巴結 1 顆，分化第 3 級 Grade 3，健保會過嗎？')">
-                            🗣️ <strong>腫瘤 1.6cm、淋巴結 1 顆、Grade 3</strong> ➔ <span class="badge bg-success">條件III 給付</span>
-                        </button>
-                        <button class="btn btn-outline-primary btn-sm py-1 px-2 text-start" style="font-size: 0.75rem;" onclick="simulateVoiceQuery('淋巴結 0 顆，腫瘤 5.5 公分，ER 陽性，健保給不給？')">
-                            🗣️ <strong>腫瘤 5.5cm、淋巴結 0 顆 (N0)</strong> ➔ <span class="badge bg-success">條件IV 給付</span>
-                        </button>
-                        <button class="btn btn-outline-danger btn-sm py-1 px-2 text-start" style="font-size: 0.75rem;" onclick="simulateVoiceQuery('病人腫瘤 3 公分，淋巴結沒有轉移 N0，健保有給付嗎？')">
-                            🗣️ <strong>腫瘤 3cm、淋巴結 0 顆 (N0)</strong> ➔ <span class="badge bg-danger">不符-防退件/引導自費</span>
-                        </button>
-                        <button class="btn btn-outline-info text-dark btn-sm py-1 px-2 text-start" style="font-size: 0.75rem;" onclick="simulateVoiceQuery('停經前晚期轉移，ER 陽性，可不可以報停經針加擊癌利？')">
-                            🗣️ <strong>停經前晚期一線 + 停經針</strong> ➔ <span class="badge bg-info text-dark">雙藥送審給付</span>
-                        </button>
-                    </div>
+                    
                 </div>
 
                 <!-- 1. Hospital, Dept & Doctor Setting -->
