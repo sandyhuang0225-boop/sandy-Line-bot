@@ -111,12 +111,20 @@
                 <!-- 0. Doctor Voice Outpatient Assistant (Instant Oral NHI Query - TOP PRIORITY) -->
                 <div class="card card-custom p-3 mb-3 border-2 border-primary shadow-sm" style="background: linear-gradient(180deg, #F0FDF4 0%, #FFFFFF 100%);">
                     <div class="d-flex align-items-center justify-content-between mb-2">
-                        <h6 class="fw-bold text-dark mb-0">
-                            <i class="fa-solid fa-microphone-lines text-success me-2 fs-5"></i>醫師門診語音助理（口述秒判健保）
-                        </h6>
-                        <button class="btn btn-outline-success btn-sm py-0 px-2 fw-bold" onclick="testAudioVoice()" style="font-size: 0.72rem;">
-                            <i class="fa-solid fa-volume-high me-1"></i>試聽 AI 語音
-                        </button>
+                        <div class="d-flex align-items-center flex-wrap gap-1">
+                            <h6 class="fw-bold text-dark mb-0">
+                                <i class="fa-solid fa-microphone-lines text-success me-2 fs-5"></i>醫師門診語音助理
+                            </h6>
+                            <span class="badge bg-danger text-white ms-1 fw-bold" style="font-size: 0.68rem;" id="versionBadge">v3.3 已更新 (02:40)</span>
+                        </div>
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-outline-danger btn-sm py-0 px-2 fw-bold" onclick="forceHardRefresh()" style="font-size: 0.72rem;" title="手機若無更新請點此強制清除快取">
+                                <i class="fa-solid fa-arrows-rotate me-1"></i>強制刷新
+                            </button>
+                            <button class="btn btn-outline-success btn-sm py-0 px-2 fw-bold" onclick="testAudioVoice()" style="font-size: 0.72rem;">
+                                <i class="fa-solid fa-volume-high me-1"></i>試聽語音
+                            </button>
+                        </div>
                     </div>
                     <p class="text-muted small mb-2" style="font-size: 0.76rem;">
                         門診不用花時間查規章，直接按住麥克風口述（或點擊下方快捷按鈕），AI 即時語音朗讀、判定給付並自動備妥申請書！
@@ -177,6 +185,12 @@
                     <!-- Quick Voice Simulation Pills -->
                     <div class="text-muted small mb-1 fw-bold" style="font-size: 0.72rem;">門診常見口述情境（點擊直接模擬測試）：</div>
                     <div class="d-grid gap-1">
+                        <button class="btn btn-outline-success btn-sm py-1 px-2 text-start border-2 fw-bold" style="font-size: 0.76rem;" onclick="simulateVoiceQuery('病患腫瘤七公分、淋巴結零顆，健保有給付')">
+                            🗣️ <strong>「腫瘤七公分、淋巴結零顆」</strong> ➔ <span class="badge bg-success">條件IV 全額給付</span>
+                        </button>
+                        <button class="btn btn-outline-success btn-sm py-1 px-2 text-start border-2 fw-bold" style="font-size: 0.76rem;" onclick="simulateVoiceQuery('病患 T2N1，健保給付嗎')">
+                            🗣️ <strong>「病患 T2N1（或 T2NE 語音）」</strong> ➔ <span class="badge bg-success">條件II 全額給付</span>
+                        </button>
                         <button class="btn btn-outline-primary btn-sm py-1 px-2 text-start" style="font-size: 0.75rem;" onclick="simulateVoiceQuery('腫瘤 3.5 公分、淋巴結 4 顆、ER/PR 大於 30%，健保有給付嗎？')">
                             🗣️ <strong>腫瘤 3.5cm、淋巴結 4 顆</strong> ➔ <span class="badge bg-success">條件I 給付</span>
                         </button>
@@ -646,6 +660,11 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                     window.speechSynthesis.speak(dummy);
                 } catch(e) {}
             }
+        }
+
+        function forceHardRefresh() {
+            const cleanUrl = window.location.origin + window.location.pathname + '?v=' + new Date().getTime();
+            window.location.replace(cleanUrl);
         }
 
         function testAudioVoice() {
