@@ -878,6 +878,28 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
         // Supports: Chinese Numerals (一二兩两三四五六七八九十零點点), TNM (T1-T4, N0-N3), Grades (1-3)
         // Strictly adheres to Taiwan NHI 115/12/1 Early Breast Cancer Kisqali Rules
         // ==========================================
+        function parseChineseOrArabicNum(str) {
+            if (!str) return null;
+            str = str.trim();
+            if (/^\d+(\.\d+)?$/.test(str)) return parseFloat(str);
+            const cn = {'零': 0, '一': 1, '二': 2, '兩': 2, '两': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9, '十': 10};
+            if (str.includes('點') || str.includes('点')) {
+                const parts = str.split(/[點点]/);
+                const ip = cn[parts[0]] !== undefined ? cn[parts[0]] : (parseInt(parts[0]) || 0);
+                const dp = cn[parts[1]] !== undefined ? cn[parts[1]] : (parseInt(parts[1]) || 0);
+                return parseFloat(ip + '.' + dp);
+            }
+            if (cn[str] !== undefined) return cn[str];
+            if (str.startsWith('十') && str.length === 2 && cn[str[1]] !== undefined) return 10 + cn[str[1]];
+            if (str.endsWith('十') && str.length === 2 && cn[str[0]] !== undefined) return cn[str[0]] * 10;
+            if (str.length === 3 && str[1] === '十') {
+                const t = cn[str[0]] !== undefined ? cn[str[0]] : 1;
+                const u = cn[str[2]] !== undefined ? cn[str[2]] : 0;
+                return t * 10 + u;
+            }
+            return null;
+        }
+
         function evaluateClinicalQuery(query) {
             const raw = query.trim();
             const cnMap = {'零': 0, '一': 1, '二': 2, '兩': 2, '两': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9, '十': 10};
@@ -933,10 +955,11 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             let nodeDesc = "";
 
             // Check explicit counts with Chinese or Arabic numbers
-            const nodeCountMatch = raw.match(/(?<![tTpNn])(\d+|[零一二兩两三四五六七八九十])\s*(?:顆|粒|個)(?:陽性|轉移)?(?:淋巴)?|淋巴(?:結)?\s*(?:陽性|轉移)?\s*(\d+|[零一二兩两三四五六七八九十])\s*(?:顆|粒|個)?/i);
+            const nodeCountMatch = raw.match(/(?<![tTpNn])(\d+|[零一二兩两三四五六七八九十]+)\s*(?:顆|粒|個)(?:陽性|轉移)?(?:淋巴)?|淋巴(?:結)?\s*(?:陽性|轉移)?\s*(\d+|[零一二兩两三四五六七八九十]+)\s*(?:顆|粒|個)?/i);
             if (nodeCountMatch) {
                 const valStr = nodeCountMatch[1] || nodeCountMatch[2];
-                nodeCount = /^\d+$/.test(valStr) ? parseInt(valStr) : (cnMap[valStr] !== undefined ? cnMap[valStr] : 0);
+                const parsedVal = parseChineseOrArabicNum(valStr);
+                nodeCount = parsedVal !== null ? Math.round(parsedVal) : 0;
                 if (nodeCount === 0) {
                     nStage = "N0";
                     nodeDesc = "淋巴結 0 顆（N0 / 無轉移）";
@@ -962,7 +985,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                 nStage = "N1";
                 nodeCount = 2; // Representative value for form
                 nodeDesc = "N1（淋巴結 1 到 3 顆）";
-            } else if (/N0|n0|pN0|無轉移|没有转移|無淋巴|0\s*顆|零顆/i.test(raw)) {
+            } else if (/N0|n0|pN0|無轉移|没有转移|沒有轉移|没转移|无转移|無淋巴|0\s*顆|零顆/i.test(raw)) {
                 nStage = "N0";
                 nodeCount = 0;
                 nodeDesc = "N0（淋巴結 0 顆 / 無轉移）";
@@ -986,18 +1009,8 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             const sizeMatch = raw.match(/(\d+(?:\.\d+)?|[零一二兩两三四五六七八九十點点]+)\s*(?:公分|厘米|cm)/i);
             if (sizeMatch) {
                 const sv = sizeMatch[1];
-                if (/^\d+(?:\.\d+)?$/.test(sv)) {
-                    sizeCm = parseFloat(sv);
-                } else if (sv.includes('點') || sv.includes('点')) {
-                    const parts = sv.split(/[點点]/);
-                    const ip = cnMap[parts[0]] !== undefined ? cnMap[parts[0]] : 0;
-                    const dp = cnMap[parts[1]] !== undefined ? cnMap[parts[1]] : 0;
-                    sizeCm = parseFloat(ip + '.' + dp);
-                } else if (cnMap[sv] !== undefined) {
-                    sizeCm = parseFloat(cnMap[sv]);
-                } else {
-                    sizeCm = 2.0;
-                }
+                const parsedSize = parseChineseOrArabicNum(sv);
+                sizeCm = parsedSize !== null ? parsedSize : 2.0;
 
                 if (sizeCm <= 2.0) {
                     tStage = tStage || "T1";
