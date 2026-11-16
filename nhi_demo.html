@@ -75,10 +75,24 @@
             padding-bottom: 8px;
             margin-bottom: 12px;
         }
+        .editable-cell {
+            cursor: text;
+            transition: background-color 0.15s, outline 0.15s;
+        }
+        .editable-cell:hover {
+            background-color: #f0fdf4 !important;
+            outline: 1.5px dashed #16a34a;
+        }
+        .editable-cell:focus {
+            background-color: #ffffff !important;
+            outline: 2px solid #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
         @media print {
             body * { visibility: hidden; }
             #printableArea, #printableArea * { visibility: visible; }
-            #printableArea { position: absolute; left: 0; top: 0; width: 100%; }
+            #printableArea { position: absolute; left: 0; top: 0; width: 100%; border: none !important; box-shadow: none !important; }
+            .editable-cell { outline: none !important; box-shadow: none !important; background: transparent !important; }
             .no-print { display: none !important; }
         }
     </style>
@@ -115,7 +129,7 @@
                             <h6 class="fw-bold text-dark mb-0">
                                 <i class="fa-solid fa-microphone-lines text-success me-2 fs-5"></i>醫師門診語音助理
                             </h6>
-                            <span class="badge bg-danger text-white ms-1 fw-bold" style="font-size: 0.68rem;" id="versionBadge">v3.6 門診清爽極簡版 (03:10)</span>
+                            <span class="badge bg-danger text-white ms-1 fw-bold" style="font-size: 0.68rem;" id="versionBadge">v3.7 靜音切換+病患自訂版 (03:30)</span>
                         </div>
                         <div class="d-flex gap-1">
                             <button class="btn btn-outline-danger btn-sm py-0 px-2 fw-bold" onclick="forceHardRefresh()" style="font-size: 0.72rem;" title="手機若無更新請點此強制清除快取">
@@ -172,8 +186,8 @@
                                 <span class="badge bg-success fs-6 me-1" id="voiceRespBadge">✅ 健保【有給付】！</span>
                                 <span class="badge badge-code" id="voiceRespCode">事審代碼：C50P1</span>
                             </div>
-                            <button class="btn btn-sm btn-outline-success py-0 px-2 fw-bold" onclick="replayLastResponse()" style="font-size: 0.72rem;">
-                                <i class="fa-solid fa-volume-high me-1"></i>重播語音
+                            <button id="btnVoiceMuteToggle" class="btn btn-sm btn-outline-success py-0 px-2 fw-bold" onclick="toggleMuteAudio()" style="font-size: 0.72rem;" title="按一下切換為靜音看文字，再按開啟聲音">
+                                <i class="fa-solid fa-volume-high text-success me-1" id="respMuteIcon"></i><span id="respMuteText">有聲 (點擊靜音)</span>
                             </button>
                         </div>
                         <div id="voiceRespText" class="text-dark fw-bold mt-1" style="font-size: 0.82rem; line-height: 1.4;"></div>
@@ -385,22 +399,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                         </div>
                     </div>
 
-                    <!-- Preset Samples -->
-                    <div class="text-muted small fw-bold mb-1">或點擊預設典型案例快速測試：</div>
-                    <div class="d-grid gap-1">
-                        <button class="btn btn-sm btn-outline-primary text-start py-1" onclick="loadCase('T2N1')">
-                            <i class="fa-solid fa-arrow-right me-1"></i> <strong>案例 A：T2N1</strong> (2.4cm, 2顆, G2) ➔ <span class="text-success fw-bold">核准(條件II)</span>
-                        </button>
-                        <button class="btn btn-sm btn-outline-primary text-start py-1" onclick="loadCase('T1N1G3')">
-                            <i class="fa-solid fa-arrow-right me-1"></i> <strong>案例 B：T1N1 G3</strong> (1.6cm, 1顆, G3) ➔ <span class="text-success fw-bold">核准(條件III)</span>
-                        </button>
-                        <button class="btn btn-sm btn-outline-primary text-start py-1" onclick="loadCase('5.5cmN0')">
-                            <i class="fa-solid fa-arrow-right me-1"></i> <strong>案例 C：5.5cm N0</strong> (5.5cm, 0顆) ➔ <span class="text-success fw-bold">核准(條件IV)</span>
-                        </button>
-                        <button class="btn btn-sm btn-outline-danger text-start py-1" onclick="loadCase('T2N0')">
-                            <i class="fa-solid fa-triangle-exclamation me-1"></i> <strong>案例 D：T2N0</strong> (3.5cm, 0顆) ➔ <span class="text-danger fw-bold">不符合(防退件)</span>
-                        </button>
-                    </div>
+                    <!-- Preset Samples Removed per Physician Request -->
                 </div>
 
             </div>
@@ -423,6 +422,48 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                     </div>
                     <div class="mt-2 text-dark small" id="aiResultDesc">
                         經 AI 系統自動交叉比對病理報告與 115 年 12 月 1 日最新健保修訂規定：完全符合早期乳癌高復發風險條件 II（pALN 為 1-3 顆 且 腫瘤大小 > 2cm）。每日核可處方 2 粒（400mg），終生給付上限 36 個月。
+                    </div>
+                </div>
+
+                <!-- Patient Info Quick Edit Bar (No-Print) -->
+                <div class="card card-custom p-3 mb-3 no-print bg-white border border-primary-subtle shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
+                        <div class="fw-bold text-primary small">
+                            <i class="fa-solid fa-user-pen me-1"></i> 病患基本資料手動填寫（隨打隨連動，亦可直接點擊下方表格內文修改）
+                        </div>
+                        <span class="badge bg-light text-secondary border small">
+                            <i class="fa-solid fa-i-cursor me-1"></i> 下方申請書表格各欄位支援直接點擊打字修改
+                        </span>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-md-3 col-6">
+                            <label class="form-label small mb-1 fw-bold text-muted">保險對象姓名</label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text"><i class="fa-solid fa-user"></i></span>
+                                <input type="text" id="inputPatientName" class="form-control" value="王○蘭" placeholder="例：林○美 或自訂" oninput="updatePatientInfoFromInputs()">
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <label class="form-label small mb-1 fw-bold text-muted">身分證字號</label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text"><i class="fa-solid fa-id-card"></i></span>
+                                <input type="text" id="inputIdNo" class="form-control" value="A220198888" placeholder="例：A220198888" oninput="updatePatientInfoFromInputs()">
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <label class="form-label small mb-1 fw-bold text-muted">出生年月日 (民國/西元)</label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text"><i class="fa-solid fa-cake-candles"></i></span>
+                                <input type="text" id="inputDob" class="form-control" value="052/08/15" placeholder="例：052/08/15" oninput="updatePatientInfoFromInputs()">
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <label class="form-label small mb-1 fw-bold text-muted">預定實施 / 申請日期</label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text"><i class="fa-regular fa-calendar-check"></i></span>
+                                <input type="text" id="inputApplyDate" class="form-control" value="115 年 12 月 01 日" placeholder="例：115 年 12 月 01 日" oninput="updatePatientInfoFromInputs()">
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -453,19 +494,19 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                         </tr>
                         <tr>
                             <td style="background: #F8FAFC;" class="fw-bold text-center">保險對象姓名</td>
-                            <td id="viewPatient">王○蘭 (去識別化病友)</td>
+                            <td id="viewPatient" contenteditable="true" class="editable-cell" title="點擊此處可直接手動修改姓名" oninput="syncInputsFromTable()">王○蘭</td>
                             <td style="background: #F8FAFC;" class="fw-bold text-center">身分證號 / 生日</td>
-                            <td id="viewIdDob">A22019**** ｜ 052/08/15</td>
+                            <td id="viewIdDob" contenteditable="true" class="editable-cell" title="點擊此處可直接手動修改身分證號及生日" oninput="syncInputsFromTable()">A220198888 ｜ 052/08/15</td>
                         </tr>
                         <tr>
                             <td style="background: #F8FAFC;" class="fw-bold text-center">國際疾病分類碼</td>
-                            <td id="viewIcd">C50.919 (惡性乳房腫瘤)</td>
+                            <td id="viewIcd" contenteditable="true" class="editable-cell" title="點擊此處可直接手動修改 ICD 代碼">C50.919 (惡性乳房腫瘤)</td>
                             <td style="background: #F8FAFC;" class="fw-bold text-center">預定實施日期</td>
-                            <td>115 年 12 月 01 日</td>
+                            <td id="viewApplyDate" contenteditable="true" class="editable-cell" title="點擊此處可直接手動修改日期" oninput="syncInputsFromTable()">115 年 12 月 01 日</td>
                         </tr>
                         <tr>
                             <td style="background: #F8FAFC;" class="fw-bold text-center">傷病名稱<br>傷病情況<br>及使用理由</td>
-                            <td colspan="3" id="viewReason" style="white-space: pre-line; line-height: 1.5; font-size: 0.85rem;">
+                            <td colspan="3" id="viewReason" contenteditable="true" class="editable-cell" title="點擊此處可直接自訂編輯審查理由文字" style="white-space: pre-line; line-height: 1.5; font-size: 0.85rem;">
                                 【病歷摘要與合規使用理由】：
                                 1. 診斷：侵襲性乳癌 (T2N1M0, Stage IIB)。
                                 2. 病理標記：腫瘤最大徑 2.4cm (T2 > 2cm)，腋下陽性淋巴結 2 顆 (pALN 2/16, N1)。ER 85%、PR 70% (均 > 30%)，HER2 檢測為陰性 (IHC 1+)。
@@ -496,7 +537,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                     <div class="d-flex justify-content-between mt-4 pt-2 border-top border-dark small">
                         <div>醫事服務機構負責醫師印章：____________</div>
                         <div>主治醫師簽章：<strong class="border-bottom border-dark px-2" id="signDoctor">李春輝</strong></div>
-                        <div>申請日期：115 年 12 月 01 日</div>
+                        <div>申請日期：<span id="viewSignDate" contenteditable="true" class="editable-cell" title="點擊此處可直接手動修改申請日期">115 年 12 月 01 日</span></div>
                     </div>
 
                 </div>
@@ -646,16 +687,92 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             speakText("醫師您好！我是擊癌利健保事前審查 AI 語音助理。請點擊麥克風口述病況，或直接在文字框輸入，我會即時為您分析 12 月 1 日健保給付！");
         }
 
+        function toggleMuteAudio() {
+            ttsEnabled = !ttsEnabled;
+            if (!ttsEnabled) {
+                if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            }
+            updateMuteButtonUI();
+        }
+
         function toggleSpeechOutput() {
             ttsEnabled = !ttsEnabled;
-            const icon = document.getElementById("ttsIcon");
-            if (ttsEnabled) {
-                icon.className = "fa-solid fa-volume-high text-success fs-5";
+            if (!ttsEnabled) {
+                if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            } else {
                 unlockMobileAudio();
                 speakText("已開啟 AI 語音朗讀回覆");
+            }
+            updateMuteButtonUI();
+        }
+
+        function updateMuteButtonUI() {
+            const btn = document.getElementById("btnVoiceMuteToggle");
+            const icon = document.getElementById("respMuteIcon");
+            const text = document.getElementById("respMuteText");
+            const topIcon = document.getElementById("ttsIcon");
+
+            if (ttsEnabled) {
+                if (btn) btn.className = "btn btn-sm btn-outline-success py-0 px-2 fw-bold";
+                if (icon) icon.className = "fa-solid fa-volume-high text-success me-1";
+                if (text) text.textContent = "有聲 (點擊靜音)";
+                if (topIcon) topIcon.className = "fa-solid fa-volume-high text-success fs-5";
             } else {
-                icon.className = "fa-solid fa-volume-xmark text-muted fs-5";
-                if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+                if (btn) btn.className = "btn btn-sm btn-outline-danger py-0 px-2 fw-bold";
+                if (icon) icon.className = "fa-solid fa-volume-xmark text-danger me-1";
+                if (text) text.textContent = "已靜音 (點擊開聲)";
+                if (topIcon) topIcon.className = "fa-solid fa-volume-xmark text-muted fs-5";
+            }
+        }
+
+        function updatePatientInfoFromInputs() {
+            const name = (document.getElementById("inputPatientName")?.value || "").trim() || "王○蘭";
+            const idNo = (document.getElementById("inputIdNo")?.value || "").trim() || "A220198888";
+            const dob = (document.getElementById("inputDob")?.value || "").trim() || "052/08/15";
+            const applyDate = (document.getElementById("inputApplyDate")?.value || "").trim() || "115 年 12 月 01 日";
+
+            const pEl = document.getElementById("viewPatient");
+            if (pEl) pEl.textContent = name;
+
+            const idDobEl = document.getElementById("viewIdDob");
+            if (idDobEl) idDobEl.textContent = `${idNo} ｜ ${dob}`;
+
+            const applyEl = document.getElementById("viewApplyDate");
+            if (applyEl) applyEl.textContent = applyDate;
+
+            const signEl = document.getElementById("viewSignDate");
+            if (signEl) signEl.textContent = applyDate;
+        }
+
+        function syncInputsFromTable() {
+            const pEl = document.getElementById("viewPatient");
+            if (pEl) {
+                const nameVal = pEl.innerText.trim();
+                const inName = document.getElementById("inputPatientName");
+                if (inName && nameVal) inName.value = nameVal;
+            }
+
+            const idDobEl = document.getElementById("viewIdDob");
+            if (idDobEl) {
+                const text = idDobEl.innerText.trim();
+                const parts = text.split(/[｜|/]/);
+                if (parts.length >= 2) {
+                    const inId = document.getElementById("inputIdNo");
+                    const inDob = document.getElementById("inputDob");
+                    if (inId) inId.value = parts[0].trim();
+                    if (inDob) inDob.value = parts.slice(1).join("/").trim();
+                } else if (parts.length === 1) {
+                    const inId = document.getElementById("inputIdNo");
+                    if (inId) inId.value = parts[0].trim();
+                }
+            }
+
+            const applyEl = document.getElementById("viewApplyDate");
+            if (applyEl) {
+                const inDate = document.getElementById("inputApplyDate");
+                if (inDate) inDate.value = applyEl.innerText.trim();
+                const signEl = document.getElementById("viewSignDate");
+                if (signEl) signEl.innerText = applyEl.innerText.trim();
             }
         }
 
@@ -1168,6 +1285,23 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             document.getElementById("spokenTextContent").textContent = "「" + raw + "」";
             document.getElementById("spokenConfidence").className = "badge bg-primary";
             document.getElementById("spokenConfidence").textContent = "辨識完成";
+
+            // Detect spoken patient name or ID if doctor mentions it
+            const pNameMatch = raw.match(/病[患人](?:姓名|叫|是)?([一-龥a-zA-Z]{2,4})/);
+            if (pNameMatch) {
+                const pName = pNameMatch[1];
+                const inName = document.getElementById("inputPatientName");
+                if (inName) inName.value = pName;
+                const pEl = document.getElementById("viewPatient");
+                if (pEl) pEl.textContent = pName;
+            }
+            const pIdMatch = raw.match(/([a-zA-Z][12]\d{8})/);
+            if (pIdMatch) {
+                const pId = pIdMatch[1].toUpperCase();
+                const inId = document.getElementById("inputIdNo");
+                if (inId) inId.value = pId;
+                updatePatientInfoFromInputs();
+            }
 
             // 2. Evaluate Clinical Rules
             const res = evaluateClinicalQuery(raw);
