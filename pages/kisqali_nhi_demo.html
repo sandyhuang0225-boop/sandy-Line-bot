@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kisqali (擊癌利) 全民健保事前審查智慧輔助系統 - 115/12/1 新制演示版</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --kisqali-primary: #0F172A;
+            --kisqali-accent: #991B1B;
+            --kisqali-teal: #0D9488;
+            --kisqali-bg: #F8FAFC;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft JhengHei", sans-serif;
+            background-color: var(--kisqali-bg);
+            color: #1E293B;
+        }
+        .navbar-custom {
+            background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .card-custom {
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            background: #FFFFFF;
+            transition: transform 0.2s;
+        }
+        .btn-scenario {
+            text-align: left;
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .btn-scenario.active {
+            background-color: #0F172A;
+            color: #FFFFFF;
+            border-color: #0F172A;
+            box-shadow: 0 4px 8px rgba(15,23,42,0.25);
+        }
+        .badge-code {
+            font-size: 0.85rem;
+            padding: 4px 8px;
+            border-radius: 6px;
+            background-color: #991B1B;
+            color: white;
+            font-weight: 700;
+        }
+        .preview-form {
+            background: #FFFFFF;
+            border: 2px solid #0F172A;
+            padding: 24px;
+            font-size: 0.88rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .preview-form table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .preview-form th, .preview-form td {
+            border: 1px solid #000000;
+            padding: 6px 10px;
+            vertical-align: middle;
+        }
+        .form-header-box {
+            border-bottom: 2px solid #000;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+        }
+        @media print {
+            body * { visibility: hidden; }
+            #printableArea, #printableArea * { visibility: visible; }
+            #printableArea { position: absolute; left: 0; top: 0; width: 100%; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Navigation -->
+    <nav class="navbar navbar-dark navbar-custom px-4 py-3">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1 d-flex align-items-center">
+                <i class="fa-solid fa-file-medical text-danger me-2 fs-4"></i>
+                <div>
+                    <div class="fw-bold">Kisqali (擊癌利) 全民健保事前審查智慧輔助系統</div>
+                    <small class="text-secondary" style="font-size: 0.75rem;">115 年 12 月 1 日最新健保擴大給付修訂新制 演示專案</small>
+                </div>
+            </span>
+            <div class="d-flex align-items-center gap-2 no-print">
+                <span class="badge bg-success"><i class="fa-solid fa-shield-halved me-1"></i>健保署 12/1 規定已同步</span>
+                <span class="badge bg-primary">醫學中心 / 專案展示版</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid py-4 px-lg-5">
+        <div class="row g-4">
+            
+            <!-- Left Control Panel -->
+            <div class="col-lg-5 col-xl-4 no-print">
+                
+                <!-- 1. Hospital & Doctor Setting -->
+                <div class="card card-custom p-3 mb-3">
+                    <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-hospital text-danger me-2"></i>醫事機構與主治醫師（個管師快捷台）</h6>
+                    <div class="mb-2">
+                        <label class="form-label text-muted small mb-1">責任醫院：</label>
+                        <select id="selHospital" class="form-select form-select-sm" onchange="updateHospital()">
+                            <option value="chang_gung" selected>基隆長庚紀念醫院及其情人湖院區 (代碼：1111060015)</option>
+                            <option value="tsgh">三軍總醫院附設民眾診療服務處 (內湖/汀州) (代碼：0501110514)</option>
+                        </select>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="form-label text-muted small mb-1">主治醫師：</label>
+                            <select id="selDoctor" class="form-select form-select-sm" onchange="renderPreview()">
+                                <option value="李春輝">李春輝 醫師</option>
+                                <option value="吳宗翰">吳宗翰 醫師</option>
+                                <option value="吳儁峰">吳儁峰 醫師</option>
+                                <option value="林咸舫">林咸舫 醫師</option>
+                                <option value="張悅詩">張悅詩 醫師</option>
+                                <option value="蘇柏旭">蘇柏旭 醫師</option>
+                                <option value="黃仁聖">黃仁聖 醫師</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label text-muted small mb-1">就診科別：</label>
+                            <input type="text" id="deptName" class="form-control form-control-sm" value="一般外科 / 乳房外科" onchange="renderPreview()">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Clinical Scenario -->
+                <div class="card card-custom p-3 mb-3">
+                    <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-list-check text-primary me-2"></i>臨床申請情境（點選切換）</h6>
+                    <div class="d-flex flex-column">
+                        <button class="btn btn-outline-secondary btn-scenario active" onclick="setScenario(1, this)">
+                            <div class="d-flex justify-content-between">
+                                <strong>🌸 1. 早期乳癌 (EBC) 術後輔助</strong>
+                                <span class="badge bg-danger">C50P1 (2粒/天)</span>
+                            </div>
+                            <small class="text-muted d-block mt-1">高復發風險成年人（男女皆可），上限給付36個月</small>
+                        </button>
+                        <button class="btn btn-outline-secondary btn-scenario" onclick="setScenario(2, this)">
+                            <div class="d-flex justify-content-between">
+                                <strong>🎗️ 2. 晚期轉移一線－停經後女性</strong>
+                                <span class="badge bg-success">C50R1 (3粒/天)</span>
+                            </div>
+                            <small class="text-muted d-block mt-1">併用 AI，門檻放寬至 ER/PR ≧ 1%，非單純骨轉</small>
+                        </button>
+                        <button class="btn btn-outline-secondary btn-scenario" onclick="setScenario(3, this)">
+                            <div class="d-flex justify-content-between">
+                                <strong>💉 3. 晚期轉移一線－停經前女性</strong>
+                                <span class="badge bg-info text-dark">C50R1 + 停經針</span>
+                            </div>
+                            <small class="text-muted d-block mt-1">併用 AI 及 GnRH analogue (Zoladex/Leuplin)</small>
+                        </button>
+                        <button class="btn btn-outline-secondary btn-scenario" onclick="setScenario(4, this)">
+                            <div class="d-flex justify-content-between">
+                                <strong>👨‍⚕️ 4. 晚期轉移一線－男性乳癌</strong>
+                                <span class="badge bg-secondary">C50R1 + 停經針</span>
+                            </div>
+                            <small class="text-muted d-block mt-1">男性遠端轉移，併用 AI 及 GnRH 針劑</small>
+                        </button>
+                        <button class="btn btn-outline-secondary btn-scenario" onclick="setScenario(5, this)">
+                            <div class="d-flex justify-content-between">
+                                <strong>🔄 5. 內分泌惡化後併用 Fulvestrant</strong>
+                                <span class="badge bg-warning text-dark">C50R2 (12/1解禁)</span>
+                            </div>
+                            <small class="text-muted d-block mt-1">二線後線，雙藥送審（東洋伏斯壯 / 原廠法洛德）</small>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 3. Sample Case Loader -->
+                <div class="card card-custom p-3 mb-3">
+                    <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-vial-virus text-teal me-2"></i>病理報告快速實測（模擬醫師拍照）</h6>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-sm btn-outline-primary text-start" onclick="loadCase('T2N1')">
+                            <i class="fa-solid fa-arrow-right me-1"></i> <strong>案例 A：T2N1 早期乳癌</strong> (2.4cm, 2顆, ER 85%, G2) ➔ <span class="text-success fw-bold">核准 (條件II)</span>
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary text-start" onclick="loadCase('T1N1G3')">
+                            <i class="fa-solid fa-arrow-right me-1"></i> <strong>案例 B：T1N1 Grade 3</strong> (1.6cm, 1顆, G3, ER 90%) ➔ <span class="text-success fw-bold">核准 (條件III)</span>
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary text-start" onclick="loadCase('5.5cmN0')">
+                            <i class="fa-solid fa-arrow-right me-1"></i> <strong>案例 C：5.5 公分 N0</strong> (5.5cm, 0顆, ER 70%) ➔ <span class="text-success fw-bold">核准 (條件IV)</span>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger text-start" onclick="loadCase('T2N0')">
+                            <i class="fa-solid fa-triangle-exclamation me-1"></i> <strong>案例 D：T2N0 早期乳癌</strong> (3.5cm, 0顆) ➔ <span class="text-danger fw-bold">不符合 (防退件/引導自費)</span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Preview & Output Panel -->
+            <div class="col-lg-7 col-xl-8">
+                
+                <!-- AI Instant Diagnosis Alert Card -->
+                <div id="aiAlertCard" class="card card-custom p-3 mb-3 border-start border-4 border-success">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <span class="badge bg-success me-2 fs-6" id="aiResultBadge">✅ 100% 符合健保給付</span>
+                            <span class="badge badge-code" id="aiCodeBadge">事前審查代碼：C50P1</span>
+                        </div>
+                        <div class="no-print">
+                            <button class="btn btn-dark btn-sm me-2" onclick="window.print()">
+                                <i class="fa-solid fa-print me-1"></i> 一鍵列印申請書
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-dark small" id="aiResultDesc">
+                        經 AI 系統自動交叉比對病理報告與 115 年 12 月 1 日最新健保修訂規定：完全符合早期乳癌高復發風險條件 II（pALN 為 1-3 顆 且 腫瘤大小 > 2cm）。每日核可處方 2 粒（400mg），終生給付上限 36 個月。
+                    </div>
+                </div>
+
+                <!-- Printable NHI Form (Attachment 1) -->
+                <div id="printableArea" class="preview-form rounded-3">
+                    
+                    <div class="form-header-box d-flex justify-content-between align-items-center">
+                        <div class="small fw-bold">全民健康保險藥品及特殊材料事前審查申請書</div>
+                        <div class="small text-muted">附件一 (第一聯：保險人審查聯 / 第二聯：核定通知聯)</div>
+                    </div>
+
+                    <div class="text-center mb-2">
+                        <h5 class="fw-bold mb-1">全民健康保險藥品及特殊材料事前審查申請書</h5>
+                        <div class="small">
+                            <span class="me-3">☑ 藥品</span>
+                            <span class="me-3">☑ 事前審查申請書</span>
+                            <span class="me-3">☑ 送核</span>
+                            <span class="text-danger fw-bold">【115 年 12 月 1 日起生效新制】</span>
+                        </div>
+                    </div>
+
+                    <table>
+                        <tr>
+                            <td style="width: 15%; background: #F8FAFC;" class="fw-bold text-center">醫事服務機構<br>名稱及代號</td>
+                            <td style="width: 35%;" id="viewHosp">長庚醫療財團法人基隆長庚紀念醫院及其情人湖院區<br>(代號：1111060015)</td>
+                            <td style="width: 15%; background: #F8FAFC;" class="fw-bold text-center">主治醫師<br>姓名</td>
+                            <td style="width: 35%;" id="viewDoctor">李春輝 醫師<br>科別：一般外科 / 乳房外科</td>
+                        </tr>
+                        <tr>
+                            <td style="background: #F8FAFC;" class="fw-bold text-center">保險對象姓名</td>
+                            <td id="viewPatient">王○蘭 (去識別化病友)</td>
+                            <td style="background: #F8FAFC;" class="fw-bold text-center">身分證號 / 生日</td>
+                            <td id="viewIdDob">A22019**** ｜ 052/08/15</td>
+                        </tr>
+                        <tr>
+                            <td style="background: #F8FAFC;" class="fw-bold text-center">國際疾病分類碼</td>
+                            <td id="viewIcd">C50.919 (惡性乳房腫瘤)</td>
+                            <td style="background: #F8FAFC;" class="fw-bold text-center">預定實施日期</td>
+                            <td>115 年 12 月 01 日</td>
+                        </tr>
+                        <tr>
+                            <td style="background: #F8FAFC;" class="fw-bold text-center">傷病名稱<br>傷病情況<br>及使用理由</td>
+                            <td colspan="3" id="viewReason" style="white-space: pre-line; line-height: 1.5; font-size: 0.85rem;">
+                                【病歷摘要與合規使用理由】：
+                                1. 診斷：侵襲性乳癌 (T2N1M0, Stage IIB)。
+                                2. 病理標記：腫瘤最大徑 2.4cm (T2 > 2cm)，腋下陽性淋巴結 2 顆 (pALN 2/16, N1)。ER 85%、PR 70% (均 > 30%)，HER2 檢測為陰性 (IHC 1+)。
+                                3. 健保給付合規：完全符合 115 年 12 月 1 日健保修訂規定 9.72 第 4 點之早期乳癌高復發風險條件 II「pALN 為 1-3 顆，且腫瘤大小 > 2cm」。
+                                4. 病患已接受標準化學輔助治療，於手術切除後 16 個月內，內分泌治療未滿 12 週，特此提出申請 ribociclib (事審代碼：C50P1) 併用芳香環轉化酶抑制劑 (AI)。
+                            </td>
+                        </tr>
+                        <tr style="background: #F1F5F9;" class="text-center fw-bold">
+                            <td style="width: 8%;">項次</td>
+                            <td style="width: 25%;">項目編號 (事審代碼)</td>
+                            <td style="width: 32%;">項目名稱 (藥品名)</td>
+                            <td style="width: 35%;">規格、劑型、用法用量及數量</td>
+                        </tr>
+                        <tbody id="itemsBody">
+                            <tr>
+                                <td class="text-center">1</td>
+                                <td><strong class="text-danger">C50P1</strong><br><small class="text-muted">健保碼: KC01004100</small></td>
+                                <td><strong>擊癌利膜衣錠 200毫克</strong><br><small class="text-muted">台灣諾華 (Novartis)</small></td>
+                                <td>200mg/錠，每日口服一次，<strong>每次 2 粒 (400mg)</strong>，服21天停7天。<br><strong>申請數量：252 粒 (24週用量)</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="mt-3 small">
+                        <strong>檢送附件：</strong> ☑ 1. 病歷影本  ☑ 5. 病歷摘要  ☑ 7. 治療計劃  ☑ 11. 其他：病理組織切片報告、IHC 免疫染色報告
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4 pt-2 border-top border-dark small">
+                        <div>醫事服務機構負責醫師印章：____________</div>
+                        <div>主治醫師簽章：<strong class="border-bottom border-dark px-2" id="signDoctor">李春輝</strong></div>
+                        <div>申請日期：115 年 12 月 01 日</div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentScenario = 1;
+        
+        const HOSPITALS = {
+            chang_gung: {
+                name: "長庚醫療財團法人基隆長庚紀念醫院及其情人湖院區",
+                code: "1111060015",
+                doctors: ["李春輝", "吳宗翰", "吳儁峰", "林咸舫", "張悅詩", "蘇柏旭", "黃仁聖"],
+                defaultFulvestrant: "東洋 伏斯壯 (Fustron) AC61825221"
+            },
+            tsgh: {
+                name: "三軍總醫院附設民眾診療服務處 (內湖/汀州)",
+                code: "0501110514",
+                doctors: ["陳達人 醫師", "俞志誠 醫師", "曾令民 醫師", "主治醫師"],
+                defaultFulvestrant: "原廠 法洛德 (Faslodex) B024345248"
+            }
+        };
+
+        function updateHospital() {
+            const hKey = document.getElementById("selHospital").value;
+            const h = HOSPITALS[hKey];
+            const selDoc = document.getElementById("selDoctor");
+            selDoc.innerHTML = "";
+            h.doctors.forEach(d => {
+                const opt = document.createElement("option");
+                opt.value = d.replace(" 醫師", "");
+                opt.textContent = d.includes("醫師") ? d : d + " 醫師";
+                selDoc.appendChild(opt);
+            });
+            renderPreview();
+        }
+
+        function setScenario(scId, btn) {
+            currentScenario = scId;
+            document.querySelectorAll(".btn-scenario").forEach(b => b.classList.remove("active"));
+            if (btn) btn.classList.add("active");
+            renderPreview();
+        }
+
+        function loadCase(caseType) {
+            if (caseType === 'T2N1') {
+                setScenario(1);
+                document.getElementById("viewReason").textContent = 
+                    "【病歷摘要與使用理由】：\n" +
+                    "1. 診斷：侵襲性乳癌 (Invasive Ductal Carcinoma, T2N1M0, Stage IIB)。\n" +
+                    "2. 病理報告數值：腫瘤最大徑 2.4cm (符合 T2 > 2cm)，陽性腋下淋巴結 2/16 顆 (符合 pALN 1-3 顆)。ER 85%、PR 70% (均 > 30%)，HER2 陰性 (IHC 1+)。\n" +
+                    "3. 健保給付合規比對：完全符合 115 年 12 月 1 日健保修訂規定 9.72 第 4 點之早期乳癌高復發風險條件 II「pALN 為 1-3 顆，且腫瘤大小 > 2cm」。\n" +
+                    "4. 病患已接受標準化學輔助治療，術後未滿 16 個月，特此申請 ribociclib (事審代碼：C50P1，每日 2 粒) 併用芳香環轉化酶抑制劑 (AI)。";
+                setAIResult(true, "C50P1", "符合早期高復發條件 II (T2N1, 腫瘤 2.4cm, 淋巴結 2 顆)。每日核發 2 粒，終生 36 個月。");
+            } else if (caseType === 'T1N1G3') {
+                setScenario(1);
+                document.getElementById("viewReason").textContent = 
+                    "【病歷摘要與使用理由】：\n" +
+                    "1. 診斷：侵襲性乳癌 (Invasive Ductal Carcinoma, T1cN1M0, Stage IIA)。\n" +
+                    "2. 病理報告數值：腫瘤最大徑 1.6cm (T1c)，陽性腋下淋巴結 1/14 顆 (符合 pALN 1-3 顆)。腫瘤細胞分化為第 3 級 (Histologic Grade 3, Poorly differentiated)。ER 90%、PR 65% (均 > 30%)，HER2 陰性。\n" +
+                    "3. 健保給付合規比對：完全符合 115 年 12 月 1 日健保修訂規定 9.72 第 4 點之早期乳癌高復發風險條件 III「pALN 為 1-3 顆 且 腫瘤細胞分化第 3 級」。\n" +
+                    "4. 特此申請 ribociclib (事審代碼：C50P1，每日 2 粒) 進行輔助治療。";
+                setAIResult(true, "C50P1", "符合早期高復發條件 III (T1N1 Grade 3，不限腫瘤大小)。每日核發 2 粒，終生 36 個月。");
+            } else if (caseType === '5.5cmN0') {
+                setScenario(1);
+                document.getElementById("viewReason").textContent = 
+                    "【病歷摘要與使用理由】：\n" +
+                    "1. 診斷：侵襲性乳癌 (Invasive Ductal Carcinoma, T3N0M0, Stage IIB)。\n" +
+                    "2. 病理報告數值：腫瘤最大徑 5.5cm (符合腫瘤 > 5cm)，腋下淋巴結無轉移 (0/15, pALN = 0, N0)。ER 70%、PR 50% (均 > 30%)，HER2 陰性。\n" +
+                    "3. 健保給付合規比對：完全符合 115 年 12 月 1 日健保修訂規定 9.72 第 4 點之早期乳癌高復發風險條件 IV「腋下淋巴結無轉移 但 腫瘤大小 > 5cm」。\n" +
+                    "4. 特此申請 ribociclib (事審代碼：C50P1，每日 2 粒) 進行輔助治療。";
+                setAIResult(true, "C50P1", "符合早期高復發條件 IV (腫瘤 5.5cm > 5cm, N0)。每日核發 2 粒，終生 36 個月。");
+            } else if (caseType === 'T2N0') {
+                setScenario(1);
+                document.getElementById("viewReason").textContent = 
+                    "⚠️【AI 健保防退件警報】：\n" +
+                    "1. 病患報告為 T2N0 (腫瘤 3.5cm，淋巴結無轉移 N0)。\n" +
+                    "2. 依 115 年 12 月 1 日健保給付規定：若淋巴結無轉移 (N0)，腫瘤必須大於 5cm (T3) 或局部侵犯 (T4)。本例腫瘤僅 3.5cm 未達健保門檻，送審將會被健保署退件！\n" +
+                    "3. 臨床建議：此病人符合國際 NATALEE 適應症，建議引導病人加入【擊癌利自費支持計畫 / 買一送一專案存摺】以減輕自費負擔。";
+                setAIResult(false, "不符健保", "未達高復發條件 (N0 須 >5cm 或 T4)。已自動攔截防退件，可引導病人走自費存摺專案！");
+            }
+        }
+
+        function setAIResult(isPass, code, desc) {
+            const card = document.getElementById("aiAlertCard");
+            const badgeRes = document.getElementById("aiResultBadge");
+            const badgeCode = document.getElementById("aiCodeBadge");
+            const descEl = document.getElementById("aiResultDesc");
+
+            if (isPass) {
+                card.className = "card card-custom p-3 mb-3 border-start border-4 border-success";
+                badgeRes.className = "badge bg-success me-2 fs-6";
+                badgeRes.textContent = "✅ 100% 符合健保給付";
+                badgeCode.className = "badge badge-code";
+                badgeCode.textContent = "事前審查代碼：" + code;
+            } else {
+                card.className = "card card-custom p-3 mb-3 border-start border-4 border-danger";
+                badgeRes.className = "badge bg-danger me-2 fs-6";
+                badgeRes.textContent = "❌ 暫不符合健保給付 (已攔截防退件)";
+                badgeCode.className = "badge bg-secondary";
+                badgeCode.textContent = code;
+            }
+            descEl.textContent = desc;
+        }
+
+        function renderPreview() {
+            const hKey = document.getElementById("selHospital").value;
+            const h = HOSPITALS[hKey];
+            const doc = document.getElementById("selDoctor").value;
+            const dept = document.getElementById("deptName").value;
+
+            document.getElementById("viewHosp").innerHTML = `${h.name}<br>(代號：${h.code})`;
+            document.getElementById("viewDoctor").innerHTML = `${doc} 醫師<br>科別：${dept}`;
+            document.getElementById("signDoctor").textContent = doc;
+
+            const tbody = document.getElementById("itemsBody");
+            
+            if (currentScenario === 1) { // EBC
+                tbody.innerHTML = `
+                    <tr>
+                        <td class="text-center">1</td>
+                        <td><strong class="text-danger">C50P1</strong><br><small class="text-muted">健保碼: KC01004100</small></td>
+                        <td><strong>擊癌利膜衣錠 200毫克</strong><br><small class="text-muted">台灣諾華 (Novartis)</small></td>
+                        <td>200mg/錠，每日口服一次，<strong>每次 2 粒 (400mg)</strong>，服21天停7天。<br><strong>申請數量：252 粒 (24週用量)</strong></td>
+                    </tr>
+                `;
+            } else if (currentScenario === 2) { // MBC postmenopausal
+                tbody.innerHTML = `
+                    <tr>
+                        <td class="text-center">1</td>
+                        <td><strong class="text-success">C50R1</strong><br><small class="text-muted">健保碼: KC01004100</small></td>
+                        <td><strong>擊癌利膜衣錠 200毫克</strong><br><small class="text-muted">台灣諾華 (Novartis)</small></td>
+                        <td>200mg/錠，每日口服一次，<strong>每次 3 粒 (600mg)</strong>，服21天停7天。<br><strong>申請數量：378 粒 (24週用量)</strong></td>
+                    </tr>
+                `;
+            } else if (currentScenario === 3 || currentScenario === 4) { // Pre-menopause / Male + Zoladex
+                tbody.innerHTML = `
+                    <tr>
+                        <td class="text-center">1</td>
+                        <td><strong class="text-success">C50R1</strong><br><small class="text-muted">健保碼: KC01004100</small></td>
+                        <td><strong>擊癌利膜衣錠 200毫克</strong><br><small class="text-muted">台灣諾華 (Novartis)</small></td>
+                        <td>200mg/錠，口服每日 3 粒 (600mg)，服21天停7天。<br><strong>申請數量：378 粒 (24週用量)</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="text-center">2</td>
+                        <td><strong>B018244243</strong><br><small class="text-muted">健保署核准代號</small></td>
+                        <td><strong>諾曼德持續性注射劑 3.6毫克</strong><br><small class="text-muted">台灣阿斯特捷利康 (Zoladex)</small></td>
+                        <td>3.6mg/針，每 28 天 (4週) 皮下注射 1 劑。<br><strong>申請數量：6 支 (24週用量)</strong></td>
+                    </tr>
+                `;
+            } else if (currentScenario === 5) { // 2nd line Fulvestrant
+                const fulvName = hKey === 'chang_gung' ? "伏斯壯注射液 50mg/mL (台灣東洋 TTY)" : "法洛德注射液 250mg (AstraZeneca)";
+                const fulvCode = hKey === 'chang_gung' ? "AC61825221" : "B024345248";
+                tbody.innerHTML = `
+                    <tr>
+                        <td class="text-center">1</td>
+                        <td><strong class="text-warning text-dark">C50R2</strong><br><small class="text-muted">健保碼: KC01004100 (12/1解禁)</small></td>
+                        <td><strong>擊癌利膜衣錠 200毫克</strong><br><small class="text-muted">台灣諾華 (Novartis)</small></td>
+                        <td>200mg/錠，口服每日 3 粒 (600mg)，服21天停7天。<br><strong>申請數量：378 粒 (24週用量)</strong></td>
+                    </tr>
+                    <tr>
+                        <td class="text-center">2</td>
+                        <td><strong>${fulvCode}</strong><br><small class="text-muted">健保署核准代號</small></td>
+                        <td><strong>${fulvName}</strong><br><small class="text-muted">${hKey === 'chang_gung' ? '台灣東洋藥品' : '台灣阿斯特捷利康'}</small></td>
+                        <td>每次 500mg (2支) 雙側臀部肌肉注射 (D1, D15, D29及後續每月1次)。<br><strong>申請數量：16 支 (24週用量)</strong></td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Initialize on load
+        updateHospital();
+        loadCase('T2N1');
+    </script>
+</body>
+</html>
