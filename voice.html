@@ -876,6 +876,11 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                 grade = 1;
             }
 
+            const isT4 = /T4|t4|局部侵犯|胸壁侵犯|皮膚侵犯|發炎性/i.test(query);
+            if (isT4) {
+                size = 5.5;
+            }
+
             // Sync with Inspector inputs
             document.getElementById("inTumorSize").value = size;
             document.getElementById("inNodes").value = nodes;
@@ -898,54 +903,9 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             } else if (nodes >= 1 && nodes <= 3 && grade === 3) {
                 conditionMet = "條件 III";
                 conditionReason = "淋巴結 1-3 顆 (本例 " + nodes + " 顆) 且 組織學分化第 3 級 (Grade 3)";
-            } else if (nodes === 0 && size > 5.0) {
+            } else if (isT4) {
                 conditionMet = "條件 IV";
-                conditionReason = "淋巴結無轉移但腫瘤大於 5 公分 (本例 " + size + "cm)";
-            }
-
-            if (conditionMet) {
-                badge.className = "badge bg-success fs-6";
-                badge.textContent = "✅ 健保【有給付】！";
-                codeEl.textContent = "事審代碼：C50P1";
-                card.className = "p-2 border rounded small mb-2 border-start border-4 border-success bg-white shadow-sm";
-                const spokenMsg = "報告醫師，完全符合健保給付！符合 12 月 1 日早期高復發" + conditionMet + "，" + conditionReason + "。事前審查代碼 C50P1，每日處方 2 粒，終生給付上限 36 個月。右側已為您自動備妥事前審查申請書！";
-                descEl.textContent = spokenMsg;
-                speakText(spokenMsg);
-            } else {
-                badge.className = "badge bg-danger fs-6";
-                badge.textContent = "❌ 健保【暫無給付】(已攔截防退件)";
-                codeEl.textContent = "未符門檻";
-                card.className = "p-2 border rounded small mb-2 border-start border-4 border-danger bg-white shadow-sm";
-                const spokenMsg = "報告醫師，目前暫不符合 12 月 1 日健保給付門檻！本例腫瘤 " + size + " 公分、淋巴結 " + nodes + " 顆，未達高復發條件。若直接送審將被退件，建議引導病人加入擊癌利自費存摺專案買一送一！";
-                descEl.textContent = spokenMsg;
-                speakText(spokenMsg);
-            }
-
-            recalculateFromInputs();
-        }
-
-            // Sync with Inspector inputs
-            document.getElementById("inTumorSize").value = size;
-            document.getElementById("inNodes").value = nodes;
-            document.getElementById("inGrade").value = grade;
-            document.getElementById("inER").value = 85;
-            document.getElementById("inPR").value = 70;
-            document.getElementById("inHER2").value = "negative";
-
-            // Evaluate
-            setScenario(1);
-            let conditionMet = null;
-            let conditionReason = "";
-
-            if (nodes >= 4) {
-                conditionMet = "條件 I";
-                conditionReason = "淋巴結 ≧ 4 顆 (本例 " + nodes + " 顆)";
-            } else if (nodes >= 1 && nodes <= 3 && size > 2.0) {
-                conditionMet = "條件 II";
-                conditionReason = "淋巴結 1-3 顆 (本例 " + nodes + " 顆) 且 腫瘤大於 2 公分 (本例 " + size + "cm)";
-            } else if (nodes >= 1 && nodes <= 3 && grade === 3) {
-                conditionMet = "條件 III";
-                conditionReason = "淋巴結 1-3 顆 (本例 " + nodes + " 顆) 且 組織學分化第 3 級 (Grade 3)";
+                conditionReason = "符合早期乳癌高復發條件 IV 之「T4 局部侵犯」（胸壁/皮膚侵犯/發炎性乳癌）";
             } else if (nodes === 0 && size > 5.0) {
                 conditionMet = "條件 IV";
                 conditionReason = "淋巴結無轉移但腫瘤大於 5 公分 (本例 " + size + "cm)";
