@@ -105,33 +105,38 @@
             <!-- Left Control Panel -->
             <div class="col-lg-5 col-xl-4 no-print">
                 
-                <!-- 1. Hospital & Doctor Setting -->
+                <!-- 1. Hospital, Dept & Doctor Setting -->
                 <div class="card card-custom p-3 mb-3">
-                    <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-hospital text-danger me-2"></i>醫事機構與主治醫師（個管師快捷台）</h6>
+                    <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-hospital text-danger me-2"></i>醫事機構、科別與主治醫師（個管師/NP台）</h6>
+                    
+                    <!-- Hospital Select -->
                     <div class="mb-2">
-                        <label class="form-label text-muted small mb-1">責任醫院：</label>
-                        <select id="selHospital" class="form-select form-select-sm" onchange="updateHospital()">
+                        <label class="form-label text-muted small mb-1 fw-bold">1. 選擇責任醫院：</label>
+                        <select id="selHospital" class="form-select form-select-sm" onchange="onHospitalChange()">
                             <option value="chang_gung" selected>基隆長庚紀念醫院及其情人湖院區 (代碼：1111060015)</option>
                             <option value="tsgh">三軍總醫院附設民眾診療服務處 (內湖/汀州) (代碼：0501110514)</option>
                         </select>
                     </div>
-                    <div class="row g-2">
-                        <div class="col-6">
-                            <label class="form-label text-muted small mb-1">主治醫師：</label>
-                            <select id="selDoctor" class="form-select form-select-sm" onchange="renderPreview()">
-                                <option value="李春輝">李春輝 醫師</option>
-                                <option value="吳宗翰">吳宗翰 醫師</option>
-                                <option value="吳儁峰">吳儁峰 醫師</option>
-                                <option value="林咸舫">林咸舫 醫師</option>
-                                <option value="張悅詩">張悅詩 醫師</option>
-                                <option value="蘇柏旭">蘇柏旭 醫師</option>
-                                <option value="黃仁聖">黃仁聖 醫師</option>
-                            </select>
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label text-muted small mb-1">就診科別：</label>
-                            <input type="text" id="deptName" class="form-control form-control-sm" value="一般外科 / 乳房外科" onchange="renderPreview()">
-                        </div>
+
+                    <!-- Department Select -->
+                    <div class="mb-2">
+                        <label class="form-label text-muted small mb-1 fw-bold">2. 選擇就診科別：</label>
+                        <select id="selDept" class="form-select form-select-sm" onchange="onDeptChange()">
+                            <option value="breast_surg" selected>乳房外科 / 一般外科</option>
+                            <option value="hem_onc">血液腫瘤科 / 腫瘤內科</option>
+                        </select>
+                    </div>
+
+                    <!-- Doctor Select -->
+                    <div class="mb-2">
+                        <label class="form-label text-muted small mb-1 fw-bold">3. 主治醫師（自動篩選科內專任醫師）：</label>
+                        <select id="selDoctor" class="form-select form-select-sm" onchange="onDoctorChange()">
+                            <!-- Dynamically populated -->
+                        </select>
+                    </div>
+
+                    <div class="mt-2 text-muted" style="font-size: 0.75rem;">
+                        <i class="fa-solid fa-circle-check text-success me-1"></i>已即時聯動帶入官方醫事機構代碼與醫師姓名
                     </div>
                 </div>
 
@@ -172,7 +177,7 @@
                                 <strong>🔄 5. 內分泌惡化後併用 Fulvestrant</strong>
                                 <span class="badge bg-warning text-dark">C50R2 (12/1解禁)</span>
                             </div>
-                            <small class="text-muted d-block mt-1">二線後線，雙藥送審（東洋伏斯壯 / 原廠法洛德）</small>
+                            <small class="text-muted d-block mt-1">二線後線雙藥送審（長庚東洋伏斯壯 / 三總法洛德）</small>
                         </button>
                     </div>
                 </div>
@@ -242,7 +247,7 @@
                             <td style="width: 15%; background: #F8FAFC;" class="fw-bold text-center">醫事服務機構<br>名稱及代號</td>
                             <td style="width: 35%;" id="viewHosp">長庚醫療財團法人基隆長庚紀念醫院及其情人湖院區<br>(代號：1111060015)</td>
                             <td style="width: 15%; background: #F8FAFC;" class="fw-bold text-center">主治醫師<br>姓名</td>
-                            <td style="width: 35%;" id="viewDoctor">李春輝 醫師<br>科別：一般外科 / 乳房外科</td>
+                            <td style="width: 35%;" id="viewDoctor">李春輝 醫師<br>科別：乳房外科 / 一般外科</td>
                         </tr>
                         <tr>
                             <td style="background: #F8FAFC;" class="fw-bold text-center">保險對象姓名</td>
@@ -301,33 +306,87 @@
     <script>
         let currentScenario = 1;
         
-        const HOSPITALS = {
+        // Exact Hospital & Department & Doctor Directory
+        const HOSPITAL_DATA = {
             chang_gung: {
                 name: "長庚醫療財團法人基隆長庚紀念醫院及其情人湖院區",
                 code: "1111060015",
-                doctors: ["李春輝", "吳宗翰", "吳儁峰", "林咸舫", "張悅詩", "蘇柏旭", "黃仁聖"],
-                defaultFulvestrant: "東洋 伏斯壯 (Fustron) AC61825221"
+                depts: {
+                    breast_surg: {
+                        name: "乳房外科 / 一般外科",
+                        doctors: [
+                            "李春輝 醫師", "吳宗翰 醫師", "吳儁峰 醫師", "林咸舫 醫師", 
+                            "張悅詩 醫師", "蘇柏旭 醫師", "黃仁聖 醫師", "陳瑞裕 醫師", "葉大成 醫師"
+                        ]
+                    },
+                    hem_onc: {
+                        name: "血液腫瘤科 / 腫瘤內科",
+                        doctors: [
+                            "王正旭 醫師", "葉光揚 醫師", "吳教恩 醫師", 
+                            "黃彥閔 醫師", "張沛泓 醫師", "沈芳緯 醫師"
+                        ]
+                    }
+                },
+                defaultFulvestrant: {
+                    name: "伏斯壯注射液 50毫克/毫升 (Fustron)",
+                    code: "AC61825221",
+                    brand: "台灣東洋藥品工業股份有限公司"
+                }
             },
             tsgh: {
                 name: "三軍總醫院附設民眾診療服務處 (內湖/汀州)",
                 code: "0501110514",
-                doctors: ["陳達人 醫師", "俞志誠 醫師", "曾令民 醫師", "主治醫師"],
-                defaultFulvestrant: "原廠 法洛德 (Faslodex) B024345248"
+                depts: {
+                    breast_surg: {
+                        name: "乳房外科 / 一般外科",
+                        doctors: [
+                            "俞志誠 醫師", "馮安捷 醫師", "許桓銘 醫師", 
+                            "劉耀基 醫師", "沈國樑 醫師", "詹德全 醫師"
+                        ]
+                    },
+                    hem_onc: {
+                        name: "血液腫瘤科 / 腫瘤內科",
+                        doctors: [
+                            "戴明燊 醫師", "陳宇欽 醫師", "李卓豪 醫師", 
+                            "曹友平 醫師", "林宗哲 醫師", "賴志政 醫師"
+                        ]
+                    }
+                },
+                defaultFulvestrant: {
+                    name: "法洛德注射液 250毫克 (Faslodex)",
+                    code: "B024345248",
+                    brand: "台灣阿斯特捷利康股份有限公司"
+                }
             }
         };
 
-        function updateHospital() {
+        function onHospitalChange() {
+            populateDoctors();
+            renderPreview();
+        }
+
+        function onDeptChange() {
+            populateDoctors();
+            renderPreview();
+        }
+
+        function onDoctorChange() {
+            renderPreview();
+        }
+
+        function populateDoctors() {
             const hKey = document.getElementById("selHospital").value;
-            const h = HOSPITALS[hKey];
+            const dKey = document.getElementById("selDept").value;
+            const docList = HOSPITAL_DATA[hKey].depts[dKey].doctors;
+            
             const selDoc = document.getElementById("selDoctor");
             selDoc.innerHTML = "";
-            h.doctors.forEach(d => {
+            docList.forEach(docName => {
                 const opt = document.createElement("option");
-                opt.value = d.replace(" 醫師", "");
-                opt.textContent = d.includes("醫師") ? d : d + " 醫師";
+                opt.value = docName.replace(" 醫師", "");
+                opt.textContent = docName;
                 selDoc.appendChild(opt);
             });
-            renderPreview();
         }
 
         function setScenario(scId, btn) {
@@ -400,12 +459,13 @@
 
         function renderPreview() {
             const hKey = document.getElementById("selHospital").value;
-            const h = HOSPITALS[hKey];
-            const doc = document.getElementById("selDoctor").value;
-            const dept = document.getElementById("deptName").value;
+            const dKey = document.getElementById("selDept").value;
+            const h = HOSPITAL_DATA[hKey];
+            const deptObj = h.depts[dKey];
+            const doc = document.getElementById("selDoctor").value || deptObj.doctors[0].replace(" 醫師", "");
 
             document.getElementById("viewHosp").innerHTML = `${h.name}<br>(代號：${h.code})`;
-            document.getElementById("viewDoctor").innerHTML = `${doc} 醫師<br>科別：${dept}`;
+            document.getElementById("viewDoctor").innerHTML = `${doc} 醫師<br>科別：${deptObj.name}`;
             document.getElementById("signDoctor").textContent = doc;
 
             const tbody = document.getElementById("itemsBody");
@@ -444,8 +504,7 @@
                     </tr>
                 `;
             } else if (currentScenario === 5) { // 2nd line Fulvestrant
-                const fulvName = hKey === 'chang_gung' ? "伏斯壯注射液 50mg/mL (台灣東洋 TTY)" : "法洛德注射液 250mg (AstraZeneca)";
-                const fulvCode = hKey === 'chang_gung' ? "AC61825221" : "B024345248";
+                const fulv = h.defaultFulvestrant;
                 tbody.innerHTML = `
                     <tr>
                         <td class="text-center">1</td>
@@ -455,8 +514,8 @@
                     </tr>
                     <tr>
                         <td class="text-center">2</td>
-                        <td><strong>${fulvCode}</strong><br><small class="text-muted">健保署核准代號</small></td>
-                        <td><strong>${fulvName}</strong><br><small class="text-muted">${hKey === 'chang_gung' ? '台灣東洋藥品' : '台灣阿斯特捷利康'}</small></td>
+                        <td><strong>${fulv.code}</strong><br><small class="text-muted">健保署核准代號</small></td>
+                        <td><strong>${fulv.name}</strong><br><small class="text-muted">${fulv.brand}</small></td>
                         <td>每次 500mg (2支) 雙側臀部肌肉注射 (D1, D15, D29及後續每月1次)。<br><strong>申請數量：16 支 (24週用量)</strong></td>
                     </tr>
                 `;
@@ -464,7 +523,8 @@
         }
 
         // Initialize on load
-        updateHospital();
+        populateDoctors();
+        renderPreview();
         loadCase('T2N1');
     </script>
 </body>
