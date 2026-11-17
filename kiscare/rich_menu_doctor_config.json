@@ -1,0 +1,89 @@
+{
+  "size": {
+    "width": 2500,
+    "height": 1686
+  },
+  "selected": true,
+  "name": "擊癌利健保事前審查六宮格選單",
+  "chatBarText": "🩺 擊癌利事前審查選單",
+  "areas": [
+    {
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 833,
+        "height": 843
+      },
+      "action": {
+        "type": "uri",
+        "label": "AI語音審查判讀",
+        "uri": "https://sandyhuang0225-boop.github.io/sandy-Line-bot/pages/voice.html#spokenTextBox"
+      }
+    },
+    {
+      "bounds": {
+        "x": 833,
+        "y": 0,
+        "width": 834,
+        "height": 843
+      },
+      "action": {
+        "type": "uri",
+        "label": "事審表一鍵列印",
+        "uri": "https://sandyhuang0225-boop.github.io/sandy-Line-bot/pages/voice.html#printableArea"
+      }
+    },
+    {
+      "bounds": {
+        "x": 1667,
+        "y": 0,
+        "width": 833,
+        "height": 843
+      },
+      "action": {
+        "type": "uri",
+        "label": "六大給付情境",
+        "uri": "https://sandyhuang0225-boop.github.io/sandy-Line-bot/pages/voice.html#scenarioSection"
+      }
+    },
+    {
+      "bounds": {
+        "x": 0,
+        "y": 843,
+        "width": 833,
+        "height": 843
+      },
+      "action": {
+        "type": "uri",
+        "label": "病理報告拍照辨識",
+        "uri": "https://sandyhuang0225-boop.github.io/sandy-Line-bot/pages/voice.html#uploadPreviewSection"
+      }
+    },
+    {
+      "bounds": {
+        "x": 833,
+        "y": 843,
+        "width": 834,
+        "height": 843
+      },
+      "action": {
+        "type": "uri",
+        "label": "雙藥品項選擇",
+        "uri": "https://sandyhuang0225-boop.github.io/sandy-Line-bot/pages/voice.html#cardFulvestrantSelector"
+      }
+    },
+    {
+      "bounds": {
+        "x": 1667,
+        "y": 843,
+        "width": 833,
+        "height": 843
+      },
+      "action": {
+        "type": "message",
+        "label": "擊癌利自費存摺專案",
+        "text": "查詢自費存摺專案"
+      }
+    }
+  ]
+}
