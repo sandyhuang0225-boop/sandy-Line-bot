@@ -2001,7 +2001,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             }
 
             // SCENARIO 6: 24 Months Renewal
-            if (/24\s*個月|兩年|2年|二年|續約|展延|續審|non-PD/i.test(raw)) {
+            if (/24\s*個月|兩年|2年|二年|續約|展延|續審|non-PD|延續申請|延續/i.test(raw)) {
                 return {
                     scenario: 6, eligible: true,
                     badgeClass: "badge bg-success fs-6", badgeText: "✅ 健保【展延續審給付】！",
@@ -2013,7 +2013,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             }
 
             // SCENARIO 5: 2nd line Fulvestrant (post AI failure)
-            if (/內分泌(?:治療)?(?:使用後)?(?:無效|失敗|復發|惡化)|前線(?:失敗|惡化)|AI惡化|二線|第二線|fulvestrant|法洛德/i.test(raw)) {
+            if (/內分泌(?:治療|療法)?(?:使用後)?(?:無效|失敗|復發|惡化|PD)|前線(?:失敗|惡化)|AI惡化|二線|第二線|fulvestrant|法洛德|伏斯壯|faslodex/i.test(raw)) {
                 if (effectiveER < 30 && effectivePR < 30) {
                     return {
                         scenario: 5, eligible: false,
