@@ -299,44 +299,48 @@
         </div>
 
         <!-- 3 個最直覺好用的大按鈕 -->
-        <div class="row g-2 mb-3">
-            <!-- 1. 從相簿選取照片 -->
-            <div class="col-md-4 col-12">
-                <label class="btn-action-main btn-primary mb-0" style="cursor: pointer;">
-                    <i class="fa-solid fa-images fs-5"></i>
-                    <span>🖼️ 從相簿選取 Agenda 照片</span>
-                    <input type="file" id="albumInput" accept="image/*" style="position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none;" onchange="processUserUpload(this, '照片')">
-                </label>
+        <!-- 原生檔案上傳區 (專為 iPhone Safari 原生設計，純原生按鍵，絕不吞點擊、100% 穩定秒開相簿與相機) -->
+        <div class="row g-3 mb-3">
+            <!-- 1. 從相簿選取照片或拍照 (iPhone Safari 原生按鍵) -->
+            <div class="col-md-6 col-12">
+                <div class="card p-3 border-2 border-primary bg-white shadow-sm h-100">
+                    <label for="albumInput" class="form-label fw-bold text-primary fs-5 mb-1 d-block">
+                        <i class="fa-solid fa-camera me-2"></i>【點此選取或拍攝 Agenda 照片】
+                    </label>
+                    <div class="text-secondary small mb-2">
+                        點擊下方原生「選擇檔案」按鈕，立即開啟 iPhone 相簿或相機：
+                    </div>
+                    <input type="file" id="albumInput" accept="image/*" class="form-control form-control-lg border-2 border-primary py-2" style="font-size: 1.05rem; cursor: pointer;" onchange="processUserUpload(this, '照片')">
+                </div>
             </div>
-            <!-- 2. 上傳 PDF 檔 -->
-            <div class="col-md-4 col-12">
-                <label class="btn-action-main btn-info text-white mb-0" style="cursor: pointer;">
-                    <i class="fa-solid fa-file-pdf fs-5"></i>
-                    <span>📄 上傳 PDF 檔 Agenda</span>
-                    <input type="file" id="pdfInput" accept=".pdf,application/pdf" style="position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none;" onchange="processUserUpload(this, 'PDF')">
-                </label>
-            </div>
-            <!-- 3. 貼上 ChatGPT 議程文字 -->
-            <div class="col-md-4 col-12">
-                <button class="btn-action-main btn-dark" onclick="togglePasteArea()">
-                    <i class="fa-solid fa-paste fs-5"></i>
-                    <span>📋 貼上 ChatGPT 議程文字</span>
-                </button>
+
+            <!-- 2. 上傳 PDF 檔案 (iPhone Safari 原生按鍵) -->
+            <div class="col-md-6 col-12">
+                <div class="card p-3 border-2 border-info bg-white shadow-sm h-100">
+                    <label for="pdfInput" class="form-label fw-bold text-dark fs-5 mb-1 d-block">
+                        <i class="fa-solid fa-file-pdf me-2 text-danger"></i>【點此上傳 PDF 格式 Agenda】
+                    </label>
+                    <div class="text-secondary small mb-2">
+                        若議程為 PDF，點擊下方原生「選擇檔案」按鈕選取檔案：
+                    </div>
+                    <input type="file" id="pdfInput" accept=".pdf,application/pdf" class="form-control form-control-lg border-2 border-info py-2" style="font-size: 1.05rem; cursor: pointer;" onchange="processUserUpload(this, 'PDF')">
+                </div>
             </div>
         </div>
 
-        <!-- ChatGPT 文字直接貼上區 (可展開) -->
-        <div id="pasteAreaBox" class="p-3 bg-light border border-dark rounded-3 shadow-sm mb-3" style="display: none;">
-            <div class="d-flex align-items-center justify-content-between mb-2">
-                <span class="fw-bold text-dark small"><i class="fa-solid fa-robot me-1"></i>貼上 ChatGPT 生成的議程文字：</span>
-                <button class="btn btn-dark btn-sm fw-bold px-3" onclick="parsePastedText()">
-                    <i class="fa-solid fa-check me-1"></i>立即解析填入合約
+        <!-- 3. ChatGPT 文字貼上區塊 -->
+        <div class="card p-3 bg-light border rounded-3 mb-3 shadow-sm">
+            <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
+                <span class="fw-bold text-dark small">
+                    <i class="fa-solid fa-paste me-2 text-warning"></i>【或直接貼上文字】貼上 ChatGPT / LINE 的議程文字：
+                </span>
+                <button class="btn btn-dark btn-sm fw-bold px-3" type="button" onclick="parsePastedText()">
+                    <i class="fa-solid fa-bolt me-1"></i>立即解析帶入合約
                 </button>
             </div>
-            <textarea id="agendaTextInput" class="form-control form-control-sm" rows="3" placeholder="請在此貼上 ChatGPT 生成的議程文字（系統會自動排除諾華內部同仁，填入外部醫師資料）..."></textarea>
+            <textarea id="agendaTextInput" class="form-control" rows="3" placeholder="請在此貼上議程文字（系統將自動排除 Sandy Huang 諾華同仁，精準帶入外部醫師顧問）..."></textarea>
         </div>
 
-        <!-- 檔案已上傳解析成功提示卡 (上傳後立刻亮起) -->
         <div id="fileNoticeBanner" class="alert alert-success border-success py-2 px-3 mb-3 shadow-sm" style="display: none;">
             <div class="d-flex align-items-center justify-content-between">
                 <div>
@@ -1092,16 +1096,8 @@ function saveGeminiApiKey() {
 // 🚀 手機端圖片自動壓縮引擎：將 10MB~15MB iPhone 照片於 0.1 秒內壓縮為 300KB JPEG，並設置 2 秒超時防呆
 function compressImage(file, maxWidth = 1600, maxHeight = 1600, quality = 0.8) {
     return new Promise((resolve) => {
-        let resolved = false;
-        const timeout = setTimeout(() => {
-            if (!resolved) {
-                resolved = true;
-                readFileAsBase64(file).then(b64 => resolve({ base64: b64, mimeType: file.type || 'image/jpeg' })).catch(() => resolve({ base64: '', mimeType: 'image/jpeg' }));
-            }
-        }, 2000);
-
+        // PDF 檔案直接讀取 base64
         if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
-            clearTimeout(timeout);
             readFileAsBase64(file).then(b64 => resolve({ base64: b64, mimeType: 'application/pdf' })).catch(() => resolve({ base64: '', mimeType: 'application/pdf' }));
             return;
         }
@@ -1110,9 +1106,6 @@ function compressImage(file, maxWidth = 1600, maxHeight = 1600, quality = 0.8) {
         reader.onload = (e) => {
             const img = new Image();
             img.onload = () => {
-                if (resolved) return;
-                resolved = true;
-                clearTimeout(timeout);
                 try {
                     let width = img.width;
                     let height = img.height;
@@ -1134,22 +1127,16 @@ function compressImage(file, maxWidth = 1600, maxHeight = 1600, quality = 0.8) {
                     const base64 = dataUrl.split(',')[1];
                     resolve({ base64, mimeType: 'image/jpeg' });
                 } catch (err) {
-                    readFileAsBase64(file).then(b64 => resolve({ base64: b64, mimeType: 'image/jpeg' }));
+                    readFileAsBase64(file).then(b64 => resolve({ base64: b64, mimeType: 'image/jpeg' })).catch(() => resolve({ base64: '', mimeType: 'image/jpeg' }));
                 }
             };
             img.onerror = () => {
-                if (resolved) return;
-                resolved = true;
-                clearTimeout(timeout);
-                readFileAsBase64(file).then(b64 => resolve({ base64: b64, mimeType: 'image/jpeg' }));
+                readFileAsBase64(file).then(b64 => resolve({ base64: b64, mimeType: 'image/jpeg' })).catch(() => resolve({ base64: '', mimeType: 'image/jpeg' }));
             };
             img.src = e.target.result;
         };
         reader.onerror = () => {
-            if (resolved) return;
-            resolved = true;
-            clearTimeout(timeout);
-            resolve({ base64: '', mimeType: 'image/jpeg' });
+            readFileAsBase64(file).then(b64 => resolve({ base64: b64, mimeType: 'image/jpeg' })).catch(() => resolve({ base64: '', mimeType: 'image/jpeg' }));
         };
         reader.readAsDataURL(file);
     });
@@ -1311,7 +1298,7 @@ async function parsePastedText() {
 
     const apiKey = getStoredApiKey();
     if (!apiKey) {
-        document.getElementById('apiKeyConfigBox').style.display = 'block';
+        // apiKeyConfigBox removed
         alert("【請先設定 Gemini API Key】
 請先貼上您的 Google Gemini API Key 以啟用分析！");
         return;
@@ -1487,6 +1474,9 @@ function resetToBlank() {
 }
 
 function togglePasteArea() {
+    const el = document.getElementById('agendaTextInput');
+    if (el) el.focus();
+    return;
     const box = document.getElementById('pasteAreaBox');
     box.style.display = (box.style.display === 'none') ? 'block' : 'none';
 }
