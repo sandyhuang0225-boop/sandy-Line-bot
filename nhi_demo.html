@@ -143,7 +143,7 @@
                             <h6 class="fw-bold text-dark mb-0">
                                 <i class="fa-solid fa-microphone-lines text-success me-2 fs-5"></i>醫師門診語音助理
                             </h6>
-                            <span class="badge bg-danger text-white ms-1 fw-bold" style="font-size: 0.68rem;" id="versionBadge">v3.9 三總腫瘤科名單更新版 (10:50)</span>
+                            <span class="badge bg-danger text-white ms-1 fw-bold" style="font-size: 0.68rem;" id="versionBadge">v4.0 官方 NATALEE 健保核准矩陣版 (11:00)</span>
                         </div>
                         <div class="d-flex gap-1">
                             <button class="btn btn-outline-danger btn-sm py-0 px-2 fw-bold" onclick="forceHardRefresh()" style="font-size: 0.72rem;" title="手機若無更新請點此強制清除快取">
@@ -257,7 +257,7 @@
                                 <strong>🌸 1. 早期乳癌 (EBC) 術後輔助</strong>
                                 <span class="badge bg-danger">C50P1 (2粒/天)</span>
                             </div>
-                            <small class="text-muted d-block mt-1">高復發風險成年人（男女皆可），上限給付36個月</small>
+                            <small class="text-muted d-block mt-1">高復發風險成年女性病人，ER或PR>30%且HER2陰性，上限給付36個月</small>
                         </button>
                         <button class="btn btn-outline-secondary btn-scenario" onclick="setScenario(2, this)">
                             <div class="d-flex justify-content-between">
@@ -436,6 +436,136 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                     </div>
                     <div class="mt-2 text-dark small" id="aiResultDesc">
                         經 AI 系統自動交叉比對病理報告與 115 年 12 月 1 日最新健保修訂規定：完全符合早期乳癌高復發風險條件 II（pALN 為 1-3 顆 且 腫瘤大小 > 2cm）。每日核可處方 2 粒（400mg），終生給付上限 36 個月。
+                    </div>
+                </div>
+
+                <!-- Official 115/12/1 NHI EBC NATALEE Staging Matrix Card -->
+                <div class="card card-custom p-3 mb-3 no-print bg-white border shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                        <div class="fw-bold text-dark small">
+                            <i class="fa-solid fa-table-cells text-danger me-1"></i> <strong>115 年 12 月 1 日 早期乳癌 (EBC) 健保四大給付條件與 AJCC 分期對照表</strong>
+                        </div>
+                        <span class="badge bg-danger text-white small">官方 NATALEE 健保核准矩陣</span>
+                    </div>
+
+                    <!-- 4 Conditions Summary Badges -->
+                    <div class="row g-2 mb-2" style="font-size: 0.78rem;">
+                        <div class="col-md-3 col-6">
+                            <div class="p-2 rounded text-white fw-bold text-center" style="background-color: #DC2626;">
+                                條件 I: pALN ≧ 4<br><span style="font-size:0.7rem; font-weight:normal;">不限大小分化</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="p-2 rounded text-white fw-bold text-center" style="background-color: #9333EA;">
+                                條件 II: pALN 1-3<br><span style="font-size:0.7rem; font-weight:normal;">且 腫瘤 > 2cm 或 T4</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="p-2 rounded text-dark fw-bold text-center" style="background-color: #FACC15;">
+                                條件 III: pALN 1-3<br><span style="font-size:0.7rem; font-weight:normal;">且 細胞分化 Grade 3</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="p-2 rounded text-white fw-bold text-center" style="background-color: #16A34A;">
+                                條件 IV: 淋巴無轉移(N0)<br><span style="font-size:0.7rem; font-weight:normal;">且 腫瘤 > 5cm 或 T4</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Collapsible Table -->
+                    <div class="accordion accordion-flush" id="accMatrix">
+                        <div class="accordion-item border rounded">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button py-2 px-3 small fw-bold text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#colMatrix">
+                                    <i class="fa-solid fa-layer-group me-2"></i>查看完整 AJCC Staging vs. 健保給付對照清單 (T0~T4, N0~N3)
+                                </button>
+                            </h2>
+                            <div id="colMatrix" class="accordion-collapse collapse show">
+                                <div class="accordion-body p-2 table-responsive">
+                                    <table class="table table-sm table-bordered text-center align-middle mb-0" style="font-size: 0.76rem;">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th style="width: 18%;">AJCC Staging</th>
+                                                <th style="width: 20%;">TN (M0)</th>
+                                                <th style="width: 31%;">Grade 1 或 2</th>
+                                                <th style="width: 31%;">Grade 3</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td rowspan="3" class="fw-bold bg-light">Stage IIA</td>
+                                                <td>T0N1</td>
+                                                <td class="text-muted bg-light">❌ 不符合</td>
+                                                <td style="background-color: #FEF08A; font-weight: bold;">🟡 條件 III (核准)</td>
+                                            </tr>
+                                            <tr>
+                                                <td>T1N1</td>
+                                                <td class="text-muted bg-light">❌ 不符合</td>
+                                                <td style="background-color: #FEF08A; font-weight: bold;">🟡 條件 III (核准)</td>
+                                            </tr>
+                                            <tr>
+                                                <td>T2N0</td>
+                                                <td colspan="2" class="text-muted bg-light">❌ 健保不給付 (NATALEE僅收G3/Ki67高者，但台灣健保未納入)</td>
+                                            </tr>
+                                            <tr>
+                                                <td rowspan="2" class="fw-bold bg-light">Stage IIB</td>
+                                                <td>T2N1</td>
+                                                <td style="background-color: #E9D5FF; font-weight: bold;">🟣 條件 II (核准)</td>
+                                                <td style="background-color: #FEF08A; font-weight: bold;">🟡 條件 III (核准)</td>
+                                            </tr>
+                                            <tr>
+                                                <td>T3N0</td>
+                                                <td colspan="2" style="background-color: #BBF7D0; font-weight: bold;">🟢 條件 IV (核准：腫瘤 > 5cm 即使 N0)</td>
+                                            </tr>
+                                            <tr>
+                                                <td rowspan="5" class="fw-bold bg-light">Stage IIIA</td>
+                                                <td>T0N2</td>
+                                                <td colspan="2" style="background-color: #FECACA; font-weight: bold;">🔴 條件 I (核准：pALN ≧ 4)</td>
+                                            </tr>
+                                            <tr>
+                                                <td>T1N2</td>
+                                                <td colspan="2" style="background-color: #FECACA; font-weight: bold;">🔴 條件 I (核准：pALN ≧ 4)</td>
+                                            </tr>
+                                            <tr>
+                                                <td>T2N2</td>
+                                                <td colspan="2" style="background-color: #FECACA; font-weight: bold;">🔴 條件 I (核准：pALN ≧ 4)</td>
+                                            </tr>
+                                            <tr>
+                                                <td>T3N1</td>
+                                                <td style="background-color: #E9D5FF; font-weight: bold;">🟣 條件 II (核准)</td>
+                                                <td style="background-color: #FEF08A; font-weight: bold;">🟡 條件 III (核准)</td>
+                                            </tr>
+                                            <tr>
+                                                <td>T3N2</td>
+                                                <td colspan="2" style="background-color: #FECACA; font-weight: bold;">🔴 條件 I (核准：pALN ≧ 4)</td>
+                                            </tr>
+                                            <tr>
+                                                <td rowspan="3" class="fw-bold bg-light">Stage IIIB</td>
+                                                <td>T4N0</td>
+                                                <td colspan="2" style="background-color: #BBF7D0; font-weight: bold;">🟢 條件 IV (核准：T4 局部侵犯 即使 N0)</td>
+                                            </tr>
+                                            <tr>
+                                                <td>T4N1</td>
+                                                <td style="background-color: #E9D5FF; font-weight: bold;">🟣 條件 II (核准)</td>
+                                                <td style="background-color: #FEF08A; font-weight: bold;">🟡 條件 III (核准)</td>
+                                            </tr>
+                                            <tr>
+                                                <td>T4N2</td>
+                                                <td colspan="2" style="background-color: #FECACA; font-weight: bold;">🔴 條件 I (核准：pALN ≧ 4)</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="fw-bold bg-light">Stage IIIC</td>
+                                                <td>Any TN3</td>
+                                                <td colspan="2" style="background-color: #FECACA; font-weight: bold;">🔴 條件 I (核准：pALN ≧ 10 顆)</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <div class="mt-2 text-muted" style="font-size: 0.72rem;">
+                                        📌 <strong>必備三要件：</strong>(1) HR 陽性 (ER 或 PR > 30%) 且 HER2 陰性之成年女性病人 (2) 使用前須接受標準化學及放射輔助治療；若疾病惡化須停止且不得再用其他 CDK4/6 (3) 使用前最多 12 週內分泌治療，且應於手術切除後 16 個月內接受治療。
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -1192,6 +1322,21 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             // ========================================================
             // NHI 9.72 ITEM 4: EARLY BREAST CANCER (EBC) PRE-SCREEN CHECKS
             // ========================================================
+
+            // EBC Pre-Screen 0: Adult Female Check (健保 9.72 第4點明訂限成年女性病人)
+            if (/男性.*早期|早期.*男性/i.test(raw)) {
+                return {
+                    scenario: 1,
+                    eligible: false,
+                    badgeClass: "badge bg-danger fs-6",
+                    badgeText: "❌ 健保【不給付】(早期限成年女性病人)",
+                    code: "未符健保 9.72 第4點",
+                    borderClass: "border-danger",
+                    spoken: "報告醫師，健保 9.72 第 4 點明文規定早期乳癌輔助療法限用於「成年女性病人」！男性乳癌健保給付僅限於晚期/轉移性乳癌，早期乳癌若以男性送審將遭退件！",
+                    details: "⚠️【健保 9.72 防退件攔截】：\n• 條文依據：健保 9.72 第 4 點條文明定「作為高復發風險之早期乳癌成年女性病人的輔助療法」。\n• 臨床處置：男性乳癌僅在晚期轉移一線享有給付 (事審代碼 C50R1+GnRH)，早期階段不符給付規範。",
+                    size: 2.4, nodes: 2, grade: 2
+                };
+            }
 
             // EBC Pre-Screen 1: Adult Check (成年人 >= 18 歲)
             if (/未成年|小兒|兒科|未滿\s*18\s*歲|<\s*18\s*歲|17\s*歲|16\s*歲|15\s*歲/i.test(raw)) {
