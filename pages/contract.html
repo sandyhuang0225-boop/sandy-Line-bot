@@ -248,13 +248,63 @@
 
 <div class="container my-3 no-print">
 
-    <!-- 🌟 核心操作區：上傳 Agenda 帶入 🌟 -->
+    <!-- 🌟 核心操作區：上傳 Agenda 真正由 Gemini 視覺 AI 帶入 🌟 -->
     <div class="upload-hero-card">
-        <div class="d-flex align-items-center justify-content-between mb-3">
-            <h5 class="mb-0 fw-bold text-primary">
-                <i class="fa-solid fa-cloud-arrow-up text-danger me-2"></i>上傳 Agenda 一鍵生成合約
-            </h5>
-            <span id="contractStatusBadge" class="badge bg-secondary px-2 py-1">合約待上傳帶入</span>
+        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+            <div>
+                <h5 class="mb-0 fw-bold text-primary">
+                    <i class="fa-solid fa-cloud-arrow-up text-danger me-2"></i>上傳 Agenda 智慧生成合約
+                </h5>
+                <small class="text-muted">由 Google Gemini 視覺 AI 即時辨識真實檔案，自動排除 Sandy Huang 諾華同仁</small>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span id="geminiKeyBadge" class="badge bg-warning-subtle text-dark border border-warning px-2 py-1" style="cursor: pointer;" onclick="toggleApiKeyBox()">
+                    <i class="fa-solid fa-key me-1"></i><span id="keyStatusText">Gemini 視覺 AI 設定</span>
+                </span>
+                <span id="contractStatusBadge" class="badge bg-secondary px-2 py-1">合約待上傳帶入</span>
+            </div>
+        </div>
+
+        <!-- 🔑 Gemini API Key 展開設定卡 -->
+        <div id="apiKeyConfigBox" class="p-3 mb-3 bg-white border border-warning rounded-3 shadow-sm" style="display: none;">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <h6 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-brain me-2 text-warning"></i>Google Gemini 視覺 AI 金鑰設定</h6>
+                <button type="button" class="btn-close btn-sm" onclick="toggleApiKeyBox()"></button>
+            </div>
+            <p class="small text-muted mb-2">
+                金鑰僅保存在您手機的瀏覽器本機端（localStorage），絕不上傳任何第三方伺服器。<br>
+                <a href="https://aistudio.google.com/app/apikey" target="_blank" class="fw-bold text-decoration-underline text-primary">
+                    <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>按此免費取得 Google Gemini API Key（Google 帳號 10 秒免費申請）
+                </a>
+            </p>
+            <div class="input-group">
+                <span class="input-group-text bg-light"><i class="fa-solid fa-key text-muted"></i></span>
+                <input type="password" id="geminiApiKeyInput" class="form-control" placeholder="貼上您的 Gemini API Key (以 AIzaSy 開頭)">
+                <button class="btn btn-outline-secondary" type="button" onclick="toggleKeyVisibility()">
+                    <i class="fa-regular fa-eye" id="eyeIcon"></i>
+                </button>
+                <button class="btn btn-warning fw-bold text-dark" type="button" onclick="saveGeminiApiKey()">
+                    <i class="fa-solid fa-floppy-disk me-1"></i>儲存金鑰
+                </button>
+            </div>
+            <div id="apiKeySavedTip" class="small text-success mt-1 fw-bold" style="display: none;">
+                <i class="fa-solid fa-circle-check me-1"></i>金鑰已儲存！您現在上傳的任何 Agenda 照片或 PDF 都將由 Gemini 真實辨識。
+            </div>
+        </div>
+
+        <!-- AI 辨識分析中的載入指示器 -->
+        <div id="aiAnalyzingBox" class="alert alert-primary border-primary py-3 px-3 mb-3 shadow-sm" style="display: none;">
+            <div class="d-flex align-items-center gap-3">
+                <div class="spinner-border text-primary" role="status" style="width: 2rem; height: 2rem;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div>
+                    <div class="fw-bold text-primary fs-6">
+                        <i class="fa-solid fa-wand-magic-sparkles me-1 text-warning"></i>Gemini 1.5 視覺 AI 正在深度辨識您的檔案...
+                    </div>
+                    <div class="small text-muted" id="aiStatusDetail">正在分析主講醫師、演講題目、時間地點，並自動排除 Sandy Huang 諾華同仁與主持人...</div>
+                </div>
+            </div>
         </div>
 
         <!-- 3 個最直覺好用的大按鈕 -->
@@ -961,45 +1011,334 @@ function updateContract() {
     }
 }
 
-// 核心：由使用者親自上傳檔案後觸發帶入
-function processUserUpload(inputElement, typeLabel) {
+// ==================== 🤖 Google Gemini 1.5 視覺 AI 真正真辨識整合 ====================
+
+// 取得與更新本機 API Key
+function getStoredApiKey() {
+    return localStorage.getItem('novartis_gemini_api_key') || '';
+}
+
+function updateKeyBadge() {
+    const key = getStoredApiKey();
+    const badge = document.getElementById('geminiKeyBadge');
+    const statusText = document.getElementById('keyStatusText');
+    const input = document.getElementById('geminiApiKeyInput');
+    if (input) input.value = key;
+
+    if (key && key.trim().length > 10) {
+        badge.className = 'badge bg-success-subtle text-success border border-success px-2 py-1';
+        statusText.innerHTML = '<i class="fa-solid fa-circle-check me-1"></i>視覺 AI 已連線';
+    } else {
+        badge.className = 'badge bg-warning-subtle text-dark border border-warning px-2 py-1';
+        statusText.innerHTML = '<i class="fa-solid fa-key me-1"></i>設定 Gemini Key';
+    }
+}
+
+function toggleApiKeyBox() {
+    const box = document.getElementById('apiKeyConfigBox');
+    box.style.display = (box.style.display === 'none') ? 'block' : 'none';
+}
+
+function toggleKeyVisibility() {
+    const input = document.getElementById('geminiApiKeyInput');
+    const icon = document.getElementById('eyeIcon');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fa-regular fa-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'fa-regular fa-eye';
+    }
+}
+
+function saveGeminiApiKey() {
+    const input = document.getElementById('geminiApiKeyInput');
+    const key = input.value.trim();
+    if (!key) {
+        alert("請輸入有效的 Gemini API Key！");
+        return;
+    }
+    localStorage.setItem('novartis_gemini_api_key', key);
+    updateKeyBadge();
+    const tip = document.getElementById('apiKeySavedTip');
+    tip.style.display = 'block';
+    setTimeout(() => {
+        tip.style.display = 'none';
+        document.getElementById('apiKeyConfigBox').style.display = 'none';
+    }, 1500);
+}
+
+// 核心：由使用者上傳照片或 PDF 後，交由 Gemini 1.5 視覺 AI 真正即時解析！
+async function processUserUpload(inputElement, typeLabel) {
     if (!inputElement || !inputElement.files || inputElement.files.length === 0) return;
     const file = inputElement.files[0];
 
-    // 動態填入從此檔案抽取的 Agenda 資料 (依 Sandy 要求：顧問之雇主保持留白)
-    document.getElementById('inputDoctor').value = "廖國秀 醫師";
-    document.getElementById('inputHospital').value = "三軍總醫院";
-    document.getElementById('inputHospAddr').value = "台北市內湖區成功路二段325號";
-    document.getElementById('inputDocTitle').value = "主治醫師";
-    document.getElementById('inputEventName').value = "三總乳癌討論會 - From Shared Decision to Long-Term Confidence";
-    document.getElementById('inputDate').value = "2026年11月24日";
-    document.getElementById('inputTime').value = "18:30-20:30";
-    document.getElementById('inputVenue').value = "Wilson Park 威爾森公園餐廳（台北市內湖區民權東路六段125之1號）";
-    document.getElementById('inputTopic').value = "KISQALI Does it Again: A Moment for OS in NATALEE";
-    document.getElementById('inputFee').value = "新台幣 5,000 元整";
-    document.getElementById('inputMgrName').value = "周書權";
-    document.getElementById('inputMgrTitle').value = "區域業務經理";
+    const apiKey = getStoredApiKey();
+    if (!apiKey) {
+        document.getElementById('apiKeyConfigBox').style.display = 'block';
+        document.getElementById('apiKeyConfigBox').scrollIntoView({ behavior: 'smooth' });
+        alert("【請先設定 Gemini API Key】
+為避免再出現固定假資料，請先在此展開的黃色區塊貼上您的 Google Gemini API Key（免費取得），系統才能使用 Google 視覺 AI 真正看懂您上傳的照片！");
+        inputElement.value = '';
+        return;
+    }
 
-    updateContract();
+    const aiBox = document.getElementById('aiAnalyzingBox');
+    const aiDetail = document.getElementById('aiStatusDetail');
+    aiBox.style.display = 'block';
+    aiDetail.textContent = `正在讀取【${file.name}】並交由 Gemini 視覺大模型深度分析中...`;
+    aiBox.scrollIntoView({ behavior: 'smooth' });
 
-    // 醒目提示條
-    const banner = document.getElementById('fileNoticeBanner');
-    const noticeText = document.getElementById('fileNoticeText');
-    noticeText.innerHTML = `已成功讀取您上傳的${typeLabel}【<strong>${file.name}</strong>】！資料已全數自動填入下方合約中。`;
-    banner.style.display = 'block';
+    try {
+        const base64Data = await readFileAsBase64(file);
+        let mimeType = file.type;
+        if (!mimeType) {
+            const lowerName = file.name.toLowerCase();
+            if (lowerName.endsWith('.pdf')) mimeType = 'application/pdf';
+            else if (lowerName.endsWith('.png')) mimeType = 'image/png';
+            else mimeType = 'image/jpeg';
+        }
 
-    // 欄位高亮閃爍動畫，讓 Sandy 明顯看見合約從空白變成帶入完成！
-    document.querySelectorAll('.var-field').forEach(el => {
-        el.classList.add('flash');
-        setTimeout(() => el.classList.remove('flash'), 1200);
+        const promptText = `你是一位台灣諾華（Novartis）的資深法務合約專家。請仔細分析這份會議議程（Agenda）檔案，並為「外部專家顧問/講者服務合約」擷取正確資訊。
+
+【重要合約規則】：
+1. 顧問姓名（doctor_name）：找出受邀演講的外部專科醫師/專家姓名（如：廖國秀、王大明）。
+   ★ 絕對規則：必須排除 Novartis 台灣諾華內部同仁（特別是 Sandy Huang 或任何分享 PSP 專案、公司內部介紹的同仁），不可列為合約顧問！
+   ★ 排除純主持人/主席（Moderator/Chair，除非該人同時兼任主講人且無其他講者）。
+2. 服務機構（hospital）：該顧問醫師所屬的醫院或診所全名（如：三軍總醫院、台北榮民總醫院、國泰綜合醫院）。
+3. 機構地址（hospital_address）：該醫院的完整地址（如：台北市內湖區成功路二段325號）。若議程未寫明地址，請根據醫院名稱自動提供標準地址，若不確定可留空。
+4. 醫師職稱（doctor_title）：例如 主治醫師、主任、副院長、教授 等。
+5. 會議名稱（event_name）：本場研討會或學術會議完整名稱。
+6. 會議日期（event_date）：請格式化為合約格式，例如「民國 115 年 11 月 24 日」或包含西元年。
+7. 會議時間（event_time）：例如「18:30 - 20:30」。
+8. 會議地點（event_venue）：包含飯店或餐廳名稱與地址（例如：Wilson Park 威爾森公園）。
+9. 演講主題（event_topic）：該顧問醫師所負責演講的具體 Topic / 題目。
+10. 顧問費用（fee_total）：固定填寫「新台幣 5,000 元整」。
+11. 諾華代表主管（mgr_name / mgr_title）：固定填寫「周書權」與「區域業務經理」。
+
+請嚴格輸出合法的 JSON，不要輸出任何額外解釋或 Markdown 標籤，格式如下：
+{
+  "doctor_name": "...",
+  "hospital": "...",
+  "hospital_address": "...",
+  "doctor_title": "...",
+  "event_name": "...",
+  "event_date": "...",
+  "event_time": "...",
+  "event_venue": "...",
+  "event_topic": "...",
+  "fee_total": "新台幣 5,000 元整",
+  "mgr_name": "周書權",
+  "mgr_title": "區域業務經理"
+}`;
+
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [
+                        { text: promptText },
+                        {
+                            inline_data: {
+                                mime_type: mimeType,
+                                data: base64Data
+                            }
+                        }
+                    ]
+                }],
+                generationConfig: {
+                    response_mime_type: "application/json",
+                    temperature: 0.1
+                }
+            })
+        });
+
+        if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.error?.message || `API 回應錯誤碼 ${response.status}`);
+        }
+
+        const resData = await response.json();
+        const rawJsonText = resData.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!rawJsonText) {
+            throw new Error("Gemini 未能傳回有效的辨識內容。");
+        }
+
+        const data = JSON.parse(rawJsonText);
+
+        // 將真實 AI 辨識出的欄位帶入 input 中
+        document.getElementById('inputDoctor').value = data.doctor_name || '';
+        document.getElementById('inputHospital').value = data.hospital || '';
+        document.getElementById('inputHospAddr').value = data.hospital_address || '';
+        document.getElementById('inputDocTitle').value = data.doctor_title || '主治醫師';
+        document.getElementById('inputEventName').value = data.event_name || '';
+        document.getElementById('inputDate').value = data.event_date || '';
+        document.getElementById('inputTime').value = data.event_time || '';
+        document.getElementById('inputVenue').value = data.event_venue || '';
+        document.getElementById('inputTopic').value = data.event_topic || '';
+        document.getElementById('inputFee').value = data.fee_total || '新台幣 5,000 元整';
+        document.getElementById('inputMgrName').value = data.mgr_name || '周書權';
+        document.getElementById('inputMgrTitle').value = data.mgr_title || '區域業務經理';
+
+        updateContract();
+
+        // 提示條
+        const banner = document.getElementById('fileNoticeBanner');
+        const noticeText = document.getElementById('fileNoticeText');
+        noticeText.innerHTML = `✨ <strong>Gemini 視覺 AI 真實辨識成功！</strong>已讀取【<strong>${file.name}</strong>】，自動為您提取【<strong>${data.doctor_name || '顧問'}</strong>】醫師（${data.hospital || ''}）之合約資訊！`;
+        banner.style.display = 'block';
+
+        // 欄位高亮閃爍動畫
+        document.querySelectorAll('.var-field').forEach(el => {
+            el.classList.add('flash');
+            setTimeout(() => el.classList.remove('flash'), 1200);
+        });
+
+        // 平滑滾動至合約第 1 頁供使用者檢視
+        setTimeout(() => {
+            document.getElementById('contractFullDoc').scrollIntoView({ behavior: 'smooth' });
+        }, 400);
+
+    } catch (err) {
+        console.error("Gemini Vision Error:", err);
+        alert(`【AI 辨識發生問題】
+${err.message}
+
+請確認您的 Gemini API Key 是否有效。您也可以直接在下方欄位手動填寫/修改，合約依然會即時更新！`);
+    } finally {
+        aiBox.style.display = 'none';
+        inputElement.value = '';
+    }
+}
+
+// 輔助函式：將 File 轉為 base64 純字串
+function readFileAsBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            const result = reader.result;
+            const base64 = result.split(',')[1];
+            resolve(base64);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
     });
+}
 
-    // 平滑滾動至合約第 1 頁讓使用者立刻親眼見證
-    setTimeout(() => {
-        document.getElementById('contractFullDoc').scrollIntoView({ behavior: 'smooth' });
-    }, 300);
+// 貼上文字之 Gemini 語意辨識
+async function parsePastedText() {
+    const raw = document.getElementById('agendaTextInput').value.trim();
+    if (!raw) {
+        alert("請先貼上文字！");
+        return;
+    }
 
-    inputElement.value = '';
+    const apiKey = getStoredApiKey();
+    if (!apiKey) {
+        document.getElementById('apiKeyConfigBox').style.display = 'block';
+        document.getElementById('apiKeyConfigBox').scrollIntoView({ behavior: 'smooth' });
+        alert("【請先設定 Gemini API Key】
+請先貼上您的 Google Gemini API Key 以啟用文字語意分析！");
+        return;
+    }
+
+    const aiBox = document.getElementById('aiAnalyzingBox');
+    const aiDetail = document.getElementById('aiStatusDetail');
+    aiBox.style.display = 'block';
+    aiDetail.textContent = "正在請 Gemini 分析剪貼簿文字中...";
+    aiBox.scrollIntoView({ behavior: 'smooth' });
+
+    try {
+        const promptText = `你是一位台灣諾華（Novartis）的資深法務合約專家。請仔細分析以下會議議程（Agenda）文字，並為「外部專家顧問/講者服務合約」擷取正確資訊。
+
+【重要合約規則】：
+1. 顧問姓名（doctor_name）：找出受邀演講的外部專科醫師/專家姓名。務必排除 Novartis 台灣諾華內部同仁（特別是 Sandy Huang 或任何分享 PSP 專案的同仁）與主持人。
+2. 服務機構（hospital）：該顧問醫師所屬醫院或診所全名。
+3. 機構地址（hospital_address）：該醫院地址。若無請留空。
+4. 醫師職稱（doctor_title）：例如 主治醫師、主任。
+5. 會議名稱（event_name）：研討會全稱。
+6. 會議日期（event_date）：例如「民國 115 年 11 月 24 日」。
+7. 會議時間（event_time）：例如「18:30 - 20:30」。
+8. 會議地點（event_venue）：包含飯店餐廳名稱與地址。
+9. 演講主題（event_topic）：該顧問醫師負責演講的具體題目。
+10. 顧問費用（fee_total）：固定填寫「新台幣 5,000 元整」。
+11. 諾華代表主管（mgr_name / mgr_title）：固定「周書權」與「區域業務經理」。
+
+請嚴格輸出合法的 JSON，不要輸出任何解釋：
+{
+  "doctor_name": "...",
+  "hospital": "...",
+  "hospital_address": "...",
+  "doctor_title": "...",
+  "event_name": "...",
+  "event_date": "...",
+  "event_time": "...",
+  "event_venue": "...",
+  "event_topic": "...",
+  "fee_total": "新台幣 5,000 元整",
+  "mgr_name": "周書權",
+  "mgr_title": "區域業務經理"
+}
+
+以下為議程文字：
+${raw}`;
+
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [{ text: promptText }]
+                }],
+                generationConfig: {
+                    response_mime_type: "application/json",
+                    temperature: 0.1
+                }
+            })
+        });
+
+        if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.error?.message || `API 回應錯誤碼 ${response.status}`);
+        }
+
+        const resData = await response.json();
+        const data = JSON.parse(resData.candidates[0].content.parts[0].text);
+
+        document.getElementById('inputDoctor').value = data.doctor_name || '';
+        document.getElementById('inputHospital').value = data.hospital || '';
+        document.getElementById('inputHospAddr').value = data.hospital_address || '';
+        document.getElementById('inputDocTitle').value = data.doctor_title || '主治醫師';
+        document.getElementById('inputEventName').value = data.event_name || '';
+        document.getElementById('inputDate').value = data.event_date || '';
+        document.getElementById('inputTime').value = data.event_time || '';
+        document.getElementById('inputVenue').value = data.event_venue || '';
+        document.getElementById('inputTopic').value = data.event_topic || '';
+        document.getElementById('inputFee').value = data.fee_total || '新台幣 5,000 元整';
+        document.getElementById('inputMgrName').value = data.mgr_name || '周書權';
+        document.getElementById('inputMgrTitle').value = data.mgr_title || '區域業務經理';
+
+        updateContract();
+        document.getElementById('pasteAreaBox').style.display = 'none';
+
+        const banner = document.getElementById('fileNoticeBanner');
+        const noticeText = document.getElementById('fileNoticeText');
+        noticeText.innerHTML = `✨ <strong>Gemini AI 文字分析成功！</strong>已為您提取【<strong>${data.doctor_name || '顧問'}</strong>】醫師之合約資訊！`;
+        banner.style.display = 'block';
+
+        document.querySelectorAll('.var-field').forEach(el => {
+            el.classList.add('flash');
+            setTimeout(() => el.classList.remove('flash'), 1200);
+        });
+
+    } catch (err) {
+        alert("文字解析失敗：" + err.message);
+    } finally {
+        aiBox.style.display = 'none';
+    }
 }
 
 // 重設為空白狀態
@@ -1018,21 +1357,12 @@ function resetToBlank() {
     updateContract();
 }
 
-// 貼上文字解析
 function togglePasteArea() {
     const box = document.getElementById('pasteAreaBox');
     box.style.display = (box.style.display === 'none') ? 'block' : 'none';
 }
 
-function parsePastedText() {
-    const raw = document.getElementById('agendaTextInput').value.trim();
-    if (!raw) {
-        alert("請先貼上文字！");
-        return;
-    }
-    processUserUpload({ files: [{ name: "剪貼簿貼上文字" }] }, "文字");
-    document.getElementById('pasteAreaBox').style.display = 'none';
-}
+
 
 // 🚀 核心升級：12 頁逐頁精準轉檔 (徹底告別空白頁與記憶體溢出)
 async function downloadDocuSignPDF() {
@@ -1133,6 +1463,7 @@ function exportWord() {
 
 // 頁面預設：以空白待上傳狀態呈現
 window.onload = function() {
+    updateKeyBadge();
     resetToBlank();
 };
 </script>
