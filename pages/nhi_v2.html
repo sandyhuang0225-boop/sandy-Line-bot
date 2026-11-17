@@ -10,7 +10,7 @@
     <script>
         (function() {
             try {
-                const CURRENT_BUILD = "3.9.1";
+                const CURRENT_BUILD = "4.2.0";
                 const url = new URL(window.location.href);
                 const loadedV = url.searchParams.get("v");
                 if (!loadedV || !loadedV.startsWith("3.9")) {
@@ -143,7 +143,7 @@
                             <h6 class="fw-bold text-dark mb-0">
                                 <i class="fa-solid fa-microphone-lines text-success me-2 fs-5"></i>醫師門診語音助理
                             </h6>
-                            <span class="badge bg-danger text-white ms-1 fw-bold" style="font-size: 0.68rem;" id="versionBadge">v4.1 成年病人男女皆可版 (11:30)</span>
+                            <span class="badge bg-danger text-white ms-1 fw-bold" style="font-size: 0.68rem;" id="versionBadge">v4.2 汐止國泰施盈逸主任新增版 (11:35)</span>
                         </div>
                         <div class="d-flex gap-1">
                             <button class="btn btn-outline-danger btn-sm py-0 px-2 fw-bold" onclick="forceHardRefresh()" style="font-size: 0.72rem;" title="手機若無更新請點此強制清除快取">
@@ -223,6 +223,7 @@
                         <select id="selHospital" class="form-select form-select-sm" onchange="onHospitalChange()">
                             <option value="chang_gung" selected>基隆長庚紀念醫院及其情人湖院區 (代碼：1111060015)</option>
                             <option value="tsgh">三軍總醫院附設民眾診療服務處 (內湖/汀州) (代碼：0501110514)</option>
+                            <option value="cgh_xizhi">國泰醫療財團法人汐止國泰綜合醫院 (代碼：1131110516)</option>
                         </select>
                     </div>
 
@@ -744,10 +745,37 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                     code: "B024345248",
                     brand: "台灣阿斯特捷利康股份有限公司"
                 }
+            },
+            cgh_xizhi: {
+                name: "國泰醫療財團法人汐止國泰綜合醫院",
+                code: "1131110516",
+                depts: {
+                    hem_onc: {
+                        name: "血液腫瘤科 / 腫瘤內科",
+                        doctors: [
+                            "施盈逸 醫師"
+                        ]
+                    },
+                    breast_surg: {
+                        name: "乳房外科 / 一般外科",
+                        doctors: [
+                            "乳房外科專科 醫師"
+                        ]
+                    }
+                },
+                defaultFulvestrant: {
+                    name: "法洛德注射液 250毫克 (Faslodex)",
+                    code: "B024345248",
+                    brand: "台灣阿斯特捷利康股份有限公司"
+                }
             }
         };
 
         function onHospitalChange() {
+            const hKey = document.getElementById("selHospital").value;
+            if (hKey === "cgh_xizhi") {
+                document.getElementById("selDept").value = "hem_onc";
+            }
             populateDoctors();
             renderPreview();
         }
@@ -1695,6 +1723,23 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             document.getElementById("spokenConfidence").textContent = "辨識完成";
 
             // Detect spoken hospital or doctor
+            if (/汐止國泰|國泰醫院|汐止/i.test(raw)) {
+                const selHosp = document.getElementById("selHospital");
+                if (selHosp && selHosp.value !== "cgh_xizhi") {
+                    selHosp.value = "cgh_xizhi";
+                    onHospitalChange();
+                }
+            }
+            if (/施盈逸|施瑩逸|施醫師/i.test(raw)) {
+                const selHosp = document.getElementById("selHospital");
+                const selDept = document.getElementById("selDept");
+                const selDoc = document.getElementById("selDoctor");
+                if (selHosp) selHosp.value = "cgh_xizhi";
+                if (selDept) selDept.value = "hem_onc";
+                onDeptChange();
+                if (selDoc) { selDoc.value = "施盈逸"; onDoctorChange(); }
+            }
+
             if (/三總|三軍總醫院/i.test(raw)) {
                 const selHosp = document.getElementById("selHospital");
                 if (selHosp && selHosp.value !== "tsgh") {
