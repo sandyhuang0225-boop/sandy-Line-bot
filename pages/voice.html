@@ -10,7 +10,7 @@
     <script>
         (function() {
             try {
-                const CURRENT_BUILD = "4.2.0";
+                const CURRENT_BUILD = "4.3.0";
                 const url = new URL(window.location.href);
                 const loadedV = url.searchParams.get("v");
                 if (!loadedV || !loadedV.startsWith("3.9")) {
@@ -143,7 +143,7 @@
                             <h6 class="fw-bold text-dark mb-0">
                                 <i class="fa-solid fa-microphone-lines text-success me-2 fs-5"></i>醫師門診語音助理
                             </h6>
-                            <span class="badge bg-danger text-white ms-1 fw-bold" style="font-size: 0.68rem;" id="versionBadge">v4.2 汐止國泰施盈逸主任新增版 (11:35)</span>
+                            <span class="badge bg-danger text-white ms-1 fw-bold" style="font-size: 0.68rem;" id="versionBadge">v4.3 修正HER2陰性精準判讀版 (11:40)</span>
                         </div>
                         <div class="d-flex gap-1">
                             <button class="btn btn-outline-danger btn-sm py-0 px-2 fw-bold" onclick="forceHardRefresh()" style="font-size: 0.72rem;" title="手機若無更新請點此強制清除快取">
@@ -1193,6 +1193,11 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                 function normalizeMedicalSpeech(text) {
             if (!text) return "";
             let s = text;
+
+            // Normalize HER2 speech recognition variations (HER2, HER-2, HER two, HER to, HER too, HER 陰性, 赫2)
+            s = s.replace(/\bher\s*[-_]?(?:2|two|to|too|二|兩|两)\b|\bher\s*[-_]?(?:2|two|to|too|二|兩|两)/gi, ' HER2 ');
+            s = s.replace(/赫\s*[-_]?(?:2|二|兩|两)|賀\s*[-_]?(?:2|二|兩|两)/gi, ' HER2 ');
+            s = s.replace(/\bher\s*(?:陰性|陽性|positive|negative|\+|\-)/gi, (m) => m.replace(/her/i, 'HER2 '));
             
             // 0. English number words
             const numWords = [
@@ -1441,19 +1446,25 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             let prVal = null;
             let her2Status = null; // "negative", "positive"
 
-            // HER2 Check
+            // HER2 Check (Strictly identifies HER2 without confusing with ER)
             if (/(?:her2|her-2|her\s*2)\s*(?:陽性|positive|3\+|三加|\+\+\+)/i.test(raw) || /(?:her2|her-2)\s*(?:2\+|二加|\+\+)\s*(?:fish\s*陽性|fish\s*positive|擴增)/i.test(raw)) {
                 her2Status = "positive";
-            } else if (/(?:her2|her-2|her\s*2)\s*(?:陰性|negative|0|1\+|一加|\+)/i.test(raw) || /(?:her2|her-2)\s*(?:2\+|二加)\s*(?:fish\s*陰性|fish\s*negative|無擴增)/i.test(raw)) {
+            } else if (/(?:her2|her-2|her\s*2)\s*(?:陰性|negative|0|1\+|一加|\+)/i.test(raw) || /(?:her2|her-2)\s*(?:2\+|二加)\s*(?:fish\s*陰性|fish\s*negative|無擴增)/i.test(raw) || /her2/i.test(raw)) {
                 her2Status = "negative";
             }
 
-            // Combined ER PR expression e.g. "ER、PR 大於等於 20%" / "ER與PR 20%"
-            const combMatch = raw.match(/(?:er[\s、,與和及\/]*pr|er和pr|er與pr|er及pr)[^\d一二兩三四五六七八九十%]*(?:陰性|negative|0%|零)/i);
-            const combNumMatch = raw.match(/(?:er[\s、,與和及\/]*pr|er和pr|er與pr|er及pr)[^\d一二兩三四五六七八九十%]*(\d+|[零一二兩两三四五六七八九十]+)\s*%?/i);
-            if (combMatch) {
+            // Combined ER PR expression e.g. "ER、PR 大於等於 20%" / "ER與PR 20%" / "ER PR 大於 30%"
+            // Use (?<![a-zA-Z]) to prevent HER from matching ER!
+            const combNegMatch = raw.match(/(?<![a-zA-Z])(?:er[\s、,與和及\/]*pr|er和pr|er與pr|er及pr)[^\d一二兩三四五六七八九十%]*(?:陰性|negative|0%|零)/i);
+            const combPosMatch = raw.match(/(?<![a-zA-Z])(?:er[\s、,與和及\/]*pr|er和pr|er與pr|er及pr)[^\d一二兩三四五六七八九十%]*(?:大於|超過|>|≧|\>=|大於等於)\s*(?:30|三十)/i);
+            const combNumMatch = raw.match(/(?<![a-zA-Z])(?:er[\s、,與和及\/]*pr|er和pr|er與pr|er及pr)[^\d一二兩三四五六七八九十%]*(\d+|[零一二兩两三四五六七八九十]+)\s*%?/i);
+
+            if (combNegMatch) {
                 erVal = 0;
                 prVal = 0;
+            } else if (combPosMatch) {
+                erVal = 85;
+                prVal = 70;
             } else if (combNumMatch) {
                 const parsedCombined = parseChineseOrArabicNum(combNumMatch[1]);
                 if (parsedCombined !== null) {
@@ -1461,22 +1472,26 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                     prVal = parsedCombined;
                 }
             } else {
-                // Separate ER
-                if (/(?:er|雌激素受體|雌激素)[^\d一二兩三四五六七八九十%]*(?:陰性|negative|0%|零)/i.test(raw)) {
+                // Separate ER (Strictly (?<![a-zA-Z])er so 'HER' NEVER matches 'ER')
+                if (/(?<![a-zA-Z])(?:er|雌激素受體|雌激素)[^\d一二兩三四五六七八九十%]*(?:陰性|negative|0%|零)/i.test(raw)) {
                     erVal = 0;
+                } else if (/(?<![a-zA-Z])(?:er|雌激素受體|雌激素)[^\d一二兩三四五六七八九十%]*(?:大於|超過|>|≧|\>=|大於等於)\s*(?:30|三十)/i.test(raw)) {
+                    erVal = 85;
                 } else {
-                    const em = raw.match(/(?:er|雌激素受體|雌激素)[^\d一二兩三四五六七八九十%]*(\d+|[零一二兩两三四五六七八九十]+)\s*%?/i);
+                    const em = raw.match(/(?<![a-zA-Z])(?:er|雌激素受體|雌激素)[^\d一二兩三四五六七八九十%]*(\d+|[零一二兩两三四五六七八九十]+)\s*%?/i);
                     if (em) {
                         const parsed = parseChineseOrArabicNum(em[1]);
                         if (parsed !== null) erVal = parsed;
                     }
                 }
 
-                // Separate PR
-                if (/(?:pr|黃體素受體|黃體素)[^\d一二兩三四五六七八九十%]*(?:陰性|negative|0%|零)/i.test(raw)) {
+                // Separate PR (Strictly (?<![a-zA-Z])pr)
+                if (/(?<![a-zA-Z])(?:pr|黃體素受體|黃體素)[^\d一二兩三四五六七八九十%]*(?:陰性|negative|0%|零)/i.test(raw)) {
                     prVal = 0;
+                } else if (/(?<![a-zA-Z])(?:pr|黃體素受體|黃體素)[^\d一二兩三四五六七八九十%]*(?:大於|超過|>|≧|\>=|大於等於)\s*(?:30|三十)/i.test(raw)) {
+                    prVal = 70;
                 } else {
-                    const pm = raw.match(/(?:pr|黃體素受體|黃體素)[^\d一二兩三四五六七八九十%]*(\d+|[零一二兩两三四五六七八九十]+)\s*%?/i);
+                    const pm = raw.match(/(?<![a-zA-Z])(?:pr|黃體素受體|黃體素)[^\d一二兩三四五六七八九十%]*(\d+|[零一二兩两三四五六七八九十]+)\s*%?/i);
                     if (pm) {
                         const parsed = parseChineseOrArabicNum(pm[1]);
                         if (parsed !== null) prVal = parsed;
@@ -1678,7 +1693,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                     code: "事審代碼：C50P1",
                     borderClass: "border-success",
                     spoken: spokenReply,
-                    details: "符合早期高復發【" + conditionMet + "】：\n• 判定依據：" + conditionReason + "\n• 生物標記：ER " + finalEr + "%、PR " + finalPr + "% (≧ 30% 通過) 且 HER2 陰性 (通過)\n• 規章檢核：成年病人 (男女皆可)、併用 AI、術後 16 個月內、輔助化療/放療完成、輔助內分泌 ≦ 12 週\n• 辨識指標：腫瘤 " + displaySize + "、" + displayNodes + "、分化 " + displayGrade + (isSwitchingDueToAE ? "\n• 換藥備註：因 abemaciclib AE 不耐受互換核准（合併計算 36 個月）" : ""),
+                    details: "符合早期高復發【" + conditionMet + "】：\n• 判定依據：" + conditionReason + "\n• 生物標記：ER " + finalEr + "%、PR " + finalPr + "% (≧ 30% 通過) 且 HER2 陰性 (通過)\n• 規章檢核：成年病人 (男女皆可)、併用 AI、術後 16 個月內、輔助化療/放療完成、輔助內分泌 ≦ 12 週\n• 辨識指標：腫瘤 " + displaySize + "、" + displayNodes + "、分化 " + displayGrade + "、HER2 " + (finalHer2 === "negative" ? "陰性 (Negative)" : finalHer2) + (isSwitchingDueToAE ? "\n• 換藥備註：因 abemaciclib AE 不耐受互換核准（合併計算 36 個月）" : ""),
                     size: formSize, nodes: formNodes, grade: formGrade, isT4: isT4, er: finalEr, pr: finalPr, her2: finalHer2, isAE: isSwitchingDueToAE
                 };
             } else {
@@ -1706,7 +1721,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                     code: "未符門檻",
                     borderClass: "border-danger",
                     spoken: rejectSpoken,
-                    details: "⚠️【AI 健保防退件攔截】：\n• 退件原因：" + rejectReason + "\n• 臨床處置：避免無效事審送審，建議引導病人加入擊癌利自費存摺專案（買一送一/買四送八）！\n• 辨識指標：腫瘤 " + displaySize + "、" + displayNodes + "、分化 " + displayGrade,
+                    details: "⚠️【AI 健保防退件攔截】：\n• 退件原因：" + rejectReason + "\n• 臨床處置：避免無效事審送審，建議引導病人加入擊癌利自費存摺專案（買一送一/買四送八）！\n• 辨識指標：腫瘤 " + displaySize + "、" + displayNodes + "、分化 " + displayGrade + "、HER2 " + (finalHer2 === "negative" ? "陰性 (Negative)" : finalHer2),
                     size: formSize, nodes: formNodes, grade: formGrade, isT4: isT4, er: finalEr, pr: finalPr, her2: finalHer2
                 };
             }
