@@ -265,22 +265,6 @@
             </div>
         </div>
 
-<!-- 🌟 多位醫師切換分頁區 (支援 Speaker 講者與 Moderator 座長共 4 位以上醫師) 🌟 -->
-        <div id="multiDoctorSection" class="p-3 bg-white border border-primary rounded-3 mb-3 shadow-sm" style="display: none;">
-            <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2 pb-2 border-bottom">
-                <div>
-                    <h6 class="mb-0 fw-bold text-primary">
-                        <i class="fa-solid fa-user-doctor me-2"></i>本場會議共辨識出 <span id="detectedDoctorCount" class="badge bg-primary fs-6">0</span> 位顧問醫師
-                    </h6>
-                    <small class="text-muted">（已自動包含 Speakers 講者與 Moderators 座長，並自動排除 Sandy Huang 諾華同仁）</small>
-                </div>
-                <button class="btn btn-sm btn-success fw-bold" onclick="downloadAllDoctorsPDF()">
-                    <i class="fa-solid fa-file-zipper me-1"></i>批次下載全場所有醫師 PDF
-                </button>
-            </div>
-            <div class="d-flex flex-wrap gap-2 mt-2" id="doctorTabButtons">
-                <!-- 動態生成多位醫師按鈕 -->
-            </div>
         </div>
 
         <!-- AI 辨識分析中的載入指示器 -->
@@ -466,7 +450,31 @@
 </div>
 
 <!-- ==================== 正式合約預覽 (共 12 頁，DocuSign 標準版面) ==================== -->
-<div id="contractFullDoc">
+<!-- 🌟 多位醫師切換選擇區 (置頂於合約正上方，支援 Speaker 講者與 Moderator 座長，切換一目了然) -->
+    <div id="multiDoctorSection" class="card border-2 border-primary shadow mb-3" style="display: none;">
+        <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between flex-wrap gap-2 py-2 px-3">
+            <div class="fw-bold fs-5">
+                <i class="fa-solid fa-users me-2"></i>本場會議共辨識出 <span id="detectedDoctorCount" class="badge bg-warning text-dark fs-5">0</span> 位顧問醫師
+            </div>
+            <button type="button" class="btn btn-warning btn-sm fw-bold text-dark px-3 py-2" onclick="downloadAllDoctorsPDF()">
+                <i class="fa-solid fa-file-zipper me-1"></i>📥 一鍵依序下載全部醫師 PDF
+            </button>
+        </div>
+        <div class="card-body p-3 bg-white">
+            <div class="text-secondary small fw-bold mb-2">
+                👉 請點擊下方醫師按鈕，合約將立即切換為該醫師的姓名、服務醫院與講題（可分別檢視與下載）：
+            </div>
+            <!-- 醫師切換大按鈕群 (大顆、清楚、好按) -->
+            <div class="d-flex flex-wrap gap-2 mb-2" id="doctorTabButtons"></div>
+            <!-- 目前檢視中醫師提示條 -->
+            <div id="currentViewingNotice" class="alert alert-info py-2 px-3 mb-0 fw-bold text-primary" style="font-size: 1.05rem;">
+                📄 目前正在檢視：【第 1 位顧問醫師】之專屬 12 頁正式合約
+            </div>
+        </div>
+    </div>
+
+    <!-- 完整 12 頁合約主容器 -->
+    <div id="contractFullDoc">
 
     <!-- PAGE 1 -->
     <div class="contract-page">
@@ -1321,8 +1329,8 @@ async function processUserUpload(source, typeLabel) {
 
         // 滾動至合約檢視
         setTimeout(() => {
-            const docFull = document.getElementById('contractFullDoc');
-            if (docFull) docFull.scrollIntoView({ behavior: 'smooth' });
+            const sec = document.getElementById('multiDoctorSection');
+            if (sec && (data.doctors || []).length > 1) { sec.scrollIntoView({ behavior: 'smooth' }); } else { const docFull = document.getElementById('contractFullDoc'); if (docFull) docFull.scrollIntoView({ behavior: 'smooth' }); }
         }, 400);
 
     } catch (err) {
@@ -1452,7 +1460,10 @@ function renderDoctorTabs(eventData) {
         const roleLabel = isSpeaker ? 'Speaker 講者' : 'Moderator 座長';
         const roleClass = isSpeaker ? 'bg-primary' : 'bg-secondary';
         
-        btn.className = (idx === 0) ? 'btn btn-primary btn-sm fw-bold shadow-sm' : 'btn btn-outline-secondary btn-sm fw-bold';
+        btn.className = (idx === 0) 
+            ? 'btn btn-primary btn-lg fw-bold shadow-sm py-2 px-3' 
+            : 'btn btn-outline-dark btn-lg fw-bold py-2 px-3 bg-white text-dark';
+        btn.style.fontSize = '1.05rem';
         btn.innerHTML = `<i class="fa-solid fa-user-doctor me-1"></i>${doc.doctor_name || '醫師'} <span class="badge ${roleClass} ms-1">${roleLabel}</span>`;
         btn.onclick = () => selectDoctor(idx);
         container.appendChild(btn);
@@ -1470,10 +1481,19 @@ function selectDoctor(index) {
     // 更新按鈕高亮
     const container = document.getElementById('doctorTabButtons');
     Array.from(container.children).forEach((btn, idx) => {
-        btn.className = (idx === index) ? 'btn btn-primary btn-sm fw-bold shadow-sm' : 'btn btn-outline-secondary btn-sm fw-bold';
+        btn.className = (idx === index) 
+            ? 'btn btn-primary btn-lg fw-bold shadow-sm py-2 px-3' 
+            : 'btn btn-outline-dark btn-lg fw-bold py-2 px-3 bg-white text-dark';
+        btn.style.fontSize = '1.05rem';
     });
 
     // 填入各輸入框
+    const notice = document.getElementById('currentViewingNotice');
+    if (notice) {
+        const total = currentEventData.doctors.length;
+        const roleName = (doc.role || '').toLowerCase().includes('moderator') ? '座長' : '講者';
+        notice.innerHTML = `📄 目前正在檢視：【第 ${index + 1}/${total} 位 - ${doc.doctor_name} 醫師（${roleName}）】之專屬 12 頁正式顧問合約`;
+    }
     document.getElementById('inputDoctor').value = doc.doctor_name || '';
     document.getElementById('inputHospital').value = doc.hospital || '';
     document.getElementById('inputHospAddr').value = doc.hospital_address || '';
