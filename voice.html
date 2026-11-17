@@ -289,40 +289,53 @@
                 <div class="card card-custom p-3 mb-3">
                     <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-list-check text-primary me-2"></i>臨床申請情境（點選切換）</h6>
                     <div class="d-flex flex-column">
-                        <button class="btn btn-outline-secondary btn-scenario active" onclick="setScenario(1, this)">
-                            <div class="d-flex justify-content-between">
-                                <strong>🌸 1. 早期乳癌 (EBC) 術後輔助</strong>
+                        <!-- Scenario 1: EBC -->
+                        <button class="btn btn-outline-secondary btn-scenario active mb-2" style="border-left: 4px solid #e11d48 !important; background: #fff1f2;" onclick="setScenario(1, this)">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong style="font-size: 0.95rem; color: #9f1239;">🌸 1. 早期乳癌 (EBC) 術後輔助</strong>
                                 <span class="badge bg-danger">C50P1 (2粒/天)</span>
                             </div>
-                            <small class="text-muted d-block mt-1">高復發風險成年病人（男女皆可），ER或PR>30%且HER2陰性，上限給付36個月</small>
+                            <small class="text-dark-emphasis d-block mt-1" style="font-size: 0.74rem;">高復發風險成年病人（男女皆可），4大條件審查，ER/PR ≧ 30% 且 HER2 陰性，上限給付 36 個月</small>
                         </button>
-                        <button class="btn btn-outline-secondary btn-scenario" onclick="setScenario(2, this)">
-                            <div class="d-flex justify-content-between">
-                                <strong>🎗️ 2. 晚期轉移一線－停經後女性</strong>
-                                <span class="badge bg-success">C50R1 (3粒/天)</span>
+
+                        <!-- Scenario 2: Post-menopausal MBC (Distinct Emerald Green) -->
+                        <button class="btn btn-outline-secondary btn-scenario mb-2" style="border-left: 4px solid #059669 !important; background: #f0fdf4;" onclick="setScenario(2, this)">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong style="font-size: 0.96rem; color: #065f46;"><i class="fa-solid fa-person-dress text-success me-1"></i>2. 晚期轉移一線 ──【停經後女性】</strong>
+                                <span class="badge bg-success">停經後 C50R1 (單藥口服)</span>
                             </div>
-                            <small class="text-muted d-block mt-1">併用 AI，門檻放寬至 ER/PR ≧ 1%，非單純骨轉</small>
-                        </button>
-                        <button class="btn btn-outline-secondary btn-scenario" onclick="setScenario(3, this)">
-                            <div class="d-flex justify-content-between">
-                                <strong>💉 3. 晚期轉移一線－女性停經前或男性</strong>
-                                <span class="badge bg-info text-dark">C50R1 + 停經針</span>
+                            <div class="text-success-emphasis mt-1 fw-medium" style="font-size: 0.75rem;">
+                                • <strong>停經後單藥標靶</strong>：併用口服 AI，門檻放寬至 ER/PR ≧ 1%，無腦轉移、非單純骨轉移
                             </div>
-                            <small class="text-muted d-block mt-1">適用對象：女性停經前或男性，併用 AI 及 LHRH 類似劑 (停經針)</small>
                         </button>
-                        <button class="btn btn-outline-secondary btn-scenario" onclick="setScenario(4, this)">
-                            <div class="d-flex justify-content-between">
-                                <strong>🔄 4. 內分泌惡化後併用 Fulvestrant</strong>
+
+                        <!-- Scenario 3: Pre-menopausal or Male MBC (Distinct Royal Blue + Needle) -->
+                        <button class="btn btn-outline-secondary btn-scenario mb-2" style="border-left: 4px solid #2563eb !important; background: #eff6ff;" onclick="setScenario(3, this)">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong style="font-size: 0.98rem; color: #1e40af;"><i class="fa-solid fa-syringe text-primary me-1"></i>3. 晚期轉移一線 ──【女性停經前 或 男性】</strong>
+                                <span class="badge bg-primary">雙藥健保：C50R1 ＋ 停經針</span>
+                            </div>
+                            <div class="text-primary-emphasis mt-1 fw-medium" style="font-size: 0.75rem;">
+                                • <strong>適用對象：女性停經前或男性</strong>（健保全額給付雙藥：擊癌利 ＋ LHRH 停經針 6 支）
+                            </div>
+                        </button>
+
+                        <!-- Scenario 4: 2nd line Fulvestrant (Amber Gold) -->
+                        <button class="btn btn-outline-secondary btn-scenario mb-2" style="border-left: 4px solid #d97706 !important; background: #fffbeb;" onclick="setScenario(4, this)">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong style="font-size: 0.95rem; color: #92400e;">🔄 4. 內分泌惡化後二線解禁 ── 併用 Fulvestrant</strong>
                                 <span class="badge bg-warning text-dark">C50R2 (12/1解禁)</span>
                             </div>
-                            <small class="text-muted d-block mt-1">二線解禁雙藥送審（東洋伏斯壯 / 原廠法洛德）</small>
+                            <small class="text-warning-emphasis d-block mt-1" style="font-size: 0.74rem;">前線 AI 惡化後第二線雙藥送審（東洋伏斯壯 / 原廠法洛德 16 支），嚴格要求 ER/PR ≧ 30%</small>
                         </button>
-                        <button class="btn btn-outline-secondary btn-scenario" onclick="setScenario(5, this)">
-                            <div class="d-flex justify-content-between">
-                                <strong>📈 5. 用藥滿 24 個月 (2年) 無惡化續約展延</strong>
-                                <span class="badge bg-success">無惡化續約展延</span>
+
+                        <!-- Scenario 5: 24 Months Renewal (Slate Purple) -->
+                        <button class="btn btn-outline-secondary btn-scenario" style="border-left: 4px solid #475569 !important; background: #f8fafc;" onclick="setScenario(5, this)">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong style="font-size: 0.95rem; color: #1e293b;">📈 5. 用藥滿 24 個月 (2年) 無惡化續約展延</strong>
+                                <span class="badge bg-dark">C50R1 展延審查</span>
                             </div>
-                            <small class="text-muted d-block mt-1">檢附近 4 週 RECIST 影像評估 non-PD，申請繼續給付</small>
+                            <small class="text-muted d-block mt-1" style="font-size: 0.74rem;">檢附近 4 週 RECIST 影像評估 non-PD，申請繼續展延核發 24 週 (378 粒)</small>
                         </button>
                     </div>
                 </div>
