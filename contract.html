@@ -233,7 +233,7 @@
         </div>
         <div class="d-flex align-items-center gap-2">
             <!-- 一鍵下載 PDF (專門上傳 DocuSign 用) -->
-            <button class="btn btn-warning btn-sm fw-bold shadow-sm" onclick="downloadDocuSignPDF()">
+            <button type="button" class="btn btn-warning fw-bold" style="font-size: 1rem; padding: 8px 16px;" onclick="downloadDocuSignPDF()">
                 <i class="fa-solid fa-file-pdf me-1"></i>下載 DocuSign 專用 PDF (完整12頁)
             </button>
             <button class="btn btn-outline-light btn-sm" onclick="window.print()">
@@ -330,37 +330,38 @@
             </div>
         </div>
 
-        <!-- 步驟 2：超大實體開始按鈕 (點擊此處立即觸發 AI 辨識！) -->
-        <div class="card p-3 bg-white border-2 border-success shadow mb-3 text-center">
-            <button id="btnStartAI" type="button" class="btn btn-success btn-lg w-100 py-3 fw-bold fs-5 shadow-sm" onclick="triggerManualAnalysis()">
-                <i class="fa-solid fa-wand-magic-sparkles me-2 text-warning"></i>【步驟 2：點此立即開始 AI 深度辨識並帶入合約】
+                <!-- 步驟 2：基本款實體開始按鈕 (絕不阻擋點擊、隨時可按、保證觸發) -->
+        <div style="background: #e8f5e9; border: 2px solid #2e7d32; padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
+            <button id="btnStartAI" type="button" class="btn btn-success btn-lg w-100" style="font-size: 1.2rem; font-weight: bold; padding: 14px; background-color: #2e7d32; border-color: #1b5e20;" onclick="triggerManualAnalysis()">
+                👉【步驟 2：點此立即開始 AI 深度辨識並帶入合約】
             </button>
-            <small class="text-muted mt-2 d-block">
-                選好上方照片或 PDF 後，<strong>請按此按鈕</strong>，Gemini 3.1 視覺 AI 將立即開始深度辨識並帶入 12 頁合約！
-            </small>
+            <div style="color: #1b5e20; font-weight: bold; margin-top: 8px; font-size: 0.95rem;">
+                選好上方照片或 PDF 後，請直接點此按鈕啟動辨識！
+            </div>
         </div>
 
-        <!-- 3. ChatGPT 文字貼上區塊 -->
-        <div class="card p-3 bg-light border rounded-3 mb-3 shadow-sm">
+        <!-- 3. ChatGPT 文字貼上區塊 (可選備用) -->
+        <div class="card p-3 bg-light border rounded-3 mb-3">
             <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
                 <span class="fw-bold text-dark small">
                     <i class="fa-solid fa-paste me-2 text-warning"></i>【或直接貼上文字】貼上 ChatGPT / LINE 的議程文字：
                 </span>
                 <button class="btn btn-dark btn-sm fw-bold px-3" type="button" onclick="parsePastedText()">
-                    <i class="fa-solid fa-bolt me-1"></i>立即解析帶入合約
+                    立即解析填入合約
                 </button>
             </div>
             <textarea id="agendaTextInput" class="form-control" rows="3" placeholder="請在此貼上議程文字（系統將自動排除 Sandy Huang 諾華同仁，精準帶入外部醫師顧問）..."></textarea>
         </div>
 
-        <div id="fileNoticeBanner"  class="alert alert-success border-success py-2 px-3 mb-3 shadow-sm" style="display: none;">
+        <!-- 檔案已上傳解析成功提示卡 -->
+        <div id="fileNoticeBanner" class="alert alert-success border-success py-2 px-3 mb-3 shadow-sm" style="display: none;">
             <div class="d-flex align-items-center justify-content-between">
                 <div>
                     <i class="fa-solid fa-circle-check text-success fs-5 me-2"></i>
                     <strong id="fileNoticeText">Agenda 上傳成功！資料已全自動填入下方 12 頁正式合約中。</strong>
                 </div>
                 <button class="btn btn-sm btn-outline-success fw-bold" onclick="resetToBlank()">
-                    <i class="fa-solid fa-rotate-left me-1"></i>清空重試
+                    清空重試
                 </button>
             </div>
         </div>
@@ -1033,17 +1034,14 @@ function handleFileChosen(inputElement, typeLabel) {
     const noticeId = (typeLabel === '照片') ? 'albumChosenNotice' : 'pdfChosenNotice';
     const noticeEl = document.getElementById(noticeId);
     if (noticeEl) {
-        noticeEl.innerHTML = `<i class="fa-solid fa-circle-check text-success me-1"></i>已成功選取【${file.name}】（${(file.size / 1024).toFixed(1)} KB）！請按下方【步驟 2】開始辨識！`;
+        noticeEl.innerHTML = `✅ 已成功選取檔案：<strong>${file.name}</strong>（${(file.size / 1024).toFixed(1)} KB）<br><span style="color:#d97706; font-size: 1.05rem;">👉 請直接點擊下方【步驟 2】綠色按鈕開始辨識！</span>`;
         noticeEl.style.display = 'block';
     }
 
     const btn = document.getElementById('btnStartAI');
     if (btn) {
-        btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles me-2 text-warning"></i>【步驟 2：立即開始辨識 ${file.name}】`;
+        btn.innerHTML = `👉【步驟 2：點此立即開始解析 ${file.name}】`;
     }
-
-    // 自動啟動辨識
-    processUserUpload(file, typeLabel);
 }
 
 function triggerManualAnalysis() {
@@ -1073,7 +1071,7 @@ function triggerManualAnalysis() {
         return;
     }
 
-    alert("請先點選上方的「選擇檔案」挑選一張 Agenda 照片或 PDF 檔喔！");
+    alert("請先在【步驟 1】點選「選擇檔案」挑選一張 Agenda 照片喔！");
 }
 
 let currentDoctorIndex = 0;
@@ -1161,65 +1159,30 @@ function saveGeminiApiKey() {
 }
 
 // 🚀 手機端圖片自動壓縮引擎：將 10MB~15MB iPhone 照片於 0.1 秒內壓縮為 300KB JPEG，並設置 2 秒超時防呆
-function compressImage(file, maxWidth = 1600, maxHeight = 1600, quality = 0.8) {
-    return new Promise((resolve) => {
-        // PDF 檔案直接讀取 base64
-        if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
-            readFileAsBase64(file).then(b64 => resolve({ base64: b64, mimeType: 'application/pdf' })).catch(() => resolve({ base64: '', mimeType: 'application/pdf' }));
-            return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const img = new Image();
-            img.onload = () => {
-                try {
-                    let width = img.width;
-                    let height = img.height;
-                    if (width > maxWidth || height > maxHeight) {
-                        if (width / height > maxWidth / maxHeight) {
-                            height = Math.round((height * maxWidth) / width);
-                            width = maxWidth;
-                        } else {
-                            width = Math.round((width * maxHeight) / height);
-                            height = maxHeight;
-                        }
-                    }
-                    const canvas = document.createElement('canvas');
-                    canvas.width = width;
-                    canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    const dataUrl = canvas.toDataURL('image/jpeg', quality);
-                    const base64 = dataUrl.split(',')[1];
-                    resolve({ base64, mimeType: 'image/jpeg' });
-                } catch (err) {
-                    readFileAsBase64(file).then(b64 => resolve({ base64: b64, mimeType: 'image/jpeg' })).catch(() => resolve({ base64: '', mimeType: 'image/jpeg' }));
-                }
-            };
-            img.onerror = () => {
-                readFileAsBase64(file).then(b64 => resolve({ base64: b64, mimeType: 'image/jpeg' })).catch(() => resolve({ base64: '', mimeType: 'image/jpeg' }));
-            };
-            img.src = e.target.result;
-        };
-        reader.onerror = () => {
-            readFileAsBase64(file).then(b64 => resolve({ base64: b64, mimeType: 'image/jpeg' })).catch(() => resolve({ base64: '', mimeType: 'image/jpeg' }));
-        };
-        reader.readAsDataURL(file);
-    });
-}
-
+// 純原生 FileReader 讀取，絕不透過 Canvas，保證 0 延遲、0 當機、相容所有 iPhone Safari
 function readFileAsBase64(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => {
-            const result = reader.result;
-            const base64 = result.split(',')[1];
-            resolve(base64);
+            try {
+                const result = reader.result;
+                const base64 = result.split(',')[1];
+                let mime = file.type || 'image/jpeg';
+                if (!mime || mime.includes('heic') || mime.includes('heif')) {
+                    mime = 'image/jpeg';
+                }
+                resolve({ base64, mimeType: mime });
+            } catch (e) {
+                reject(e);
+            }
         };
-        reader.onerror = reject;
+        reader.onerror = () => reject(new Error("讀取檔案失敗，請重新選取"));
         reader.readAsDataURL(file);
     });
+}
+
+function compressImage(file) {
+    return readFileAsBase64(file);
 }
 
 // 核心：上傳照片或 PDF 後，交由 Gemini 1.5 視覺 AI 深度解析全場多位醫師 (Speakers 與 Moderators)！
@@ -1230,32 +1193,37 @@ async function processUserUpload(source, typeLabel) {
     } else if (source && source.files && source.files.length > 0) {
         file = source.files[0];
     }
-    if (!file) return;
+    if (!file) {
+        alert("請先在「步驟 1」選取檔案！");
+        return;
+    }
 
     currentSelectedFile = file;
     currentSelectedType = typeLabel;
 
-    // 按鈕切換為正在運作中動畫
+    // 按鈕更新文字 (不 disabled，維持原生直接可點)
     const btn = document.getElementById('btnStartAI');
     if (btn) {
-        btn.disabled = true;
-        btn.className = 'btn btn-warning btn-lg w-100 py-3 fw-bold fs-5 shadow-sm text-dark';
-        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status"></span>Gemini 3.1 視覺 AI 深度解析中（約需 3~5 秒），請稍候...`;
+        btn.innerHTML = `⏳ 正在深度解析【${file.name}】中，請稍候 3~5 秒...`;
+        btn.style.backgroundColor = '#d97706';
+        btn.style.borderColor = '#b45309';
     }
 
     const aiBox = document.getElementById('aiAnalyzingBox');
     const aiDetail = document.getElementById('aiStatusDetail');
     if (aiBox) {
         aiBox.style.display = 'block';
-        aiDetail.innerHTML = `<i class="fa-solid fa-spinner fa-spin me-2 text-warning"></i>已接收到 <strong>${file.name}</strong>（${(file.size / 1024).toFixed(1)} KB），正在交由 Gemini 3.1 視覺 AI 深度分析...`;
+        if (aiDetail) {
+            aiDetail.innerHTML = `已接收到 <strong>${file.name}</strong>（${(file.size / 1024).toFixed(1)} KB），正在透過 Gemini 3.1 視覺 AI 深度解析全場醫師...`;
+        }
     }
 
     const apiKey = getStoredApiKey();
 
     try {
-        const { base64, mimeType } = await compressImage(file);
+        const { base64, mimeType } = await readFileAsBase64(file);
         if (!base64) {
-            throw new Error("無法讀取檔案內容，請確認檔案格式是否正確。");
+            throw new Error("無法讀取檔案內容，請重新選取！");
         }
 
         const promptText = `你是一位台灣諾華（Novartis）的資深法務合約專家。請仔細分析這份會議議程（Agenda）檔案。
