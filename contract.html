@@ -265,57 +265,29 @@
             </div>
         </div>
 
-        <!-- 🔑 Gemini API Key 展開設定卡 -->
-        <div id="apiKeyConfigBox" class="p-3 mb-3 bg-white border border-warning rounded-3 shadow-sm" style="display: none;">
-            <div class="d-flex align-items-center justify-content-between mb-2">
-                <h6 class="fw-bold mb-0 text-dark"><i class="fa-solid fa-brain me-2 text-warning"></i>Google Gemini 視覺 AI 金鑰設定</h6>
-                <button type="button" class="btn-close btn-sm" onclick="toggleApiKeyBox()"></button>
-            </div>
-            <p class="small text-muted mb-2">
-                金鑰僅保存在您手機的瀏覽器本機端（localStorage），絕不上傳任何第三方伺服器。<br>
-                <a href="https://aistudio.google.com/app/apikey" target="_blank" class="fw-bold text-decoration-underline text-primary">
-                    <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>按此免費取得 Google Gemini API Key（Google 帳號 10 秒免費申請）
-                </a>
-            </p>
-            <div class="input-group">
-                <span class="input-group-text bg-light"><i class="fa-solid fa-key text-muted"></i></span>
-                <input type="password" id="geminiApiKeyInput" class="form-control" placeholder="貼上您的 Gemini API Key (以 AIzaSy 開頭)">
-                <button class="btn btn-outline-secondary" type="button" onclick="toggleKeyVisibility()">
-                    <i class="fa-regular fa-eye" id="eyeIcon"></i>
-                </button>
-                <button class="btn btn-warning fw-bold text-dark" type="button" onclick="saveGeminiApiKey()">
-                    <i class="fa-solid fa-floppy-disk me-1"></i>儲存金鑰
-                </button>
-            </div>
-            <div id="apiKeySavedTip" class="small text-success mt-1 fw-bold" style="display: none;">
-                <i class="fa-solid fa-circle-check me-1"></i>金鑰已儲存！您現在上傳的任何 Agenda 照片或 PDF 都將由 Gemini 真實辨識。
-            </div>
-        </div>
-
-        <!-- AI 辨識分析中的載入指示器 -->
-        <div id="aiAnalyzingBox" class="alert alert-primary border-primary py-3 px-3 mb-3 shadow-sm" style="display: none;">
-            <div class="d-flex align-items-center gap-3">
-                <div class="spinner-border text-primary" role="status" style="width: 2rem; height: 2rem;">
-                    <span class="visually-hidden">Loading...</span>
+        <!-- 🔑 醒目直接貼上金鑰區 (預設直接展開，不需要點按鈕切換，防呆好用) -->
+        <div id="apiKeyOpenCard" class="card border-warning mb-3 shadow-sm" style="background: #fffdf5; border-width: 2px !important;">
+            <div class="card-body p-3">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <h6 class="fw-bold text-dark mb-0">
+                        <i class="fa-solid fa-key text-warning fs-5 me-2"></i>請在此貼上您剛複製的 Gemini API Key
+                    </h6>
+                    <span id="keyStatusPill" class="badge bg-warning text-dark">待輸入</span>
                 </div>
-                <div>
-                    <div class="fw-bold text-primary fs-6">
-                        <i class="fa-solid fa-wand-magic-sparkles me-1 text-warning"></i>Gemini 1.5 視覺 AI 正在深度辨識您的檔案...
-                    </div>
-                    <div class="small text-muted" id="aiStatusDetail">正在分析主講醫師、演講題目、時間地點，並自動排除 Sandy Huang 諾華同仁與主持人...</div>
+                <p class="small text-muted mb-2">
+                    您剛剛在 Google AI Studio 申請並複製的 Key（開頭通常為 <code>AIzaSy...</code>），直接在下方框內長按貼上，按「儲存並啟用」：
+                </p>
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="fa-solid fa-clipboard text-muted"></i></span>
+                    <input type="text" id="geminiApiKeyInput" class="form-control form-control-lg fs-6" placeholder="長按此處貼上 (如: AIzaSy...)">
+                    <button class="btn btn-warning btn-lg fw-bold text-dark px-3" type="button" onclick="saveGeminiApiKey()">
+                        <i class="fa-solid fa-circle-check me-1"></i>儲存並啟用
+                    </button>
+                </div>
+                <div id="apiKeySavedTip" class="alert alert-success py-2 px-3 mt-2 mb-0 fw-bold small shadow-sm" style="display: none;">
+                    <i class="fa-solid fa-circle-check text-success me-1"></i>金鑰已成功開通！現在您可以直接上傳照片或 PDF 開始真辨識。
                 </div>
             </div>
-        </div>
-
-        <!-- ⚠️ 尚未設定金鑰的明顯警告列 (手機端最友善，不依賴易被阻擋的彈出視窗) -->
-        <div id="noKeyWarningAlert" class="alert alert-warning border-warning py-2 px-3 mb-3 shadow-sm d-flex align-items-center justify-content-between flex-wrap gap-2" style="display: none;">
-            <div>
-                <i class="fa-solid fa-triangle-exclamation text-warning me-2 fs-5"></i>
-                <strong>尚未設定 Gemini API Key：</strong>請先填入 Google 免費金鑰以啟用多位醫師視覺 AI 辨識。
-            </div>
-            <button class="btn btn-warning btn-sm fw-bold text-dark" onclick="toggleApiKeyBox()">
-                <i class="fa-solid fa-key me-1"></i>立即點此設定（10秒免費申請）
-            </button>
         </div>
 
         <!-- 🌟 多位醫師切換分頁區 (支援 Speaker 講者與 Moderator 座長共 4 位以上醫師) 🌟 -->
@@ -333,6 +305,21 @@
             </div>
             <div class="d-flex flex-wrap gap-2 mt-2" id="doctorTabButtons">
                 <!-- 動態生成多位醫師按鈕 -->
+            </div>
+        </div>
+
+        <!-- AI 辨識分析中的載入指示器 -->
+        <div id="aiAnalyzingBox" class="alert alert-primary border-primary py-3 px-3 mb-3 shadow-sm" style="display: none;">
+            <div class="d-flex align-items-center gap-3">
+                <div class="spinner-border text-primary" role="status" style="width: 2rem; height: 2rem;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div>
+                    <div class="fw-bold text-primary fs-6">
+                        <i class="fa-solid fa-wand-magic-sparkles me-1 text-warning"></i>Gemini 1.5 視覺 AI 正在深度辨識您的檔案...
+                    </div>
+                    <div class="small text-muted" id="aiStatusDetail">正在分析全場醫師名單（Speakers 與 Moderators）、時間地點，並自動排除 Sandy 諾華同仁...</div>
+                </div>
             </div>
         </div>
 
@@ -1055,17 +1042,35 @@ function updateKeyBadge() {
     const badge = document.getElementById('geminiKeyBadge');
     const statusText = document.getElementById('keyStatusText');
     const input = document.getElementById('geminiApiKeyInput');
-    const warnAlert = document.getElementById('noKeyWarningAlert');
-    if (input) input.value = key;
+    const openCard = document.getElementById('apiKeyOpenCard');
+    const keyStatusPill = document.getElementById('keyStatusPill');
+
+    if (input && key) input.value = key;
 
     if (key && key.trim().length > 10) {
-        badge.className = 'badge bg-success-subtle text-success border border-success px-2 py-1';
-        statusText.innerHTML = '<i class="fa-solid fa-circle-check me-1"></i>視覺 AI 已連線';
-        if (warnAlert) warnAlert.style.display = 'none';
+        if (badge) badge.className = 'badge bg-success-subtle text-success border border-success px-2 py-1';
+        if (statusText) statusText.innerHTML = '<i class="fa-solid fa-circle-check me-1"></i>視覺 AI 已連線';
+        if (keyStatusPill) {
+            keyStatusPill.className = 'badge bg-success text-white';
+            keyStatusPill.textContent = '已連線啟用';
+        }
+        if (openCard) {
+            // 已連線時收攏為簡約卡片
+            openCard.style.background = '#f8f9fa';
+            openCard.style.borderColor = '#198754';
+        }
     } else {
-        badge.className = 'badge bg-warning-subtle text-dark border border-warning px-2 py-1';
-        statusText.innerHTML = '<i class="fa-solid fa-key me-1"></i>設定 Gemini Key';
-        if (warnAlert) warnAlert.style.display = 'flex';
+        if (badge) badge.className = 'badge bg-warning-subtle text-dark border border-warning px-2 py-1';
+        if (statusText) statusText.innerHTML = '<i class="fa-solid fa-key me-1"></i>待貼上金鑰';
+        if (keyStatusPill) {
+            keyStatusPill.className = 'badge bg-warning text-dark';
+            keyStatusPill.textContent = '待輸入';
+        }
+        if (openCard) {
+            openCard.style.display = 'block';
+            openCard.style.background = '#fffdf5';
+            openCard.style.borderColor = '#ffc107';
+        }
     }
 }
 
@@ -1088,19 +1093,21 @@ function toggleKeyVisibility() {
 
 function saveGeminiApiKey() {
     const input = document.getElementById('geminiApiKeyInput');
-    const key = input.value.trim();
-    if (!key) {
-        alert("請輸入有效的 Gemini API Key！");
+    const key = input ? input.value.trim() : '';
+    if (!key || key.length < 10) {
+        alert("請貼上正確的 Gemini API Key（通常為 AIzaSy 開頭的字串）！");
         return;
     }
     localStorage.setItem('novartis_gemini_api_key', key);
     updateKeyBadge();
     const tip = document.getElementById('apiKeySavedTip');
-    tip.style.display = 'block';
-    setTimeout(() => {
-        tip.style.display = 'none';
-        document.getElementById('apiKeyConfigBox').style.display = 'none';
-    }, 1500);
+    if (tip) {
+        tip.style.display = 'block';
+        setTimeout(() => {
+            tip.style.display = 'none';
+        }, 3000);
+    }
+    alert("🎉 金鑰已成功儲存並啟用！現在您可以直接點擊下方按鈕上傳照片或 PDF 了。");
 }
 
 // 🚀 手機端圖片自動壓縮引擎：將 10MB~15MB iPhone 照片於 0.1 秒內壓縮為 300KB JPEG，徹底告別手機當機卡死！
