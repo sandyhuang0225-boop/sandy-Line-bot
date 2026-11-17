@@ -406,9 +406,34 @@
                 </div>
 
 
-                <!-- 3. Real Pathology Report Upload & Case Tester -->
+                                <!-- 3. Real Pathology Report Upload & Case Tester (Gemini Vision AI) -->
                 <div class="card card-custom p-3 mb-3">
-                    <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-camera text-primary me-2"></i>上傳真實英文病理報告實測</h6>
+                    <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
+                        <h6 class="fw-bold text-dark mb-0"><i class="fa-solid fa-camera text-primary me-2"></i>上傳真實病理報告（Gemini 視覺 AI 判讀）</h6>
+                        <span id="geminiKeyBadge" class="badge bg-warning-subtle text-dark border border-warning px-2 py-1" style="cursor: pointer;" onclick="toggleApiKeyBox()">
+                            <i class="fa-solid fa-key me-1"></i><span id="keyStatusText">Gemini 視覺 AI 設定</span>
+                        </span>
+                    </div>
+
+                    <!-- 🔑 Gemini API Key 展開設定卡 -->
+                    <div id="apiKeyConfigBox" class="p-3 mb-2 bg-white border border-warning rounded-3 shadow-sm" style="display: none;">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <h6 class="fw-bold mb-0 text-dark small"><i class="fa-solid fa-brain me-1 text-warning"></i>Google Gemini 視覺 AI 設定</h6>
+                            <button type="button" class="btn-close btn-sm" onclick="toggleApiKeyBox()"></button>
+                        </div>
+                        <p class="text-muted mb-2" style="font-size: 0.72rem;">
+                            與合約生成器共用同一組 Google 免費金鑰，僅保存在您的手機本機端（localStorage），安全無虞。<br>
+                            <a href="https://aistudio.google.com/app/apikey" target="_blank" class="fw-bold text-primary text-decoration-underline">
+                                <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>按此免費取得 Google Gemini API Key（10秒免費申請）
+                            </a>
+                        </p>
+                        <div class="input-group input-group-sm">
+                            <input type="password" id="geminiApiKeyInput" class="form-control" placeholder="貼上 Gemini API Key (以 AIzaSy 開頭)">
+                            <button class="btn btn-warning fw-bold text-dark" type="button" onclick="saveGeminiApiKey()">
+                                <i class="fa-solid fa-floppy-disk me-1"></i>儲存金鑰
+                            </button>
+                        </div>
+                    </div>
                     
                     <!-- Upload Dropzone -->
                     <div class="border border-2 border-dashed rounded-3 p-3 text-center bg-light mb-2" id="dropZone" style="cursor: pointer; border-color: #0d6efd !important;" onclick="document.getElementById('reportFileInput').click()">
@@ -424,20 +449,29 @@
                     <input type="hidden" id="inKi67" value="">
                     <input type="hidden" id="inHER2" value="negative">
 
-                    <!-- Uploaded Image Preview & Scanner (hidden initially) -->
+                                        <!-- Uploaded Image Preview & Scanner (hidden initially) -->
                     <div id="uploadPreviewSection" class="d-none mb-2">
                         <div class="d-flex align-items-center justify-content-between mb-1">
-                            <span class="small fw-bold text-secondary"><i class="fa-solid fa-file-image me-1"></i>已載入報告影像：</span>
+                            <span class="small fw-bold text-secondary"><i class="fa-solid fa-file-image me-1"></i>病理報告預覽</span>
                             <button class="btn btn-link btn-sm text-danger p-0 text-decoration-none" onclick="clearUploadedFile()">清除重傳</button>
                         </div>
-                        <div class="position-relative border rounded p-1 bg-dark text-center" style="max-height: 200px; overflow: hidden;">
-                            <img id="reportImgPreview" src="" alt="Report Preview" class="img-fluid rounded" style="max-height: 190px; object-fit: contain;">
-                            <div id="scanningOverlay" class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center" style="background: rgba(0,0,0,0.7);">
+                        <div class="position-relative border rounded p-1 bg-dark text-center" style="max-height: 250px; overflow: hidden;">
+                            <img id="reportImgPreview" src="" alt="Report Preview" class="img-fluid rounded" style="max-height: 240px; object-fit: contain;">
+                            <div id="scanningOverlay" class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center" style="background: rgba(0,0,0,0.8);">
                                 <div class="spinner-border text-info mb-2" role="status"></div>
-                                <div class="text-white fw-bold small">AI 視覺神經網路深度掃描中...</div>
-                                <div class="text-light" style="font-size: 0.7rem;">辨識 ER/PR、HER2、腫瘤大小、淋巴結、分級...</div>
+                                <div class="text-white fw-bold small"><i class="fa-solid fa-wand-magic-sparkles text-warning me-1"></i>Gemini 1.5 視覺 AI 深度判讀中...</div>
+                                <div class="text-light" style="font-size: 0.72rem;">正在精確解析腫瘤大小 (pT)、淋巴結數 (pN)、ER/PR、HER2、分級與 Ki-67...</div>
                             </div>
                         </div>
+                        <!-- AI 辨識佐證卡 -->
+                        <div id="aiEvidenceBox" class="alert alert-success border-success py-2 px-3 mt-2 shadow-sm d-none">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <i class="fa-solid fa-circle-check text-success"></i>
+                                <strong class="small text-success">Gemini 視覺 AI 真實辨識完成！</strong>
+                            </div>
+                            <div class="text-dark small" id="aiEvidenceNotes" style="font-size: 0.78rem;"></div>
+                        </div>
+                    </div>
                     </div>
 
                     <!-- Quick Extracted Fields Inspector -->
@@ -2419,29 +2453,204 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             renderPreview();
         }
 
-        function handleFileUpload(event) {
+        // ==================== 🤖 Google Gemini 視覺 AI 病理報告真判讀 ====================
+
+        function getStoredApiKey() {
+            return localStorage.getItem('novartis_gemini_api_key') || '';
+        }
+
+        function updateKeyBadge() {
+            const key = getStoredApiKey();
+            const badge = document.getElementById('geminiKeyBadge');
+            const statusText = document.getElementById('keyStatusText');
+            const input = document.getElementById('geminiApiKeyInput');
+            if (input) input.value = key;
+
+            if (badge && statusText) {
+                if (key && key.trim().length > 10) {
+                    badge.className = 'badge bg-success-subtle text-success border border-success px-2 py-1';
+                    statusText.innerHTML = '<i class="fa-solid fa-circle-check me-1"></i>視覺 AI 已連線';
+                } else {
+                    badge.className = 'badge bg-warning-subtle text-dark border border-warning px-2 py-1';
+                    statusText.innerHTML = '<i class="fa-solid fa-key me-1"></i>設定 Gemini Key';
+                }
+            }
+        }
+
+        function toggleApiKeyBox() {
+            const box = document.getElementById('apiKeyConfigBox');
+            if (box) box.style.display = (box.style.display === 'none') ? 'block' : 'none';
+        }
+
+        function saveGeminiApiKey() {
+            const input = document.getElementById('geminiApiKeyInput');
+            const key = input ? input.value.trim() : '';
+            if (!key) {
+                alert("請輸入有效的 Gemini API Key！");
+                return;
+            }
+            localStorage.setItem('novartis_gemini_api_key', key);
+            updateKeyBadge();
+            alert("金鑰已成功儲存！現在您可以拍照上傳病理報告進行真實 AI 判讀。");
+            const box = document.getElementById('apiKeyConfigBox');
+            if (box) box.style.display = 'none';
+        }
+
+        // 核心：由使用者上傳照片或 PDF 後，交由 Gemini 1.5 視覺 AI 真正即時解析病理報告！
+        async function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
 
+            const apiKey = getStoredApiKey();
+            if (!apiKey) {
+                document.getElementById('apiKeyConfigBox').style.display = 'block';
+                document.getElementById('apiKeyConfigBox').scrollIntoView({ behavior: 'smooth' });
+                alert("【請先設定 Gemini API Key】
+為確保病理報告是透過真實視覺 AI 深度判讀，請先在黃色區塊貼上您的 Google Gemini API Key（免費取得）！");
+                event.target.value = '';
+                return;
+            }
+
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = async function(e) {
                 const previewImg = document.getElementById("reportImgPreview");
                 previewImg.src = e.target.result;
-                
+
                 const previewSec = document.getElementById("uploadPreviewSection");
                 previewSec.classList.remove("d-none");
-                
+
                 const scanningOverlay = document.getElementById("scanningOverlay");
                 scanningOverlay.classList.remove("d-none");
+                
+                const evidenceBox = document.getElementById("aiEvidenceBox");
+                if (evidenceBox) evidenceBox.classList.add("d-none");
 
-                // Simulate deep AI multimodal vision scanning
-                setTimeout(() => {
-                    scanningOverlay.classList.add("d-none");
+                try {
+                    const base64Data = e.target.result.split(',')[1];
+                    let mimeType = file.type;
+                    if (!mimeType) {
+                        const lowerName = file.name.toLowerCase();
+                        if (lowerName.endsWith('.pdf')) mimeType = 'application/pdf';
+                        else if (lowerName.endsWith('.png')) mimeType = 'image/png';
+                        else mimeType = 'image/jpeg';
+                    }
+
+                    const promptText = `你是一位專業的乳癌病理學專家與台灣健保（NHI）審查專家。
+請仔細分析這張乳癌病理報告（Surgical Pathology Report）圖片或 PDF 檔案，提取乳癌健保給付試算所需的關鍵病理數值。
+
+【請嚴格提取以下指標】：
+1. 浸潤性腫瘤最大直徑（tumor_size_cm）：以公分（cm）為單位之浮點數（例如：2.8 或 1.5 或 4.2 或 0.8）。若報告為 mm，請換算為 cm（如 25 mm -> 2.5）。若有多個腫瘤病灶，以最大浸潤腫瘤為準。
+2. 陽性淋巴結數（positive_lymph_nodes）：整數（例如：0, 1, 3, 5）。請尋找 Regional / Axillary lymph nodes 轉移數（例如 2/15 positive -> 回傳 2；0/12 positive -> 回傳 0）。若有微轉移（micrometastasis），請據實計入。
+3. 組織學分級（histologic_grade）：整數 1、2 或 3（例如 Nottingham histologic score: Grade 2 -> 2, Grade 3 -> 3）。若未記載請回傳 2。
+4. Ki-67 增殖指數（ki67_percent）：百分比整數（0-100）。例如 Ki-67 35% -> 回傳 35。若報告未檢測或未記載，請回傳 null。
+5. ER 荷爾蒙受體陽性率（er_percent）：百分比整數（0-100）。例如 ER: 85% -> 回傳 85；若僅寫 Positive 未標百分比，預設回傳 80；若 Negative 回傳 0。
+6. PR 荷爾蒙受體陽性率（pr_percent）：百分比整數（0-100）。例如 PR: 70% -> 回傳 70；若僅寫 Positive 未標百分比，預設回傳 70；若 Negative 回傳 0。
+7. HER2 狀態（her2_status）：請嚴格回傳以下三者之一：
+   - "negative": IHC 0, 1+, 或 IHC 2+ 經 FISH/CISH 檢測為 non-amplified (陰性)
+   - "equivocal_neg": IHC 2+ 但報告結論判定陰性
+   - "positive": IHC 3+ 陽性，或 FISH 陽性 (amplified)
+8. 病理摘要佐證依據（evidence_notes）：簡要列出你從報告中哪一段看到的數值摘要（繁體中文），例如：「原發腫瘤大小 2.8 cm (pT2)、腋下淋巴結 2/14 陽性 (pN1a)、Grade 2、ER 85%、PR 70%、HER2 1+ 陰性、Ki-67 30%」。
+
+請嚴格輸出合法的 JSON，不要輸出任何額外解釋或 Markdown 標籤，格式如下：
+{
+  "tumor_size_cm": 2.8,
+  "positive_lymph_nodes": 2,
+  "histologic_grade": 2,
+  "ki67_percent": 35,
+  "er_percent": 85,
+  "pr_percent": 70,
+  "her2_status": "negative",
+  "evidence_notes": "..."
+}`;
+
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [
+                                    { text: promptText },
+                                    {
+                                        inline_data: {
+                                            mime_type: mimeType,
+                                            data: base64Data
+                                        }
+                                    }
+                                ]
+                            }],
+                            generationConfig: {
+                                response_mime_type: "application/json",
+                                temperature: 0.1
+                            }
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errData = await response.json();
+                        throw new Error(errData.error?.message || `API 回應錯誤碼 ${response.status}`);
+                    }
+
+                    const resData = await response.json();
+                    const rawJsonText = resData.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (!rawJsonText) {
+                        throw new Error("Gemini 未能傳回有效的病理辨識內容。");
+                    }
+
+                    const data = JSON.parse(rawJsonText);
+
+                    // 真實寫入各輸入框
+                    if (data.tumor_size_cm !== undefined && data.tumor_size_cm !== null) {
+                        document.getElementById("inTumorSize").value = data.tumor_size_cm;
+                    }
+                    if (data.positive_lymph_nodes !== undefined && data.positive_lymph_nodes !== null) {
+                        document.getElementById("inNodes").value = data.positive_lymph_nodes;
+                    }
+                    if (data.histologic_grade) {
+                        document.getElementById("inGrade").value = data.histologic_grade;
+                    }
+                    if (data.ki67_percent !== undefined && data.ki67_percent !== null) {
+                        document.getElementById("inKi67_ocr").value = data.ki67_percent;
+                        document.getElementById("inKi67").value = data.ki67_percent;
+                    } else {
+                        document.getElementById("inKi67_ocr").value = '';
+                        document.getElementById("inKi67").value = '';
+                    }
+                    if (data.er_percent !== undefined) {
+                        document.getElementById("inER_ocr").value = data.er_percent;
+                        document.getElementById("inER").value = data.er_percent;
+                    }
+                    if (data.pr_percent !== undefined) {
+                        document.getElementById("inPR_ocr").value = data.pr_percent;
+                        document.getElementById("inPR").value = data.pr_percent;
+                    }
+                    if (data.her2_status) {
+                        document.getElementById("inHER2").value = data.her2_status;
+                    }
+
+                    // 展開檢視卡
                     const collapseEl = document.getElementById("collapseExtracted");
                     const bsCollapse = new bootstrap.Collapse(collapseEl, { show: true });
+
+                    // 顯示 AI 佐證依據
+                    if (evidenceBox && data.evidence_notes) {
+                        document.getElementById("aiEvidenceNotes").textContent = data.evidence_notes;
+                        evidenceBox.classList.remove("d-none");
+                    }
+
+                    // 依據真實辨識出的數值，立刻試算健保給付！
                     recalculateFromInputs();
-                    alert("✨ AI 視覺神經網絡掃描完畢！已自動萃取數值並重新比對健保給付規定。");
-                }, 1200);
+
+                } catch (err) {
+                    console.error("Gemini Pathology Error:", err);
+                    alert(`【病理報告 AI 判讀失敗】
+${err.message}
+
+請確認您的 Gemini API Key 是否有效。您也可以在下方手動調整數值進行試算！`);
+                } finally {
+                    scanningOverlay.classList.add("d-none");
+                    event.target.value = '';
+                }
             };
             reader.readAsDataURL(file);
         }
@@ -2450,78 +2659,107 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             document.getElementById("reportFileInput").value = "";
             document.getElementById("uploadPreviewSection").classList.add("d-none");
             document.getElementById("reportImgPreview").src = "";
+            const evidenceBox = document.getElementById("aiEvidenceBox");
+            if (evidenceBox) evidenceBox.classList.add("d-none");
         }
 
-        function parseRawReportText() {
-            const text = document.getElementById("rawReportText").value;
-            if (!text.trim()) {
+        // 貼上英文病理報告文字之 Gemini 語意辨識
+        async function parseRawReportText() {
+            const raw = document.getElementById("rawReportText").value.trim();
+            if (!raw) {
                 alert("請先貼上英文病理報告文字！");
                 return;
             }
 
-            // Extract Tumor Size
-            const sizeMatch = text.match(/(?:tumor\s*size|size|dimension|diameter)?:?\s*(\d+(?:\.\d+)?)\s*(?:x\s*\d+(?:\.\d+)?)*\s*(?:cm|mm)/i) || text.match(/(\d+(?:\.\d+)?)\s*cm/i);
-            if (sizeMatch) {
-                let sizeVal = parseFloat(sizeMatch[1]);
-                if (text.includes("mm") && !text.includes("cm")) {
-                    sizeVal = sizeVal / 10;
+            const apiKey = getStoredApiKey();
+            if (!apiKey) {
+                document.getElementById('apiKeyConfigBox').style.display = 'block';
+                document.getElementById('apiKeyConfigBox').scrollIntoView({ behavior: 'smooth' });
+                alert("【請先設定 Gemini API Key】
+請先貼上您的 Google Gemini API Key 以啟用病理文字語意分析！");
+                return;
+            }
+
+            const btn = document.querySelector("#accordionPaste button.btn-outline-primary");
+            const origText = btn ? btn.innerHTML : "";
+            if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>Gemini 分析中...';
+
+            try {
+                const promptText = `你是一位專業的乳癌病理學專家與台灣健保（NHI）審查專家。
+請仔細分析以下乳癌病理報告英文文字，提取乳癌健保給付試算所需的關鍵病理數值：
+
+【指標】：
+1. 浸潤性腫瘤最大直徑（tumor_size_cm）：以公分（cm）為單位之浮點數（如 2.8）。
+2. 陽性淋巴結數（positive_lymph_nodes）：整數（如 2）。
+3. 組織學分級（histologic_grade）：整數 1、2 或 3。
+4. Ki-67 增殖指數（ki67_percent）：百分比整數，無則 null。
+5. ER 陽性率（er_percent）：百分比整數（0-100）。
+6. PR 陽性率（pr_percent）：百分比整數（0-100）。
+7. HER2 狀態（her2_status）："negative"、"equivocal_neg" 或 "positive"。
+8. 病理摘要佐證依據（evidence_notes）：簡短繁體中文摘要。
+
+請嚴格輸出合法的 JSON，格式如下：
+{
+  "tumor_size_cm": 2.8,
+  "positive_lymph_nodes": 2,
+  "histologic_grade": 2,
+  "ki67_percent": 35,
+  "er_percent": 85,
+  "pr_percent": 70,
+  "her2_status": "negative",
+  "evidence_notes": "..."
+}
+
+以下為病理報告文字：
+${raw}`;
+
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: promptText }] }],
+                        generationConfig: { response_mime_type: "application/json", temperature: 0.1 }
+                    })
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error?.message || `API 回應錯誤碼 ${response.status}`);
                 }
-                document.getElementById("inTumorSize").value = sizeVal;
-            }
 
-            // Extract Lymph Nodes
-            const nodeMatch = text.match(/(\d+)\s*(?:of|\/)\s*(\d+)\s*(?:positive|lymph|nodes)/i) || text.match(/pN(\d+)/i) || text.match(/(\d+)\s*positive\s*nodes?/i);
-            if (nodeMatch) {
-                document.getElementById("inNodes").value = parseInt(nodeMatch[1]);
-            }
+                const resData = await response.json();
+                const data = JSON.parse(resData.candidates[0].content.parts[0].text);
 
-            // Extract Grade
-            const gradeMatch = text.match(/grade\s*[:\s]*([123])/i) || text.match(/grade\s*[:\s]*(I{1,3})/i);
-            if (gradeMatch) {
-                let g = gradeMatch[1];
-                if (g === 'I') g = '1';
-                else if (g === 'II') g = '2';
-                else if (g === 'III') g = '3';
-                document.getElementById("inGrade").value = g;
-            }
+                if (data.tumor_size_cm !== undefined && data.tumor_size_cm !== null) document.getElementById("inTumorSize").value = data.tumor_size_cm;
+                if (data.positive_lymph_nodes !== undefined && data.positive_lymph_nodes !== null) document.getElementById("inNodes").value = data.positive_lymph_nodes;
+                if (data.histologic_grade) document.getElementById("inGrade").value = data.histologic_grade;
+                if (data.ki67_percent !== undefined && data.ki67_percent !== null) {
+                    document.getElementById("inKi67_ocr").value = data.ki67_percent;
+                    document.getElementById("inKi67").value = data.ki67_percent;
+                }
+                if (data.er_percent !== undefined) {
+                    document.getElementById("inER_ocr").value = data.er_percent;
+                    document.getElementById("inER").value = data.er_percent;
+                }
+                if (data.pr_percent !== undefined) {
+                    document.getElementById("inPR_ocr").value = data.pr_percent;
+                    document.getElementById("inPR").value = data.pr_percent;
+                }
+                if (data.her2_status) document.getElementById("inHER2").value = data.her2_status;
 
-            // Extract Ki-67
-            const kiMatch = text.match(/(?:ki-?67|proliferation)[^\d%]*?(\d{1,3})\s*%/i);
-            if (kiMatch) {
-                const kv = parseInt(kiMatch[1]);
-                if (document.getElementById("inKi67")) document.getElementById("inKi67").value = kv;
-                if (document.getElementById("inKi67_ocr")) document.getElementById("inKi67_ocr").value = kv;
-            }
+                const collapseEl = document.getElementById("collapseExtracted");
+                new bootstrap.Collapse(collapseEl, { show: true });
 
-            // Extract ER
-            const erMatch = text.match(/ER[^\d\n\r]*?(\d{1,3})\s*%/i) || text.match(/Estrogen[^\d\n\r]*?(\d{1,3})\s*%/i);
-            if (erMatch) {
-                const ev = parseInt(erMatch[1]);
-                if (document.getElementById("inER")) document.getElementById("inER").value = ev;
-                if (document.getElementById("inER_ocr")) document.getElementById("inER_ocr").value = ev;
-            }
+                recalculateFromInputs();
+                alert("✨ Gemini AI 英文病理報告分析完成！
+" + (data.evidence_notes || "已自動帶入各項數值並試算。"));
 
-            // Extract PR
-            const prMatch = text.match(/PR[^\d\n\r]*?(\d{1,3})\s*%/i) || text.match(/Progesterone[^\d\n\r]*?(\d{1,3})\s*%/i);
-            if (prMatch) {
-                const pv = parseInt(prMatch[1]);
-                if (document.getElementById("inPR")) document.getElementById("inPR").value = pv;
-                if (document.getElementById("inPR_ocr")) document.getElementById("inPR_ocr").value = pv;
+            } catch (err) {
+                alert("文字辨識失敗：" + err.message);
+            } finally {
+                if (btn) btn.innerHTML = origText;
             }
-
-            // Extract HER2
-            if (/HER2[^\n\r]*?(?:3\+|positive)/i.test(text) && !/non-amplified|negative/i.test(text)) {
-                document.getElementById("inHER2").value = "positive";
-            } else if (/HER2[^\n\r]*?(?:2\+|equivocal)/i.test(text)) {
-                document.getElementById("inHER2").value = "equivocal_neg";
-            } else {
-                document.getElementById("inHER2").value = "negative";
-            }
-
-            const collapseEl = document.getElementById("collapseExtracted");
-            new bootstrap.Collapse(collapseEl, { show: true });
-            recalculateFromInputs();
-            alert("✨ AI 英文語意辨識成功！已自動填入數值並重新計算事前審查申請書。");
         }
 
         function recalculateFromInputs() {
