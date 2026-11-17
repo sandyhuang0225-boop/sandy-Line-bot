@@ -52,22 +52,22 @@
             padding: 20px;
             margin-bottom: 20px;
         }
-        /* 原生 Label 按鈕：100% 繞過手機瀏覽器 click 攔截限制 */
+        /* 原生 Label 按鈕：100% 響應手機點擊 */
         .btn-upload-native {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
-            font-size: 1.05rem;
+            gap: 8px;
+            font-size: 1rem;
             font-weight: bold;
             color: white;
             border-radius: 10px;
-            padding: 16px 14px;
+            padding: 15px 12px;
             cursor: pointer;
             text-align: center;
             user-select: none;
             transition: transform 0.15s ease, box-shadow 0.15s ease;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
             position: relative;
             overflow: hidden;
             width: 100%;
@@ -76,8 +76,11 @@
         .btn-upload-native:active {
             transform: scale(0.98);
         }
-        .btn-photo {
+        .btn-gallery {
             background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+        }
+        .btn-camera {
+            background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
         }
         .btn-pdf {
             background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
@@ -198,7 +201,7 @@
             }
             .btn-upload-native {
                 font-size: 0.95rem;
-                padding: 14px 10px;
+                padding: 13px 8px;
             }
         }
         /* 列印與 PDF 匯出模式 */
@@ -237,7 +240,7 @@
         <div class="d-flex align-items-center gap-2">
             <span class="brand-badge">NOVARTIS</span>
             <h5 class="mb-0 fw-bold"><i class="fa-solid fa-file-signature text-warning me-1"></i>醫師顧問/講者合約 智能系統</h5>
-            <span class="badge bg-light text-dark d-none d-md-inline-block">DocuSign 簽署專用規格</span>
+            <span class="badge bg-light text-dark d-none d-md-inline-block">DocuSign 專用版面</span>
         </div>
         <div class="d-flex align-items-center gap-2">
             <!-- 一鍵下載 PDF (專門上傳 DocuSign 用) -->
@@ -256,38 +259,46 @@
 
 <div class="container my-3 no-print">
 
-    <!-- 🌟 最重要核心：一鍵上傳 Agenda 拍照 / 圖片 / PDF / Word 專區 🌟 -->
+    <!-- 🌟 最重要核心：一鍵上傳 Agenda 專區 🌟 -->
     <div class="upload-hero-card">
         <div class="d-flex align-items-center justify-content-between mb-3">
             <h5 class="mb-0 fw-bold text-primary">
                 <i class="fa-solid fa-cloud-arrow-up text-danger me-2"></i>上傳 Agenda 一鍵生成合約（免 Key 任何字！）
             </h5>
-            <span class="badge bg-success px-2 py-1">全手機/電腦原生支援</span>
+            <span class="badge bg-success px-2 py-1">相簿/相機/PDF/Word</span>
         </div>
 
-        <!-- 3 個原生 Label 大按鈕 (100% 響應手機點擊，絕不卡死) -->
+        <!-- 4 個分工明確的原生 Label 大按鈕 (100% 滿足相簿、拍照、PDF、Word 需求) -->
         <div class="row g-2 mb-3">
-            <!-- 1. 拍照 / 選照片 -->
-            <div class="col-md-4 col-12">
-                <label class="btn-upload-native btn-photo">
+            <!-- 1. 從相簿選照片 (無 capture 屬性，點擊 100% 打開相簿，專門選取 ChatGPT 生成圖或截圖) -->
+            <div class="col-md-3 col-6">
+                <label class="btn-upload-native btn-gallery" title="選取手機相簿中的 ChatGPT 生成圖或截圖">
+                    <i class="fa-solid fa-images fs-4"></i>
+                    <span>🖼️ 從相簿選照片</span>
+                    <input type="file" class="native-file-input" accept="image/*" onchange="handleFileChange(this)">
+                </label>
+            </div>
+            <!-- 2. 現場相機拍照 (有 capture 屬性，現場直接拍照) -->
+            <div class="col-md-3 col-6">
+                <label class="btn-upload-native btn-camera" title="現場開啟相機對著投影幕拍照">
                     <i class="fa-solid fa-camera fs-4"></i>
-                    <span>📸 拍照 / 選擇照片上傳</span>
+                    <span>📸 現場拍照上傳</span>
                     <input type="file" class="native-file-input" accept="image/*" capture="environment" onchange="handleFileChange(this)">
                 </label>
             </div>
-            <!-- 2. 上傳 PDF 檔 -->
-            <div class="col-md-4 col-12">
-                <label class="btn-upload-native btn-pdf">
+            <!-- 3. 上傳 PDF 檔 -->
+            <div class="col-md-3 col-6">
+                <label class="btn-upload-native btn-pdf" title="選取 PDF 格式的 Agenda">
                     <i class="fa-solid fa-file-pdf fs-4"></i>
-                    <span>📄 上傳 PDF 檔 Agenda</span>
+                    <span>📄 上傳 PDF 檔</span>
                     <input type="file" class="native-file-input" accept=".pdf,application/pdf" onchange="handleFileChange(this)">
                 </label>
             </div>
-            <!-- 3. 上傳 Word 檔 -->
-            <div class="col-md-4 col-12">
-                <label class="btn-upload-native btn-word">
+            <!-- 4. 上傳 Word 檔 -->
+            <div class="col-md-3 col-6">
+                <label class="btn-upload-native btn-word" title="選取 Word 格式的 Agenda">
                     <i class="fa-solid fa-file-word fs-4"></i>
-                    <span>📝 上傳 Word 檔 Agenda</span>
+                    <span>📝 上傳 Word 檔</span>
                     <input type="file" class="native-file-input" accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" onchange="handleFileChange(this)">
                 </label>
             </div>
@@ -302,7 +313,7 @@
                 <span id="parsePercent" class="badge bg-primary">載入中</span>
             </div>
             <div class="progress mb-2" style="height: 10px;">
-                <div id="parseProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width: 20%"></div>
+                <div id="parseProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" style="width: 25%"></div>
             </div>
             <div id="fileInfoPreview" class="small text-muted"></div>
         </div>
@@ -871,7 +882,7 @@
 
 </div>
 
-<!-- 外部 CDN 工具安全非同步載入 (放在 body 最底部，絕不阻斷頁面原生功能) -->
+<!-- 外部 CDN 工具安全非同步載入 -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" async></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" async></script>
@@ -924,7 +935,7 @@ function handleFileChange(inputElement) {
     progressBox.style.display = 'block';
     progressBar.style.width = '30%';
     percentBadge.textContent = '30%';
-    statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>已成功選取檔案，正在解析...';
+    statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>已選取檔案，正在解析...';
     fileInfo.innerHTML = `📄 檔案名稱：<strong>${file.name}</strong> (${(file.size / 1024).toFixed(1)} KB)`;
 
     const fileName = file.name.toLowerCase();
@@ -937,7 +948,7 @@ function handleFileChange(inputElement) {
     else if (fileName.endsWith('.doc') || fileName.endsWith('.docx')) {
         parseWordFile(file);
     }
-    // 3. 照片 / 圖片 (JPG, PNG, HEIC)
+    // 3. 照片 / 圖片 (JPG, PNG, HEIC, etc.)
     else {
         parseImageFile(file);
     }
@@ -949,7 +960,7 @@ function handleFileChange(inputElement) {
 // 1. 解析 PDF
 function parsePDFFile(file) {
     if (typeof pdfjsLib === 'undefined') {
-        alert("正在載入 PDF 核心模組，請稍候 3 秒後重試一次！");
+        setTimeout(() => parsePDFFile(file), 500);
         return;
     }
     const reader = new FileReader();
@@ -980,7 +991,7 @@ function parsePDFFile(file) {
 // 2. 解析 Word
 function parseWordFile(file) {
     if (typeof mammoth === 'undefined') {
-        alert("正在載入 Word 模組，請稍候 3 秒後重試一次！");
+        setTimeout(() => parseWordFile(file), 500);
         return;
     }
     const reader = new FileReader();
@@ -1005,7 +1016,7 @@ function parseImageFile(file) {
 
     progressBar.style.width = '60%';
     percentBadge.textContent = '60%';
-    statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>正在進行文字識別抽取中...';
+    statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>正在識別相簿圖片文字...';
 
     if (typeof Tesseract !== 'undefined') {
         Tesseract.recognize(
@@ -1172,7 +1183,6 @@ function downloadDocuSignPDF() {
             document.body.classList.remove('clean-mode');
         });
     } else {
-        // 若 html2pdf 尚未載入，喚起標準瀏覽器列印另存為 PDF
         window.print();
     }
 }
