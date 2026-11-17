@@ -370,74 +370,6 @@
                     </div>
                 </div>
 
-                <!-- 2.2 Hormone Receptor (ER / PR) Threshold Interactive Card -->
-                <div class="card card-custom p-3 mb-3 bg-white border border-warning-subtle shadow-sm" id="cardErPrSelector">
-                    <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
-                        <h6 class="fw-bold text-dark mb-0">
-                            <i class="fa-solid fa-dna text-danger me-2"></i>荷爾蒙受體 (ER / PR) 檢驗比率設定
-                        </h6>
-                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle small fw-bold">
-                            健保關鍵門檻
-                        </span>
-                    </div>
-
-                    <!-- Rule explanation banner -->
-                    <div class="alert alert-warning py-1 px-2 mb-2 small" style="font-size: 0.74rem; line-height: 1.45;">
-                        <div class="fw-bold text-dark mb-1"><i class="fa-solid fa-scale-balanced me-1 text-danger"></i>健保 9.72 給付門檻差異：</div>
-                        <div>🔴 <strong>早期乳癌 (C50P1) & 二線法洛德 (C50R2)</strong>：嚴格要求 <strong>ER 或 PR 需 ≧ 30%</strong>。</div>
-                        <div>🟢 <strong>晚期轉移一線 (C50R1 停經前後)</strong>：健保已放寬為 <strong>ER 或 PR ≧ 1% 即有給付</strong>！</div>
-                    </div>
-
-                    <!-- ER Input & Quick Presets -->
-                    <div class="mb-2">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <label class="form-label text-dark small mb-0 fw-bold">Estrogen Receptor (ER) 陽性率：</label>
-                            <div class="btn-group btn-group-sm" role="group">
-                                <button type="button" class="btn btn-outline-success py-0 px-2 fw-bold" onclick="setERPreset(85)" style="font-size: 0.68rem;">85% (強陽性)</button>
-                                <button type="button" class="btn btn-outline-warning text-dark py-0 px-2 fw-bold" onclick="setERPreset(20)" style="font-size: 0.68rem;">20% (晚期給付/早期不符)</button>
-                                <button type="button" class="btn btn-outline-danger py-0 px-2 fw-bold" onclick="setERPreset(0)" style="font-size: 0.68rem;">0% (陰性)</button>
-                            </div>
-                        </div>
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text fw-bold text-primary">ER</span>
-                            <input type="number" id="inER" class="form-control fw-bold fs-6" value="85" min="0" max="100" oninput="onERPRChange()">
-                            <span class="input-group-text">%</span>
-                        </div>
-                    </div>
-
-                    <!-- PR Input & Quick Presets -->
-                    <div class="mb-2">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <label class="form-label text-dark small mb-0 fw-bold">Progesterone Receptor (PR) 陽性率：</label>
-                            <div class="btn-group btn-group-sm" role="group">
-                                <button type="button" class="btn btn-outline-success py-0 px-2 fw-bold" onclick="setPRPreset(70)" style="font-size: 0.68rem;">70% (強陽性)</button>
-                                <button type="button" class="btn btn-outline-warning text-dark py-0 px-2 fw-bold" onclick="setPRPreset(10)" style="font-size: 0.68rem;">10% (晚期給付/早期不符)</button>
-                                <button type="button" class="btn btn-outline-danger py-0 px-2 fw-bold" onclick="setPRPreset(0)" style="font-size: 0.68rem;">0% (陰性)</button>
-                            </div>
-                        </div>
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text fw-bold text-primary">PR</span>
-                            <input type="number" id="inPR" class="form-control fw-bold fs-6" value="70" min="0" max="100" oninput="onERPRChange()">
-                            <span class="input-group-text">%</span>
-                        </div>
-                    </div>
-
-                    <!-- HER2 Selector -->
-                    <div class="mb-1">
-                        <label class="form-label text-dark small mb-1 fw-bold">HER2 檢測狀態 (擊癌利必須為陰性)：</label>
-                        <div class="d-flex gap-2">
-                            <div class="form-check form-check-inline small">
-                                <input class="form-check-input" type="radio" name="radioHER2" id="her2Neg" value="negative" checked onchange="onHER2RadioChange('negative')">
-                                <label class="form-check-label fw-bold text-success" for="her2Neg">陰性 (IHC 0/1+ 或 FISH-) ✅符合</label>
-                            </div>
-                            <div class="form-check form-check-inline small">
-                                <input class="form-check-input" type="radio" name="radioHER2" id="her2Pos" value="positive" onchange="onHER2RadioChange('positive')">
-                                <label class="form-check-label fw-bold text-danger" for="her2Pos">陽性 (IHC 3+ 或 FISH+) ❌排除</label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- 3. Real Pathology Report Upload & Case Tester -->
                 <div class="card card-custom p-3 mb-3">
                     <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-camera text-primary me-2"></i>上傳真實英文病理報告實測</h6>
@@ -451,7 +383,11 @@
                     </div>
 
                     <!-- Uploaded Image Preview & Scanner (hidden initially) -->
-                    <div id="uploadPreviewSection" class="d-none mb-2">
+                    <div <!-- Hidden state inputs for ER / PR / HER2 (controlled via Voice/Text AI) -->
+                <input type="hidden" id="inER" value="85">
+                <input type="hidden" id="inPR" value="70">
+                <input type="hidden" id="inHER2" value="negative">
+                id="uploadPreviewSection" class="d-none mb-2">
                         <div class="d-flex align-items-center justify-content-between mb-1">
                             <span class="small fw-bold text-secondary"><i class="fa-solid fa-file-image me-1"></i>已載入報告影像：</span>
                             <button class="btn btn-link btn-sm text-danger p-0 text-decoration-none" onclick="clearUploadedFile()">清除重傳</button>
@@ -1780,7 +1716,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                 selectGnrhAgonist('zoladex');
             }
 
-            // 2. Extract ER, PR, HER2
+            // 2. Extract ER, PR, HER2 directly from spoken or typed query
             let erVal = null;
             let prVal = null;
             let her2Status = null;
@@ -1791,17 +1727,29 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                 her2Status = "negative";
             }
 
-            // Combined ER PR expression e.g. "ER、PR 20%" / "ER與PR大於30%"
+            // Combined ER PR expression e.g. "ER、PR 20%" / "ER與PR大於30%" / "ER/PR大於1%"
             const combNegMatch = raw.match(/(?<![a-zA-Z])(?:er[\s、,與和及\/]*pr|er和pr|er與pr|er及pr)[^\d一二兩三四五六七八九十%]*(?:陰性|negative|0%|零)/i);
-            const combPosMatch = raw.match(/(?<![a-zA-Z])(?:er[\s、,與和及\/]*pr|er和pr|er與pr|er及pr)[^\d一二兩三四五六七八九十%]*(?:大於|超過|>|≧|\>=|大於等於)\s*(?:30|三十)/i);
+            const combLt1Match = raw.match(/(?<![a-zA-Z])(?:er[\s、,與和及\/]*pr|er和pr|er與pr|er及pr)[^\d一二兩三四五六七八九十%]*(?:小於|低於|<|未達|不足)\s*(?:1|一)/i);
+            const combLt30Match = raw.match(/(?<![a-zA-Z])(?:er[\s、,與和及\/]*pr|er和pr|er與pr|er及pr)[^\d一二兩三四五六七八九十%]*(?:小於|低於|<|未達|不足)\s*(?:30|三十)/i);
+            const combPosMatch = raw.match(/(?<![a-zA-Z])(?:er[\s、,與和及\/]*pr|er和pr|er與pr|er及pr)[^\d一二兩三四五六七八九十%]*(?:大於等於|大於|超過|>|≧|\>=)\s*(?:30|三十)/i);
+            const combOneMatch = raw.match(/(?<![a-zA-Z])(?:er[\s、,與和及\/]*pr|er和pr|er與pr|er及pr)[^\d一二兩三四五六七八九十%]*(?:大於等於|大於|超過|>|≧|\>=)\s*(?:1|一)/i);
             const combNumMatch = raw.match(/(?<![a-zA-Z])(?:er[\s、,與和及\/]*pr|er和pr|er與pr|er及pr)[^\d一二兩三四五六七八九十%]*(\d+|[零一二兩两三四五六七八九十]+)\s*%?/i);
 
             if (combNegMatch) {
                 erVal = 0;
                 prVal = 0;
+            } else if (combLt1Match) {
+                erVal = 0;
+                prVal = 0;
+            } else if (combLt30Match) {
+                erVal = 20;
+                prVal = 20;
             } else if (combPosMatch) {
                 erVal = 85;
                 prVal = 70;
+            } else if (combOneMatch) {
+                erVal = 10;
+                prVal = 10;
             } else if (combNumMatch) {
                 const parsed = parseChineseOrArabicNum(combNumMatch[1]);
                 if (parsed !== null) { erVal = parsed; prVal = parsed; }
@@ -1809,8 +1757,14 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                 // Separate ER
                 if (/(?<![a-zA-Z])(?:er|雌激素受體|雌激素)[^\d一二兩三四五六七八九十%]*(?:陰性|negative|0%|零)/i.test(raw)) {
                     erVal = 0;
-                } else if (/(?<![a-zA-Z])(?:er|雌激素受體|雌激素)[^\d一二兩三四五六七八九十%]*(?:大於|超過|>|≧|\>=|大於等於)\s*(?:30|三十)/i.test(raw)) {
+                } else if (/(?<![a-zA-Z])(?:er|雌激素受體|雌激素)[^\d一二兩三四五六七八九十%]*(?:小於|低於|<|未達|不足)\s*(?:1|一)/i.test(raw)) {
+                    erVal = 0;
+                } else if (/(?<![a-zA-Z])(?:er|雌激素受體|雌激素)[^\d一二兩三四五六七八九十%]*(?:小於|低於|<|未達|不足)\s*(?:30|三十)/i.test(raw)) {
+                    erVal = 20;
+                } else if (/(?<![a-zA-Z])(?:er|雌激素受體|雌激素)[^\d一二兩三四五六七八九十%]*(?:大於等於|大於|超過|>|≧|\>=)\s*(?:30|三十)/i.test(raw)) {
                     erVal = 85;
+                } else if (/(?<![a-zA-Z])(?:er|雌激素受體|雌激素)[^\d一二兩三四五六七八九十%]*(?:大於等於|大於|超過|>|≧|\>=)\s*(?:1|一)/i.test(raw)) {
+                    erVal = 10;
                 } else {
                     const em = raw.match(/(?<![a-zA-Z])(?:er|雌激素受體|雌激素)[^\d一二兩三四五六七八九十%]*(\d+|[零一二兩两三四五六七八九十]+)\s*%?/i);
                     if (em) {
@@ -1822,8 +1776,14 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                 // Separate PR
                 if (/(?<![a-zA-Z])(?:pr|黃體素受體|黃體素)[^\d一二兩三四五六七八九十%]*(?:陰性|negative|0%|零)/i.test(raw)) {
                     prVal = 0;
-                } else if (/(?<![a-zA-Z])(?:pr|黃體素受體|黃體素)[^\d一二兩三四五六七八九十%]*(?:大於|超過|>|≧|\>=|大於等於)\s*(?:30|三十)/i.test(raw)) {
+                } else if (/(?<![a-zA-Z])(?:pr|黃體素受體|黃體素)[^\d一二兩三四五六七八九十%]*(?:小於|低於|<|未達|不足)\s*(?:1|一)/i.test(raw)) {
+                    prVal = 0;
+                } else if (/(?<![a-zA-Z])(?:pr|黃體素受體|黃體素)[^\d一二兩三四五六七八九十%]*(?:小於|低於|<|未達|不足)\s*(?:30|三十)/i.test(raw)) {
+                    prVal = 20;
+                } else if (/(?<![a-zA-Z])(?:pr|黃體素受體|黃體素)[^\d一二兩三四五六七八九十%]*(?:大於等於|大於|超過|>|≧|\>=)\s*(?:30|三十)/i.test(raw)) {
                     prVal = 70;
+                } else if (/(?<![a-zA-Z])(?:pr|黃體素受體|黃體素)[^\d一二兩三四五六七八九十%]*(?:大於等於|大於|超過|>|≧|\>=)\s*(?:1|一)/i.test(raw)) {
+                    prVal = 10;
                 } else {
                     const pm = raw.match(/(?<![a-zA-Z])(?:pr|黃體素受體|黃體素)[^\d一二兩三四五六七八九十%]*(\d+|[零一二兩两三四五六七八九十]+)\s*%?/i);
                     if (pm) {
@@ -1833,72 +1793,73 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                 }
             }
 
-            const spokenHasERPR = (erVal !== null || prVal !== null);
-
-            // If doctor did NOT speak ER/PR, fallback to current input values (default 85 / 70)
+            // Defaults: if doctor does not speak ER/PR, default to compliant (85%/70%)
             const currentInputER = parseInt(document.getElementById("inER")?.value);
             const currentInputPR = parseInt(document.getElementById("inPR")?.value);
             const effectiveER = (erVal !== null) ? erVal : (!isNaN(currentInputER) ? currentInputER : 85);
             const effectivePR = (prVal !== null) ? prVal : (!isNaN(currentInputPR) ? currentInputPR : 70);
-            const effectiveHER2 = (her2Status !== null) ? her2Status : (document.querySelector('input[name="radioHER2"]:checked')?.value || "negative");
+            const effectiveHER2 = (her2Status !== null) ? her2Status : (document.getElementById("inHER2")?.value || "negative");
 
-            // Sync to UI controls immediately
-            if (erVal !== null && document.getElementById("inER")) document.getElementById("inER").value = erVal;
-            if (prVal !== null && document.getElementById("inPR")) document.getElementById("inPR").value = prVal;
-            if (her2Status !== null) {
-                const rad = document.getElementById(her2Status === 'positive' ? 'her2Pos' : 'her2Neg');
-                if (rad) rad.checked = true;
-            }
+            // Sync to hidden inputs
+            if (document.getElementById("inER")) if (document.getElementById("inER")) document.getElementById("inER").value = effectiveER;
+            if (document.getElementById("inPR")) if (document.getElementById("inPR")) document.getElementById("inPR").value = effectivePR;
+            if (document.getElementById("inHER2")) document.getElementById("inHER2").value = effectiveHER2;
 
-            // 3. HER2 Positive Interception (All CDK4/6 cases require HER2-)
+            // 3. HER2 Positive Interception
             if (effectiveHER2 === "positive") {
                 return {
                     scenario: 1,
                     eligible: false,
                     badgeClass: "badge bg-danger fs-6",
-                    badgeText: "❌ 健保【不給付】(HER2 陽性不符規定)",
-                    code: "未符健保 9.72 規定",
+                    badgeText: "❌ 健保【不給付】(HER2 陽性患者排除)",
+                    code: "未符健保 9.72 適應症",
                     borderClass: "border-danger",
-                    spoken: "報告醫師，健保規定擊癌利 (ribociclib) 僅限給付於 HER2 陰性之乳癌病人！病患檢測為 HER2 陽性，應接受抗 HER2 標靶藥物治療（如雙標靶或曲妥珠單抗），不可申請擊癌利事前審查，送審必遭退件！",
-                    details: "⚠️【健保 9.72 防退件攔截】：\n• 攔截原因：健保 9.72 明訂限用於「HER2 陰性」之病人。病患為 HER2 陽性。\n• 臨床處置：請評估標準抗 HER2 標靶藥物 (Herceptin / Perjeta)，避免無效送審遭退件核扣！",
-                    er: effectiveER, pr: effectivePR, her2: "positive", spokenHasERPR: spokenHasERPR
+                    spoken: "報告醫師，健保 9.72 明訂 CDK4/6 抑制劑擊癌利限用於「HER2 檢測為陰性」之病患！病患 HER2 為陽性，不符合本藥健保給付適應症，請勿送審避免核扣；建議評估抗 HER2 標靶治療（如雙標靶賀疾妥或賀癌平）。",
+                    details: "⚠️【健保 9.72 禁忌排除攔截】：\n• 排除原因：病患檢測為 HER2 陽性 (IHC 3+ 或 FISH+)。\n• 規定要件：健保僅給付於 HER2 陰性患者。\n• 臨床處置：請評估 Trastuzumab / Pertuzumab 等抗 HER2 標靶組合，請勿送審擊癌利避免退件！",
+                    er: effectiveER, pr: effectivePR, her2: effectiveHER2
                 };
             }
 
-            // 4. CNS / Brain Metastasis Interception
-            if (/腦轉移|中樞神經|腦部轉移|CNS/i.test(raw)) {
+            // 4. CNS / Brain Metastasis Check with NEGATION AWARENESS
+            const isBrainNeg = /(?:無|沒有|未|不具|非|排除|不是|未出現|無任何).*(?:腦轉移|中樞神經|腦部轉移|CNS)/i.test(raw);
+            const isBrainPos = (/(?:腦轉移|中樞神經轉移|腦部轉移|CNS\s*轉移)/i.test(raw) || /(?:合併|出現|伴隨|診斷為).*(?:腦轉移|CNS)/i.test(raw)) && !isBrainNeg;
+            if (isBrainPos) {
                 return {
-                    scenario: 1,
+                    scenario: 2,
                     eligible: false,
                     badgeClass: "badge bg-danger fs-6",
-                    badgeText: "❌ 健保【不給付】(排除腦/中樞神經轉移)",
+                    badgeText: "❌ 健保【不給付】(CNS 腦轉移排除)",
                     code: "未符健保 9.72",
                     borderClass: "border-danger",
-                    spoken: "報告醫師，健保 9.72 明文規定排除中樞神經系統腦轉移！病患若有腦轉移或尚未控制穩定，健保不給付擊癌利，送審必遭退件。建議優先由放腫科進行腦部局部治療！",
+                    spoken: "報告醫師，健保 9.72 條文明文規定：必須「無中樞神經系統 (CNS) 轉移」！病患合併腦轉移，不符合健保第一線給付規定，送審必遭退件核扣！建議優先評估立體定位放射治療或全腦放療！",
                     details: "⚠️【健保 9.72 防退件攔截】：\n• 攔截原因：健保 9.72 條文明定「無中樞神經系統 (CNS) 轉移」為必要前提。\n• 臨床處置：病患腦轉移未達給付標準，請勿送審避免退件核扣；建議優先評估放療 (SRS/WBRT)。",
-                    er: effectiveER, pr: effectivePR, her2: effectiveHER2, spokenHasERPR: spokenHasERPR
+                    er: effectiveER, pr: effectivePR, her2: effectiveHER2
                 };
             }
 
-            // 5. Visceral Crisis Interception
-            if (/內臟危象|器官轉移危急|visceral\s*crisis|器官衰竭/i.test(raw)) {
+            // 5. Visceral Crisis / Acute Organ Failure Check with NEGATION AWARENESS
+            const isViscNeg = /(?:無|沒有|未|不具|非|排除|不是|未出現|不符|未達|無任何).*(?:內臟危象|器官轉移危急|visceral\s*crisis|器官衰竭)/i.test(raw);
+            const isViscPos = (/(?:內臟危象|器官轉移危急|visceral\s*crisis|器官衰竭|轉移危急)/i.test(raw) || /(?:合併|出現|伴隨|急性).*(?:內臟危象|器官衰竭)/i.test(raw)) && !isViscNeg;
+            if (isViscPos) {
                 return {
-                    scenario: 1,
+                    scenario: 2,
                     eligible: false,
                     badgeClass: "badge bg-danger fs-6",
-                    badgeText: "❌ 健保【不給付】(排除內臟危象，需優先化療)",
+                    badgeText: "❌ 健保【不給付】(內臟危象不符口服標靶適應症)",
                     code: "未符健保 9.72",
                     borderClass: "border-danger",
-                    spoken: "報告醫師，健保 9.72 明訂排除器官轉移危急症狀（Visceral Crisis）！病患目前重要內臟器官功能嚴重受損有立即危險，健保不給付 CDK4/6，臨床需優先以化學治療救急！",
-                    details: "⚠️【健保 9.72 防退件攔截】：\n• 攔截原因：健保明訂「未出現器官轉移危急症狀 (Visceral Crisis)」方可給付。\n• 臨床處置：重大器官嚴重衰竭之內臟危象具立即生命危險，臨床指引要求優先以化學治療救急，不符合內分泌標靶事前審查。",
-                    er: effectiveER, pr: effectivePR, her2: effectiveHER2, spokenHasERPR: spokenHasERPR
+                    spoken: "報告醫師，健保規定：具器官轉移危急症狀（Visceral Crisis）之患者，不符口服 CDK4/6 抑制劑給付標準！送審將遭退件，臨床指引強烈建議優先使用化學治療以迅速緩解症狀！",
+                    details: "⚠️【臨床安全與健保防退件攔截】：\n• 攔截原因：內臟轉移危急症狀 (Visceral Crisis) 不符 CDK4/6 抑制劑健保給付規定。\n• 臨床建議：因病情危急，NCCN / ABC 指引建議優先給予快速緩解之化學治療。",
+                    er: effectiveER, pr: effectivePR, her2: effectiveHER2
                 };
             }
 
-            // 6. Bone-only Metastasis Interception
-            if (/骨轉移/i.test(raw) && !/肝|肺|肋膜|腹膜|內臟|軟組織|淋巴結/i.test(raw) && (/單純|只有|僅有|單一|純|晚期|轉移/i.test(raw) || !/顆/i.test(raw))) {
+            // 6. Bone-only Metastasis Check with NEGATION AWARENESS
+            const isBoneOnlyNeg = /(?:不是|非|排除|並非|不屬於|不只是|不單是|不單純是).*(?:單純|純粹|只有|僅有)?\s*骨轉移|(?:無|沒有|未).*(?:骨轉移)/i.test(raw);
+            const isBoneOnlyPos = (/(?:單純|純粹|只有|僅有|單一|純)\s*骨轉移/i.test(raw) || /(?:僅|只有|單純).*(?:骨骼轉移|骨轉)/i.test(raw)) && !isBoneOnlyNeg;
+            if (isBoneOnlyPos) {
                 return {
-                    scenario: 1,
+                    scenario: 2,
                     eligible: false,
                     badgeClass: "badge bg-danger fs-6",
                     badgeText: "❌ 健保【不給付】(骨轉移不可為唯一部位)",
@@ -1906,112 +1867,13 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                     borderClass: "border-danger",
                     spoken: "報告醫師，健保 9.72 條文明文規定：骨轉移不可為唯一轉移部位！病患若為單純骨轉移，健保不予給付擊癌利，送審必遭退件！建議引導病患加入自費存摺專案或單純內分泌治療！",
                     details: "⚠️【健保 9.72 防退件攔截】：\n• 攔截原因：健保規定「骨轉移不可為唯一轉移部位（Bone-only metastasis 健保不給付）」。\n• 臨床處置：若只有骨轉移，不得送審 CDK4/6 抑制劑；須同時伴隨符合規定之內臟或軟組織轉移。建議病友加入擊癌利自費存摺專案 (買一送一)。",
-                    er: effectiveER, pr: effectivePR, her2: effectiveHER2, spokenHasERPR: spokenHasERPR
+                    er: effectiveER, pr: effectivePR, her2: effectiveHER2
                 };
             }
 
-            // 7. Scenario 5: Endocrine Resistance / 2nd Line Progression (Kisqali + Fulvestrant)
-            if (/內分泌(?:治療)?(?:無效|失敗)|前線(?:失敗|惡化)|AI惡化|二線|第二線|fulvestrant|法洛德/i.test(raw)) {
-                // Strict ER/PR Check: >= 30%
-                if (effectiveER < 30 && effectivePR < 30) {
-                    return {
-                        scenario: 5,
-                        eligible: false,
-                        badgeClass: "badge bg-danger fs-6",
-                        badgeText: "❌ 健保【不給付】(二線法洛德需 ER/PR ≧ 30%)",
-                        code: "未符健保 9.72 第3點",
-                        borderClass: "border-danger",
-                        spoken: `報告醫師，健保規定二線合併法洛德 (Fulvestrant)，荷爾蒙受體染色比例嚴格規定 ER 或 PR 必須 ≧ 30%！病患目前數值（ER ${effectiveER}%、PR ${effectivePR}%）未達 30% 給付門檻，送審必遭退件！建議評估其他治療或引導加入自費存摺專案。`,
-                        details: `⚠️【二線法洛德荷爾蒙受體門檻攔截】：\n• 法規依據：健保 9.72 第 3 點二線解禁規定「HR 陽性（ER 或 PR 染色比率 ≧ 30%）且 HER2 陰性」。\n• 當前數值：ER ${effectiveER}%、PR ${effectivePR}% (未達 30% 給付標準)。\n• 臨床處置：未達事前審查給付規定，切勿送審避免退件核扣！`,
-                        er: effectiveER, pr: effectivePR, her2: effectiveHER2, spokenHasERPR: spokenHasERPR
-                    };
-                }
-
-                return {
-                    scenario: 5,
-                    eligible: true,
-                    badgeClass: "badge bg-warning text-dark fs-6",
-                    badgeText: "✅ 健保【二線解禁有給付】！",
-                    code: "事審代碼：C50R2 (二線解禁)",
-                    borderClass: "border-warning",
-                    spoken: `報告醫師，115 年 12 月 1 日健保新制正式解禁二線！前線使用 AI 惡化且荷爾蒙受體符合 ≧ 30% 規定之轉移性乳癌，健保給付擊癌利合併法洛德 Fulvestrant，事審代碼 C50R2！`,
-                    details: `【115/12/1 二線惡化解禁】：\n• 給付項目：擊癌利 (每日 3 粒 / 600mg) + 法洛德 Fulvestrant (每月 500mg 肌注)\n• 荷爾蒙受體：ER ${effectiveER}%、PR ${effectivePR}% (符合 ≧ 30% 規定)\n• 適用對象：晚期轉移性乳癌且前線使用內分泌治療 (AI) 惡化者\n• 事審代碼：C50R2${!spokenHasERPR ? "\n• 💡 提示：醫師口述未提 ER/PR，系統暫以預設帶入；二線法洛德需 ≧ 30% 方可給付。" : ""}`,
-                    er: effectiveER, pr: effectivePR, her2: effectiveHER2, spokenHasERPR: spokenHasERPR
-                };
-            }
-
-            // 8. Scenario 3/4: Pre-menopausal Metastatic (停經前晚期一線 + GnRH agonist)
-            if (/停經前|停經針|Zoladex|Leuplin|諾曼德|達菲林|Decapeptyl/i.test(raw)) {
-                // Relaxed ER/PR Check: >= 1%
-                if (effectiveER < 1 && effectivePR < 1) {
-                    return {
-                        scenario: 3,
-                        eligible: false,
-                        badgeClass: "badge bg-danger fs-6",
-                        badgeText: "❌ 健保【不給付】(ER 與 PR 均為 0% 陰性)",
-                        code: "未符健保 9.72 第2點",
-                        borderClass: "border-danger",
-                        spoken: "報告醫師，病患 ER 與 PR 均為 0% 陰性，屬於三陰性或荷爾蒙受體陰性乳癌，未達晚期乳癌 HR 陽性 (≧ 1%) 給付門檻，健保不給付 CDK4/6 抑制劑！",
-                        details: "⚠️【荷爾蒙受體陰性攔截】：\n• 攔截原因：健保 9.72 規定限用於荷爾蒙受體陽性之患者。病患 ER/PR 均為 0% 陰性。\n• 臨床處置：請評估化學治療或免疫治療，不符合內分泌標靶事前審查。",
-                        er: effectiveER, pr: effectivePR, her2: effectiveHER2, spokenHasERPR: spokenHasERPR
-                    };
-                }
-
-                const gnrhName = GNRH_ITEMS[currentGnrhAgonist].name.split(" ")[0];
-                let spokenMsg = `報告醫師，停經前轉移性乳癌（無內臟危象、無腦轉移且非單純骨轉移），健保已放寬為 ER 或 PR ≧ 1% 即給付！病患 ER ${effectiveER}%、PR ${effectivePR}% 符合給付，全額給付擊癌利每日 3 粒合併 AI 及停經針 (${gnrhName})，事審代碼 C50R1 併申請停經針。已為您產出雙藥事審申請書！`;
-                if (effectiveER < 30 && effectivePR < 30) {
-                    spokenMsg = `報告醫師，晚期轉移性乳癌健保已放寬荷爾蒙受體規定，ER 或 PR 只要 ≧ 1% 即符合給付！病患 ER ${effectiveER}%、PR ${effectivePR}% (雖小於 30% 但達 ≧ 1% 門檻)，符合晚期給付門檻，健保全額給付擊癌利合併 AI 及停經針 (${gnrhName})！`;
-                }
-
-                return {
-                    scenario: 3,
-                    eligible: true,
-                    badgeClass: "badge bg-info text-dark fs-6",
-                    badgeText: "✅ 健保【停經前雙藥有給付】！",
-                    code: "事審代碼：C50R1 + 停經針 (" + gnrhName + ")",
-                    borderClass: "border-info",
-                    spoken: spokenMsg,
-                    details: `【停經前轉移性乳癌 (MBC)】：\n• 給付項目：擊癌利 (每日 3 粒 / 600mg) + AI + 停經針 (${GNRH_ITEMS[currentGnrhAgonist].name})\n• 荷爾蒙受體：ER ${effectiveER}%、PR ${effectivePR}% (符合晚期放寬 ≧ 1% 給付門檻)\n• 排除要件：無 Visceral Crisis、無 CNS 腦轉移、非單純骨轉移\n• 事審代碼：C50R1 + 停經針 (${GNRH_ITEMS[currentGnrhAgonist].code})${!spokenHasERPR ? "\n• 💡 提示：醫師未口述 ER/PR，系統暫以預設帶入；晚期一線放寬為 ≧ 1% 即符合給付。" : ""}`,
-                    er: effectiveER, pr: effectivePR, her2: effectiveHER2, spokenHasERPR: spokenHasERPR
-                };
-            }
-
-            // 9. Scenario 2: Post-menopausal Metastatic (停經後晚期一線)
-            if (/停經後|晚期乳癌|轉移性乳癌|(?:骨轉移.*(?:肝|肺|內臟))|(?:(?:肝|肺|內臟).*轉移)/i.test(raw)) {
-                // Relaxed ER/PR Check: >= 1%
-                if (effectiveER < 1 && effectivePR < 1) {
-                    return {
-                        scenario: 2,
-                        eligible: false,
-                        badgeClass: "badge bg-danger fs-6",
-                        badgeText: "❌ 健保【不給付】(ER 與 PR 均為 0% 陰性)",
-                        code: "未符健保 9.72 第1點",
-                        borderClass: "border-danger",
-                        spoken: "報告醫師，病患 ER 與 PR 均為 0% 陰性，未達晚期乳癌 HR 陽性 (≧ 1%) 給付門檻，健保不給付 CDK4/6 抑制劑！",
-                        details: "⚠️【荷爾蒙受體陰性攔截】：\n• 攔截原因：健保規定限用於荷爾蒙受體陽性之患者。病患 ER/PR 均為 0% 陰性。\n• 臨床處置：請評估化學治療或抗體藥物複合體 (ADC)，避免無效送件遭退件！",
-                        er: effectiveER, pr: effectivePR, her2: effectiveHER2, spokenHasERPR: spokenHasERPR
-                    };
-                }
-
-                let spokenMsg = `報告醫師，停經後轉移性乳癌（無內臟危象、無腦轉移且非單純骨轉移），健保已放寬為 ER 或 PR ≧ 1% 即給付！病患 ER ${effectiveER}%、PR ${effectivePR}% 符合給付，全額給付第一線擊癌利每日 3 粒合併芳香環轉化酶抑制劑 AI，事前審查代碼 C50R1，每次核准 24 週！`;
-                if (effectiveER < 30 && effectivePR < 30) {
-                    spokenMsg = `報告醫師，晚期轉移性乳癌健保已放寬荷爾蒙受體規定，ER 或 PR 只要 ≧ 1% 即符合給付！病患 ER ${effectiveER}%、PR ${effectivePR}% (雖小於 30% 但達 ≧ 1% 門檻)，符合晚期一線給付門檻，健保全額給付擊癌利！`;
-                }
-
-                return {
-                    scenario: 2,
-                    eligible: true,
-                    badgeClass: "badge bg-success fs-6",
-                    badgeText: "✅ 健保【晚期一線有給付】！",
-                    code: "事審代碼：C50R1",
-                    borderClass: "border-success",
-                    spoken: spokenMsg,
-                    details: `【停經後轉移性乳癌 (MBC)】：\n• 給付項目：擊癌利 (每日 3 粒 / 600mg) + AI (Letrozole / Anastrozole)\n• 荷爾蒙受體：ER ${effectiveER}%、PR ${effectivePR}% (符合晚期放寬 ≧ 1% 給付門檻)\n• 排除要件：無器官轉移危急症狀 (Visceral Crisis)、無中樞神經系統轉移、骨轉移非唯一轉移部位\n• 事審代碼：C50R1，終生以 24 個月為上限${!spokenHasERPR ? "\n• 💡 提示：醫師未口述 ER/PR，系統暫以預設帶入；晚期一線放寬為 ≧ 1% 即符合給付。" : ""}`,
-                    er: effectiveER, pr: effectivePR, her2: effectiveHER2, spokenHasERPR: spokenHasERPR
-                };
-            }
-
-            // 10. Scenario 6: 24 Months Renewal
+            // ========================================================
+            // SCENARIO 6: 24 Months Renewal
+            // ========================================================
             if (/24\s*個月|兩年|2年|二年|續約|展延|續審|non-PD/i.test(raw)) {
                 return {
                     scenario: 6,
@@ -2022,19 +1884,119 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                     borderClass: "border-success",
                     spoken: "報告醫師，用藥滿 24 個月無惡化續約，檢附近期電腦斷層及骨骼掃描確認疾病無惡化（non-PD），依健保 9.72 規定得繼續申請給付。已為您備妥展延申請書！",
                     details: "【24 個月展延續審】：\n• 判定依據：用藥滿 24 個月且影像學檢查無疾病進展 (non-PD)\n• 事審代碼：C50R1\n• 已自動匯入展延追蹤審查表",
-                    er: effectiveER, pr: effectivePR, her2: effectiveHER2, spokenHasERPR: spokenHasERPR
+                    er: effectiveER, pr: effectivePR, her2: effectiveHER2
                 };
             }
 
-            // 11. Scenario 1: Early Breast Cancer (EBC - NATALEE)
+            // ========================================================
+            // SCENARIO 5: 內分泌使用後復發/惡化之二線病人 (Kisqali with Fulvestrant)
+            // 關鍵門檻：ER 或 PR 必須 ≧ 30%！小於 30% 健保不給過！
+            // ========================================================
+            if (/內分泌(?:治療)?(?:使用後)?(?:無效|失敗|復發|惡化)|前線(?:失敗|惡化)|AI惡化|二線|第二線|fulvestrant|法洛德/i.test(raw)) {
+                if (effectiveER < 30 && effectivePR < 30) {
+                    return {
+                        scenario: 5,
+                        eligible: false,
+                        badgeClass: "badge bg-danger fs-6",
+                        badgeText: "❌ 健保【不給付】(二線復發需 ER/PR ≧ 30%)",
+                        code: "未符健保 9.72 第3點",
+                        borderClass: "border-danger",
+                        spoken: `報告醫師，內分泌治療後復發之二線病人，健保規定荷爾蒙受體染色比例嚴格要求 ER 或 PR 必須 ≧ 30%！病患目前 ER ${effectiveER}%、PR ${effectivePR}% (小於 30%)，健保不給過，送審必遭退件！建議評估其他治療或引導加入自費存摺專案。`,
+                        details: `⚠️【二線荷爾蒙受體未達 30% 攔截】：\n• 規章規定：經 AI 治療惡化後二線併用 Fulvestrant，健保限「HR 陽性（ER 或 PR ≧ 30%）且 HER2 陰性」。\n• 當前數值：ER ${effectiveER}%、PR ${effectivePR}% (未達 30% 給付門檻)。\n• 臨床處置：未達 30% 門檻健保不給付，請勿送審避免核扣！`,
+                        er: effectiveER, pr: effectivePR, her2: effectiveHER2
+                    };
+                }
+
+                return {
+                    scenario: 5,
+                    eligible: true,
+                    badgeClass: "badge bg-warning text-dark fs-6",
+                    badgeText: "✅ 健保【二線惡化後解禁有給付】！",
+                    code: "事審代碼：C50R2 (115/12/1解禁)",
+                    borderClass: "border-warning",
+                    spoken: `報告醫師，完全符合 115 年 12 月 1 日二線解禁擴大給付！病患前線使用芳香環轉化酶抑制劑 AI 惡化後，健保全額給付第二線擊癌利每日 3 粒 (600mg) 合併使用 Fulvestrant (事審代碼 C50R2)！已為您備妥二線雙藥事前審查申請書！`,
+                    details: `【二線惡化解禁送審】：\n• 給付法規：115/12/1 健保 9.72 第 3 點擴大給付\n• 組合藥品：擊癌利 (每日 3 粒 / 600mg) + Fulvestrant (法洛德/伏斯壯 500mg 每月)\n• 荷爾蒙受體：ER ${effectiveER}%、PR ${effectivePR}% (符合二線嚴格 ≧ 30% 門檻)\n• 事審代碼：C50R2，每次核准 24 週用量`,
+                    er: effectiveER, pr: effectivePR, her2: effectiveHER2
+                };
+            }
+
+            // ========================================================
+            // SCENARIO 3 & 4: 停經前轉移性乳癌 (晚期一線 + GnRH agonist)
+            // 關鍵門檻：不是單純骨轉移、無內臟危象，只要 ER/PR > 1% 健保即可給付！
+            // ========================================================
+            if (/停經前|停經針|Zoladex|Leuplin|諾曼德|達菲林|Decapeptyl/i.test(raw)) {
+                if (effectiveER < 1 && effectivePR < 1) {
+                    return {
+                        scenario: 3,
+                        eligible: false,
+                        badgeClass: "badge bg-danger fs-6",
+                        badgeText: "❌ 健保【不給付】(ER 與 PR 均為 0% 陰性)",
+                        code: "未符健保 9.72 第2點",
+                        borderClass: "border-danger",
+                        spoken: "報告醫師，病患 ER 與 PR 均為 0% 陰性，未達晚期乳癌 HR 陽性 (≧ 1%) 給付門檻，健保不給付 CDK4/6 抑制劑！",
+                        details: "⚠️【荷爾蒙受體陰性攔截】：\n• 攔截原因：健保規定限用於荷爾蒙受體陽性之患者。病患 ER/PR 均為 0% 陰性。\n• 臨床處置：請評估化學治療或抗體藥物複合體 (ADC)。",
+                        er: effectiveER, pr: effectivePR, her2: effectiveHER2
+                    };
+                }
+
+                const gnrh = GNRH_ITEMS[currentGnrhAgonist] || GNRH_ITEMS.zoladex;
+                return {
+                    scenario: 3,
+                    eligible: true,
+                    badgeClass: "badge bg-info text-dark fs-6",
+                    badgeText: "✅ 健保【晚期停經前一線有給付】！",
+                    code: "事審代碼：C50R1 (併用停經針)",
+                    borderClass: "border-info",
+                    spoken: `報告醫師，停經前晚期轉移性乳癌病人（不是單純骨轉移、沒有內臟危象），健保規定只要 ER 或 PR ≧ 1% 即可給付！病患 ER ${effectiveER}%、PR ${effectivePR}% 符合給付，全額給付第一線擊癌利每日 3 粒 (600mg) 併用芳香環轉化酶抑制劑 (AI) 及停經針 (${gnrh.name.split(" ")[0]})，事前審查代碼 C50R1！已為您備妥雙藥事前審查申請書！`,
+                    details: `【停經前晚期轉移性乳癌 (C50R1 + GnRH)】：\n• 給付項目：擊癌利 (每日 3 粒 / 600mg) + AI + ${gnrh.name}\n• 荷爾蒙受體：ER ${effectiveER}%、PR ${effectivePR}% (符合晚期放寬 ≧ 1% 給付門檻)\n• 停經針劑：已自動配置【${gnrh.name}】(${gnrh.spec})，申請數量 ${gnrh.qty}\n• 排除確認：無器官轉移危急症狀 (Visceral Crisis)、無中樞神經系統轉移、骨轉移非唯一轉移部位\n• 事審代碼：C50R1，每次核准 24 週 (378 粒)`,
+                    er: effectiveER, pr: effectivePR, her2: effectiveHER2
+                };
+            }
+
+            // ========================================================
+            // SCENARIO 2: 晚期轉移性乳癌 (停經後晚期一線)
+            // 關鍵門檻：不是單純骨轉移、無內臟危象，只要 ER/PR > 1% 健保即可給付！
+            // ========================================================
+            if (/晚期|轉移|停經後|四期|stage\s*iv|第四期|(?:骨轉移.*(?:肝|肺|內臟))|(?:(?:肝|肺|內臟).*轉移)/i.test(raw)) {
+                if (effectiveER < 1 && effectivePR < 1) {
+                    return {
+                        scenario: 2,
+                        eligible: false,
+                        badgeClass: "badge bg-danger fs-6",
+                        badgeText: "❌ 健保【不給付】(ER 與 PR 均為 0% 陰性)",
+                        code: "未符健保 9.72 第1點",
+                        borderClass: "border-danger",
+                        spoken: "報告醫師，病患 ER 與 PR 均為 0% 陰性，未達晚期乳癌 HR 陽性 (≧ 1%) 給付門檻，健保不給付 CDK4/6 抑制劑！",
+                        details: "⚠️【荷爾蒙受體陰性攔截】：\n• 攔截原因：健保規定限用於荷爾蒙受體陽性之患者。病患 ER/PR 均為 0% 陰性。\n• 臨床處置：請評估化學治療或抗體藥物複合體 (ADC)。",
+                        er: effectiveER, pr: effectivePR, her2: effectiveHER2
+                    };
+                }
+
+                return {
+                    scenario: 2,
+                    eligible: true,
+                    badgeClass: "badge bg-success fs-6",
+                    badgeText: "✅ 健保【晚期一線有給付】！",
+                    code: "事審代碼：C50R1",
+                    borderClass: "border-success",
+                    spoken: `報告醫師，晚期轉移性乳癌病人（不是單純骨轉移、沒有內臟危象），健保規定只要 ER 或 PR ≧ 1% 即可給付！病患 ER ${effectiveER}%、PR ${effectivePR}% 符合給付，全額給付第一線擊癌利每日 3 粒 (600mg) 合併芳香環轉化酶抑制劑 AI，事前審查代碼 C50R1！`,
+                    details: `【停經後晚期轉移性乳癌 (C50R1)】：\n• 給付項目：擊癌利 (每日 3 粒 / 600mg) + AI (Letrozole / Anastrozole)\n• 荷爾蒙受體：ER ${effectiveER}%、PR ${effectivePR}% (符合晚期放寬 ≧ 1% 給付門檻)\n• 排除確認：無器官轉移危急症狀 (Visceral Crisis)、無中樞神經系統轉移、骨轉移非唯一轉移部位\n• 事審代碼：C50R1，每次核准 24 週 (378 粒)`,
+                    er: effectiveER, pr: effectivePR, her2: effectiveHER2
+                };
+            }
+
+            // ========================================================
+            // SCENARIO 1: 早期乳癌 (EBC - NATALEE)
+            // 關鍵門檻：ER 或 PR 必須 ≧ 30%！小於 30% 健保不給過！
+            // ========================================================
             // Adult check
             if (/未成年|小兒|兒科|未滿\s*18\s*歲|<\s*18\s*歲|17\s*歲|16\s*歲|15\s*歲/i.test(raw)) {
                 return {
                     scenario: 1, eligible: false, badgeClass: "badge bg-danger fs-6",
                     badgeText: "❌ 健保【不給付】(僅限成年病人)", code: "未符健保 9.72 第4點", borderClass: "border-danger",
                     spoken: "報告醫師，健保 9.72 第 4 點明訂僅限「早期成年病人」之輔助治療！未成年病患不符健保給付適應症，送審必遭退件！",
-                    details: "⚠️【健保 9.72 防退件攔截】：\n• 攔截原因：健保規定適用對象為成年病人（≧ 18 歲）。\n• 臨床處置：避免無效事審送件，請依兒科/未成年專案或臨床試驗評估處置。",
-                    er: effectiveER, pr: effectivePR, her2: effectiveHER2, spokenHasERPR: spokenHasERPR
+                    details: "⚠️【健保 9.72 防退件攔截】：\n• 攔截原因：健保規定適用對象為成年病人（≧ 18 歲）。",
+                    er: effectiveER, pr: effectivePR, her2: effectiveHER2
                 };
             }
 
@@ -2044,8 +2006,8 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                     scenario: 1, eligible: false, badgeClass: "badge bg-danger fs-6",
                     badgeText: "❌ 健保【不給付】(惡化者不得互換/繼續使用)", code: "未符健保 9.72 第4點", borderClass: "border-danger",
                     spoken: "報告醫師，健保 9.72 第 4 點明文嚴格規定：若因「疾病惡化」者，不得互換品項，亦不得繼續使用！此案若送審必遭健保署即刻退件核扣！",
-                    details: "⚠️【健保 9.72 嚴格禁忌攔截】：\n• 規章規定：早期乳癌 CDK4/6 抑制劑「若因疾病惡化 (PD) 者，不得互換，且不得繼續使用」。\n• 互換唯一合法條件：僅限「因嚴重不良反應 (AE) 不耐受」且無惡化者，方得申請互換。\n• 臨床處置：病患已疾病惡化，請轉移為晚期後線全身性治療評估，切勿送審早期申請書。",
-                    er: effectiveER, pr: effectivePR, her2: effectiveHER2, spokenHasERPR: spokenHasERPR
+                    details: "⚠️【健保 9.72 嚴格禁忌攔截】：\n• 規章規定：早期乳癌 CDK4/6 抑制劑「若因疾病惡化 (PD) 者，不得互換，且不得繼續使用」。",
+                    er: effectiveER, pr: effectivePR, her2: effectiveHER2
                 };
             }
 
@@ -2055,8 +2017,8 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                     scenario: 1, eligible: false, badgeClass: "badge bg-danger fs-6",
                     badgeText: "❌ 健保【不給付】(已逾術後16個月上限)", code: "未符健保 9.72 第4點", borderClass: "border-danger",
                     spoken: "報告醫師，健保 9.72 第 4 點明訂：必須於「手術切除後 16 個月內」提出藥品申請！病患手術切除已超過 16 個月，時效已過，送審將被退件！",
-                    details: "⚠️【健保 9.72 防退件攔截】：\n• 攔截原因：健保明訂申請時限為「手術切除後 16 個月內」。\n• 臨床處置：已逾越手術時間門檻，無法取得健保事前審查核准，建議輔以標準內分泌治療或自費專案。",
-                    er: effectiveER, pr: effectivePR, her2: effectiveHER2, spokenHasERPR: spokenHasERPR
+                    details: "⚠️【健保 9.72 防退件攔截】：\n• 攔截原因：健保明訂申請時限為「手術切除後 16 個月內」。",
+                    er: effectiveER, pr: effectivePR, her2: effectiveHER2
                 };
             }
 
@@ -2066,44 +2028,28 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                     scenario: 1, eligible: false, badgeClass: "badge bg-danger fs-6",
                     badgeText: "❌ 健保【不給付】(內分泌治療已逾12週)", code: "未符健保 9.72 第4點", borderClass: "border-danger",
                     spoken: "報告醫師，健保 9.72 第 4 點明訂：使用本藥品前，輔助內分泌治療最多只能接受 12 週！病患內分泌治療已超過 12 週，不符合健保申請門檻，送審將遭退件！",
-                    details: "⚠️【健保 9.72 防退件攔截】：\n• 攔截原因：健保規定「開始使用本藥品前，最多只能接受 12 週的輔助內分泌治療」。\n• 臨床處置：避免無效事審送件，建議繼續常規內分泌治療或評估自費專案。",
-                    er: effectiveER, pr: effectivePR, her2: effectiveHER2, spokenHasERPR: spokenHasERPR
+                    details: "⚠️【健保 9.72 防退件攔截】：\n• 攔截原因：健保規定「開始使用本藥品前，最多只能接受 12 週的輔助內分泌治療」。",
+                    er: effectiveER, pr: effectivePR, her2: effectiveHER2
                 };
             }
 
-            // Strict ER/PR Check for EBC (ER or PR >= 30%)
+            // Strict ER/PR Check for EBC: 必須 ≧ 30%！
             if (effectiveER < 30 && effectivePR < 30) {
                 return {
                     scenario: 1, eligible: false, badgeClass: "badge bg-danger fs-6",
-                    badgeText: "❌ 健保【不給付】(ER 與 PR 均小於 30%)", code: "未符健保 9.72 第4點", borderClass: "border-danger",
-                    spoken: `報告醫師，健保 9.72 第 4 點早期乳癌明文規定：荷爾蒙受體必須為強陽性（ER 或 PR 染色比率必須 ≧ 30%）！病患目前 ER ${effectiveER}%、PR ${effectivePR}% 未達 30% 給付門檻，送審必遭退件！建議引導病患加入擊癌利自費存摺專案。`,
-                    details: `⚠️【AI 健保防退件攔截】：\n• 攔截原因：健保 9.72 第 4 點明定荷爾蒙受體陽性門檻為「ER ≧ 30% 或 PR ≧ 30%」。\n• 辨識數值：ER ${effectiveER}%、PR ${effectivePR}%（均 < 30%）。\n• 臨床處置：避免無效事前審查送審被核扣，建議引導病人加入擊癌利自費存摺專案或評估化學治療！`,
-                    er: effectiveER, pr: effectivePR, her2: effectiveHER2, spokenHasERPR: spokenHasERPR
+                    badgeText: "❌ 健保【不給付】(ER 與 PR 均未達 30%)", code: "未符健保 9.72 第4點", borderClass: "border-danger",
+                    spoken: `報告醫師，早期乳癌 (EBC) 健保 9.72 第 4 點規定荷爾蒙受體染色比例嚴格要求 ER 或 PR 必須 ≧ 30%！病患目前 ER ${effectiveER}%、PR ${effectivePR}% (小於 30%)，健保不給過，送審必遭退件！建議引導病患加入擊癌利自費存摺專案。`,
+                    details: `⚠️【荷爾蒙受體比率未達門檻攔截】：\n• 規章規定：早期乳癌給付條件限「HR 陽性（ER 或 PR 染色比率 ≧ 30%）且 HER2 陰性」。\n• 當前數值：ER ${effectiveER}%、PR ${effectivePR}%（均小於 30%）。\n• 臨床處置：未達 30% 門檻健保不給付，切勿送審避免核扣！`,
+                    er: effectiveER, pr: effectivePR, her2: effectiveHER2
                 };
             }
 
-            // Now parse Tumor size, Nodes, Grade
-            let grade = null;
-            let gradeDesc = "";
-            if (/grade\s*3|g3|第\s*3\s*級|第三級|3\s*級|3級|poorly/i.test(raw)) {
-                grade = 3; gradeDesc = "Grade 3（第 3 級 / 分化不良）";
-            } else if (/grade\s*1|g1|第\s*1\s*級|第一級|1\s*級|1級|well/i.test(raw)) {
-                grade = 1; gradeDesc = "Grade 1（第 1 級 / 分化良好）";
-            } else if (/grade\s*2|g2|第\s*2\s*級|第二級|2\s*級|2級|moderate/i.test(raw)) {
-                grade = 2; gradeDesc = "Grade 2（第 2 級 / 中度分化）";
-            }
-
+            // Extract Nodes, Size, Grade for EBC 4 High-Risk Criteria
             let nodes = null;
-            let isN0 = false;
-            if (/n0|無淋巴結轉移|沒有淋巴結轉移|無陽性淋巴結|沒有陽性淋巴結|淋巴結零顆|零顆淋巴結|淋巴結0顆|0顆陽性/i.test(raw)) {
-                nodes = 0; isN0 = true;
-            }
-            const nodeMatch = raw.match(/(\d+|[一二兩两三四五六七八九十]+)\s*(?:顆|個|粒)?(?:陽性|轉移)?(?:腋下)?淋巴(?:結)?/i) ||
-                             raw.match(/淋巴(?:結)?(?:陽性|轉移)?(?:有)?\s*(\d+|[一二兩两三四五六七八九十]+)\s*(?:顆|個|粒)/i) ||
-                             raw.match(/n(\d+)/i) ||
-                             raw.match(/paln\s*(\d+)/i);
+            if (/無淋巴|0\s*顆|零顆|未轉移|n0|沒有淋巴|淋巴結無/i.test(raw)) nodes = 0;
+            const nodeMatch = raw.match(/(\d+|[一二兩两三四五六七八九十]+)\s*顆(?:陽性|淋巴)?|陽性淋巴結?\s*(\d+|[一二兩两三四五六七八九十]+)|淋巴結?\s*(\d+|[一二兩两三四五六七八九十]+)\s*顆|(\d+|[一二兩两三四五六七八九十]+)\s*個陽性|aln\s*(\d+)/i);
             if (nodeMatch && nodes === null) {
-                const parsed = parseChineseOrArabicNum(nodeMatch[1]);
+                const parsed = parseChineseOrArabicNum(nodeMatch[1] || nodeMatch[2] || nodeMatch[3] || nodeMatch[4] || nodeMatch[5]);
                 if (parsed !== null) nodes = parsed;
             }
 
@@ -2123,7 +2069,11 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                 if (!isNaN(parsed)) size = parsed;
             }
 
-            // Default fallbacks if omitted
+            let grade = null;
+            if (/grade\s*3|g3|第\s*3\s*級|第三級|分化不良|低分化|high\s*grade/i.test(raw)) grade = 3;
+            else if (/grade\s*2|g2|第\s*2\s*級|第二級|中度分化/i.test(raw)) grade = 2;
+            else if (/grade\s*1|g1|第\s*1\s*級|第一級|高分化/i.test(raw)) grade = 1;
+
             if (nodes === null) nodes = 2;
             if (size === null) size = 2.4;
             if (grade === null) grade = 2;
@@ -2135,7 +2085,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
 
             if (nodes >= 4) {
                 conditionMet = "條件 I (陽性淋巴結 ≧ 4 顆 / pN2-3)";
-                conditionDesc = `病患腋下陽性淋巴結轉移達 ${nodes} 顆 (pN ≧ 4)，符合極高復發風險條件 I。不限腫瘤大小與分級，享有健保全額給付！`;
+                conditionDesc = `病患腋下陽性淋巴結轉移達 ${nodes} 顆 (pN ≧ 4)，符合條件 I。不限腫瘤大小與分級，享有健保全額給付！`;
             } else if (isT4 || size > 5.0) {
                 conditionMet = "條件 IV (腫瘤 > 5cm / 局部侵犯 T4，即使 N0 給付)";
                 conditionDesc = isT4 ? "病患為局部晚期或侵犯胸壁皮膚 (T4)，符合早期高復發條件 IV，即使腋下淋巴結無轉移 (N0) 亦享有全額給付！" : `病患腫瘤最大徑 ${size}cm (T3 > 5cm)，符合條件 IV，即使淋巴結 0 顆 (N0) 亦享有全額給付！`;
@@ -2151,7 +2101,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                     badgeText: "❌ 健保【不給付】(未達早期高復發門檻)", code: "未符健保 9.72 第4點", borderClass: "border-danger",
                     spoken: `報告醫師，病患目前數值（腫瘤 ${size} 公分、陽性淋巴結 ${nodes} 顆、Grade ${grade}）未達 115 年 12 月 1 日健保 4 大高復發門檻！若送審必遭退件核扣，建議引導病患加入擊癌利自費存摺專案！`,
                     details: `⚠️【AI 健保防退件攔截】：\n• 判定結果：未達早期乳癌 4 大高復發條件。\n• 臨床處置：避免無效事審送件，建議常規輔助治療或引導加入自費存摺專案。`,
-                    size: size, nodes: nodes, grade: grade, er: effectiveER, pr: effectivePR, her2: effectiveHER2, spokenHasERPR: spokenHasERPR
+                    size: size, nodes: nodes, grade: grade, er: effectiveER, pr: effectivePR, her2: effectiveHER2
                 };
             }
 
@@ -2159,9 +2109,9 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                 scenario: 1, eligible: true, badgeClass: "badge bg-success fs-6",
                 badgeText: "✅ 健保【早期乳癌有給付】！", code: codeStr, borderClass: "border-success",
                 spoken: `報告醫師，完全符合 115 年 12 月 1 日健保擴大給付！病患符合早期乳癌高復發【${conditionMet.split(" ")[0]}】，事前審查代碼 C50P1，每次核准 24 週，每日 2 粒 (400mg)！已為您備妥正式事審申請書！`,
-                details: `【早期乳癌 (EBC) 健保 9.72 第 4 點】：\n• 判定符合：${conditionMet}\n• 臨床依據：${conditionDesc}\n• 荷爾蒙受體：ER ${effectiveER}%、PR ${effectivePR}% (符合 ≧ 30% 門檻)，HER2 陰性\n• 事審代碼：C50P1 (核准用量 252 粒 / 24 週)${!spokenHasERPR ? "\n• 💡 提示：醫師未口述 ER/PR，系統暫以預設帶入；早期乳癌需 ≧ 30% 方可給付。" : ""}`,
+                details: `【早期乳癌 (EBC) 健保 9.72 第 4 點】：\n• 判定符合：${conditionMet}\n• 臨床依據：${conditionDesc}\n• 荷爾蒙受體：ER ${effectiveER}%、PR ${effectivePR}% (符合 ≧ 30% 門檻)，HER2 陰性\n• 事審代碼：C50P1 (核准用量 252 粒 / 24 週)`,
                 size: size, nodes: nodes, grade: grade, isT4: isT4, conditionTitle: conditionMet, conditionRationale: conditionDesc,
-                er: effectiveER, pr: effectivePR, her2: effectiveHER2, spokenHasERPR: spokenHasERPR
+                er: effectiveER, pr: effectivePR, her2: effectiveHER2
             };
         }
 
@@ -2263,12 +2213,12 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             speakText(res.spoken);
 
             // 5. Synchronize Form Inputs
-            if (res.size !== undefined) document.getElementById("inTumorSize").value = res.size;
-            if (res.nodes !== undefined) document.getElementById("inNodes").value = res.nodes;
-            if (res.grade !== undefined) document.getElementById("inGrade").value = res.grade;
-            if (res.er !== undefined) document.getElementById("inER").value = res.er;
-            if (res.pr !== undefined) document.getElementById("inPR").value = res.pr;
-            if (res.her2 !== undefined) document.getElementById("inHER2").value = res.her2;
+            if (res.size !== undefined && document.getElementById("inTumorSize")) document.getElementById("inTumorSize").value = res.size;
+            if (res.nodes !== undefined && document.getElementById("inNodes")) document.getElementById("inNodes").value = res.nodes;
+            if (res.grade !== undefined && document.getElementById("inGrade")) document.getElementById("inGrade").value = res.grade;
+            if (res.er !== undefined && document.getElementById("inER")) if (document.getElementById("inER")) document.getElementById("inER").value = res.er;
+            if (res.pr !== undefined && document.getElementById("inPR")) if (document.getElementById("inPR")) document.getElementById("inPR").value = res.pr;
+            if (res.her2 !== undefined && document.getElementById("inHER2")) document.getElementById("inHER2").value = res.her2;
 
             // 6. Set Scenario & Update Prior Authorization Application Form
             setScenario(res.scenario);
@@ -2357,13 +2307,13 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             // Extract ER
             const erMatch = text.match(/ER[^\d\n\r]*?(\d{1,3})\s*%/i) || text.match(/Estrogen[^\d\n\r]*?(\d{1,3})\s*%/i);
             if (erMatch) {
-                document.getElementById("inER").value = parseInt(erMatch[1]);
+                if (document.getElementById("inER")) document.getElementById("inER").value = parseInt(erMatch[1]);
             }
 
             // Extract PR
             const prMatch = text.match(/PR[^\d\n\r]*?(\d{1,3})\s*%/i) || text.match(/Progesterone[^\d\n\r]*?(\d{1,3})\s*%/i);
             if (prMatch) {
-                document.getElementById("inPR").value = parseInt(prMatch[1]);
+                if (document.getElementById("inPR")) document.getElementById("inPR").value = parseInt(prMatch[1]);
             }
 
             // Extract HER2
@@ -2463,29 +2413,29 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                 document.getElementById("inTumorSize").value = "2.4";
                 document.getElementById("inNodes").value = "2";
                 document.getElementById("inGrade").value = "2";
-                document.getElementById("inER").value = "85";
-                document.getElementById("inPR").value = "70";
+                if (document.getElementById("inER")) document.getElementById("inER").value = "85";
+                if (document.getElementById("inPR")) document.getElementById("inPR").value = "70";
                 document.getElementById("inHER2").value = "negative";
             } else if (caseType === 'T1N1G3') {
                 document.getElementById("inTumorSize").value = "1.6";
                 document.getElementById("inNodes").value = "1";
                 document.getElementById("inGrade").value = "3";
-                document.getElementById("inER").value = "90";
-                document.getElementById("inPR").value = "65";
+                if (document.getElementById("inER")) document.getElementById("inER").value = "90";
+                if (document.getElementById("inPR")) document.getElementById("inPR").value = "65";
                 document.getElementById("inHER2").value = "negative";
             } else if (caseType === '5.5cmN0') {
                 document.getElementById("inTumorSize").value = "5.5";
                 document.getElementById("inNodes").value = "0";
                 document.getElementById("inGrade").value = "2";
-                document.getElementById("inER").value = "70";
-                document.getElementById("inPR").value = "50";
+                if (document.getElementById("inER")) document.getElementById("inER").value = "70";
+                if (document.getElementById("inPR")) document.getElementById("inPR").value = "50";
                 document.getElementById("inHER2").value = "negative";
             } else if (caseType === 'T2N0') {
                 document.getElementById("inTumorSize").value = "3.5";
                 document.getElementById("inNodes").value = "0";
                 document.getElementById("inGrade").value = "2";
-                document.getElementById("inER").value = "80";
-                document.getElementById("inPR").value = "60";
+                if (document.getElementById("inER")) document.getElementById("inER").value = "80";
+                if (document.getElementById("inPR")) document.getElementById("inPR").value = "60";
                 document.getElementById("inHER2").value = "negative";
             }
             recalculateFromInputs();
