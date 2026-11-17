@@ -1360,8 +1360,7 @@ async function parsePastedText() {
     const apiKey = getStoredApiKey();
     if (!apiKey) {
         // apiKeyConfigBox removed
-        alert("【請先設定 Gemini API Key】
-請先貼上您的 Google Gemini API Key 以啟用分析！");
+        alert("【請先設定 Gemini API Key】\n請先貼上您的 Google Gemini API Key 以啟用分析！");
         return;
     }
 
