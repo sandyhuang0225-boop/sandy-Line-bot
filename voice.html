@@ -335,7 +335,7 @@
                 </div>
 
                 <!-- 2.1 GnRH Agonist Selector (Mandatory for Pre-menopausal / Male) -->
-                <div class="card card-custom p-3 mb-3 border-2 border-primary-subtle shadow-sm" id="cardGnrhSelector">
+                <div id="cardGnrhSelector" class="card card-custom p-3 mb-3 border-2 border-primary-subtle shadow-sm d-none" class="card card-custom p-3 mb-3 border-2 border-primary-subtle shadow-sm d-none">
                     <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
                         <h6 class="fw-bold text-dark mb-0">
                             <i class="fa-solid fa-syringe text-danger me-2"></i>停經針 (GnRH agonist) 品項選擇
@@ -369,6 +369,35 @@
                         </button>
                     </div>
                 </div>
+                <!-- 2.3 Fulvestrant Selector (For Scenario 5: 2nd line recurrence) -->
+                <div class="card card-custom p-3 mb-3 border-2 border-warning-subtle shadow-sm d-none" id="cardFulvestrantSelector">
+                    <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
+                        <h6 class="fw-bold text-dark mb-0">
+                            <i class="fa-solid fa-pills text-warning me-2"></i>二線 Fulvestrant (法洛德/伏斯壯) 品項選擇
+                        </h6>
+                        <span class="badge bg-warning text-dark small">二線雙藥送審</span>
+                    </div>
+                    <div class="small text-muted mb-2" style="font-size: 0.74rem;">
+                        各醫院進藥品項不同（目前健保最普遍為<strong>台灣東洋 伏斯壯</strong>），點擊即時更換事審表第二項藥品規格、廠牌與健保碼：
+                    </div>
+                    <div class="d-grid gap-2 mb-1">
+                        <button type="button" class="btn btn-sm btn-primary text-start d-flex justify-content-between align-items-center py-2 px-3 fw-bold btn-fulv active" id="btnFulvTty" onclick="selectFulvestrantItem('tty')">
+                            <div>
+                                <div><i class="fa-solid fa-circle-dot me-2 text-warning"></i><strong>台灣東洋 伏斯壯注射液 50mg/mL (Fustron)</strong> <span class="badge bg-warning text-dark ms-1">台廠健保主流首選</span></div>
+                                <small class="text-white-50" style="font-size: 0.72rem;">健保碼: AC61825221 ｜ 台灣東洋藥品 ｜ 16支 (24週用量)</small>
+                            </div>
+                            <span class="badge bg-light text-dark">已選取 (預設)</span>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary text-start d-flex justify-content-between align-items-center py-2 px-3 fw-bold btn-fulv" id="btnFulvAz" onclick="selectFulvestrantItem('astrazeneca')">
+                            <div>
+                                <div><i class="fa-regular fa-circle me-2"></i><strong>原廠 阿斯特捷利康 法洛德注射液 250mg (Faslodex)</strong></div>
+                                <small class="text-muted" style="font-size: 0.72rem;">健保碼: B024345248 ｜ 台灣阿斯特捷利康 ｜ 16支 (24週用量)</small>
+                            </div>
+                            <span class="badge bg-secondary-subtle text-secondary">切換</span>
+                        </button>
+                    </div>
+                </div>
+
 
                 <!-- 3. Real Pathology Report Upload & Case Tester -->
                 <div class="card card-custom p-3 mb-3">
@@ -1012,6 +1041,78 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
 
         // GnRH Agonist Drug Directory (For Pre-menopausal Breast Cancer)
         let currentGnrhAgonist = "zoladex";
+        
+        const FULVESTRANT_ITEMS = {
+            tty: {
+                id: "tty",
+                name: "伏斯壯注射液 50毫克/毫升 (Fustron)",
+                generic: "Fulvestrant injection 50mg/mL (250mg/5mL)",
+                code: "AC61825221",
+                brand: "台灣東洋藥品工業股份有限公司",
+                spec: "每次 500mg (2支) 雙側臀部肌肉注射 (D1, D15, D29 及後續每 28 天一次)",
+                qty: "16 支",
+                qtyDesc: "(24週用量)"
+            },
+            astrazeneca: {
+                id: "astrazeneca",
+                name: "法洛德注射液 250毫克 (Faslodex)",
+                generic: "Faslodex Injection 250mg/5mL",
+                code: "B024345248",
+                brand: "台灣阿斯特捷利康股份有限公司",
+                spec: "每次 500mg (2支) 雙側臀部肌肉注射 (D1, D15, D29 及後續每 28 天一次)",
+                qty: "16 支",
+                qtyDesc: "(24週用量)"
+            }
+        };
+        let currentFulvestrant = "tty"; // Default: 台灣東洋 伏斯壯 (TTY)
+
+        function selectFulvestrantItem(key) {
+            if (!FULVESTRANT_ITEMS[key]) return;
+            currentFulvestrant = key;
+            
+            const btnTty = document.getElementById("btnFulvTty");
+            const btnAz = document.getElementById("btnFulvAz");
+            if (btnTty && btnAz) {
+                if (key === "tty") {
+                    btnTty.className = "btn btn-sm btn-primary text-start d-flex justify-content-between align-items-center py-2 px-3 fw-bold btn-fulv active";
+                    btnTty.innerHTML = `
+                        <div>
+                            <div><i class="fa-solid fa-circle-dot me-2 text-warning"></i><strong>台灣東洋 伏斯壯注射液 50mg/mL (Fustron)</strong> <span class="badge bg-warning text-dark ms-1">台廠健保主流首選</span></div>
+                            <small class="text-white-50" style="font-size: 0.72rem;">健保碼: AC61825221 ｜ 台灣東洋藥品 ｜ 16支 (24週用量)</small>
+                        </div>
+                        <span class="badge bg-light text-dark">已選取 (預設)</span>
+                    `;
+                    btnAz.className = "btn btn-sm btn-outline-secondary text-start d-flex justify-content-between align-items-center py-2 px-3 fw-bold btn-fulv";
+                    btnAz.innerHTML = `
+                        <div>
+                            <div><i class="fa-regular fa-circle me-2"></i><strong>原廠 阿斯特捷利康 法洛德注射液 250mg (Faslodex)</strong></div>
+                            <small class="text-muted" style="font-size: 0.72rem;">健保碼: B024345248 ｜ 台灣阿斯特捷利康 ｜ 16支 (24週用量)</small>
+                        </div>
+                        <span class="badge bg-secondary-subtle text-secondary">切換</span>
+                    `;
+                } else {
+                    btnAz.className = "btn btn-sm btn-primary text-start d-flex justify-content-between align-items-center py-2 px-3 fw-bold btn-fulv active";
+                    btnAz.innerHTML = `
+                        <div>
+                            <div><i class="fa-solid fa-circle-dot me-2 text-warning"></i><strong>原廠 阿斯特捷利康 法洛德注射液 250mg (Faslodex)</strong></div>
+                            <small class="text-white-50" style="font-size: 0.72rem;">健保碼: B024345248 ｜ 台灣阿斯特捷利康 ｜ 16支 (24週用量)</small>
+                        </div>
+                        <span class="badge bg-light text-dark">已選取</span>
+                    `;
+                    btnTty.className = "btn btn-sm btn-outline-secondary text-start d-flex justify-content-between align-items-center py-2 px-3 fw-bold btn-fulv";
+                    btnTty.innerHTML = `
+                        <div>
+                            <div><i class="fa-regular fa-circle me-2"></i><strong>台灣東洋 伏斯壯注射液 50mg/mL (Fustron)</strong> <span class="badge bg-secondary ms-1">台廠</span></div>
+                            <small class="text-muted" style="font-size: 0.72rem;">健保碼: AC61825221 ｜ 台灣東洋藥品 ｜ 16支 (24週用量)</small>
+                        </div>
+                        <span class="badge bg-secondary-subtle text-secondary">切換</span>
+                    `;
+                }
+            }
+            syncApplicationFormReason();
+            renderPreview();
+        }
+
         const GNRH_ITEMS = {
             zoladex: {
                 code: "B018244243",
@@ -1707,6 +1808,13 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             const raw = normalizeMedicalSpeech(query);
             const cnMap = {'零': 0, '一': 1, '二': 2, '兩': 2, '两': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9, '十': 10};
 
+            // Spoken Fulvestrant Drug Detection
+            if (/東洋|伏斯壯|fustron|台廠/i.test(raw)) {
+                selectFulvestrantItem('tty');
+            } else if (/法洛德|faslodex|astrazeneca|阿斯特捷利康|原廠/i.test(raw)) {
+                selectFulvestrantItem('astrazeneca');
+            }
+
             // 1. Spoken GnRH Agonist Drug Detection
             if (/柳菩林|leuplin|takeda/i.test(raw)) {
                 selectGnrhAgonist('leuplin');
@@ -2235,6 +2343,25 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             } else if (allBtns[scId - 1]) {
                 allBtns[scId - 1].classList.add("active");
             }
+
+            // Contextually display drug selector cards
+            const cardGnrh = document.getElementById("cardGnrhSelector");
+            const cardFulv = document.getElementById("cardFulvestrantSelector");
+            if (cardGnrh) {
+                if (scId === 3 || scId === 4) {
+                    cardGnrh.classList.remove("d-none");
+                } else {
+                    cardGnrh.classList.add("d-none");
+                }
+            }
+            if (cardFulv) {
+                if (scId === 5) {
+                    cardFulv.classList.remove("d-none");
+                } else {
+                    cardFulv.classList.add("d-none");
+                }
+            }
+
             syncApplicationFormReason();
             renderPreview();
         }
@@ -2540,7 +2667,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             // Scenario 5: 2nd line Fulvestrant
             if (currentScenario === 5) {
                 document.getElementById("viewIcd").textContent = "C50.919";
-                const fulv = HOSPITAL_DATA[document.getElementById("selHospital").value].defaultFulvestrant;
+                const fulv = FULVESTRANT_ITEMS[currentFulvestrant] || FULVESTRANT_ITEMS.tty;
                 viewReasonEl.innerHTML = `
 <strong>【二線惡化後解禁事前審查申請理由 (115/12/1 擴大給付 9.72 第 3 點)】：</strong>
 1. 臨床診斷：荷爾蒙受體陽性、HER2 陰性之轉移性乳癌 (Stage IV)。
@@ -2553,7 +2680,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
    完全符合 115 年 12 月 1 日健保修訂規定 9.72 第 3 點：第一線使用 AI 惡化後，得第二線合併使用 Fulvestrant (事審代碼：C50R2) 及 CDK4/6 抑制劑 ribociclib。
 5. 處方藥品：
    • <strong>擊癌利膜衣錠 200毫克 (C50R2)</strong>：每日口服 3 粒 (600mg)，服 21 天停 7 天，申請 378 粒 (24 週)。
-   • <strong>${fulv.name}</strong>：每次 500mg 肌肉注射 (第1天、第15天、第29天及後續每月1次)，申請 16 支 (24 週)。
+   • <strong>${fulv.name} (健保碼：${fulv.code})</strong>：${fulv.spec}，申請 ${fulv.qty} (24 週用量)。
                 `.trim();
                 return;
             }
@@ -2719,7 +2846,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                     </tr>
                 `;
             } else if (currentScenario === 5) { // 2nd line Fulvestrant
-                const fulv = h.defaultFulvestrant;
+                const fulv = FULVESTRANT_ITEMS[currentFulvestrant] || FULVESTRANT_ITEMS.tty;
                 tbody.innerHTML = `
                     <tr>
                         <td class="text-center align-middle">1</td>
