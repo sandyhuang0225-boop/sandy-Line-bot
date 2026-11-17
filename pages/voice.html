@@ -305,31 +305,24 @@
                         </button>
                         <button class="btn btn-outline-secondary btn-scenario" onclick="setScenario(3, this)">
                             <div class="d-flex justify-content-between">
-                                <strong>💉 3. 晚期轉移一線－停經前女性</strong>
+                                <strong>💉 3. 晚期轉移一線－女性停經前或男性</strong>
                                 <span class="badge bg-info text-dark">C50R1 + 停經針</span>
                             </div>
-                            <small class="text-muted d-block mt-1">併用 AI 及 GnRH analogue (Zoladex/Leuplin)</small>
+                            <small class="text-muted d-block mt-1">適用對象：女性停經前或男性，併用 AI 及 LHRH 類似劑 (停經針)</small>
                         </button>
                         <button class="btn btn-outline-secondary btn-scenario" onclick="setScenario(4, this)">
                             <div class="d-flex justify-content-between">
-                                <strong>👨‍⚕️ 4. 晚期轉移一線－男性乳癌</strong>
-                                <span class="badge bg-secondary">C50R1 + 停經針</span>
+                                <strong>🔄 4. 內分泌惡化後併用 Fulvestrant</strong>
+                                <span class="badge bg-warning text-dark">C50R2 (12/1解禁)</span>
                             </div>
-                            <small class="text-muted d-block mt-1">男性遠端轉移，併用 AI 及 GnRH 針劑</small>
+                            <small class="text-muted d-block mt-1">二線解禁雙藥送審（東洋伏斯壯 / 原廠法洛德）</small>
                         </button>
                         <button class="btn btn-outline-secondary btn-scenario" onclick="setScenario(5, this)">
                             <div class="d-flex justify-content-between">
-                                <strong>🔄 5. 內分泌惡化後併用 Fulvestrant</strong>
-                                <span class="badge bg-warning text-dark">C50R2 (12/1解禁)</span>
-                            </div>
-                            <small class="text-muted d-block mt-1">二線後線雙藥送審（長庚東洋伏斯壯 / 三總法洛德）</small>
-                        </button>
-                        <button class="btn btn-outline-secondary btn-scenario" onclick="setScenario(6, this)">
-                            <div class="d-flex justify-content-between">
-                                <strong>📈 6. 用藥滿 24 個月 (2年) 無惡化續約展延</strong>
+                                <strong>📈 5. 用藥滿 24 個月 (2年) 無惡化續約展延</strong>
                                 <span class="badge bg-success">無惡化續約展延</span>
                             </div>
-                            <small class="text-muted d-block mt-1">檢附 RECIST 影像評估 non-PD，申請繼續給付至惡化為止</small>
+                            <small class="text-muted d-block mt-1">檢附近 4 週 RECIST 影像評估 non-PD，申請繼續給付</small>
                         </button>
                     </div>
                 </div>
@@ -2394,14 +2387,14 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             const cardGnrh = document.getElementById("cardGnrhSelector");
             const cardFulv = document.getElementById("cardFulvestrantSelector");
             if (cardGnrh) {
-                if (scId === 3 || scId === 4) {
+                if (scId === 3) {
                     cardGnrh.classList.remove("d-none");
                 } else {
                     cardGnrh.classList.add("d-none");
                 }
             }
             if (cardFulv) {
-                if (scId === 5) {
+                if (scId === 4 || scId === 5) {
                     cardFulv.classList.remove("d-none");
                 } else {
                     cardFulv.classList.add("d-none");
@@ -2726,7 +2719,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             const kiText = (kiSpoken && kiVal !== null) ? `\n   • Ki-67 增殖比率：<strong>${kiVal}%</strong>` : (kiVal !== null ? `\n   • Ki-67 增殖比率：<strong>${kiVal}%</strong>` : "");
 
             // Scenario 6: 24 Months Renewal
-            if (currentScenario === 6) {
+            if (currentScenario === 5 || currentScenario === 6) {
                 document.getElementById("viewIcd").textContent = "C50.919";
                 viewReasonEl.innerHTML = `
 <strong>【全民健保藥品事前審查申請理由 (健保規定 9.72 第 5 點及第 7 點)】：</strong>
@@ -2748,16 +2741,17 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             }
 
             // Scenario 3/4: Pre-menopausal Metastatic + GnRH
-            if (currentScenario === 3 || currentScenario === 4) {
+            if (currentScenario === 3) {
                 document.getElementById("viewIcd").textContent = "C50.919";
                 viewReasonEl.innerHTML = `
 <strong>【全民健保藥品事前審查申請理由 (健保規定 9.72 第 2 點)】：</strong>
 
 <strong>1. 健保給付規定合規：</strong>
-符合健保規定 9.72 第 2 點：${currentScenario === 4 ? "男性" : "女性停經前"}荷爾蒙陽性、HER2 陰性轉移性乳癌，第一線使用擊癌利合併芳香環轉化酶抑制劑 (AI) 及 LHRH 類似劑 (${gnrh.name.split(" ")[0]}，健保碼：${gnrh.code})。影像確認無 CNS 轉移、無內臟危象，骨轉移非唯一部位。
+符合健保規定 9.72 第 2 點：女性停經前或男性荷爾蒙陽性、HER2 陰性轉移性乳癌，第一線使用擊癌利合併芳香環轉化酶抑制劑 (AI) 及 LHRH 類似劑 (${gnrh.name.split(" ")[0]}，健保碼：${gnrh.code})。影像確認無 CNS 轉移、無內臟危象，骨轉移非唯一部位。
 
 <strong>2. 病患現階段實際狀況 (依醫師口述與病歷)：</strong>
-• 臨床診斷：${currentScenario === 4 ? "男性" : "女性停經前"}轉移性乳癌 (Stage IV)。
+• 臨床診斷：轉移性乳癌 (Stage IV)。
+• 適用對象：女性停經前或男性病患。
 • 荷爾蒙受體：ER 染色陽性率：<strong>${erSpoken ? `${erVal}%` : "陽性 (≧ 1%)"}</strong>，PR 染色陽性率：<strong>${prSpoken ? `${prVal}%` : "陽性 (≧ 1%)"}</strong>${kiText}。
 • HER2 狀態：<strong>陰性 (Negative)</strong>。
 
@@ -2791,7 +2785,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             }
 
             // Scenario 5: 2nd line Fulvestrant
-            if (currentScenario === 5) {
+            if (currentScenario === 4) {
                 document.getElementById("viewIcd").textContent = "C50.919";
                 const fulv = FULVESTRANT_ITEMS[currentFulvestrant] || FULVESTRANT_ITEMS.tty;
                 viewReasonEl.innerHTML = `
@@ -2971,7 +2965,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                         <td class="text-muted align-middle"></td>
                     </tr>
                 `;
-            } else if (currentScenario === 3 || currentScenario === 4) { // Pre-menopause / Male + GnRH agonist
+            } else if (currentScenario === 3) { // Pre-menopause / Male + GnRH agonist
                 tbody.innerHTML = `
                     <tr>
                         <td class="text-center align-middle">1</td>
@@ -2991,7 +2985,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                         <td class="align-middle text-center"><strong>${gnrh.qty}</strong></td>
                     </tr>
                 `;
-            } else if (currentScenario === 5) { // 2nd line Fulvestrant
+            } else if (currentScenario === 4) { // 2nd line Fulvestrant
                 const fulv = FULVESTRANT_ITEMS[currentFulvestrant] || FULVESTRANT_ITEMS.tty;
                 tbody.innerHTML = `
                     <tr>
@@ -3012,7 +3006,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                         <td class="align-middle text-center"><strong>16 支</strong><br><small class="text-muted">(24週用量)</small></td>
                     </tr>
                 `;
-            } else if (currentScenario === 6) { // 24 months renewal
+            } else if (currentScenario === 5 || currentScenario === 6) { // 24 months renewal
                 tbody.innerHTML = `
                     <tr>
                         <td class="text-center align-middle">1</td>
