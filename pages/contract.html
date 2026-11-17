@@ -305,7 +305,7 @@
                 <label class="btn-action-main btn-primary mb-0" style="cursor: pointer;">
                     <i class="fa-solid fa-images fs-5"></i>
                     <span>🖼️ 從相簿選取 Agenda 照片</span>
-                    <input type="file" id="albumInput" accept="image/*" style="display:none;" onchange="processUserUpload(this, '照片')">
+                    <input type="file" id="albumInput" accept="image/*" style="position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none;" onchange="processUserUpload(this, '照片')">
                 </label>
             </div>
             <!-- 2. 上傳 PDF 檔 -->
@@ -313,7 +313,7 @@
                 <label class="btn-action-main btn-info text-white mb-0" style="cursor: pointer;">
                     <i class="fa-solid fa-file-pdf fs-5"></i>
                     <span>📄 上傳 PDF 檔 Agenda</span>
-                    <input type="file" id="pdfInput" accept=".pdf,application/pdf" style="display:none;" onchange="processUserUpload(this, 'PDF')">
+                    <input type="file" id="pdfInput" accept=".pdf,application/pdf" style="position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none;" onchange="processUserUpload(this, 'PDF')">
                 </label>
             </div>
             <!-- 3. 貼上 ChatGPT 議程文字 -->
@@ -1009,15 +1009,11 @@ let currentDoctorIndex = 0;
 
 // 取得與更新本機 API Key
 function getStoredApiKey() {
-    const k = localStorage.getItem('novartis_gemini_api_key');
-    if (k && k.trim().length > 10) return k.trim();
     try {
-        const defaultK = atob("QVEuQWI4Uk42TDNKT0ZsbnlYZHFIV2hraDVjMTVldVRLWVBXaFMxSUhTQndOdTRDUHpGUWc=");
-        localStorage.setItem('novartis_gemini_api_key', defaultK);
-        return defaultK;
-    } catch (e) {
-        return '';
-    }
+        const k = localStorage.getItem('novartis_gemini_api_key');
+        if (k && k.trim().length > 10) return k.trim();
+    } catch (e) {}
+    return atob("QVEuQWI4Uk42TDNKT0ZsbnlYZHFIV2hraDVjMTVldVRLWVBXaFMxSUhTQndOdTRDUHpGUWc=");
 }
 
 function updateKeyBadge() {
@@ -1093,11 +1089,20 @@ function saveGeminiApiKey() {
     alert("🎉 金鑰已成功儲存並啟用！現在您可以直接點擊下方按鈕上傳照片或 PDF 了。");
 }
 
-// 🚀 手機端圖片自動壓縮引擎：將 10MB~15MB iPhone 照片於 0.1 秒內壓縮為 300KB JPEG，徹底告別手機當機卡死！
+// 🚀 手機端圖片自動壓縮引擎：將 10MB~15MB iPhone 照片於 0.1 秒內壓縮為 300KB JPEG，並設置 2 秒超時防呆
 function compressImage(file, maxWidth = 1600, maxHeight = 1600, quality = 0.8) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
+        let resolved = false;
+        const timeout = setTimeout(() => {
+            if (!resolved) {
+                resolved = true;
+                readFileAsBase64(file).then(b64 => resolve({ base64: b64, mimeType: file.type || 'image/jpeg' })).catch(() => resolve({ base64: '', mimeType: 'image/jpeg' }));
+            }
+        }, 2000);
+
         if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
-            readFileAsBase64(file).then(b64 => resolve({ base64: b64, mimeType: 'application/pdf' })).catch(reject);
+            clearTimeout(timeout);
+            readFileAsBase64(file).then(b64 => resolve({ base64: b64, mimeType: 'application/pdf' })).catch(() => resolve({ base64: '', mimeType: 'application/pdf' }));
             return;
         }
 
@@ -1105,35 +1110,47 @@ function compressImage(file, maxWidth = 1600, maxHeight = 1600, quality = 0.8) {
         reader.onload = (e) => {
             const img = new Image();
             img.onload = () => {
-                let width = img.width;
-                let height = img.height;
-
-                if (width > maxWidth || height > maxHeight) {
-                    if (width / height > maxWidth / maxHeight) {
-                        height = Math.round((height * maxWidth) / width);
-                        width = maxWidth;
-                    } else {
-                        width = Math.round((width * maxHeight) / height);
-                        height = maxHeight;
+                if (resolved) return;
+                resolved = true;
+                clearTimeout(timeout);
+                try {
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > maxWidth || height > maxHeight) {
+                        if (width / height > maxWidth / maxHeight) {
+                            height = Math.round((height * maxWidth) / width);
+                            width = maxWidth;
+                        } else {
+                            width = Math.round((width * maxHeight) / height);
+                            height = maxHeight;
+                        }
                     }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                    const base64 = dataUrl.split(',')[1];
+                    resolve({ base64, mimeType: 'image/jpeg' });
+                } catch (err) {
+                    readFileAsBase64(file).then(b64 => resolve({ base64: b64, mimeType: 'image/jpeg' }));
                 }
-
-                const canvas = document.createElement('canvas');
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-
-                const dataUrl = canvas.toDataURL('image/jpeg', quality);
-                const base64 = dataUrl.split(',')[1];
-                resolve({ base64, mimeType: 'image/jpeg' });
             };
             img.onerror = () => {
-                readFileAsBase64(file).then(b64 => resolve({ base64: b64, mimeType: 'image/jpeg' })).catch(reject);
+                if (resolved) return;
+                resolved = true;
+                clearTimeout(timeout);
+                readFileAsBase64(file).then(b64 => resolve({ base64: b64, mimeType: 'image/jpeg' }));
             };
             img.src = e.target.result;
         };
-        reader.onerror = reject;
+        reader.onerror = () => {
+            if (resolved) return;
+            resolved = true;
+            clearTimeout(timeout);
+            resolve({ base64: '', mimeType: 'image/jpeg' });
+        };
         reader.readAsDataURL(file);
     });
 }
@@ -1156,37 +1173,35 @@ async function processUserUpload(inputElement, typeLabel) {
     if (!inputElement || !inputElement.files || inputElement.files.length === 0) return;
     const file = inputElement.files[0];
 
-    const apiKey = getStoredApiKey();
-    if (!apiKey) {
-        document.getElementById('apiKeyConfigBox').style.display = 'block';
-        document.getElementById('apiKeyConfigBox').scrollIntoView({ behavior: 'smooth' });
-        alert("【請先設定 Gemini API Key】
-請先在展開的黃色區塊貼上您的 Google Gemini API Key（免費申請），系統才能使用視覺 AI 真正看懂照片！");
-        inputElement.value = '';
-        return;
-    }
-
+    // 第一時間顯示載入動畫，確保使用者手機立即可見系統正在全力運作
     const aiBox = document.getElementById('aiAnalyzingBox');
     const aiDetail = document.getElementById('aiStatusDetail');
-    aiBox.style.display = 'block';
-    aiDetail.textContent = `正在將【${file.name}】進行高畫質智能壓縮並送交 Gemini 視覺大模型深度辨識中...`;
-    aiBox.scrollIntoView({ behavior: 'smooth' });
+    if (aiBox) {
+        aiBox.style.display = 'block';
+        aiDetail.innerHTML = `<i class="fa-solid fa-spinner fa-spin me-2 text-warning"></i>已接收到【<strong>${file.name}</strong>】，正在交由 Gemini 3.1 視覺 AI 深度分析中...`;
+        aiBox.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    const apiKey = getStoredApiKey();
 
     try {
         const { base64, mimeType } = await compressImage(file);
+        if (!base64) {
+            throw new Error("無法讀取檔案內容，請確認檔案格式是否正確。");
+        }
 
         const promptText = `你是一位台灣諾華（Novartis）的資深法務合約專家。請仔細分析這份會議議程（Agenda）檔案。
-這場會議通常包含多位外部專科醫師顧問（包含 Speakers 演講者、Moderators/Chairmen 座長主持人、Panelists 與談人）。
+這場會議可能包含 1 位或多位外部專科醫師顧問（包含 Speakers 演講者、Moderators/Chairmen 座長主持人、Panelists 與談人）。
 
 【重要合約規則】：
-1. 找出所有需要簽署顧問/講者服務合約的外部醫師（請抓出全部的 Speaker 與 Moderator/Chair，若有4位就抓出全部4位）。
+1. 找出所有需要簽署顧問/講者服務合約的外部醫師（不管是 1 位、2 位還是 4 位，請全部抓出）。
 2. ★ 絕對規則：務必排除 Novartis 台灣諾華內部同仁（特別是 Sandy Huang 或任何分享 PSP 專案、公司介紹的員工），絕不可列為顧問！
 3. 每位顧問的合約費用預設固定為「新台幣 5,000 元整」。
 4. 諾華代表主管固定為「周書權」與「區域業務經理」。
 5. 日期請統一轉換為合約格式（例如「民國 115 年 11 月 24 日」或包含西元年）。
 6. 會議地點包含餐廳/飯店名稱與地址。
 
-請嚴格輸出合法的 JSON 物件，不要輸出任何額外解釋或 Markdown 標籤，格式如下：
+請嚴格輸出合法的 JSON 物件，格式如下（若只有一位醫師，doctors 陣列包含一位即可）：
 {
   "event_name": "會議全稱",
   "event_date": "會議日期",
@@ -1239,31 +1254,49 @@ async function processUserUpload(inputElement, typeLabel) {
             throw new Error("Gemini 未能傳回有效的辨識內容。");
         }
 
-        const data = JSON.parse(rawJsonText);
+        let data = JSON.parse(rawJsonText);
         
-        // 渲染多位醫師切換分頁
+        // 🌟 關鍵兼容：無論 Gemini 傳回單一醫師還是多位醫師陣列，100% 自動相容轉換！
+        if (!data.doctors || !Array.isArray(data.doctors) || data.doctors.length === 0) {
+            if (data.doctor_name) {
+                data.doctors = [{
+                    role: data.role || 'Speaker',
+                    doctor_name: data.doctor_name,
+                    hospital: data.hospital || '',
+                    hospital_address: data.hospital_address || '',
+                    doctor_title: data.doctor_title || '主治醫師',
+                    event_topic: data.event_topic || data.event_name || '',
+                    fee_total: data.fee_total || '新台幣 5,000 元整'
+                }];
+            }
+        }
+
+        // 渲染醫師分頁並自動套入第 1 位醫師
         renderDoctorTabs(data);
 
-        // 提示條
+        // 成功提示條
         const banner = document.getElementById('fileNoticeBanner');
         const noticeText = document.getElementById('fileNoticeText');
         const count = (data.doctors || []).length;
-        noticeText.innerHTML = `✨ <strong>Gemini 視覺 AI 真實辨識成功！</strong>已讀取【<strong>${file.name}</strong>】，共辨識出 <strong>${count}</strong> 位顧問醫師（包含 Speakers 講者與 Moderators 座長）！`;
-        banner.style.display = 'block';
+        if (banner && noticeText) {
+            noticeText.innerHTML = `✨ <strong>Gemini 3.1 視覺 AI 辨識成功！</strong>已讀取【<strong>${file.name}</strong>】，共辨識出 <strong>${count}</strong> 位顧問醫師！下方合約已即時帶入。`;
+            banner.style.display = 'block';
+        }
 
-        // 平滑滾動至醫師選擇區
+        // 滾動至合約檢視
         setTimeout(() => {
-            document.getElementById('multiDoctorSection').scrollIntoView({ behavior: 'smooth' });
-        }, 300);
+            const docFull = document.getElementById('contractFullDoc');
+            if (docFull) docFull.scrollIntoView({ behavior: 'smooth' });
+        }, 400);
 
     } catch (err) {
         console.error("Gemini Vision Error:", err);
         alert(`【AI 辨識發生問題】
 ${err.message}
 
-請確認您的 Gemini API Key 是否有效。`);
+系統已為您記錄錯誤，請再次點擊或更換照片試試！`);
     } finally {
-        aiBox.style.display = 'none';
+        if (aiBox) aiBox.style.display = 'none';
         inputElement.value = '';
     }
 }
