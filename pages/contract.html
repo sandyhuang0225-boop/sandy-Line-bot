@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>台灣諾華 醫師顧問/講者服務合約 智能生成系統</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --novartis-navy: #042742;
+            --novartis-blue: #0b497a;
+            --novartis-orange: #eb6a0a;
+            --novartis-light-bg: #f1f5f9;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
+            background-color: var(--novartis-light-bg);
+            color: #1e293b;
+            margin: 0;
+            padding-bottom: 60px;
+        }
+        .header-bar {
+            background: linear-gradient(135deg, #042742 0%, #0b497a 100%);
+            color: white;
+            padding: 14px 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .brand-badge {
+            background-color: var(--novartis-orange);
+            color: white;
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+        .contract-page {
+            background: #ffffff;
+            width: 210mm;
+            min-height: 297mm;
+            margin: 20px auto;
+            padding: 22mm 24mm;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border: 1px solid #cbd5e1;
+            position: relative;
+            box-sizing: border-box;
+            font-size: 13.5px;
+            line-height: 1.68;
+            color: #0f172a;
+        }
+        .contract-header {
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 24px;
+            letter-spacing: 1px;
+        }
+        .contract-page-footer {
+            position: absolute;
+            bottom: 14mm;
+            left: 24mm;
+            right: 24mm;
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #64748b;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 6px;
+        }
+        .var-field {
+            color: #4c1d95;
+            background-color: #ede9fe;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            border-bottom: 2px solid #7c3aed;
+        }
+        .fixed-field {
+            color: #065f46;
+            background-color: #d1fae5;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .clean-mode .var-field {
+            color: inherit;
+            background: none;
+            padding: 0;
+            border-bottom: none;
+            font-weight: bold;
+        }
+        .clean-mode .fixed-field {
+            color: inherit;
+            background: none;
+            padding: 0;
+            font-weight: bold;
+        }
+        .signature-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 13px;
+        }
+        .signature-table td {
+            border: 1px solid #334155;
+            padding: 12px 14px;
+            vertical-align: top;
+        }
+        .signature-line {
+            display: inline-block;
+            min-width: 170px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 2px;
+        }
+        @media print {
+            body {
+                background: white !important;
+                padding: 0 !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .contract-page {
+                margin: 0 !important;
+                border: none !important;
+                box-shadow: none !important;
+                width: 100% !important;
+                min-height: 100vh !important;
+                page-break-after: always !important;
+                padding: 18mm 20mm !important;
+            }
+            .var-field, .fixed-field {
+                color: black !important;
+                background: none !important;
+                padding: 0 !important;
+                border: none !important;
+                font-weight: bold !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- 頂部控制面板 (列印時隱藏) -->
+<div class="header-bar no-print">
+    <div class="container-fluid d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <span class="brand-badge">NOVARTIS 台灣諾華</span>
+            <h5 class="mb-0 fw-bold"><i class="fa-solid fa-file-contract text-warning me-2"></i>醫師顧問/講者服務合約 智能生成系統</h5>
+            <span class="badge bg-secondary">法定範本版本：5 November 2026 (共 12 頁)</span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <a href="voice.html" class="btn btn-outline-light btn-sm"><i class="fa-solid fa-arrow-left me-1"></i>返回事前審查系統</a>
+            <button class="btn btn-warning btn-sm fw-bold shadow-sm" onclick="window.print()"><i class="fa-solid fa-print me-1"></i>一鍵列印 / 另存為 PDF</button>
+            <button class="btn btn-outline-light btn-sm" onclick="toggleCleanMode()"><i class="fa-solid fa-eye me-1"></i>套印/預覽樣式</button>
+            <button class="btn btn-success btn-sm" onclick="exportWord()"><i class="fa-solid fa-file-word me-1"></i>下載 Word (.doc)</button>
+        </div>
+    </div>
+</div>
+
+<!-- 快速操作與參數控制區 (列印時隱藏) -->
+<div class="container my-3 no-print">
+    <!-- 防呆重要提示卡 -->
+    <div class="alert alert-warning border-warning d-flex align-items-center justify-content-between p-3 mb-3 shadow-sm rounded-3">
+        <div>
+            <i class="fa-solid fa-triangle-exclamation text-danger fs-5 me-2"></i>
+            <strong>法規與倫理防呆確認：</strong>
+            諾華員工（如 <strong>Sandy Huang 諾華公司</strong>）係受雇同仁，<strong>絕對沒有顧問費</strong>，亦不得生成顧問合約！
+            本系統<strong>僅專為外部醫療專業人員 (HCP 醫師，如廖國秀醫師)</strong> 自動套入合約及顧問費 5,000 元整。
+        </div>
+        <button class="btn btn-primary btn-sm px-3 fw-bold shadow-sm" onclick="applyPresetSanZong()">
+            <i class="fa-solid fa-wand-magic-sparkles me-1"></i>一鍵帶入：三總乳癌討論會 (廖國秀醫師)
+        </button>
+    </div>
+
+    <!-- 摺疊面板：自訂變數輸入與議程解析 -->
+    <div class="card shadow-sm border-0 mb-4 rounded-3">
+        <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center py-2">
+            <span><i class="fa-solid fa-pen-to-square text-primary me-2"></i>合約變數與議程帶入 (修改後合約頁面即時連動更新)</span>
+            <span class="badge bg-light text-dark border">北區業務固定參數已預載</span>
+        </div>
+        <div class="card-body bg-light p-3">
+            <div class="row g-2">
+                <!-- 醫師顧問資料 -->
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-secondary mb-1">顧問/講者姓名 (外部醫師)</label>
+                    <input type="text" id="inputDoctor" class="form-control form-control-sm" value="廖國秀 醫師" oninput="updateContract()">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-secondary mb-1">顧問所屬單位/機構</label>
+                    <input type="text" id="inputHospital" class="form-control form-control-sm" value="三軍總醫院" oninput="updateContract()">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-secondary mb-1">顧問單位地址</label>
+                    <input type="text" id="inputHospAddr" class="form-control form-control-sm" value="台北市內湖區成功路二段325號" oninput="updateContract()">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-secondary mb-1">顧問職稱</label>
+                    <input type="text" id="inputDocTitle" class="form-control form-control-sm" value="主治醫師" oninput="updateContract()">
+                </div>
+
+                <!-- 會議資料 -->
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold text-secondary mb-1">活動會議名稱</label>
+                    <input type="text" id="inputEventName" class="form-control form-control-sm" value="三總乳癌討論會 - From Shared Decision to Long-Term Confidence" oninput="updateContract()">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold text-secondary mb-1">日期</label>
+                    <input type="text" id="inputDate" class="form-control form-control-sm" value="2026年11月24日" oninput="updateContract()">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold text-secondary mb-1">整場會議時間</label>
+                    <input type="text" id="inputTime" class="form-control form-control-sm" value="18:30-20:30" oninput="updateContract()">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold text-secondary mb-1">活動場所/地址</label>
+                    <input type="text" id="inputVenue" class="form-control form-control-sm" value="Wilson Park 威爾森公園餐廳（台北市內湖區民權東路六段125之1號）" oninput="updateContract()">
+                </div>
+
+                <!-- 簡報主題與固定項目 -->
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold text-secondary mb-1">簡報名稱/演講主題 (Topic)</label>
+                    <input type="text" id="inputTopic" class="form-control form-control-sm" value="KISQALI Does it Again: A Moment for OS in NATALEE" oninput="updateContract()">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-success mb-1"><i class="fa-solid fa-lock me-1"></i>Page 2 顧問服務費用 (固定)</label>
+                    <input type="text" id="inputFee" class="form-control form-control-sm bg-white text-success fw-bold" value="新台幣 5,000 元整" oninput="updateContract()">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-success mb-1"><i class="fa-solid fa-lock me-1"></i>Page 5 台灣諾華代表 (北區固定)</label>
+                    <div class="input-group input-group-sm">
+                        <input type="text" id="inputMgrName" class="form-control bg-white text-success fw-bold" value="周書權" oninput="updateContract()" title="經理姓名">
+                        <input type="text" id="inputMgrTitle" class="form-control bg-white text-success fw-bold" value="區域業務經理" oninput="updateContract()" title="經理職稱">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 未來議程快捷解析器 -->
+            <div class="mt-3 pt-3 border-top">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="small fw-bold text-muted"><i class="fa-solid fa-robot me-1"></i>貼上未來任何 Agenda 議程文字自動解析帶入：</span>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="parseCustomAgenda()">
+                        <i class="fa-solid fa-bolt me-1"></i>智能解析議程
+                    </button>
+                </div>
+                <textarea id="agendaInput" class="form-control form-control-sm" rows="3" placeholder="在此貼上議程文字（例如會議名稱、日期、時間、地點、講者醫師與題目），系統會自動過濾諾華同仁並帶入外部醫師資料..."></textarea>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== 合約預覽主體 (共 12 頁) ==================== -->
+<div id="contractFullDoc">
+
+    <!-- PAGE 1 -->
+    <div class="contract-page">
+        <div class="contract-header">顧問/講者服務合約</div>
+        <p>
+            本顧問講者服務合約（下稱「<strong>本合約</strong>」）係於最後一方簽署日（下稱「<strong>生效日</strong>」）生效，由下列當事人共同簽署：<strong>台灣諾華股份有限公司</strong>（設址於台北市民生東路三段二號八樓，下稱「<strong>諾華</strong>」）；及<span class="var-field doc-name">廖國秀 醫師</span>（位於<span class="var-field doc-full-addr">三軍總醫院（台北市內湖區成功路二段325號）</span>，下稱「<strong>顧問</strong>」/「<strong>您</strong>」）。
+        </p>
+
+        <p class="fw-bold mb-1">1. 本合約服務</p>
+        <p class="ps-3 mb-2">
+            (a) 您將依據本合約條款，其包括一般條款暨條件與所有適用之法律（包括反賄賂法）、法規、職業守則、產業之廉政倫理規範以及諾華講師法規遵循注意事項（詳如附件一），向諾華提供以下顧問服務。
+        </p>
+        <p class="ps-3 mb-2">
+            (b) <strong>一般資訊</strong><br>
+            • 參加下列活動，並於事前做適當準備：<br>
+            <span class="ps-3 d-block my-1">‐ 活動名稱：<span class="var-field event-name">三總乳癌討論會 - From Shared Decision to Long-Term Confidence</span></span>
+            <span class="ps-3 d-block my-1">‐ 主辦單位：<strong>台灣諾華</strong></span>
+            <span class="ps-3 d-block my-1">‐ 日期/時間：<span class="var-field event-date">2026年11月24日</span> <span class="var-field event-time">18:30-20:30</span></span>
+            <span class="ps-3 d-block my-1">‐ 地點：<span class="var-field event-venue">Wilson Park 威爾森公園餐廳（台北市內湖區民權東路六段125之1號）</span></span>
+        </p>
+        <p class="ps-3 mb-2">
+            就本活動而言，您同意主持/參與本活動並進行關於<span class="var-field event-topic">KISQALI Does it Again: A Moment for OS in NATALEE</span>（下稱「<strong>簡報</strong>」）之簡報。具體而言：
+        </p>
+        <ul class="ps-5 mb-0" style="list-style-type: disc;">
+            <li>於本活動前參加諾華舉辦之行銷性演講活動教育訓練；</li>
+            <li>僅使用諾華事前備置、核准並提供予您的素材，包括演講投影片及演講要點/腳本；</li>
+            <li>於進行簡報時遵守所有適用之法律、法規及產業規範及政策，包括提供仿單資訊(on-label)並把所有關於仿單外資訊(off-label)之詢問轉介予諾華之醫藥學術人員；及</li>
+            <li>於本活動中進行簡報，並於簡報後積極參與問答。</li>
+        </ul>
+
+        <div class="contract-page-footer">
+            <span>Ver/Date: 5 November 2026</span>
+            <span>Page 1</span>
+        </div>
+    </div>
+
+    <!-- PAGE 2 -->
+    <div class="contract-page">
+        <p class="fw-bold mb-1">2. 費用及開支</p>
+        <p class="ps-3 mb-2">
+            (a) 作為本合約服務之對價，諾華同意依據您所完成的工時及服務內容，向您支付顧問服務費用總計<strong><span class="fixed-field fee-total">新台幣 5,000 元整</span></strong>，外加增值型營業稅（如適用）。
+        </p>
+        <p class="ps-3 mb-2">
+            (b) 差旅交通及住宿必須透過諾華指定之旅行社，依據諾華之醫療專業人員差旅指引進行預訂。
+        </p>
+        <p class="ps-3 mb-2">
+            (c) 您得向諾華報銷任何合理的實際開支，惟需出示收據證明，且需與您履行本合約服務相關（例如，搭乘計程車至提供本合約服務之地點）。
+        </p>
+        <p class="ps-3 mb-2">
+            (d) 您確認並同意：<br>
+            (i) 您因本合約服務所取得的報酬符合常規交易中之公平市價。<br>
+            (ii) 您所取得的一切款項均係關於履行本合約服務而產生的正當開支或其報銷或補償金額；及<br>
+            (iii) 您收取該等款項完全符合所有適用之法律、法規及產業規範及政策。
+        </p>
+
+        <p class="fw-bold mb-1 mt-3">3. 無不當影響</p>
+        <p class="ps-3 mb-2">
+            (a) 您確認：<br>
+            (i) 您係獨立行事，而非受諾華控制，當您進行任何與本合約服務相關之溝通或參與相關會議時，您會揭露您為諾華提供顧問服務；<br>
+            (ii) 本合約服務之履行不受任何不當影響或偏見所影響；及<br>
+            (iii) 您受諾華聘用或接受任何與本合約服務相關之經濟報酬均非為換取採購、開立任何諾華產品或為其提供有利地位之明示或默示合意。
+        </p>
+        <p class="ps-3 mb-2">
+            (b) 您瞭解並同意，諾華委託您提供服務並非為誘使您推薦、開立、採購、供應、銷售或施用任何諾華產品。
+        </p>
+        <p class="ps-3 mb-2">
+            (c) 您確認並同意，若您參與之會議或活動係由諾華發出邀請，且為網路線上形式(virtual)或混合式會議(hybrid event)形式，該邀請連結係僅限您個人專屬且應予保密。未經諾華事先書面同意，您不得向任何第三人揭露、分享、轉寄或以其他方式提供諾華給您之專屬邀請內容、相關登入或存取資訊、會議紀錄、錄音錄影內容或任何與本活動相關之資訊。
+        </p>
+
+        <div class="contract-page-footer">
+            <span>Ver/Date: 5 November 2026</span>
+            <span>Page 2</span>
+        </div>
+    </div>
+
+    <!-- PAGE 3 -->
+    <div class="contract-page">
+        <p class="ps-3 mb-3">
+            (d) 若您因提供顧問服務而使用病患之醫療影像、檢查結果、診斷資料或其他病患資訊，應遵守適用之個人資料保護法及相關法令、事先取得病患適當之書面同意，並確保相關資訊已適當去識別化或匿名化。於簡報、教材或其他發表內容中使用時，您並應註明該資訊業經病患同意使用。
+        </p>
+
+        <p class="fw-bold mb-1">4. 錄音/錄影－資料隱私權</p>
+        <p class="ps-3 mb-2">
+            您了解並同意，若會議/活動有進行錄音/錄影，諾華得為以下目的（下稱「<strong>本合約目的</strong>」）使用、編輯、出版、改編、翻譯、公開播送（包括於線上同步播送）、公開展示、重製、分享、揭露、公開發布及/或分發該等錄音/錄影之全部或一部：
+        </p>
+        <ul class="ps-5 mb-2" style="list-style-type: disc;">
+            <li>為科學或宣傳性/行銷性教育訓練目的，於諾華及其全球各地之關係企業，包括於諾華會議及諾華網站上使用；</li>
+            <li>為科學或宣傳性/行銷性教育訓練目的，由諾華及/或其全球關係企業，於有醫療專業人員或大眾參與的私人或公開場合（如諮詢委員會、研討會、大會、會議、教育訓練或網站）使用；</li>
+            <li>為行銷或廣告目的，包括由諾華及/或其關係企業或其代表於全球各地擁有、維護或託管的廣告網站上使用。</li>
+        </ul>
+        <p class="ps-3 mb-2">
+            您同意，上述錄音/錄影中可能包含您的全名、學歷、專業資格、專業經歷、照片、肖像及/或影片。
+        </p>
+        <p class="ps-3 mb-3">
+            諾華將擁有該等錄音/錄影之所有著作權。錄音/錄影將被保存及使用五年；未經您事前書面同意，不會被分享或被使用於非本合約目的所列之範圍。於上述期間屆滿後，諾華將停止使用並以安全的方式銷毀或封存該等錄音/錄影。
+        </p>
+
+        <p class="fw-bold mb-1">5. 顧問同意向美國聯邦醫療保險和聯邦醫療補助服務中心辦理申報（僅適用美國合格醫事人員或美國教學醫院）</p>
+        <p class="ps-3 mb-0">
+            (a) 若您具有得於美國任何一州從事醫療業務之有效執照（無論您是否居住於該州或主要於該州執業）或正在申請該等執照（下稱「美國醫事人員」）或您為美國教學醫院（以美國聯邦醫療保險和聯邦醫療補助服務中心（U.S. Centers of Medicare and Medicaid Services，下稱「CMS」）認定為準），您瞭解並同意，諾華得處理您的個人資料及/或與本合約服務及本合約活動相關之個人資料。具體而言，諾華得將該等個人資料移轉至 CMS（一美國政府機關）。該等個人資料可能係由您直接提供或由第三方處取得。
+        </p>
+
+        <div class="contract-page-footer">
+            <span>Ver/Date: 5 November 2026</span>
+            <span>Page 3</span>
+        </div>
+    </div>
+
+    <!-- PAGE 4 -->
+    <div class="contract-page">
+        <p class="ps-3 mb-2">
+            (b) 若您為美國醫事人員或美國教學醫院（以 CMS 認定為準），您確認並同意：<br>
+            (i) 諾華將處理（具體而言，將移轉予 CMS）您的個人資料及您依據本合約履行本合約服務之相關個人資料，包括但不限於您的姓名、居住或營業（依情況適用）之城市及州、您的專業、國家供應商識別碼（National Provider Identifier，NPI），依據本合約履行本合約服務之性質，及與本合約相關之任何及所有款項、費用報銷或其他非金錢有價物之移轉（下稱「顧問資料」）；及<br>
+            (ii) 諾華移轉予 CMS 之顧問資料將不再由諾華控制，並將由 CMS 依據美國醫師陽光支付法案（U.S. Physicians’ Payment Sunshine Act）及其規範公開揭露。一旦顧問資料被移轉予 CMS，諾華不能保證亦不再對該等顧問資料之隱私權及資料保護負責。
+        </p>
+
+        <p class="mt-4 mb-3">若您是本條定義之美國醫事人員，您必須提供以下資訊：</p>
+        <p class="ps-3 mb-2">執照號碼：______________________________</p>
+        <p class="ps-3 mb-2">核發執照國家：______________________________</p>
+        <p class="ps-3 mb-4">國家供應商識別碼（NPI）號碼（如有）：______________________________</p>
+
+        <div style="margin-top: 80px;" class="text-center text-muted">
+            （以下為簽署頁）
+        </div>
+
+        <div class="contract-page-footer">
+            <span>Ver/Date: 5 November 2026</span>
+            <span>Page 4</span>
+        </div>
+    </div>
+
+    <!-- PAGE 5 -->
+    <div class="contract-page">
+        <table class="signature-table">
+            <tr>
+                <td style="width: 50%;">
+                    <div class="fw-bold mb-2">顧問</div>
+                    <p style="font-size: 11px; line-height: 1.4;" class="text-muted mb-3">
+                        您茲此確認：(i) 您已取得簽署或履行本合約所必須之所有核准、授權及簽名（如適用），包括來自您的任何雇主或與您有專業關係之其他組織、主管機關或機構，並應諾華要求向諾華提供相關副本；(ii) 您同意受本合約條款及條件所拘束。
+                    </p>
+                    <p class="mb-2">姓名：<span class="var-field doc-name signature-line">廖國秀 醫師</span></p>
+                    <p class="mb-2">職稱：<span class="var-field doc-title signature-line">主治醫師</span></p>
+                    <p class="mb-2">簽名：<span class="signature-line"></span></p>
+                    <p class="mb-0">日期：<span class="signature-line"></span></p>
+                </td>
+                <td style="width: 50%;">
+                    <div class="fw-bold mb-2">顧問之雇主 (若適用)</div>
+                    <p style="font-size: 11px; line-height: 1.4;" class="text-muted mb-3">
+                        作為顧問之雇主，茲此同意接受本合約條款，包括一般條款暨條件與附錄，並核准其依據本合約收受利益。
+                    </p>
+                    <p class="mb-2">單 位 名 稱：<span class="var-field doc-hospital signature-line">三軍總醫院</span></p>
+                    <p class="mb-2">授權簽署代表：<span class="signature-line"></span></p>
+                    <p class="mb-2">簽&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;名：<span class="signature-line"></span></p>
+                    <p class="mb-0">日&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;期：<span class="signature-line"></span></p>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <div class="fw-bold mb-2">台灣諾華股份有限公司</div>
+                    <div class="row">
+                        <div class="col-6">
+                            <p class="mb-2">姓名：<span class="fixed-field mgr-name signature-line">周書權</span></p>
+                            <p class="mb-2">職稱：<span class="fixed-field mgr-title signature-line">區域業務經理</span></p>
+                        </div>
+                        <div class="col-6">
+                            <p class="mb-2">簽名：<span class="signature-line"></span></p>
+                            <p class="mb-0">日期：<span class="signature-line"></span></p>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <div class="contract-page-footer">
+            <span>Ver/Date: 5 November 2026</span>
+            <span>Page 5</span>
+        </div>
+    </div>
+
+    <!-- PAGE 6 -->
+    <div class="contract-page">
+        <div class="contract-header" style="text-align: center; margin-bottom: 20px;">一般條款及條件</div>
+        <div class="row">
+            <div class="col-6 pe-3" style="border-right: 1px solid #e2e8f0;">
+                <p class="fw-bold mb-1">1. 適用範圍</p>
+                <p class="ps-2 mb-3">
+                    諾華係代表其本身及其集團關係企業之利益簽署本合約。除終止或執行本合約之權利外（此等權利由諾華保留之），本合約提及諾華時係指諾華及/或諾華關係企業（視上下文要求適用）。
+                </p>
+
+                <p class="fw-bold mb-1">2. 付款及開立發票/收據</p>
+                <p class="ps-2 mb-3">
+                    (a) 諾華將在收到您的適用發票/收據(如適用)且入帳後 60 日內支付所有無爭議金額（必須符合稅法規範）。
+                </p>
+
+                <p class="fw-bold mb-1">3. 合約服務之確認</p>
+                <p class="ps-2 mb-3">
+                    合約服務內容亦會透過諾華採購訂單進行確認；該採購訂單若與本合約有衝突者，以本合約所載內容為準。
+                </p>
+
+                <p class="fw-bold mb-1">4. 付款時程及說明</p>
+                <p class="ps-2 mb-2">
+                    (a) 您應提供發票/收據（如適用）：<br>
+                    寄送地址如下：<br>
+                    台北市民生東路三段二號八樓<br>
+                    諾華聯絡人：不適用
+                </p>
+            </div>
+            <div class="col-6 ps-3">
+                <p class="ps-2 mb-2">
+                    諾華將僅支付符合下列規範之發票/收據金額，其中包括以下資訊：<br>
+                    • 顧問名稱/姓名及地址<br>
+                    • 本合約服務之詳細說明及明細，及本合約服務之履行日期<br>
+                    • 應付金額（發票/收據/請款單應顯示費用金額及開支金額）<br>
+                    • 您的銀行帳戶之詳細資訊（首次交易提供），包括：<br>
+                    &nbsp;&nbsp;○ 存摺影本或<br>
+                    &nbsp;&nbsp;○ 精確至開戶分行之銀行帳戶資料文件<br>
+                    • 收款帳戶必須為您的個人銀行帳戶（亦即，非屬任何法律實體之帳戶），且該帳戶必須位於您的居住國或執業地(如適用)；<br>
+                    • 您的統一編號（如適用）<br>
+                    • 您的身分證字號（如適用）
+                </p>
+                <p class="ps-2 mb-2">
+                    (b) 若適用法律要求您的雇主核准及同意本合約，諾華有權扣留任何應付款項，直到您提出雇主同意之證明。
+                </p>
+                <p class="fw-bold mb-1 mt-2">5. 智慧財產權及所有權</p>
+                <p class="ps-2 mb-1">
+                    (a) <strong>智慧財產權之定義。</strong>「智慧財產權」：任何專利、設計、發明、技術、商標、商業外觀、著作權、技術密竅(know-how)、營業秘密、規格、公式、設備、系統、方法、解決方案、流程、文件、結果、財產權、資訊或任何形式之智慧財產權的專有權利、資訊、資料或形式之所有權利、所有權及利益（無論是否可透過登記獲得保護）。
+                </p>
+            </div>
+        </div>
+
+        <div class="contract-page-footer">
+            <span>Ver/Date: 5 November 2026</span>
+            <span>Page 6</span>
+        </div>
+    </div>
+
+    <!-- PAGE 7 -->
+    <div class="contract-page">
+        <div class="row">
+            <div class="col-6 pe-3" style="border-right: 1px solid #e2e8f0;">
+                <p class="ps-2 mb-2">
+                    「工作成果」：您依據本合約為諾華提供本合約服務所產生或開發之智慧財產權。
+                </p>
+                <p class="ps-2 mb-2">
+                    (b) <strong>工作成果之所有權。</strong>於本合約生效日之前，由您或諾華擁有且非屬工作成果之智慧財產權，仍屬於原擁有方之財產（各稱「顧問智慧財產」或「諾華智慧財產」）。您不會因為履行本合約服務而取得任何諾華智慧財產之權利、所有權或利益。
+                </p>
+                <p class="ps-2 mb-2">
+                    (c) <strong>工作成果之所有權及轉讓。</strong>諾華為所有工作成果唯一所有人，並有權就其進行使用及商業利用。於完成本合約服務或本合約提前終止或屆期時，您將向諾華提供所有工作成果，並將所有工作成果之權利、所有權及權益移轉及轉讓予諾華。您將於不向諾華收取額外費用的情況下，提供協助並簽署所有文件，以確保諾華取得工作成果之權利、所有權及利益。
+                </p>
+                <p class="ps-2 mb-2">
+                    (d) <strong>顧問對智慧財產權之使用。</strong><br>
+                    (i) 您確認您擁有或有權使用及/或轉讓用於履行本合約服務之智慧財產。<br>
+                    (ii) 未經諾華事前書面同意，您不得使用諾華之名稱或標誌，除非是為履行本合約服務所必須。
+                </p>
+            </div>
+            <div class="col-6 ps-3">
+                <p class="fw-bold mb-1">6. 保密義務</p>
+                <p class="ps-2 mb-2">
+                    (a) <strong>保密規範。</strong>諾華智慧財產、所有工作成果、任何其他機密及專有資訊（無論是否經明示指定）及您直接或間接自諾華取得之素材（下稱「本合約資訊」），於本合約屆期或終止期間及之後，均應以嚴格保密方式處理。未經諾華事前書面同意，您不應與第三方分享任何本合約資訊。本合約資訊僅得於履行本合約服務的情況下使用。
+                </p>
+                <p class="ps-2 mb-2">
+                    任何由 (a) 諾華、其代表人或其任何關係企業或 (b) 任何無關聯之第三方應諾華或其任何關係企業之要求向您揭露之本合約資訊，均應被視為由諾華依據本合約所作之揭露。就本合約目的而言，「代表人」係指一方之董事、經理人及員工。就本合約目的而言，若一實體為受諾華控制、控制諾華或與諾華受共同控制之公司（無論為股份有限公司或其他形式之組織），即應被視為諾華之「關係企業」。「控制」係指直接或間接擁有一公司或商業實體超過百分之五十之股權，或實質上有能力控制該公司或商業實體之管理決策。此外，關係企業亦應包括諾華及/或其關係企業所組織及/或贊助之研究基金會。
+                </p>
+                <p class="ps-2 mb-2">
+                    (b) <strong>歸還/銷毀資訊。</strong>當本合約服務完成後，您將立即遵守諾華之任何要求，歸還或銷毀任何由諾華或代表諾華提供之文件或電腦資料，不得無故拖延。
+                </p>
+            </div>
+        </div>
+
+        <div class="contract-page-footer">
+            <span>Ver/Date: 5 November 2026</span>
+            <span>Page 7</span>
+        </div>
+    </div>
+
+    <!-- PAGE 8 -->
+    <div class="contract-page">
+        <div class="row">
+            <div class="col-6 pe-3" style="border-right: 1px solid #e2e8f0;">
+                <p class="ps-2 mb-2">
+                    (c) <strong>保密規範之例外情況。</strong>您得提供書面文件，使下列情況不適用於本合約資訊之保密義務：<br>
+                    (i) 非因您違反任何義務，而於揭露當時或於揭露後成為眾所周知者；<br>
+                    (ii) 係由有權揭露而不違反保密義務之第三方向您揭露者；<br>
+                    (iii) 於諾華、其關係企業、或代表諾華或其關係企業之自然人或法人揭露之前，您已知悉或以其他方式掌握者；或<br>
+                    (iv) 係由您在未使用諾華或其關係企業揭露之任何資訊的情況下獨立開發者。<br>
+                    若經法院、行政機關或其他具有管轄權之法庭之強制要求，您得揭露本合約資訊；然而，您必須先向諾華迅即出具書面通知，俾使諾華或其關係企業得向該法院、機關或法庭尋求保護令或其他救濟。您應依據您的法律顧問之合理意見僅於必要範圍內揭露本合約資訊。
+                </p>
+                <p class="ps-2 mb-2">
+                    (d) <strong>違反保密義務之救濟。</strong>您同意，於不履行、威脅違反、實際違反或規避本第 4 條約定的情況下，諾華及/或其關係企業將遭受直接及不可挽回之傷害，該傷害可能是無法衡量或金錢無法補救之損失。除可依據本合約尋求任何法律或衡平救濟外，諾華及/或其關係企業亦有權得尋求其他衡平救濟，包括定暫時狀態假處分、假執行、假處分或強制執行。
+                </p>
+            </div>
+            <div class="col-6 ps-3">
+                <p class="fw-bold mb-1">7. 合約期間</p>
+                <p class="ps-2 mb-2">
+                    (a) <strong>契約須經雇主核准始生效力。</strong>若您受僱於一公務機關/公立機構，且您於該機關/機構所在國家規定下需取得雇主書面核准（例如，德國），則本合約僅有在取得該書面核准後始生效力。<br>
+                    (b) <strong>屆期。</strong>本合約於本合約服務完成後屆期，或至遲於生效日後兩（2）年屆期。
+                </p>
+
+                <p class="fw-bold mb-1 mt-3">8. 終止</p>
+                <p class="ps-2 mb-2">
+                    (a) <strong>終止權。</strong>任一方當事人均得於至少十(10)日前，透過事前向他方發出書面通知來終止本合約。<br>
+                    (b) <strong>終止時顧問之義務。</strong>您將以最符合成本效益之方式停止提供本合約服務。<br>
+                    (c) <strong>就實際履行之本合約服務支付報酬。</strong>若諾華終止本合約，其將就您於終止前實際履行的所有本合約服務支付報酬，而您將向諾華提供於終止前取得的所有工作成果。
+                </p>
+            </div>
+        </div>
+
+        <div class="contract-page-footer">
+            <span>Ver/Date: 5 November 2026</span>
+            <span>Page 8</span>
+        </div>
+    </div>
+
+    <!-- PAGE 9 -->
+    <div class="contract-page">
+        <div class="row">
+            <div class="col-6 pe-3" style="border-right: 1px solid #e2e8f0;">
+                <p class="ps-2 mb-2">
+                    若有其他第三方開支，均應符合諾華差旅政策要求，且向諾華提供適當之證明文件以核實發票金額。<br>
+                    (d) <strong>終止時權利及義務之存續。</strong>第 5 條（智慧財產權及所有權）及第 6 條（保密義務）所載權利及義務於本合約屆期或終止後仍然適用。
+                </p>
+
+                <p class="fw-bold mb-1 mt-2">9. 公開發表</p>
+                <p class="ps-2 mb-2">
+                    於本合約有效期間內或提前終止或屆期後，未經諾華事前書面核准，您不應於任何出版物、講座、手稿、海報、展示或其他揭露或傳播（不論以口頭或書面）提及本合約服務、本合約或包含本合約資訊（除非被您的揭露義務所要求）。
+                </p>
+
+                <p class="fw-bold mb-1 mt-2">10. 委任公開透明</p>
+                <p class="ps-2 mb-2">
+                    (a) 您將在面向外部觀眾的所有素材中披露：<br>
+                    (i) 您與諾華之間存在關係的事實；及<br>
+                    (ii) 任何其他關係，該其他關係係一合理、道德之人均會期待被揭露之關係。<br>
+                    (b) 您及諾華將共同遵守與本合約相關的任何其他適用之揭露要求，包括與諾華產品（不論已上市或仍在試驗中）有關之您與決策機關的專業關係。
+                </p>
+            </div>
+            <div class="col-6 ps-3">
+                <p class="fw-bold mb-1">11. 必要核准及無衝突義務</p>
+                <p class="ps-2 mb-2">
+                    (a) 您確認：<br>
+                    (i) 您對任何第三方沒有任何可能與您於本合約下之義務有任何衝突之義務，且您未經諾華事前書面同意，不會承擔任何該等義務；及<br>
+                    (ii) 您已提供所有必要之通知，並取得所有必要之核准，以履行本合約下之本合約服務，包括您的雇主及/或相關監管機關之核准（如必要）。<br>
+                    (b) 若您受僱於任何醫療院所、大專院校或任何其他機構（下稱「機構」），您確認您係以個人身分而非以該機構員工或代理人之身分訂立本合約，並確認您於履行本合約服務時應獨立負責保護並遵守該機構之專有資訊、規則及政策。
+                </p>
+
+                <p class="fw-bold mb-1 mt-2">12. 藥物安全監視通報</p>
+                <p class="ps-2 mb-2">
+                    <strong>不良事件或特殊情況通報：</strong>如果您得知任何關於病患使用諾華產品之不良事件或特殊事件，應向諾華藥物安全監視部門於<strong>獲知後 24 小時內</strong>通報該事件，毋庸考量其關聯性、嚴重度、仿單記載及/或通報者類型。您進行通報時應提供諾華關於使用此諾華產品之資訊，以及促使諾華依據法令記錄暨通報不良事件所需之個人健康資訊。
+                </p>
+            </div>
+        </div>
+
+        <div class="contract-page-footer">
+            <span>Ver/Date: 5 November 2026</span>
+            <span>Page 9</span>
+        </div>
+    </div>
+
+    <!-- PAGE 10 -->
+    <div class="contract-page">
+        <div class="row">
+            <div class="col-6 pe-3" style="border-right: 1px solid #e2e8f0;">
+                <p class="ps-2 mb-2">
+                    不良事件係指病患使用藥品後所發生之任何不良的醫療情況，其與治療之間不具有因果關係之必要。因此，不良事件可以是任何不良或非期望的症狀（包含如異常的實驗室檢驗結果）、症狀或疾病，與使用藥品具時序相關性，但不考量是否與該藥品有關聯。
+                </p>
+                <p class="ps-2 mb-2">
+                    特殊情況是指那些可能不是不良事件，但我們仍然需要收集的情況，以確保接受諾華產品治療的病人的安全。例如：懷孕/哺乳、仿單外使用、用藥錯誤、效果不好、過量、誤用/濫用、藥品依賴/成癮、不遵從醫囑等不良事件或特殊案例情況通報方式為：<br>
+                    <strong>PVI:</strong> https://www.novartis.com/report<br>
+                    <strong>Email:</strong> tw.safety@novartis.com<br>
+                    <strong>Tel:</strong> 0800-205165
+                </p>
+
+                <p class="fw-bold mb-1 mt-3">13. 附則</p>
+                <p class="ps-2 mb-2">
+                    (a) <strong>停權。</strong>您確認您並未遭任何適用之法律或法規禁止或取消資格，若於簽署本合約後任何時間發生此等情況，您會通知諾華。<br>
+                    (b) <strong>轉讓。</strong>您僅得於諾華事前書面同意的情況下轉讓本合約之權利及義務。然而，諾華得隨時轉讓其於本合約下之權利及義務，而毋須您的事前同意。<br>
+                    (c) <strong>準據法。</strong>本合約受中華民國(台灣)法律管轄。任何與本合約相關之爭議，均受台灣台北地方法院之管轄。
+                </p>
+            </div>
+            <div class="col-6 ps-3">
+                <p class="ps-2 mb-2">
+                    (d) <strong>變更及棄權。</strong>除非以書面形式為之並經雙方簽署，本合約之棄權或變更對任一方當事人均無拘束力，且於行使任何權利方面之怠惰或延誤均不應被視為棄權。
+                </p>
+
+                <p class="fw-bold mb-1 mt-3">14. 業務夥伴之一般隱私權通知</p>
+                <p class="ps-2 mb-2">
+                    諾華將依據下列網頁所載政策蒐集及處理您的個人資料：<br>
+                    https://www.novartis.com/sites/www.novartis.com/files/novartis-general-privacy-notice-for-business-partners.pdf，包括為本合約及與您後續互動之目的評估您擔任講者的表現（如適用）。
+                </p>
+            </div>
+        </div>
+
+        <div class="contract-page-footer">
+            <span>Ver/Date: 5 November 2026</span>
+            <span>Page 10</span>
+        </div>
+    </div>
+
+    <!-- PAGE 11 -->
+    <div class="contract-page">
+        <div class="contract-header" style="text-align: center; margin-bottom: 20px;">附件一：諾華講師法規遵循注意事項</div>
+        
+        <p class="fw-bold mb-1">1. 諾華會議安排與執行規範</p>
+        <p class="ps-3 mb-2">
+            (a) 講座主題內容須事先經諾華確認(台灣諾華內部審核流程)<br>
+            (b) 講師須符合適當的遴選條件<br>
+            (c) 講師酬勞須符合市場公允價值<br>
+            (d) 會議須具正當商業目的：傳遞仿單內產品資訊給適當聽眾，而非給予講師不正當利益<br>
+            (e) 演講前，講師須與諾華簽訂顧問合約<br>
+            (f) 會議的舉行須依照本地 IRPMA 市場行銷規範以及諾華內部政策<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;• 眷屬與朋友不得參與<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;• 適當的款待<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;• 適當的會議地點<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;• 不得給予禮品
+        </p>
+
+        <p class="fw-bold mb-1 mt-3">2. 簡報內容注意事項 (藥品、醫材之行銷規範)</p>
+        <p class="ps-3 mb-2">
+            (a) 與核可之產品訊息一致 (on-label)<br>
+            (b) 正確、不誤導<br>
+            (c) 實據基礎<br>
+            (d) 公正、平衡
+        </p>
+
+        <p class="fw-bold mb-1 mt-3">3. 簡報內容及材料</p>
+        <p class="ps-3 mb-2">
+            (a) 請最遲於會議前三個工作天將您的簡報及講義交給我們覆核<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;• 請勿修改覆核過的內容，或提供未經覆核的材料給聽眾<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;• 請發表整份覆核過的簡報。<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;• 請對聽眾表明您諾華講師的身分，以及表明此次演講及會議由諾華出資
+        </p>
+
+        <p class="fw-bold mb-1 mt-3">4. 回答聽眾的 Off-Label 提問注意事項</p>
+        <p class="ps-3 mb-2">
+            (a) 講師不可主動發起 Off-Label 的討論<br>
+            (b) 講師可以回答聽眾 Off-Label 的提問，但是必須符合以下要求:<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;• 講師應表明此提問為 Off-Label<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;• 表明回覆為基於自身經驗，非由諾華背書或提供<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;• 僅針對提問內容回答，不可加以延長討論<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;• 以非行銷的詞語及語調回覆，以表明目的為傳遞科學訊息<br>
+            (c) 諾華政策不限制您回答對於醫療技術、疾病診斷等一般性問題
+        </p>
+
+        <p class="fw-bold mb-1 mt-3">5. 交通住宿費用報銷</p>
+        <p class="ps-3 mb-0">
+            (a) 須事先經諾華同意(台灣諾華內部審核流程)<br>
+            (b) 交通由諾華核准之旅行社安排，或依單據實報實銷<br>
+            (c) 以經濟艙為主<br>
+            (d) 住宿飯店等級不可超過五星，且不可以休閒娛樂或奢華著稱
+        </p>
+
+        <div class="contract-page-footer">
+            <span>Ver/Date: 5 November 2026</span>
+            <span>Page 11</span>
+        </div>
+    </div>
+
+    <!-- PAGE 12 -->
+    <div class="contract-page">
+        <p class="fw-bold mb-1">6. 諾華同仁對於講師執行狀況之觀察及檢視</p>
+        <p class="ps-3 mb-2">
+            (a) 諾華代表必須回報任何違反諾華政策的行為<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;• 未揭露藥物安全資訊<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;• 使用未經覆核的教材<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;• 積極討論 Off-Label 議題<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;• 不適當的行為或不適當的參與者<br>
+            (b) 若未遵循相關規範，可能導致合約的終止
+        </p>
+
+        <div class="contract-page-footer">
+            <span>Ver/Date: 5 November 2026</span>
+            <span>Page 12</span>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function updateContract() {
+    const docName = document.getElementById('inputDoctor').value;
+    const hospital = document.getElementById('inputHospital').value;
+    const hospAddr = document.getElementById('inputHospAddr').value;
+    const docTitle = document.getElementById('inputDocTitle').value;
+    const eventName = document.getElementById('inputEventName').value;
+    const eventDate = document.getElementById('inputDate').value;
+    const eventTime = document.getElementById('inputTime').value;
+    const eventVenue = document.getElementById('inputVenue').value;
+    const eventTopic = document.getElementById('inputTopic').value;
+    const feeTotal = document.getElementById('inputFee').value;
+    const mgrName = document.getElementById('inputMgrName').value;
+    const mgrTitle = document.getElementById('inputMgrTitle').value;
+
+    document.querySelectorAll('.doc-name').forEach(el => el.textContent = docName);
+    document.querySelectorAll('.doc-title').forEach(el => el.textContent = docTitle);
+    document.querySelectorAll('.doc-hospital').forEach(el => el.textContent = hospital);
+    document.querySelectorAll('.doc-full-addr').forEach(el => el.textContent = `${hospital}（${hospAddr}）`);
+    document.querySelectorAll('.event-name').forEach(el => el.textContent = eventName);
+    document.querySelectorAll('.event-date').forEach(el => el.textContent = eventDate);
+    document.querySelectorAll('.event-time').forEach(el => el.textContent = eventTime);
+    document.querySelectorAll('.event-venue').forEach(el => el.textContent = eventVenue);
+    document.querySelectorAll('.event-topic').forEach(el => el.textContent = eventTopic);
+    document.querySelectorAll('.fee-total').forEach(el => el.textContent = feeTotal);
+    document.querySelectorAll('.mgr-name').forEach(el => el.textContent = mgrName);
+    document.querySelectorAll('.mgr-title').forEach(el => el.textContent = mgrTitle);
+}
+
+function applyPresetSanZong() {
+    document.getElementById('inputDoctor').value = "廖國秀 醫師";
+    document.getElementById('inputHospital').value = "三軍總醫院";
+    document.getElementById('inputHospAddr').value = "台北市內湖區成功路二段325號";
+    document.getElementById('inputDocTitle').value = "主治醫師";
+    document.getElementById('inputEventName').value = "三總乳癌討論會 - From Shared Decision to Long-Term Confidence";
+    document.getElementById('inputDate').value = "2026年11月24日";
+    document.getElementById('inputTime').value = "18:30-20:30";
+    document.getElementById('inputVenue').value = "Wilson Park 威爾森公園餐廳（台北市內湖區民權東路六段125之1號）";
+    document.getElementById('inputTopic').value = "KISQALI Does it Again: A Moment for OS in NATALEE";
+    document.getElementById('inputFee').value = "新台幣 5,000 元整";
+    document.getElementById('inputMgrName').value = "周書權";
+    document.getElementById('inputMgrTitle').value = "區域業務經理";
+    updateContract();
+}
+
+function toggleCleanMode() {
+    document.body.classList.toggle('clean-mode');
+}
+
+function parseCustomAgenda() {
+    const raw = document.getElementById('agendaInput').value;
+    if (!raw.trim()) {
+        alert("請先貼上議程文字內容！");
+        return;
+    }
+
+    // 智能提取日期
+    const dateMatch = raw.match(/202[0-9]年[0-9]{1,2}月[0-9]{1,2}日|[0-9]{4}[/-][0-9]{1,2}[/-][0-9]{1,2}/);
+    if (dateMatch) {
+        document.getElementById('inputDate').value = dateMatch[0];
+    }
+
+    // 智能提取總時間
+    const timeMatch = raw.match(/[0-2]?[0-9]:[0-5][0-9]\s*[-~至]\s*[0-2]?[0-9]:[0-5][0-9]/);
+    if (timeMatch) {
+        document.getElementById('inputTime').value = timeMatch[0];
+    }
+
+    // 智能提取地點
+    const venueMatch = raw.match(/地點\s*[:：]\s*(.+)/);
+    if (venueMatch) {
+        document.getElementById('inputVenue').value = venueMatch[1].trim();
+    }
+
+    // 智能提取醫師與醫院（排除諾華同仁）
+    const lines = raw.split(/\r?\n/);
+    lines.forEach(line => {
+        // 如果該行包含諾華或員工名稱，則直接跳過
+        if (line.includes("諾華") || line.includes("Sandy") || line.includes("PSP")) {
+            return;
+        }
+
+        // 提取醫師
+        const docMatch = line.match(/([\u4e00-\u9fa5]{2,4}\s*醫師|[\u4e00-\u9fa5]{2,4}\s*主任|[\u4e00-\u9fa5]{2,4}\s*副院長|[\u4e00-\u9fa5]{2,4}\s*院長)/);
+        if (docMatch) {
+            document.getElementById('inputDoctor').value = docMatch[1].trim();
+        }
+
+        // 提取醫院機構
+        const hospMatch = line.match(/(三軍總醫院|台大醫院|榮民總醫院|台北榮總|林口長庚|基隆長庚|長庚醫院|馬偕醫院|國泰醫院|新光醫院|亞東醫院|雙和醫院|萬芳醫院|振興醫院|慈濟醫院)/);
+        if (hospMatch) {
+            document.getElementById('inputHospital').value = hospMatch[1].trim();
+        }
+    });
+
+    updateContract();
+    alert("議程解析完成！已自動排除諾華內部同仁，並更新外部醫師合約資料。");
+}
+
+function exportWord() {
+    const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' "+
+        "xmlns:w='urn:schemas-microsoft-com:office:word' "+
+        "xmlns='http://www.w3.org/TR/REC-html40'>"+
+        "<head><meta charset='utf-8'><title>顧問服務合約</title><style>body{font-family:'Microsoft JhengHei',sans-serif;}</style></head><body>";
+    const footer = "</body></html>";
+    const sourceHTML = header + document.getElementById('contractFullDoc').innerHTML + footer;
+    
+    const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
+    const fileDownload = document.createElement("a");
+    document.body.appendChild(fileDownload);
+    fileDownload.href = source;
+    fileDownload.download = `諾華顧問服務合約_${document.getElementById('inputDoctor').value}.doc`;
+    fileDownload.click();
+    document.body.removeChild(fileDownload);
+}
+
+// 預設初始化
+window.onload = function() {
+    updateContract();
+};
+</script>
+</body>
+</html>
