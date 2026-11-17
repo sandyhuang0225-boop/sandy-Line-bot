@@ -2753,24 +2753,26 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                 return;
             }
 
-            // Scenario 3/4: Pre-menopausal Metastatic + GnRH
+            // Scenario 3: Pre-menopausal / Male MBC First-line (Dual Drug Simultaneous Prior Authorization)
             if (currentScenario === 3) {
                 document.getElementById("viewIcd").textContent = "C50.919";
                 viewReasonEl.innerHTML = `
-<strong>【全民健保藥品事前審查申請理由 (健保規定 9.72 第 2 點)】：</strong>
+<strong>【全民健保藥品事前審查申請理由 (健保規定 9.72 第 2 點 ＆ 5.5.1 點 雙藥合併送核)】：</strong>
 
-<strong>1. 健保給付規定合規：</strong>
-符合健保規定 9.72 第 2 點：女性停經前或男性荷爾蒙陽性、HER2 陰性轉移性乳癌，第一線使用擊癌利合併芳香環轉化酶抑制劑 (AI) 及 LHRH 類似劑 (${gnrh.name.split(" ")[0]}，健保碼：${gnrh.code})。影像確認無 CNS 轉移、無內臟危象，骨轉移非唯一部位。
+<strong>1. 健保給付規定合規（雙藥健保同時給付）：</strong>
+符合健保規定 9.72 第 2 點及 5.5.1 點：女性停經前或男性荷爾蒙陽性、HER2 陰性轉移性乳癌，第一線給付擊癌利 (ribociclib) 合併芳香環轉化酶抑制劑 (AI) 及 LHRH 類似劑停經針 (${gnrh.name.split(" ")[0]}，健保碼：${gnrh.code})。
+• <strong>雙藥同時給付與審查依據</strong>：健保全額給付雙藥，且兩藥皆屬健保事前審查管制藥品，特此於本申請書【同時列名、合併送核】。
+• 排除條件覆核：全身影像確認無 CNS 腦轉移、無內臟危象 (Visceral Crisis)，骨轉移非唯一部位。
 
 <strong>2. 病患現階段實際狀況 (依醫師口述與病歷)：</strong>
 • 臨床診斷：轉移性乳癌 (Stage IV)。
-• 適用對象：女性停經前或男性病患。
-• 荷爾蒙受體：ER 染色陽性率：<strong>${erSpoken ? `${erVal}%` : "陽性 (≧ 1%)"}</strong>，PR 染色陽性率：<strong>${prSpoken ? `${prVal}%` : "陽性 (≧ 1%)"}</strong>${kiText}。
+• 適用對象：<strong>女性停經前或男性病患</strong> (合併使用 LHRH 類似劑卵巢功能抑制劑)。
+• 荷爾蒙受體：ER 染色陽性率：<strong>${erSpoken ? `${erVal}%` : "陽性 (≧ 1%)"}</strong>，PR 染色陽性率：<strong>${prSpoken ? `${prVal}%` : "陽性 (≧ 1%)"}</strong>${kiText} (符合晚期放寬 ≧ 1% 給付門檻)。
 • HER2 狀態：<strong>陰性 (Negative)</strong>。
 
-<strong>3. 事前審查申請代碼與品項：</strong>
-• <strong>擊癌利膜衣錠 200毫克</strong>：事審代碼 <strong>C50R1</strong> (健保碼：KC01004100)，每次 3 粒 (600mg) 每日口服，申請 <strong>378 粒</strong> (24 週用量)。
-• <strong>${gnrh.name}</strong>：健保代碼 <strong>${gnrh.code}</strong>，申請 <strong>${gnrh.qty}</strong>。
+<strong>3. 事前審查申請代碼與雙藥品項（兩藥同時審查、合併申領 24 週）：</strong>
+• <strong>項次一【口服標靶】擊癌利膜衣錠 200毫克</strong>：事前審查代碼 <strong>C50R1</strong> (健保碼：KC01004100)，每次 3 粒 (600mg) 每日口服一次，服 21 天停 7 天，申請 <strong>378 粒</strong> (24 週用量)。
+• <strong>項次二【停經針劑】${gnrh.name}</strong>：健保藥品代碼 <strong>${gnrh.code}</strong>，規格 ${gnrh.spec}，依健保 5.5.1 點每 4 週注射一次，申請 <strong>${gnrh.qty}</strong> (24 週用量)。
                 `.trim();
                 return;
             }
@@ -2797,24 +2799,25 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                 return;
             }
 
-            // Scenario 5: 2nd line Fulvestrant
+            // Scenario 4: 2nd line Fulvestrant Post-AI PD (Dual Drug Simultaneous Prior Authorization)
             if (currentScenario === 4) {
                 document.getElementById("viewIcd").textContent = "C50.919";
                 const fulv = FULVESTRANT_ITEMS[currentFulvestrant] || FULVESTRANT_ITEMS.tty;
                 viewReasonEl.innerHTML = `
-<strong>【全民健保藥品事前審查申請理由 (115/12/1 擴大給付 9.72 第 3 點)】：</strong>
+<strong>【全民健保藥品事前審查申請理由 (115/12/1 健保規定 9.72 第 3 點 ＆ 9.130 點 雙藥合併送核)】：</strong>
 
-<strong>1. 健保給付規定合規：</strong>
-符合 115 年 12 月 1 日健保規定 9.72 第 3 點：第一線使用 AI 惡化後，第二線合併使用 Fulvestrant (事審代碼：C50R2) 及 CDK4/6 抑制劑擊癌利。
+<strong>1. 健保給付規定合規（雙藥健保同時給付）：</strong>
+完全符合 115 年 12 月 1 日健保修訂規定 9.72 第 3 點及第 9.130 點規定：轉移性乳癌病人前線使用芳香環轉化酶抑制劑 (AI) 治療後惡化，第二線合併使用 CDK4/6 抑制劑擊癌利 (ribociclib) 與 Faslodex/Fulvestrant (氟維司群)。
+• <strong>雙藥同時給付與審查依據</strong>：健保全額給付擊癌利與 Faslodex/Fulvestrant，依健保法規兩藥均屬事前審查藥品，特此於本申請書【同時申報、雙藥合併審查】。
 
 <strong>2. 病患現階段實際狀況 (依醫師口述與病歷)：</strong>
-• 治療病史：前線使用 AI 治療後疾病惡化。
-• 荷爾蒙受體：ER 染色陽性率：<strong>${erSpoken ? `${erVal}%` : "陽性 (≧ 30%)"}</strong>，PR 染色陽性率：<strong>${prSpoken ? `${prVal}%` : "陽性 (≧ 30%)"}</strong>${kiText} (符合二線嚴格 ≧ 30% 給付門檻)。
+• 治療病史：前線曾接受芳香環轉化酶抑制劑 (AI) 輔助或第一線治療後產生疾病惡化 (PD)。
+• 荷爾蒙受體：ER 染色陽性率：<strong>${erSpoken ? `${erVal}%` : "陽性 (≧ 30%)"}</strong>，PR 染色陽性率：<strong>${prSpoken ? `${prVal}%` : "陽性 (≧ 30%)"}</strong>${kiText} (完全符合二線惡化嚴格要求 ER 或 PR ≧ 30% 之給付門檻)。
 • HER2 狀態：<strong>陰性 (Negative)</strong>。
 
-<strong>3. 事前審查申請代碼與品項：</strong>
-• <strong>擊癌利膜衣錠 200毫克</strong>：事審代碼 <strong>C50R2</strong> (健保碼：KC01004100)，每次 3 粒 (600mg)，申請 <strong>378 粒</strong> (24 週用量)。
-• <strong>${fulv.name}</strong>：健保碼 <strong>${fulv.code}</strong>，規格 ${fulv.spec}，申請 <strong>${fulv.qty}</strong>。
+<strong>3. 事前審查申請代碼與雙藥品項（兩藥同時審查、合併申領 24 週）：</strong>
+• <strong>項次一【口服標靶】擊癌利膜衣錠 200毫克</strong>：事前審查代碼 <strong>C50R2</strong> (健保藥碼：KC01004100)，每次口服 3 粒 (600mg)，服 21 天停 7 天，申請 <strong>378 粒</strong> (24 週用量)。
+• <strong>項次二【肌肉注射】${fulv.name}</strong>：健保藥品代碼 <strong>${fulv.code}</strong> (Fulvestrant 250mg/5ml)，依健保 9.130 點每次 500mg (2 支) 雙側臀部肌肉注射，申請 <strong>16 支</strong> (24 週用量)。
                 `.trim();
                 return;
             }
