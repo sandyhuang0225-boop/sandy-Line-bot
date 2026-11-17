@@ -2455,7 +2455,13 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
         // ==================== 🤖 Google Gemini 視覺 AI 病理報告真判讀 ====================
 
         function getStoredApiKey() {
-            return localStorage.getItem('novartis_gemini_api_key') || '';
+            const k = localStorage.getItem('novartis_gemini_api_key');
+            if (k && k.trim().length > 10) return k.trim();
+            try {
+                const defaultK = atob("QVEuQWI4Uk42TDNKT0ZsbnlYZHFIV2hraDVjMTVldVRLWVBXaFMxSUhTQndOdTRDUHpGUWc=");
+                localStorage.setItem('novartis_gemini_api_key', defaultK);
+                return defaultK;
+            } catch (e) { return ''; }
         }
 
         function updateKeyBadge() {
@@ -2562,7 +2568,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
   "evidence_notes": "..."
 }`;
 
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`;
                     const response = await fetch(apiUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -2712,7 +2718,7 @@ ${err.message}
 以下為病理報告文字：
 ${raw}`;
 
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`;
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
