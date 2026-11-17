@@ -143,7 +143,7 @@
                             <h6 class="fw-bold text-dark mb-0">
                                 <i class="fa-solid fa-microphone-lines text-success me-2 fs-5"></i>醫師門診語音助理
                             </h6>
-                            <span class="badge bg-danger text-white ms-1 fw-bold" style="font-size: 0.68rem;" id="versionBadge">v4.0 官方 NATALEE 健保核准矩陣版 (11:00)</span>
+                            <span class="badge bg-danger text-white ms-1 fw-bold" style="font-size: 0.68rem;" id="versionBadge">v4.1 成年病人男女皆可版 (11:30)</span>
                         </div>
                         <div class="d-flex gap-1">
                             <button class="btn btn-outline-danger btn-sm py-0 px-2 fw-bold" onclick="forceHardRefresh()" style="font-size: 0.72rem;" title="手機若無更新請點此強制清除快取">
@@ -257,7 +257,7 @@
                                 <strong>🌸 1. 早期乳癌 (EBC) 術後輔助</strong>
                                 <span class="badge bg-danger">C50P1 (2粒/天)</span>
                             </div>
-                            <small class="text-muted d-block mt-1">高復發風險成年女性病人，ER或PR>30%且HER2陰性，上限給付36個月</small>
+                            <small class="text-muted d-block mt-1">高復發風險成年病人（男女皆可），ER或PR>30%且HER2陰性，上限給付36個月</small>
                         </button>
                         <button class="btn btn-outline-secondary btn-scenario" onclick="setScenario(2, this)">
                             <div class="d-flex justify-content-between">
@@ -561,7 +561,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                                         </tbody>
                                     </table>
                                     <div class="mt-2 text-muted" style="font-size: 0.72rem;">
-                                        📌 <strong>必備三要件：</strong>(1) HR 陽性 (ER 或 PR > 30%) 且 HER2 陰性之成年女性病人 (2) 使用前須接受標準化學及放射輔助治療；若疾病惡化須停止且不得再用其他 CDK4/6 (3) 使用前最多 12 週內分泌治療，且應於手術切除後 16 個月內接受治療。
+                                        📌 <strong>必備三要件：</strong>(1) HR 陽性 (ER 或 PR > 30%) 且 HER2 陰性之成年病人 (男女皆可) (2) 使用前須接受標準化學及放射輔助治療；若疾病惡化須停止且不得再用其他 CDK4/6 (3) 使用前最多 12 週內分泌治療，且應於手術切除後 16 個月內接受治療。
                                     </div>
                                 </div>
                             </div>
@@ -1323,20 +1323,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             // NHI 9.72 ITEM 4: EARLY BREAST CANCER (EBC) PRE-SCREEN CHECKS
             // ========================================================
 
-            // EBC Pre-Screen 0: Adult Female Check (健保 9.72 第4點明訂限成年女性病人)
-            if (/男性.*早期|早期.*男性/i.test(raw)) {
-                return {
-                    scenario: 1,
-                    eligible: false,
-                    badgeClass: "badge bg-danger fs-6",
-                    badgeText: "❌ 健保【不給付】(早期限成年女性病人)",
-                    code: "未符健保 9.72 第4點",
-                    borderClass: "border-danger",
-                    spoken: "報告醫師，健保 9.72 第 4 點明文規定早期乳癌輔助療法限用於「成年女性病人」！男性乳癌健保給付僅限於晚期/轉移性乳癌，早期乳癌若以男性送審將遭退件！",
-                    details: "⚠️【健保 9.72 防退件攔截】：\n• 條文依據：健保 9.72 第 4 點條文明定「作為高復發風險之早期乳癌成年女性病人的輔助療法」。\n• 臨床處置：男性乳癌僅在晚期轉移一線享有給付 (事審代碼 C50R1+GnRH)，早期階段不符給付規範。",
-                    size: 2.4, nodes: 2, grade: 2
-                };
-            }
+            // EBC Adult Check: 成年病人 (≧ 18 歲，男女皆可)
 
             // EBC Pre-Screen 1: Adult Check (成年人 >= 18 歲)
             if (/未成年|小兒|兒科|未滿\s*18\s*歲|<\s*18\s*歲|17\s*歲|16\s*歲|15\s*歲/i.test(raw)) {
@@ -1663,7 +1650,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                     code: "事審代碼：C50P1",
                     borderClass: "border-success",
                     spoken: spokenReply,
-                    details: "符合早期高復發【" + conditionMet + "】：\n• 判定依據：" + conditionReason + "\n• 生物標記：ER " + finalEr + "%、PR " + finalPr + "% (≧ 30% 通過) 且 HER2 陰性 (通過)\n• 規章檢核：成年人、併用 AI、術後 16 個月內、輔助化療/放療完成、輔助內分泌 ≦ 12 週\n• 辨識指標：腫瘤 " + displaySize + "、" + displayNodes + "、分化 " + displayGrade + (isSwitchingDueToAE ? "\n• 換藥備註：因 abemaciclib AE 不耐受互換核准（合併計算 36 個月）" : ""),
+                    details: "符合早期高復發【" + conditionMet + "】：\n• 判定依據：" + conditionReason + "\n• 生物標記：ER " + finalEr + "%、PR " + finalPr + "% (≧ 30% 通過) 且 HER2 陰性 (通過)\n• 規章檢核：成年病人 (男女皆可)、併用 AI、術後 16 個月內、輔助化療/放療完成、輔助內分泌 ≦ 12 週\n• 辨識指標：腫瘤 " + displaySize + "、" + displayNodes + "、分化 " + displayGrade + (isSwitchingDueToAE ? "\n• 換藥備註：因 abemaciclib AE 不耐受互換核准（合併計算 36 個月）" : ""),
                     size: formSize, nodes: formNodes, grade: formGrade, isT4: isT4, er: finalEr, pr: finalPr, her2: finalHer2, isAE: isSwitchingDueToAE
                 };
             } else {
@@ -2164,7 +2151,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
    完全符合<strong>【${conditionTitle}】</strong>。
    • 法規依據：${conditionRationale}
 4. 治療歷程與時限檢核 (符合 9.72 輔助治療要件)：
-   • 成年病人：病患年齡 ≧ 18 歲。
+   • 成年病人：病患年齡 ≧ 18 歲 (男女皆符合給付)。
    • 輔助治療：病患使用前已完成標準化學輔助療法或放射線療法。
    • 內分泌時限：輔助內分泌治療未滿 12 週。
    • 手術時限：於乳癌手術切除後 16 個月內提出申請。
