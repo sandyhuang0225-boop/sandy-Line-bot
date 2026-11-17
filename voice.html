@@ -409,30 +409,12 @@
                 <div class="card card-custom p-3 mb-3">
                     <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
                         <h6 class="fw-bold text-dark mb-0"><i class="fa-solid fa-camera text-primary me-2"></i>上傳真實病理報告（Gemini 視覺 AI 判讀）</h6>
-                        <span id="geminiKeyBadge" class="badge bg-warning-subtle text-dark border border-warning px-2 py-1" style="cursor: pointer;" onclick="toggleApiKeyBox()">
-                            <i class="fa-solid fa-key me-1"></i><span id="keyStatusText">Gemini 視覺 AI 設定</span>
+                        <span class="badge bg-success-subtle text-success border border-success px-2 py-1">
+                            <i class="fa-solid fa-sparkles me-1"></i>Gemini 3.1 視覺 AI 已連線
                         </span>
                     </div>
 
-                    <!-- 🔑 Gemini API Key 展開設定卡 -->
-                    <div id="apiKeyConfigBox" class="p-3 mb-2 bg-white border border-warning rounded-3 shadow-sm" style="display: none;">
-                        <div class="d-flex align-items-center justify-content-between mb-2">
-                            <h6 class="fw-bold mb-0 text-dark small"><i class="fa-solid fa-brain me-1 text-warning"></i>Google Gemini 視覺 AI 設定</h6>
-                            <button type="button" class="btn-close btn-sm" onclick="toggleApiKeyBox()"></button>
-                        </div>
-                        <p class="text-muted mb-2" style="font-size: 0.72rem;">
-                            與合約生成器共用同一組 Google 免費金鑰，僅保存在您的手機本機端（localStorage），安全無虞。<br>
-                            <a href="https://aistudio.google.com/app/apikey" target="_blank" class="fw-bold text-primary text-decoration-underline">
-                                <i class="fa-solid fa-arrow-up-right-from-square me-1"></i>按此免費取得 Google Gemini API Key（10秒免費申請）
-                            </a>
-                        </p>
-                        <div class="input-group input-group-sm">
-                            <input type="password" id="geminiApiKeyInput" class="form-control" placeholder="貼上 Gemini API Key (以 AIzaSy 開頭)">
-                            <button class="btn btn-warning fw-bold text-dark" type="button" onclick="saveGeminiApiKey()">
-                                <i class="fa-solid fa-floppy-disk me-1"></i>儲存金鑰
-                            </button>
-                        </div>
-                    </div>
+                    
                     
                     <!-- Upload Dropzone -->
                     <div class="border border-2 border-dashed rounded-3 p-3 text-center bg-light mb-2" id="dropZone" style="cursor: pointer; border-color: #0d6efd !important;" onclick="document.getElementById('reportFileInput').click()">

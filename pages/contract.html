@@ -258,39 +258,14 @@
                 <small class="text-muted">由 Google Gemini 視覺 AI 即時辨識真實檔案，自動排除 Sandy Huang 諾華同仁</small>
             </div>
             <div class="d-flex align-items-center gap-2">
-                <span id="geminiKeyBadge" class="badge bg-warning-subtle text-dark border border-warning px-2 py-1" style="cursor: pointer;" onclick="toggleApiKeyBox()">
-                    <i class="fa-solid fa-key me-1"></i><span id="keyStatusText">Gemini 視覺 AI 設定</span>
+                <span class="badge bg-success-subtle text-success border border-success px-2 py-1">
+                    <i class="fa-solid fa-sparkles me-1"></i>Gemini 3.1 視覺 AI 已連線
                 </span>
                 <span id="contractStatusBadge" class="badge bg-secondary px-2 py-1">合約待上傳帶入</span>
             </div>
         </div>
 
-        <!-- 🔑 醒目直接貼上金鑰區 (預設直接展開，不需要點按鈕切換，防呆好用) -->
-        <div id="apiKeyOpenCard" class="card border-warning mb-3 shadow-sm" style="background: #fffdf5; border-width: 2px !important;">
-            <div class="card-body p-3">
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                    <h6 class="fw-bold text-dark mb-0">
-                        <i class="fa-solid fa-key text-warning fs-5 me-2"></i>請在此貼上您剛複製的 Gemini API Key
-                    </h6>
-                    <span id="keyStatusPill" class="badge bg-warning text-dark">待輸入</span>
-                </div>
-                <p class="small text-muted mb-2">
-                    您剛剛在 Google AI Studio 申請並複製的 Key（開頭通常為 <code>AIzaSy...</code>），直接在下方框內長按貼上，按「儲存並啟用」：
-                </p>
-                <div class="input-group">
-                    <span class="input-group-text bg-white"><i class="fa-solid fa-clipboard text-muted"></i></span>
-                    <input type="text" id="geminiApiKeyInput" class="form-control form-control-lg fs-6" placeholder="長按此處貼上 (如: AIzaSy...)">
-                    <button class="btn btn-warning btn-lg fw-bold text-dark px-3" type="button" onclick="saveGeminiApiKey()">
-                        <i class="fa-solid fa-circle-check me-1"></i>儲存並啟用
-                    </button>
-                </div>
-                <div id="apiKeySavedTip" class="alert alert-success py-2 px-3 mt-2 mb-0 fw-bold small shadow-sm" style="display: none;">
-                    <i class="fa-solid fa-circle-check text-success me-1"></i>金鑰已成功開通！現在您可以直接上傳照片或 PDF 開始真辨識。
-                </div>
-            </div>
-        </div>
-
-        <!-- 🌟 多位醫師切換分頁區 (支援 Speaker 講者與 Moderator 座長共 4 位以上醫師) 🌟 -->
+<!-- 🌟 多位醫師切換分頁區 (支援 Speaker 講者與 Moderator 座長共 4 位以上醫師) 🌟 -->
         <div id="multiDoctorSection" class="p-3 bg-white border border-primary rounded-3 mb-3 shadow-sm" style="display: none;">
             <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2 pb-2 border-bottom">
                 <div>
