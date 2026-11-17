@@ -129,7 +129,7 @@
                             <h6 class="fw-bold text-dark mb-0">
                                 <i class="fa-solid fa-microphone-lines text-success me-2 fs-5"></i>醫師門診語音助理
                             </h6>
-                            <span class="badge bg-danger text-white ms-1 fw-bold" style="font-size: 0.68rem;" id="versionBadge">v3.7 靜音切換+病患自訂版 (03:30)</span>
+                            <span class="badge bg-danger text-white ms-1 fw-bold" style="font-size: 0.68rem;" id="versionBadge">v3.8 全面涵蓋早期乳癌第4點規章版 (10:45)</span>
                         </div>
                         <div class="d-flex gap-1">
                             <button class="btn btn-outline-danger btn-sm py-0 px-2 fw-bold" onclick="forceHardRefresh()" style="font-size: 0.72rem;" title="手機若無更新請點此強制清除快取">
@@ -1151,7 +1151,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                 };
             }
 
-            // Scenario: 24 Months Renewal (續審展延)
+            // 7. Scenario: 24 Months Renewal (續審展延)
             if (/24\s*個月|兩年|2年|二年|續約|展延|續審|non-PD/i.test(raw)) {
                 return {
                     scenario: 6,
@@ -1163,6 +1163,173 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                     spoken: "報告醫師，用藥滿 24 個月無惡化續約，檢附近期電腦斷層及骨骼掃描確認疾病無惡化（non-PD），依健保 9.72 規定得繼續申請給付。已為您備妥展延申請書！",
                     details: "【24 個月展延續審】：\n• 判定依據：用藥滿 24 個月且影像學檢查無疾病進展 (non-PD)\n• 事審代碼：C50R1\n• 已自動匯入展延追蹤審查表",
                     size: 3.0, nodes: 2, grade: 2
+                };
+            }
+
+            // ========================================================
+            // NHI 9.72 ITEM 4: EARLY BREAST CANCER (EBC) PRE-SCREEN CHECKS
+            // ========================================================
+
+            // EBC Pre-Screen 1: Adult Check (成年人 >= 18 歲)
+            if (/未成年|小兒|兒科|未滿\s*18\s*歲|<\s*18\s*歲|17\s*歲|16\s*歲|15\s*歲/i.test(raw)) {
+                return {
+                    scenario: 1,
+                    eligible: false,
+                    badgeClass: "badge bg-danger fs-6",
+                    badgeText: "❌ 健保【不給付】(僅限成年病人)",
+                    code: "未符健保 9.72 第4點",
+                    borderClass: "border-danger",
+                    spoken: "報告醫師，健保 9.72 第 4 點明訂僅限「早期成年病人」之輔助治療！未成年病患不符健保給付適應症，送審必遭退件！",
+                    details: "⚠️【健保 9.72 防退件攔截】：\n• 攔截原因：健保規定適用對象為成年病人（≧ 18 歲）。\n• 臨床處置：避免無效事審送件，請依兒科/未成年專案或臨床試驗評估處置。",
+                    size: 2.4, nodes: 2, grade: 2
+                };
+            }
+
+            // EBC Pre-Screen 2: Switching from Abemaciclib due to Disease Progression (惡化者不得互換/不得繼續使用)
+            if (/(?:捷癌寧|abemaciclib|verzenio).*(?:惡化|進展|progression|pd)/i.test(raw) || /(?:惡化|進展|progression|pd).*(?:換藥|改用|換成|換).*擊癌利/i.test(raw)) {
+                return {
+                    scenario: 1,
+                    eligible: false,
+                    badgeClass: "badge bg-danger fs-6",
+                    badgeText: "❌ 健保【不給付】(惡化者不得互換/繼續使用)",
+                    code: "未符健保 9.72 第4點",
+                    borderClass: "border-danger",
+                    spoken: "報告醫師，健保 9.72 第 4 點明文嚴格規定：若因「疾病惡化」者，不得互換品項，亦不得繼續使用！此案若送審必遭健保署即刻退件核扣！",
+                    details: "⚠️【健保 9.72 嚴格禁忌攔截】：\n• 規章規定：早期乳癌 CDK4/6 抑制劑「若因疾病惡化 (PD) 者，不得互換，且不得繼續使用」。\n• 互換唯一合法條件：僅限「因嚴重不良反應 (AE) 不耐受」且無惡化者，方得申請互換。\n• 臨床處置：病患已疾病惡化，請轉移為晚期後線全身性治療評估，切勿送審早期申請書。",
+                    size: 2.4, nodes: 2, grade: 2
+                };
+            }
+
+            // EBC Pre-Screen 3: Surgery Time Limit (> 16 Months Post-Op)
+            if (/(?:手術|切除|術後).*(?:超過|大於|>|逾)?\s*(?:1[7-9]|[2-9]\d)\s*(?:個月|月)|術後超過\s*16\s*(?:個月|月)|手術超過\s*16\s*(?:個月|月)/i.test(raw)) {
+                return {
+                    scenario: 1,
+                    eligible: false,
+                    badgeClass: "badge bg-danger fs-6",
+                    badgeText: "❌ 健保【不給付】(已逾術後16個月上限)",
+                    code: "未符健保 9.72 第4點",
+                    borderClass: "border-danger",
+                    spoken: "報告醫師，健保 9.72 第 4 點明訂：必須於「手術切除後 16 個月內」提出藥品申請！病患手術切除已超過 16 個月，時效已過，送審將被退件！",
+                    details: "⚠️【健保 9.72 防退件攔截】：\n• 攔截原因：健保明訂申請時限為「手術切除後 16 個月內」。\n• 臨床處置：已逾越手術時間門檻，無法取得健保事前審查核准，建議輔以標準內分泌治療或自費專案。",
+                    size: 2.4, nodes: 2, grade: 2
+                };
+            }
+
+            // EBC Pre-Screen 4: Adjuvant Endocrine Therapy Time Limit (> 12 Weeks)
+            if (/(?:內分泌治療|荷爾蒙治療|口服藥|抗荷爾蒙).*(?:超過|大於|>|逾)?\s*(?:1[3-9]|[2-9]\d)\s*(?:週|周|禮拜)|內分泌.*超過\s*12\s*(?:週|周|禮拜)|荷爾蒙.*超過\s*12\s*(?:週|周|禮拜)/i.test(raw)) {
+                return {
+                    scenario: 1,
+                    eligible: false,
+                    badgeClass: "badge bg-danger fs-6",
+                    badgeText: "❌ 健保【不給付】(內分泌治療已逾12週)",
+                    code: "未符健保 9.72 第4點",
+                    borderClass: "border-danger",
+                    spoken: "報告醫師，健保 9.72 第 4 點明訂：使用本藥品前，輔助內分泌治療最多只能接受 12 週！病患內分泌治療已超過 12 週，不符合健保申請門檻，送審將遭退件！",
+                    details: "⚠️【健保 9.72 防退件攔截】：\n• 攔截原因：健保規定「開始使用本藥品前，最多只能接受 12 週的輔助內分泌治療」。\n• 臨床處置：避免無效事審送件，建議繼續常規內分泌治療或評估自費專案。",
+                    size: 2.4, nodes: 2, grade: 2
+                };
+            }
+
+            // EBC Pre-Screen 5: Pre-treatment Chemotherapy/Radiotherapy Requirement (未做化療且未做放療)
+            if (/未(?:曾)?(?:接受|做|進行)?(?:化療|化學治療).*(?:且|又)?.*未(?:曾)?(?:接受|做|進行)?(?:放療|放射治療|電療)/i.test(raw) || /(?:沒有做化療|沒做化療|未做化療).*(?:沒做放療|未做放療)/i.test(raw)) {
+                return {
+                    scenario: 1,
+                    eligible: false,
+                    badgeClass: "badge bg-danger fs-6",
+                    badgeText: "❌ 健保【不給付】(未經標準輔助化療/放療)",
+                    code: "未符健保 9.72 第4點",
+                    borderClass: "border-danger",
+                    spoken: "報告醫師，健保 9.72 第 4 點明訂：病患使用前「必須接受標準化學輔助療法或放射線療法」！病患未曾接受化療或放療輔助治療，不符給付要件，送審將被退件！",
+                    details: "⚠️【健保 9.72 防退件攔截】：\n• 攔截原因：健保規定「病患於使用前，應接受標準化學療法或放射療法輔助方可申請使用」。\n• 臨床處置：請評估是否應先行完成標準化學輔助治療或放射線輔助治療後再行送審。",
+                    size: 2.4, nodes: 2, grade: 2
+                };
+            }
+
+            // EBC Check 6: Abemaciclib AE Switching Detection (合法換藥)
+            let isSwitchingDueToAE = false;
+            if (/(?:捷癌寧|abemaciclib|verzenio).*(?:不良反應|副作用|ae|腹瀉|不耐受|腹瀉嚴重)/i.test(raw) || /(?:不良反應|副作用|ae|腹瀉|不耐受).*(?:換藥|改用|換成|轉換).*擊癌利/i.test(raw)) {
+                isSwitchingDueToAE = true;
+            }
+
+            // ========================================================
+            // BIOMARKER PARSING (ER, PR, HER2 - 健保 9.72 第4點核心要件)
+            // ========================================================
+            let erVal = null;
+            let prVal = null;
+            let her2Status = null; // "negative", "positive"
+
+            // HER2 Check
+            if (/(?:her2|her-2|her\s*2)\s*(?:陽性|positive|3\+|三加|\+\+\+)/i.test(raw) || /(?:her2|her-2)\s*(?:2\+|二加|\+\+)\s*(?:fish\s*陽性|fish\s*positive|擴增)/i.test(raw)) {
+                her2Status = "positive";
+            } else if (/(?:her2|her-2|her\s*2)\s*(?:陰性|negative|0|1\+|一加|\+)/i.test(raw) || /(?:her2|her-2)\s*(?:2\+|二加)\s*(?:fish\s*陰性|fish\s*negative|無擴增)/i.test(raw)) {
+                her2Status = "negative";
+            }
+
+            // Combined ER PR expression e.g. "ER、PR 大於等於 20%" / "ER與PR 20%"
+            const combMatch = raw.match(/(?:er[\s、,與和及\/]*pr|er和pr|er與pr|er及pr)[^\d一二兩三四五六七八九十%]*(?:陰性|negative|0%|零)/i);
+            const combNumMatch = raw.match(/(?:er[\s、,與和及\/]*pr|er和pr|er與pr|er及pr)[^\d一二兩三四五六七八九十%]*(\d+|[零一二兩两三四五六七八九十]+)\s*%?/i);
+            if (combMatch) {
+                erVal = 0;
+                prVal = 0;
+            } else if (combNumMatch) {
+                const parsedCombined = parseChineseOrArabicNum(combNumMatch[1]);
+                if (parsedCombined !== null) {
+                    erVal = parsedCombined;
+                    prVal = parsedCombined;
+                }
+            } else {
+                // Separate ER
+                if (/(?:er|雌激素受體|雌激素)[^\d一二兩三四五六七八九十%]*(?:陰性|negative|0%|零)/i.test(raw)) {
+                    erVal = 0;
+                } else {
+                    const em = raw.match(/(?:er|雌激素受體|雌激素)[^\d一二兩三四五六七八九十%]*(\d+|[零一二兩两三四五六七八九十]+)\s*%?/i);
+                    if (em) {
+                        const parsed = parseChineseOrArabicNum(em[1]);
+                        if (parsed !== null) erVal = parsed;
+                    }
+                }
+
+                // Separate PR
+                if (/(?:pr|黃體素受體|黃體素)[^\d一二兩三四五六七八九十%]*(?:陰性|negative|0%|零)/i.test(raw)) {
+                    prVal = 0;
+                } else {
+                    const pm = raw.match(/(?:pr|黃體素受體|黃體素)[^\d一二兩三四五六七八九十%]*(\d+|[零一二兩两三四五六七八九十]+)\s*%?/i);
+                    if (pm) {
+                        const parsed = parseChineseOrArabicNum(pm[1]);
+                        if (parsed !== null) prVal = parsed;
+                    }
+                }
+            }
+
+            // HER2 Positive Interception
+            if (her2Status === "positive") {
+                return {
+                    scenario: 1,
+                    eligible: false,
+                    badgeClass: "badge bg-danger fs-6",
+                    badgeText: "❌ 健保【不給付】(HER2 陽性不符規定)",
+                    code: "未符健保 9.72 第4點",
+                    borderClass: "border-danger",
+                    spoken: "報告醫師，健保 9.72 第 4 點早期乳癌明訂受審資格必須為【HER2 陰性】！病患檢測為 HER2 陽性，應接受標準抗 HER2 標靶治療（如雙標靶或曲妥珠單抗），不得申請擊癌利事前審查，送審必遭退件！",
+                    details: "⚠️【AI 健保防退件攔截】：\n• 攔截原因：健保 9.72 第 4 點明定限用於「HER2 陰性」之病人。病患為 HER2 陽性。\n• 臨床處置：請評估標準抗 HER2 標靶藥物 (Herceptin / Perjeta)，避免無效送審遭退件核扣！",
+                    size: 2.4, nodes: 2, grade: 2, er: (erVal !== null ? erVal : 85), pr: (prVal !== null ? prVal : 70), her2: "positive"
+                };
+            }
+
+            // Hormone Receptor Inadequate Interception (ER < 30% AND PR < 30%)
+            if ((erVal !== null || prVal !== null) && ((erVal !== null ? erVal : 0) < 30 && (prVal !== null ? prVal : 0) < 30)) {
+                const erText = erVal !== null ? erVal + "%" : "未達30%";
+                const prText = prVal !== null ? prVal + "%" : "未達30%";
+                return {
+                    scenario: 1,
+                    eligible: false,
+                    badgeClass: "badge bg-danger fs-6",
+                    badgeText: "❌ 健保【不給付】(ER 與 PR 均小於 30%)",
+                    code: "未符健保 9.72 第4點",
+                    borderClass: "border-danger",
+                    spoken: "報告醫師，健保 9.72 第 4 點明文規定：荷爾蒙受體必須為強陽性（ER 或 PR 染色比率必須 ≧ 30%）！病患目前 " + (erVal !== null && prVal !== null ? "ER 與 PR 均為 " + erVal + "%" : "ER 僅 " + erText + "、PR 僅 " + prText) + "，均小於 30%，未達健保給付門檻，送審必遭退件！",
+                    details: "⚠️【AI 健保防退件攔截】：\n• 攔截原因：健保 9.72 第 4 點明定荷爾蒙受體陽性門檻為「ER ≧ 30% 或 PR ≧ 30%」。\n• 辨識數值：ER " + erText + "、PR " + prText + "（均 < 30%）。\n• 臨床處置：避免無效事前審查送審被核扣，建議引導病人加入擊癌利自費存摺專案或評估化學治療！",
+                    size: 2.4, nodes: 2, grade: 2, er: (erVal !== null ? erVal : 20), pr: (prVal !== null ? prVal : 20), her2: (her2Status || "negative")
                 };
             }
 
@@ -1277,6 +1444,9 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             const formSize = sizeCm !== null ? sizeCm : (isT4 ? 5.5 : 2.0);
             const formNodes = nodeCount !== null ? nodeCount : 0;
             const formGrade = grade !== null ? grade : 2;
+            const finalEr = erVal !== null ? erVal : 85;
+            const finalPr = prVal !== null ? prVal : 70;
+            const finalHer2 = her2Status || "negative";
 
             // 4. Clinical Reimbursement Evaluation (115/12/1 NHI Rules)
             let conditionMet = null;
@@ -1287,29 +1457,33 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             if (nStage === "N2" || nStage === "N3" || (nodeCount !== null && nodeCount >= 4)) {
                 conditionMet = "條件 I";
                 conditionReason = "淋巴結轉移 ≧ 4 顆（" + displayNodes + "），符合 12 月 1 日規章「不限腫瘤大小、不限分化等級」全額給付門檻！";
-                spokenReply = "報告醫師，完全符合健保給付！病患為 " + displayNodes + "，符合 12 月 1 日早期高復發條件 I，規章明訂不限腫瘤大小與分化等級即享全額給付！事前審查代碼 C50P1，每日處方 2 粒，終生給付上限 36 個月。已為您自動備妥事前審查申請書！";
+                spokenReply = "報告醫師，完全符合健保給付！病患為 " + displayNodes + "，符合 12 月 1 日早期高復發條件 I，且 ER/PR ≧ 30% 荷爾蒙受體強陽性與 HER2 陰性合規！事前審查代碼 C50P1，併用芳香環轉化酶抑制劑 AI，每日處方 2 粒 (400mg)，每 24 週複評，終生上限 36 個月。已為您自動備妥事前審查申請書！";
             }
             // Condition III: pN1 (1-3 nodes) AND Grade 3, ANY tumor size (even T1 <= 2cm!)
             else if (nStage === "N1" && grade === 3) {
                 conditionMet = "條件 III";
                 conditionReason = "淋巴結 1–3 顆（" + displayNodes + "）且 組織學分化第 3 級（Grade 3），符合 12 月 1 日規章「不限腫瘤大小（即使腫瘤 2 公分或更小）」全額給付門檻！";
-                spokenReply = "報告醫師，完全符合健保給付！病患為 " + displayNodes + " 且組織學分化為 Grade 3，符合 12 月 1 日早期高復發條件 III！健保規章明訂此條件不限腫瘤大小，即使兩公分亦依法給付！事前審查代碼 C50P1，每日處方 2 粒，終生上限 36 個月。已為您備妥申請書！";
+                spokenReply = "報告醫師，完全符合健保給付！病患為 " + displayNodes + " 且分化為 Grade 3，符合 12 月 1 日早期高復發條件 III！受體 ER/PR ≧ 30% 與 HER2 陰性確認合規！事前審查代碼 C50P1，併用 AI 每日處方 2 粒，每 24 週複評，終生上限 36 個月。已為您備妥申請書！";
             }
             // Condition II: pN1 (1-3 nodes) AND Tumor > 2cm (T2, T3, T4)
             else if (nStage === "N1" && (tStage === "T2" || tStage === "T3" || tStage === "T4" || isT4 || (sizeCm !== null && sizeCm > 2.0))) {
                 conditionMet = "條件 II";
                 conditionReason = "淋巴結 1–3 顆（" + displayNodes + "）且 腫瘤大於 2 公分（" + displaySize + "），符合早期高復發條件 II！";
-                spokenReply = "報告醫師，完全符合健保給付！病患為 " + displayNodes + " 且腫瘤大於 2 公分（" + displaySize + "），符合 12 月 1 日早期高復發條件 II！事前審查代碼 C50P1，每日處方 2 粒，終生上限 36 個月。已為您備妥申請書！";
+                spokenReply = "報告醫師，完全符合健保給付！病患為 " + displayNodes + " 且腫瘤大於 2 公分（" + displaySize + "），符合 12 月 1 日早期高復發條件 II！受體 ER/PR ≧ 30% 與 HER2 陰性合規！事前審查代碼 C50P1，併用 AI 每日處方 2 粒，每 24 週複評，終生上限 36 個月。已為您備妥申請書！";
             }
             // Condition IV: T4 local extension OR (Tumor > 5cm / T3, even if N0!)
             else if (isT4 || tStage === "T4") {
                 conditionMet = "條件 IV";
                 conditionReason = "符合早期乳癌高復發條件 IV 之「T4 局部侵犯」（胸壁/皮膚侵犯/發炎性乳癌），即使淋巴結無轉移亦享全額給付！";
-                spokenReply = "報告醫師，完全符合健保給付！病患為 T4 局部侵犯（胸壁侵犯、皮膚侵犯或發炎性乳癌），符合 12 月 1 日早期高復發條件 IV，即使淋巴無轉移亦享給付！事前審查代碼 C50P1，每日處方 2 粒，終生上限 36 個月。已為您備妥申請書！";
+                spokenReply = "報告醫師，完全符合健保給付！病患為 T4 局部侵犯（胸壁侵犯、皮膚侵犯或發炎性乳癌），符合 12 月 1 日早期高復發條件 IV，即使淋巴無轉移亦享給付！受體 ER/PR ≧ 30% 與 HER2 陰性合規！事前審查代碼 C50P1，併用 AI 每日處方 2 粒，終生上限 36 個月。已為您備妥申請書！";
             } else if ((sizeCm !== null && sizeCm > 5.0) || tStage === "T3") {
                 conditionMet = "條件 IV";
                 conditionReason = "腫瘤大於 5 公分（" + displaySize + " / T3），符合早期乳癌高復發條件 IV，規章明訂即使腋下淋巴結無轉移（N0）亦享全額給付！";
-                spokenReply = "報告醫師，完全符合健保給付！病患腫瘤大於 5 公分（" + displaySize + " / T3），符合 12 月 1 日早期高復發條件 IV！規章明訂只要腫瘤大於五公分，即使淋巴結為零顆（N0），健保依然全額給付！事前審查代碼 C50P1，每日處方 2 粒，終生上限 36 個月。已為您備妥申請書！";
+                spokenReply = "報告醫師，完全符合健保給付！病患腫瘤大於 5 公分（" + displaySize + " / T3），符合 12 月 1 日早期高復發條件 IV！規章明訂只要腫瘤大於五公分，即使淋巴結為零顆（N0），且受體 ER/PR ≧ 30% 與 HER2 陰性合規，健保依然全額給付！事前審查代碼 C50P1，併用 AI 每日處方 2 粒，終生上限 36 個月。已為您備妥申請書！";
+            }
+
+            if (isSwitchingDueToAE) {
+                spokenReply += " （備註：病患因前線 abemaciclib 發生嚴重不良反應 AE 不耐受轉換，健保合規核准，期程合併計算滿 36 個月）。";
             }
 
             if (conditionMet) {
@@ -1321,8 +1495,8 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                     code: "事審代碼：C50P1",
                     borderClass: "border-success",
                     spoken: spokenReply,
-                    details: "符合早期高復發【" + conditionMet + "】：\n• 判定依據：" + conditionReason + "\n• 辨識指標：腫瘤 " + displaySize + "、" + displayNodes + "、分化 " + displayGrade,
-                    size: formSize, nodes: formNodes, grade: formGrade, isT4: isT4
+                    details: "符合早期高復發【" + conditionMet + "】：\n• 判定依據：" + conditionReason + "\n• 生物標記：ER " + finalEr + "%、PR " + finalPr + "% (≧ 30% 通過) 且 HER2 陰性 (通過)\n• 規章檢核：成年人、併用 AI、術後 16 個月內、輔助化療/放療完成、輔助內分泌 ≦ 12 週\n• 辨識指標：腫瘤 " + displaySize + "、" + displayNodes + "、分化 " + displayGrade + (isSwitchingDueToAE ? "\n• 換藥備註：因 abemaciclib AE 不耐受互換核准（合併計算 36 個月）" : ""),
+                    size: formSize, nodes: formNodes, grade: formGrade, isT4: isT4, er: finalEr, pr: finalPr, her2: finalHer2, isAE: isSwitchingDueToAE
                 };
             } else {
                 // Not eligible - precise medical explanation preventing rejection
@@ -1350,7 +1524,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                     borderClass: "border-danger",
                     spoken: rejectSpoken,
                     details: "⚠️【AI 健保防退件攔截】：\n• 退件原因：" + rejectReason + "\n• 臨床處置：避免無效事審送審，建議引導病人加入擊癌利自費存摺專案（買一送一/買四送八）！\n• 辨識指標：腫瘤 " + displaySize + "、" + displayNodes + "、分化 " + displayGrade,
-                    size: formSize, nodes: formNodes, grade: formGrade, isT4: isT4
+                    size: formSize, nodes: formNodes, grade: formGrade, isT4: isT4, er: finalEr, pr: finalPr, her2: finalHer2
                 };
             }
         }
@@ -1413,14 +1587,16 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             if (res.size !== undefined) document.getElementById("inTumorSize").value = res.size;
             if (res.nodes !== undefined) document.getElementById("inNodes").value = res.nodes;
             if (res.grade !== undefined) document.getElementById("inGrade").value = res.grade;
-            document.getElementById("inER").value = 85;
-            document.getElementById("inPR").value = 70;
-            document.getElementById("inHER2").value = "negative";
+            if (res.er !== undefined) document.getElementById("inER").value = res.er;
+            if (res.pr !== undefined) document.getElementById("inPR").value = res.pr;
+            if (res.her2 !== undefined) document.getElementById("inHER2").value = res.her2;
 
             // 6. Set Scenario & Update Prior Authorization Application Form
             setScenario(res.scenario);
             if (res.scenario === 1) {
-                recalculateFromInputs();
+                if (res.eligible) {
+                    recalculateFromInputs();
+                }
                 syncApplicationFormReason(res);
             } else {
                 syncApplicationFormReason(res);
@@ -1762,20 +1938,46 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                 conditionRationale = `病患目前數值（腫瘤最大徑 ${size}cm、陽性淋巴結 ${nodes} 顆、Grade ${grade}）未達 115/12/1 健保 4 大高復發門檻。若送審將被退件，建議引導加入擊癌利自費存摺專案 (買一送一)。`;
             }
 
-            viewReasonEl.innerHTML = `
-<strong>【病歷摘要與健保合規使用理由 (即時連動口述與病理數值)】：</strong>
+            if (customData && customData.eligible === false) {
+                viewReasonEl.innerHTML = `
+<strong>⚠️【AI 健保防退件攔截 / 未符給付門檻說明】：</strong>
 1. 臨床診斷：侵襲性乳癌 (Invasive Breast Carcinoma, ${stagingText}, ${nodeStaging})。
-2. 病理切片詳細數值：
-   • 腫瘤最大徑：<strong>${size} cm</strong> (${stagingText})
-   • 陽性腋下淋巴結：<strong>${nodes} 顆</strong> (${nodeStaging})
-   • 組織學分化等級：<strong>Grade ${grade}</strong>
-   • 荷爾蒙受體：ER ${er}%、PR ${pr}% (均 ≧ 30%)，HER2 檢測為陰性 (IHC 1+ / FISH non-amplified)
-3. 健保給付合規比對依據：
-   完全符合 115 年 12 月 1 日健保修訂規定 9.72 第 4 點之早期乳癌高復發風險<strong>【${conditionTitle}】</strong>。
+2. 攔截退件要件：
+   • <strong>${customData.spoken}</strong>
+   • 詳細指標：${customData.details}
+3. 健保規定 9.72 第 4 點審查要件覆核：
+   • 荷爾蒙受體：限用於 HR 陽性（ER 或 PR 染色比率 ≧ 30%）且 HER2 陰性之早期成年病人。
+   • 輔助治療條件：須於手術後 16 個月內提出、輔助內分泌治療未滿 12 週，且已完成標準化療或放療。
+   • 互換原則：因嚴重 AE 不耐受方可互換；若因疾病惡化 (PD) 者不得互換且不可繼續使用。
+4. 臨床處置建議：避免無效事前審查送件被核扣，建議引導病友加入擊癌利自費存摺專案（買一送一/買四送八）或評估常規輔助治療。
+                `.trim();
+                return;
+            }
+
+            const erValNum = customData && customData.er !== undefined ? customData.er : er;
+            const prValNum = customData && customData.pr !== undefined ? customData.pr : pr;
+            const isAEVal = customData && customData.isAE;
+
+            viewReasonEl.innerHTML = `
+<strong>【病歷摘要與健保合規使用理由 (依據 115/12/1 健保修訂規定 9.72 第 4 點)】：</strong>
+1. 臨床診斷與病理分期：
+   侵襲性乳癌 (Invasive Breast Carcinoma, ${stagingText}, ${nodeStaging})。
+2. 荷爾蒙受體與生物標記 (符合 HR ≧ 30% 且 HER2 陰性規定)：
+   • ER 染色陽性率：<strong>${erValNum}%</strong> (符合 ≧ 30% 給付門檻)
+   • PR 染色陽性率：<strong>${prValNum}%</strong> (符合 ≧ 30% 給付門檻)
+   • HER2 檢測狀態：<strong>陰性 (Negative)</strong> (IHC 1+ / FISH non-amplified)
+3. 早期乳癌高復發風險要件 (完全符合 4 大條件之一)：
+   完全符合<strong>【${conditionTitle}】</strong>。
    • 法規依據：${conditionRationale}
-4. 處方藥品與療程規劃：
-   病患已接受手術切除輔助治療，特此提出全民健保事前審查申請：
-   • 事審代碼：<strong>C50P1</strong> (擊癌利膜衣錠 ribociclib 200mg，健保代碼：KC01004100)
+4. 治療歷程與時限檢核 (符合 9.72 輔助治療要件)：
+   • 成年病人：病患年齡 ≧ 18 歲。
+   • 輔助治療：病患使用前已完成標準化學輔助療法或放射線療法。
+   • 內分泌時限：輔助內分泌治療未滿 12 週。
+   • 手術時限：於乳癌手術切除後 16 個月內提出申請。
+   ${isAEVal ? "• 互換說明：病患前線使用 abemaciclib 因嚴重不良反應 (AE) 不耐受，無疾病惡化，依法申請轉換為 ribociclib，給付期程合併計算滿 36 個月。" : "• 品項原則：核准後每 24 週檢附療效評估資料（無惡化）；與 abemaciclib 互換僅限嚴重 AE 不耐受且無惡化者，若惡化不得互換亦不得繼續使用。"}
+5. 處方藥品與療程規劃：
+   特此提出全民健保事前審查申請：
+   • 事審代碼：<strong>C50P1</strong> (擊癌利膜衣錠 ribociclib 200mg，健保代碼：KC01004100) 併用芳香環轉化酶抑制劑 (AI)。
    • 處方劑量：每日口服一次，<strong>每次 2 粒 (400mg)</strong>，連續服用 21 天後停藥 7 天 (28天/週期)。
    • 申請數量：<strong>252 粒</strong> (24 週用量，終生給付上限 36 個月)。
             `.trim();
