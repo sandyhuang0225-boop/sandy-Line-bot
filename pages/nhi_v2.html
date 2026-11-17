@@ -129,7 +129,7 @@
                             <h6 class="fw-bold text-dark mb-0">
                                 <i class="fa-solid fa-microphone-lines text-success me-2 fs-5"></i>醫師門診語音助理
                             </h6>
-                            <span class="badge bg-danger text-white ms-1 fw-bold" style="font-size: 0.68rem;" id="versionBadge">v3.8 全面涵蓋早期乳癌第4點規章版 (10:45)</span>
+                            <span class="badge bg-danger text-white ms-1 fw-bold" style="font-size: 0.68rem;" id="versionBadge">v3.9 三總腫瘤科名單更新版 (10:50)</span>
                         </div>
                         <div class="d-flex gap-1">
                             <button class="btn btn-outline-danger btn-sm py-0 px-2 fw-bold" onclick="forceHardRefresh()" style="font-size: 0.72rem;" title="手機若無更新請點此強制清除快取">
@@ -589,8 +589,8 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                     hem_onc: {
                         name: "血液腫瘤科 / 腫瘤內科",
                         doctors: [
-                            "戴明燊 醫師", "黃子權 醫師", "葉人華 醫師", "劉偉倫 醫師",
-                            "陳佳宏 醫師", "吳宜穎 醫師", "賴學緯 醫師", "余忠穎 醫師",
+                            "余宗穎 醫師", "劉韋農 醫師", "戴明燊 醫師", "黃子權 醫師",
+                            "葉人華 醫師", "陳佳宏 醫師", "吳宜穎 醫師", "賴學緯 醫師",
                             "陳昱光 醫師", "李卓豪 醫師", "陳宇欽 醫師", "張平穎 醫師"
                         ]
                     }
@@ -1538,6 +1538,32 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             document.getElementById("spokenTextContent").textContent = "「" + raw + "」";
             document.getElementById("spokenConfidence").className = "badge bg-primary";
             document.getElementById("spokenConfidence").textContent = "辨識完成";
+
+            // Detect spoken hospital or doctor
+            if (/三總|三軍總醫院/i.test(raw)) {
+                const selHosp = document.getElementById("selHospital");
+                if (selHosp && selHosp.value !== "tsgh") {
+                    selHosp.value = "tsgh";
+                    onHospitalChange();
+                }
+            }
+            if (/余宗穎|余醫師/i.test(raw)) {
+                const selHosp = document.getElementById("selHospital");
+                const selDept = document.getElementById("selDept");
+                const selDoc = document.getElementById("selDoctor");
+                if (selHosp) selHosp.value = "tsgh";
+                if (selDept) selDept.value = "hem_onc";
+                onDeptChange();
+                if (selDoc) { selDoc.value = "余宗穎"; onDoctorChange(); }
+            } else if (/劉韋農|劉醫師/i.test(raw)) {
+                const selHosp = document.getElementById("selHospital");
+                const selDept = document.getElementById("selDept");
+                const selDoc = document.getElementById("selDoctor");
+                if (selHosp) selHosp.value = "tsgh";
+                if (selDept) selDept.value = "hem_onc";
+                onDeptChange();
+                if (selDoc) { selDoc.value = "劉韋農"; onDoctorChange(); }
+            }
 
             // Detect spoken patient name or ID if doctor mentions it
             const pNameMatch = raw.match(/病[患人](?:姓名|叫|是)?([一-龥a-zA-Z]{2,4})/);
