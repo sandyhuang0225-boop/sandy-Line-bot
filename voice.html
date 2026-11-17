@@ -71,9 +71,37 @@
         .preview-form {
             background: #FFFFFF;
             border: 2px solid #0F172A;
-            padding: 24px;
-            font-size: 0.88rem;
+            padding: 20px;
+            font-size: 0.84rem;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            color: #1e293b;
+        }
+        .table-official {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #000000;
+            margin-bottom: 0;
+            font-size: 0.82rem;
+        }
+        .table-official th, .table-official td {
+            border: 1px solid #000000;
+            padding: 4px 6px;
+            vertical-align: middle;
+            color: #000000;
+        }
+        .review-col-box {
+            font-size: 0.68rem;
+            line-height: 1.35;
+            color: #1e293b;
+            text-align: left;
+        }
+        .review-col-box div {
+            margin-bottom: 2px;
+        }
+        .statutory-header-box {
+            border: 1px solid #000000;
+            border-bottom: none;
+            background: #ffffff;
         }
         .preview-form table {
             width: 100%;
@@ -103,11 +131,32 @@
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
         }
         @media print {
+            @page {
+                size: A4 portrait;
+                margin: 8mm 10mm;
+            }
+            body {
+                margin: 0;
+                padding: 0;
+                background: #ffffff !important;
+            }
             body * { visibility: hidden; }
             #printableArea, #printableArea * { visibility: visible; }
-            #printableArea { position: absolute; left: 0; top: 0; width: 100%; border: none !important; box-shadow: none !important; }
+            #printableArea { 
+                position: absolute; 
+                left: 0; 
+                top: 0; 
+                width: 100%; 
+                border: 1px solid #000000 !important; 
+                box-shadow: none !important; 
+                padding: 0 !important;
+                margin: 0 !important;
+                background: #ffffff !important;
+            }
             .editable-cell { outline: none !important; box-shadow: none !important; background: transparent !important; }
             .no-print { display: none !important; }
+            .table-official { border: 1px solid #000000 !important; }
+            .table-official th, .table-official td { border: 1px solid #000000 !important; }
         }
     </style>
 </head>
@@ -143,7 +192,7 @@
                             <h6 class="fw-bold text-dark mb-0">
                                 <i class="fa-solid fa-microphone-lines text-success me-2 fs-5"></i>醫師門診語音助理
                             </h6>
-                            <span class="badge bg-danger text-white ms-1 fw-bold" style="font-size: 0.68rem;" id="versionBadge">v4.3 修正HER2陰性精準判讀版 (11:40)</span>
+                            <span class="badge bg-danger text-white ms-1 fw-bold" style="font-size: 0.68rem;" id="versionBadge">v4.4 官方事前審查格式修正版</span>
                         </div>
                         <div class="d-flex gap-1">
                             <button class="btn btn-outline-danger btn-sm py-0 px-2 fw-bold" onclick="forceHardRefresh()" style="font-size: 0.72rem;" title="手機若無更新請點此強制清除快取">
@@ -613,85 +662,268 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                 </div>
 
                 <!-- Printable NHI Form (Attachment 1) -->
-                <div id="printableArea" class="preview-form rounded-3">
-                    
-                    <div class="form-header-box d-flex justify-content-between align-items-center">
-                        <div class="small fw-bold">全民健康保險藥品及特殊材料事前審查申請書</div>
-                        <div class="small text-muted">附件一 (第一聯：保險人審查聯 / 第二聯：核定通知聯)</div>
+                <!-- Form Copy Switcher & Quick Actions (Screen Only) -->
+                <div class="d-flex justify-content-between align-items-center mb-2 no-print flex-wrap gap-2">
+                    <div class="d-flex align-items-center gap-1">
+                        <span class="small fw-bold text-secondary me-1"><i class="fa-solid fa-copy me-1"></i>聯別切換：</span>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-primary active fw-bold py-1 px-3" id="btnCopy1" onclick="switchFormCopy(1)">
+                                第一聯：保險人審查聯
+                            </button>
+                            <button type="button" class="btn btn-outline-primary fw-bold py-1 px-3" id="btnCopy2" onclick="switchFormCopy(2)">
+                                第二聯：核定通知聯
+                            </button>
+                        </div>
                     </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-success-subtle text-success border border-success-subtle small">
+                            <i class="fa-solid fa-check-double me-1"></i>100% 依健保署「附件一」法定格式編排
+                        </span>
+                    </div>
+                </div>
 
-                    <div class="text-center mb-2">
-                        <h5 class="fw-bold mb-1">全民健康保險藥品及特殊材料事前審查申請書</h5>
-                        <div class="small">
-                            <span class="me-3">☑ 藥品</span>
-                            <span class="me-3">☑ 事前審查申請書</span>
-                            <span class="me-3">☑ 送核</span>
-                            <span class="text-danger fw-bold">【115 年 12 月 1 日起生效新制】</span>
+                <!-- Printable NHI Form (Attachment 1 - Exactly Matching Official Statutory Layout) -->
+                <div id="printableArea" class="preview-form rounded-2">
+                    
+                    <!-- Statutory Top Header Bar -->
+                    <div class="row g-0 statutory-header-box align-items-stretch">
+                        <!-- Left 8 cols: Title, Document Type, Category -->
+                        <div class="col-8 p-2 border-end border-dark">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <span class="fw-bold" style="font-size: 1.05rem; letter-spacing: 2px;">附件一</span>
+                                <span class="text-muted" style="font-size: 0.72rem;">緊急傳真日期(特殊病例事前審查案件不適用)：_______________</span>
+                            </div>
+                            <div class="text-center my-1">
+                                <h4 class="fw-bold mb-0 text-dark" style="letter-spacing: 2px; font-size: 1.25rem;">全民健康保險藥品及特殊材料</h4>
+                            </div>
+                            <div class="row g-0 mt-2 pt-1 border-top border-dark align-items-center" style="font-size: 0.8rem;">
+                                <div class="col-7 pe-2">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <span class="me-3 fw-bold text-dark">☑ 藥品</span>
+                                        <span class="fw-bold text-dark">☑ 事前審查申請書</span>
+                                    </div>
+                                    <div class="d-flex align-items-center text-muted" style="font-size: 0.78rem;">
+                                        <span class="me-3">□ 特殊材料</span>
+                                        <span>□ 特殊病例事前審查申請書</span>
+                                    </div>
+                                    <div class="text-muted" style="font-size: 0.7rem;">
+                                        (不符藥品許可證所載適應症及藥品給付規定)
+                                    </div>
+                                </div>
+                                <div class="col-5 ps-2 border-start border-dark">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <span class="me-3 fw-bold text-primary">☑ 送核</span>
+                                        <span class="text-muted">□ 補件</span>
+                                    </div>
+                                    <div class="d-flex align-items-center text-muted" style="font-size: 0.78rem;">
+                                        <span class="me-3">□ 申復</span>
+                                        <span>□ 資料異動</span>
+                                    </div>
+                                    <div class="text-danger fw-bold mt-1" style="font-size: 0.7rem;">
+                                        【115/12/01 起擴大給付生效】
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right 4 cols: Acceptance Date/No & Vertical Copy Banner -->
+                        <div class="col-4 d-flex">
+                            <div class="p-2 flex-grow-1 border-end border-dark d-flex flex-column justify-content-center">
+                                <table class="table table-bordered border-dark table-sm m-0 text-center" style="font-size: 0.78rem;">
+                                    <tr>
+                                        <td rowspan="2" class="align-middle fw-bold bg-light" style="width: 25%; writing-mode: vertical-rl; letter-spacing: 4px; padding: 4px 2px;">受理</td>
+                                        <td class="fw-bold py-1" style="width: 35%; background: #f8fafc;">日 期</td>
+                                        <td class="py-1 text-muted" id="viewAcceptDate">115/12/01</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold py-1" style="background: #f8fafc;">編 號</td>
+                                        <td class="py-1 text-muted" id="viewAcceptNo">初次送核免填</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-center bg-light text-dark fw-bold px-2 py-2" style="width: 38px; writing-mode: vertical-rl; letter-spacing: 3px; font-size: 0.85rem;" id="formCopyBanner">
+                                第一聯：保險人審查聯
+                            </div>
                         </div>
                     </div>
 
-                    <table>
+                    <!-- Main Official Grid: Hospital, Patient & Doctor -->
+                    <table class="table-official">
                         <tr>
-                            <td style="width: 15%; background: #F8FAFC;" class="fw-bold text-center">醫事服務機構<br>名稱及代號</td>
-                            <td style="width: 35%;" id="viewHosp">長庚醫療財團法人基隆長庚紀念醫院及其情人湖院區<br>(代號：1111060015)</td>
-                            <td style="width: 15%; background: #F8FAFC;" class="fw-bold text-center">主治醫師<br>姓名</td>
-                            <td style="width: 35%;" id="viewDoctor">李春輝 醫師<br>科別：乳房外科 / 一般外科</td>
+                            <td style="width: 14%; background: #F8FAFC;" class="fw-bold text-center align-middle" rowspan="2">
+                                醫事服務機構<br>名稱及代號
+                            </td>
+                            <td style="width: 26%;" id="viewHosp" class="align-middle" rowspan="2">
+                                國泰醫療財團法人汐止國泰綜合醫院<br><small class="text-muted">(代號：1131110516)</small>
+                            </td>
+                            <td style="width: 4%; background: #F8FAFC;" class="fw-bold text-center align-middle p-1" rowspan="2">
+                                <div style="writing-mode: vertical-rl; letter-spacing: 3px; margin: 0 auto;">保險對象</div>
+                            </td>
+                            <td style="width: 7%; background: #F8FAFC;" class="fw-bold text-center align-middle p-1">姓 名</td>
+                            <td style="width: 11%;" id="viewPatient" contenteditable="true" class="editable-cell align-middle" oninput="syncInputsFromTable()">王○蘭</td>
+                            <td style="width: 9%; background: #F8FAFC;" class="fw-bold text-center align-middle p-1">出生年月日</td>
+                            <td style="width: 9%;" id="viewDob" contenteditable="true" class="editable-cell align-middle" oninput="syncInputsFromTable()">052/08/15</td>
+                            <td style="width: 8%; background: #F8FAFC;" class="fw-bold text-center align-middle p-1">原受理編號</td>
+                            <td style="width: 11%;" id="viewPreCaseNo" contenteditable="true" class="editable-cell align-middle text-muted" oninput="syncInputsFromTable()">初次送核免填</td>
+                            <td style="width: 4%; background: #F8FAFC;" class="fw-bold text-center align-middle p-1" rowspan="2">
+                                <div style="writing-mode: vertical-rl; letter-spacing: 3px; margin: 0 auto;">主治醫師</div>
+                            </td>
+                            <td style="width: 7%; background: #F8FAFC;" class="fw-bold text-center align-middle p-1">姓 名</td>
+                            <td style="width: 10%;" id="viewDoctor" class="align-middle">施盈逸 醫師</td>
                         </tr>
                         <tr>
-                            <td style="background: #F8FAFC;" class="fw-bold text-center">保險對象姓名</td>
-                            <td id="viewPatient" contenteditable="true" class="editable-cell" title="點擊此處可直接手動修改姓名" oninput="syncInputsFromTable()">王○蘭</td>
-                            <td style="background: #F8FAFC;" class="fw-bold text-center">身分證號 / 生日</td>
-                            <td id="viewIdDob" contenteditable="true" class="editable-cell" title="點擊此處可直接手動修改身分證號及生日" oninput="syncInputsFromTable()">A220198888 ｜ 052/08/15</td>
+                            <td style="background: #F8FAFC;" class="fw-bold text-center align-middle p-1">身分證統一編號</td>
+                            <td id="viewPatientId" contenteditable="true" class="editable-cell align-middle" oninput="syncInputsFromTable()">A220198888</td>
+                            <td style="background: #F8FAFC;" class="fw-bold text-center align-middle p-1">科 別</td>
+                            <td id="viewDept" class="align-middle">血液腫瘤科</td>
+                            <td style="background: #F8FAFC;" class="fw-bold text-center align-middle p-1">預定實施日期</td>
+                            <td id="viewApplyDate" contenteditable="true" class="editable-cell align-middle" oninput="syncInputsFromTable()">115/12/01</td>
+                            <td style="background: #F8FAFC;" class="fw-bold text-center align-middle p-1">身分證統一編號</td>
+                            <td id="viewDoctorId" contenteditable="true" class="editable-cell align-middle text-muted">A123456789</td>
                         </tr>
+
+                        <!-- Diagnosis & Statutory Reason -->
                         <tr>
-                            <td style="background: #F8FAFC;" class="fw-bold text-center">國際疾病分類碼</td>
-                            <td id="viewIcd" contenteditable="true" class="editable-cell" title="點擊此處可直接手動修改 ICD 代碼">C50.919 (惡性乳房腫瘤)</td>
-                            <td style="background: #F8FAFC;" class="fw-bold text-center">預定實施日期</td>
-                            <td id="viewApplyDate" contenteditable="true" class="editable-cell" title="點擊此處可直接手動修改日期" oninput="syncInputsFromTable()">115 年 12 月 01 日</td>
-                        </tr>
-                        <tr>
-                            <td style="background: #F8FAFC;" class="fw-bold text-center">傷病名稱<br>傷病情況<br>及使用理由</td>
-                            <td colspan="3" id="viewReason" contenteditable="true" class="editable-cell" title="點擊此處可直接自訂編輯審查理由文字" style="white-space: pre-line; line-height: 1.5; font-size: 0.85rem;">
-                                【病歷摘要與合規使用理由】：
-                                1. 診斷：侵襲性乳癌 (T2N1M0, Stage IIB)。
+                            <td style="background: #F8FAFC;" class="fw-bold text-center align-middle p-2">
+                                傷病名稱、<br>傷病情況及<br>使用理由或<br>申復理由
+                            </td>
+                            <td colspan="9" id="viewReason" contenteditable="true" class="editable-cell p-2" style="white-space: pre-line; line-height: 1.5; font-size: 0.82rem;">
+                                【病歷摘要與健保 9.72 合規使用理由】：
+                                1. 臨床診斷：侵襲性乳癌 (T2N1M0, Stage IIB)。
                                 2. 病理標記：腫瘤最大徑 2.4cm (T2 > 2cm)，腋下陽性淋巴結 2 顆 (pALN 2/16, N1)。ER 85%、PR 70% (均 > 30%)，HER2 檢測為陰性 (IHC 1+)。
                                 3. 健保給付合規：完全符合 115 年 12 月 1 日健保修訂規定 9.72 第 4 點之早期乳癌高復發風險條件 II「pALN 為 1-3 顆，且腫瘤大小 > 2cm」。
-                                4. 病患已接受標準化學輔助治療，於手術切除後 16 個月內，內分泌治療未滿 12 週，特此提出申請 ribociclib (事審代碼：C50P1) 併用芳香環轉化酶抑制劑 (AI)。
+                                4. 治療歷程：病患已接受標準化學輔助治療及手術切除，手術後未滿 16 個月，輔助性內分泌治療未滿 12 週，特此提出申請 ribociclib (事審代碼：C50P1) 併用芳香環轉化酶抑制劑 (AI)。
+                            </td>
+                            <td style="background: #F8FAFC; width: 7%;" class="fw-bold text-center align-middle p-1">
+                                國際疾病<br>分類碼
+                            </td>
+                            <td style="width: 10%;" id="viewIcd" contenteditable="true" class="editable-cell align-middle text-center fw-bold">
+                                C50.919
                             </td>
                         </tr>
-                        <tr style="background: #F1F5F9;" class="text-center fw-bold">
-                            <td style="width: 8%;">項次</td>
-                            <td style="width: 25%;">項目編號 (事審代碼)</td>
-                            <td style="width: 32%;">項目名稱 (藥品名)</td>
-                            <td style="width: 35%;">規格、劑型、用法用量及數量</td>
-                        </tr>
-                        <tbody id="itemsBody">
-                            <tr>
-                                <td class="text-center">1</td>
-                                <td><strong class="text-danger">C50P1</strong><br><small class="text-muted">健保碼: KC01004100</small></td>
-                                <td><strong>擊癌利膜衣錠 200毫克</strong><br><small class="text-muted">台灣諾華 (Novartis)</small></td>
-                                <td>200mg/錠，每日口服一次，<strong>每次 2 粒 (400mg)</strong>，服21天停7天。<br><strong>申請數量：252 粒 (24週用量)</strong></td>
+                    </table>
+
+                    <!-- Prescribed Items Table (Statutory 7 Columns with Review Checklist Column) -->
+                    <table class="table-official mt-0 border-top-0">
+                        <thead>
+                            <tr style="background: #F1F5F9;" class="text-center fw-bold">
+                                <th style="width: 5%;">項次</th>
+                                <th style="width: 13%;">項 目 編 號</th>
+                                <th style="width: 18%;">項 目 名 稱</th>
+                                <th style="width: 25%;">規 格、劑型及用法</th>
+                                <th style="width: 11%;">廠 牌</th>
+                                <th style="width: 8%;">數 量</th>
+                                <th style="width: 20%;">保 險 人 核 定 欄</th>
                             </tr>
+                        </thead>
+                        <tbody id="itemsBody">
+                            <!-- Dynamic items generated by renderPreview() -->
                         </tbody>
                     </table>
 
-                    <div class="mt-3 small">
-                        <strong>檢送附件：</strong> ☑ 1. 病歷影本  ☑ 5. 病歷摘要  ☑ 7. 治療計劃  ☑ 11. 其他：病理組織切片報告、IHC 免疫染色報告
-                    </div>
+                    <!-- Attachments Section (Statutory 11 Checklist Items) -->
+                    <table class="table-official mt-0 border-top-0">
+                        <tr>
+                            <td style="width: 7%; background: #F8FAFC;" class="fw-bold text-center align-middle p-1">
+                                檢送<br>附件
+                            </td>
+                            <td class="p-2" style="font-size: 0.78rem; line-height: 1.55;">
+                                <div class="row g-1">
+                                    <div class="col-12">
+                                        <span class="me-3 fw-bold text-dark">☑ 1.病歷影本</span>
+                                        <span class="me-3 text-muted">□ 2.X 光片</span>
+                                        <span class="me-3 text-muted">□ 3.心臟等移植個案診斷紀錄表</span>
+                                        <span class="text-muted">□ 4.細菌培養檢驗報告</span>
+                                    </div>
+                                    <div class="col-12">
+                                        <span class="me-3 fw-bold text-dark">☑ 5.病歷摘要</span>
+                                        <span class="me-3 text-muted">□ 6.心電圖</span>
+                                        <span class="me-3 fw-bold text-dark">☑ 7.治療計劃</span>
+                                        <span class="me-3 text-muted">□ 8.超音波影像</span>
+                                        <span class="me-3 text-muted">□ 9.白內障術前檢查紀錄</span>
+                                        <span class="text-muted">□ 10.手術同意書</span>
+                                    </div>
+                                    <div class="col-12">
+                                        <span class="fw-bold text-primary">☑ 11.其他：</span>
+                                        <span id="viewOtherAttachments" contenteditable="true" class="editable-cell border-bottom border-dark px-1">
+                                            病理組織切片報告、IHC 免疫染色報告 (ER/PR/HER2/Ki-67)、腋下淋巴結病理檢驗報告
+                                        </span>
+                                    </div>
+                                    <div class="col-12 text-muted mt-1" style="font-size: 0.7rem;">
+                                        ※ 申請特殊病例事前審查應檢附文件依「全民健康保險藥物給付項目及支付標準」規定辦理。
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
 
-                    <div class="d-flex justify-content-between mt-4 pt-2 border-top border-dark small">
-                        <div>醫事服務機構負責醫師印章：____________</div>
-                        <div>主治醫師簽章：<strong class="border-bottom border-dark px-2" id="signDoctor">李春輝</strong></div>
-                        <div>申請日期：<span id="viewSignDate" contenteditable="true" class="editable-cell" title="點擊此處可直接手動修改申請日期">115 年 12 月 01 日</span></div>
+                    <!-- Statutory Instructions & Approval Signatures -->
+                    <table class="table-official mt-0 border-top-0">
+                        <tr>
+                            <td style="width: 7%; background: #F8FAFC;" class="fw-bold text-center align-middle p-1">
+                                注意<br>事項
+                            </td>
+                            <td style="width: 61%; font-size: 0.7rem; line-height: 1.35; padding: 6px 8px;" class="align-middle">
+                                1. 本申請書一式二聯，限一人一案，由保險醫事服務機構填報，不必備文。<br>
+                                2. 「原受理編號」申復時填寫，初次送核不須填寫。<br>
+                                3. 應事前審查之項目未依規定事前申請核准者，不予給付費用；事前申請核准之個案，日後如經審定該保險對象或醫事服務機構有不符全民健康保險給付規定者，亦不予給付費用。<br>
+                                4. 醫事服務機構填報藥品、特材價格經核定後，如該醫療費用申報時價格已調降，則依保險人公告之藥物給付項目及支付標準支付。<br>
+                                5. 對核定結果如有異議，得於收到核定通知之日起六十日內，重行填寫乙份申請書（應勾註申復，並填明原受理編號）向原核定單位申請複核；對申復審查結果如有異議，得於收到申復核定通知之日起 60 日內向全民健康保險爭議審議會申請爭議審議。<br>
+                                6. 本申請書得由保險醫事服務機構自行印製，並依申請項目需要作成例行式特定項目申請書使用。
+                            </td>
+                            <td style="width: 32%; padding: 0;" class="align-top">
+                                <table class="w-100 h-100 text-center m-0" style="border-collapse: collapse; font-size: 0.72rem;">
+                                    <tr>
+                                        <td style="width: 50%; height: 55px; border-bottom: 1px solid #000; border-right: 1px solid #000; vertical-align: top; padding: 3px;">
+                                            <div class="fw-bold text-muted" style="font-size: 0.7rem;">審查醫師</div>
+                                        </td>
+                                        <td style="width: 50%; height: 55px; border-bottom: 1px solid #000; vertical-align: top; padding: 3px;">
+                                            <div class="fw-bold text-muted" style="font-size: 0.7rem;">保險人日期章戳</div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="2" style="padding: 0;">
+                                            <table class="w-100 text-center m-0" style="border-collapse: collapse; font-size: 0.7rem;">
+                                                <tr style="background: #f8fafc;">
+                                                    <td style="width: 25%; border-right: 1px solid #000; padding: 2px;">承辦人</td>
+                                                    <td style="width: 25%; border-right: 1px solid #000; padding: 2px;">複核</td>
+                                                    <td style="width: 25%; border-right: 1px solid #000; padding: 2px;">科長</td>
+                                                    <td style="width: 25%; padding: 2px;">決行</td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="height: 32px; border-right: 1px solid #000;"></td>
+                                                    <td style="height: 32px; border-right: 1px solid #000;"></td>
+                                                    <td style="height: 32px; border-right: 1px solid #000;"></td>
+                                                    <td style="height: 32px;"></td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- Statutory Bottom Footer -->
+                    <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top border-dark small">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="border border-dark px-2 py-1 text-muted" style="font-size: 0.72rem;">醫事服務機構印章</span>
+                            <span>負責醫師：<strong class="border-bottom border-dark px-2">院長 印</strong></span>
+                        </div>
+                        <div>
+                            主治醫師簽章：<strong class="border-bottom border-dark px-2" id="signDoctor">施盈逸</strong>
+                        </div>
+                        <div>
+                            申請日期：<span id="viewSignDate" contenteditable="true" class="editable-cell" oninput="syncInputsFromTable()">115 年 12 月 01 日</span>
+                        </div>
                     </div>
 
                 </div>
 
+
             </div>
         </div>
-    </div>
-
-    <script>
+    </div><script>
         let currentScenario = 1;
         
         // Exact Hospital & Department & Doctor Directory
@@ -906,6 +1138,22 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             }
         }
 
+        
+        function switchFormCopy(copyNum) {
+            const banner = document.getElementById("formCopyBanner");
+            const btn1 = document.getElementById("btnCopy1");
+            const btn2 = document.getElementById("btnCopy2");
+            if (copyNum === 1) {
+                if (banner) banner.textContent = "第一聯：保險人審查聯";
+                if (btn1) { btn1.classList.add("active", "btn-primary"); btn1.classList.remove("btn-outline-primary"); }
+                if (btn2) { btn2.classList.remove("active", "btn-primary"); btn2.classList.add("btn-outline-primary"); }
+            } else {
+                if (banner) banner.textContent = "第二聯：核定通知聯";
+                if (btn2) { btn2.classList.add("active", "btn-primary"); btn2.classList.remove("btn-outline-primary"); }
+                if (btn1) { btn1.classList.remove("active", "btn-primary"); btn1.classList.add("btn-outline-primary"); }
+            }
+        }
+
         function updatePatientInfoFromInputs() {
             const name = (document.getElementById("inputPatientName")?.value || "").trim() || "王○蘭";
             const idNo = (document.getElementById("inputIdNo")?.value || "").trim() || "A220198888";
@@ -915,8 +1163,11 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             const pEl = document.getElementById("viewPatient");
             if (pEl) pEl.textContent = name;
 
-            const idDobEl = document.getElementById("viewIdDob");
-            if (idDobEl) idDobEl.textContent = `${idNo} ｜ ${dob}`;
+            const pIdEl = document.getElementById("viewPatientId");
+            if (pIdEl) pIdEl.textContent = idNo;
+
+            const dobEl = document.getElementById("viewDob");
+            if (dobEl) dobEl.textContent = dob;
 
             const applyEl = document.getElementById("viewApplyDate");
             if (applyEl) applyEl.textContent = applyDate;
@@ -933,19 +1184,16 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                 if (inName && nameVal) inName.value = nameVal;
             }
 
-            const idDobEl = document.getElementById("viewIdDob");
-            if (idDobEl) {
-                const text = idDobEl.innerText.trim();
-                const parts = text.split(/[｜|/]/);
-                if (parts.length >= 2) {
-                    const inId = document.getElementById("inputIdNo");
-                    const inDob = document.getElementById("inputDob");
-                    if (inId) inId.value = parts[0].trim();
-                    if (inDob) inDob.value = parts.slice(1).join("/").trim();
-                } else if (parts.length === 1) {
-                    const inId = document.getElementById("inputIdNo");
-                    if (inId) inId.value = parts[0].trim();
-                }
+            const pIdEl = document.getElementById("viewPatientId");
+            if (pIdEl) {
+                const inId = document.getElementById("inputIdNo");
+                if (inId) inId.value = pIdEl.innerText.trim();
+            }
+
+            const dobEl = document.getElementById("viewDob");
+            if (dobEl) {
+                const inDob = document.getElementById("inputDob");
+                if (inDob) inDob.value = dobEl.innerText.trim();
             }
 
             const applyEl = document.getElementById("viewApplyDate");
@@ -2231,68 +2479,136 @@ function renderPreview() {
             const deptObj = h.depts[dKey];
             const doc = document.getElementById("selDoctor").value || deptObj.doctors[0].replace(" 醫師", "");
 
-            document.getElementById("viewHosp").innerHTML = `${h.name}<br>(代號：${h.code})`;
-            document.getElementById("viewDoctor").innerHTML = `${doc} 醫師<br>科別：${deptObj.name}`;
-            document.getElementById("signDoctor").textContent = doc;
+            const hospEl = document.getElementById("viewHosp");
+            if (hospEl) hospEl.innerHTML = `${h.name}<br><small class="text-muted">(代號：${h.code})</small>`;
+
+            const deptEl = document.getElementById("viewDept");
+            if (deptEl) deptEl.textContent = deptObj.name;
+
+            const docEl = document.getElementById("viewDoctor");
+            if (docEl) docEl.textContent = `${doc} 醫師`;
+
+            const signEl = document.getElementById("signDoctor");
+            if (signEl) signEl.textContent = doc;
+
+            const REVIEW_COL_HTML = `
+                <td rowspan="2" class="p-1 align-top review-col-box" style="background: #ffffff; width: 20%;">
+                    <div>□ 同意備查。</div>
+                    <div>□ 不予同意，理由：<span class="border-bottom d-inline-block" style="width: 75px;"></span>。</div>
+                    <div>□ 依病情不符使用<span class="border-bottom d-inline-block" style="width: 25px;"></span>規定，請改用<span class="border-bottom d-inline-block" style="width: 25px;"></span>。</div>
+                    <div>□ 依病情同意其手術，但特材改採<span class="border-bottom d-inline-block" style="width: 35px;"></span>。</div>
+                    <div>□ 項次第<span class="border-bottom d-inline-block" style="width: 14px;"></span>項，數量核定為<span class="border-bottom d-inline-block" style="width: 18px;"></span>，理由：<span class="border-bottom d-inline-block" style="width: 35px;"></span>。</div>
+                    <div>□ 請改用相同療效，價格較廉之藥品或特材。</div>
+                    <div>□ 項目代碼與名稱不符。</div>
+                    <div>□ 手術僅同意<span class="border-bottom d-inline-block" style="width: 14px;"></span>側，另側歉難同意。</div>
+                    <div>□ 保險人審慎研議中，俟決議後再行函復。</div>
+                    <div>□ 請補送附件第<span class="border-bottom d-inline-block" style="width: 14px;"></span>項，或補件名稱：<span class="border-bottom d-inline-block" style="width: 25px;"></span>。</div>
+                    <div>□ 其他</div>
+                </td>
+            `;
 
             const tbody = document.getElementById("itemsBody");
-            
+            if (!tbody) return;
+
             if (currentScenario === 1) { // EBC
                 tbody.innerHTML = `
                     <tr>
-                        <td class="text-center">1</td>
-                        <td><strong class="text-danger">C50P1</strong><br><small class="text-muted">健保碼: KC01004100</small></td>
-                        <td><strong>擊癌利膜衣錠 200毫克</strong><br><small class="text-muted">台灣諾華 (Novartis)</small></td>
-                        <td>200mg/錠，每日口服一次，<strong>每次 2 粒 (400mg)</strong>，服21天停7天。<br><strong>申請數量：252 粒 (24週用量)</strong></td>
+                        <td class="text-center align-middle">1</td>
+                        <td class="align-middle"><strong class="text-danger">C50P1</strong><br><small class="text-muted">健保碼: KC01004100</small></td>
+                        <td class="align-middle"><strong>擊癌利膜衣錠 200毫克</strong><br><small class="text-muted">Ribociclib film-coated tab 200mg</small></td>
+                        <td class="align-middle">200mg/錠，每日口服一次，<strong>每次 2 粒 (400mg)</strong>，連續服用 21 天後停藥 7 天，28 天為一療程。</td>
+                        <td class="align-middle text-center">台灣諾華<br><small class="text-muted">Novartis</small></td>
+                        <td class="align-middle text-center"><strong>252 粒</strong><br><small class="text-muted">(24週用量)</small></td>
+                        ${REVIEW_COL_HTML}
+                    </tr>
+                    <tr>
+                        <td class="text-center text-muted align-middle">2</td>
+                        <td class="text-muted align-middle">(以下空白)</td>
+                        <td class="text-muted align-middle"></td>
+                        <td class="text-muted align-middle"></td>
+                        <td class="text-muted align-middle"></td>
+                        <td class="text-muted align-middle"></td>
                     </tr>
                 `;
             } else if (currentScenario === 2) { // MBC postmenopausal
                 tbody.innerHTML = `
                     <tr>
-                        <td class="text-center">1</td>
-                        <td><strong class="text-success">C50R1</strong><br><small class="text-muted">健保碼: KC01004100</small></td>
-                        <td><strong>擊癌利膜衣錠 200毫克</strong><br><small class="text-muted">台灣諾華 (Novartis)</small></td>
-                        <td>200mg/錠，每日口服一次，<strong>每次 3 粒 (600mg)</strong>，服21天停7天。<br><strong>申請數量：378 粒 (24週用量)</strong></td>
+                        <td class="text-center align-middle">1</td>
+                        <td class="align-middle"><strong class="text-success">C50R1</strong><br><small class="text-muted">健保碼: KC01004100</small></td>
+                        <td class="align-middle"><strong>擊癌利膜衣錠 200毫克</strong><br><small class="text-muted">Ribociclib film-coated tab 200mg</small></td>
+                        <td class="align-middle">200mg/錠，每日口服一次，<strong>每次 3 粒 (600mg)</strong>，連續服用 21 天後停藥 7 天，28 天為一療程。</td>
+                        <td class="align-middle text-center">台灣諾華<br><small class="text-muted">Novartis</small></td>
+                        <td class="align-middle text-center"><strong>378 粒</strong><br><small class="text-muted">(24週用量)</small></td>
+                        ${REVIEW_COL_HTML}
+                    </tr>
+                    <tr>
+                        <td class="text-center text-muted align-middle">2</td>
+                        <td class="text-muted align-middle">(以下空白)</td>
+                        <td class="text-muted align-middle"></td>
+                        <td class="text-muted align-middle"></td>
+                        <td class="text-muted align-middle"></td>
+                        <td class="text-muted align-middle"></td>
                     </tr>
                 `;
             } else if (currentScenario === 3 || currentScenario === 4) { // Pre-menopause / Male + Zoladex
                 tbody.innerHTML = `
                     <tr>
-                        <td class="text-center">1</td>
-                        <td><strong class="text-success">C50R1</strong><br><small class="text-muted">健保碼: KC01004100</small></td>
-                        <td><strong>擊癌利膜衣錠 200毫克</strong><br><small class="text-muted">台灣諾華 (Novartis)</small></td>
-                        <td>200mg/錠，口服每日 3 粒 (600mg)，服21天停7天。<br><strong>申請數量：378 粒 (24週用量)</strong></td>
+                        <td class="text-center align-middle">1</td>
+                        <td class="align-middle"><strong class="text-success">C50R1</strong><br><small class="text-muted">健保碼: KC01004100</small></td>
+                        <td class="align-middle"><strong>擊癌利膜衣錠 200毫克</strong><br><small class="text-muted">Ribociclib 200mg</small></td>
+                        <td class="align-middle">200mg/錠，每日口服一次，<strong>每次 3 粒 (600mg)</strong>，服 21 天停 7 天。</td>
+                        <td class="align-middle text-center">台灣諾華<br><small class="text-muted">Novartis</small></td>
+                        <td class="align-middle text-center"><strong>378 粒</strong><br><small class="text-muted">(24週用量)</small></td>
+                        ${REVIEW_COL_HTML}
                     </tr>
                     <tr>
-                        <td class="text-center">2</td>
-                        <td><strong>B018244243</strong><br><small class="text-muted">健保署核准代號</small></td>
-                        <td><strong>諾曼德持續性注射劑 3.6毫克</strong><br><small class="text-muted">台灣阿斯特捷利康 (Zoladex)</small></td>
-                        <td>3.6mg/針，每 28 天 (4週) 皮下注射 1 劑。<br><strong>申請數量：6 支 (24週用量)</strong></td>
+                        <td class="text-center align-middle">2</td>
+                        <td class="align-middle"><strong class="text-primary">B018244243</strong><br><small class="text-muted">健保署核准代號</small></td>
+                        <td class="align-middle"><strong>諾曼德持續性注射劑 3.6毫克</strong><br><small class="text-muted">Zoladex 3.6mg Depot</small></td>
+                        <td class="align-middle">3.6mg/針，每 28 天 (4週) 腹壁皮下注射 1 劑。</td>
+                        <td class="align-middle text-center">台灣阿斯特捷利康<br><small class="text-muted">AstraZeneca</small></td>
+                        <td class="align-middle text-center"><strong>6 支</strong><br><small class="text-muted">(24週用量)</small></td>
                     </tr>
                 `;
             } else if (currentScenario === 5) { // 2nd line Fulvestrant
                 const fulv = h.defaultFulvestrant;
                 tbody.innerHTML = `
                     <tr>
-                        <td class="text-center">1</td>
-                        <td><strong class="text-warning text-dark">C50R2</strong><br><small class="text-muted">健保碼: KC01004100 (12/1解禁)</small></td>
-                        <td><strong>擊癌利膜衣錠 200毫克</strong><br><small class="text-muted">台灣諾華 (Novartis)</small></td>
-                        <td>200mg/錠，口服每日 3 粒 (600mg)，服21天停7天。<br><strong>申請數量：378 粒 (24週用量)</strong></td>
+                        <td class="text-center align-middle">1</td>
+                        <td class="align-middle"><strong class="text-warning text-dark">C50R2</strong><br><small class="text-muted">健保碼: KC01004100 (12/1解禁)</small></td>
+                        <td class="align-middle"><strong>擊癌利膜衣錠 200毫克</strong><br><small class="text-muted">Ribociclib 200mg</small></td>
+                        <td class="align-middle">200mg/錠，口服每日 3 粒 (600mg)，服 21 天停 7 天。</td>
+                        <td class="align-middle text-center">台灣諾華<br><small class="text-muted">Novartis</small></td>
+                        <td class="align-middle text-center"><strong>378 粒</strong><br><small class="text-muted">(24週用量)</small></td>
+                        ${REVIEW_COL_HTML}
                     </tr>
                     <tr>
-                        <td class="text-center">2</td>
-                        <td><strong>${fulv.code}</strong><br><small class="text-muted">健保署核准代號</small></td>
-                        <td><strong>${fulv.name}</strong><br><small class="text-muted">${fulv.brand}</small></td>
-                        <td>每次 500mg (2支) 雙側臀部肌肉注射 (D1, D15, D29及後續每月1次)。<br><strong>申請數量：16 支 (24週用量)</strong></td>
+                        <td class="text-center align-middle">2</td>
+                        <td class="align-middle"><strong class="text-info text-dark">${fulv.code}</strong><br><small class="text-muted">健保署核准代號</small></td>
+                        <td class="align-middle"><strong>${fulv.name}</strong><br><small class="text-muted">${fulv.brand}</small></td>
+                        <td class="align-middle">每次 500mg (2支) 雙側臀部肌肉注射 (D1, D15, D29 及後續每月 1 次)。</td>
+                        <td class="align-middle text-center">${fulv.brand}</td>
+                        <td class="align-middle text-center"><strong>16 支</strong><br><small class="text-muted">(24週用量)</small></td>
                     </tr>
                 `;
             } else if (currentScenario === 6) { // 24 months renewal
                 tbody.innerHTML = `
                     <tr>
-                        <td class="text-center">1</td>
-                        <td><strong class="text-success">C50R1 (續評展延)</strong><br><small class="text-muted">原核准案號展延申請</small></td>
-                        <td><strong>擊癌利膜衣錠 200毫克</strong><br><small class="text-muted">台灣諾華 (Novartis)</small></td>
-                        <td>200mg/錠，每日口服一次，<strong>每次 3 粒 (600mg)</strong>，服21天停7天。<br><strong>申請數量：378 粒 (24週用量)</strong></td>
+                        <td class="text-center align-middle">1</td>
+                        <td class="align-middle"><strong class="text-success">C50R1 (續評展延)</strong><br><small class="text-muted">原核准案號展延申請</small></td>
+                        <td class="align-middle"><strong>擊癌利膜衣錠 200毫克</strong><br><small class="text-muted">Ribociclib 200mg</small></td>
+                        <td class="align-middle">200mg/錠，每日口服一次，<strong>每次 3 粒 (600mg)</strong>，服 21 天停 7 天。</td>
+                        <td class="align-middle text-center">台灣諾華<br><small class="text-muted">Novartis</small></td>
+                        <td class="align-middle text-center"><strong>378 粒</strong><br><small class="text-muted">(24週用量)</small></td>
+                        ${REVIEW_COL_HTML}
+                    </tr>
+                    <tr>
+                        <td class="text-center text-muted align-middle">2</td>
+                        <td class="text-muted align-middle">(以下空白)</td>
+                        <td class="text-muted align-middle"></td>
+                        <td class="text-muted align-middle"></td>
+                        <td class="text-muted align-middle"></td>
+                        <td class="text-muted align-middle"></td>
                     </tr>
                 `;
                 document.getElementById("viewReason").textContent = 
@@ -2304,8 +2620,8 @@ function renderPreview() {
                     "   • 依據 RECIST 1.1 評估：標靶病灶維持【疾病穩定 (SD)】或【部分緩解 (PR)】，確認【無疾病惡化 (No Progressive Disease, non-PD)】。\n" +
                     "3. 健保給付合規比對：\n" +
                     "   依據全民健康保險藥品給付規定 9.72 第 5 點及第 7 點規定，核准後每 24 週檢附療效評估資料，疾病無惡化得繼續申請使用本類藥品。\n" +
-                    "4. 特此提出展延事前審查申請，核發後續之 24 週用藥。";
-                setAIResult(true, "C50R1 (展延續審)", "已規律用藥滿 24 個月 (2年)，檢附最新影像評估無惡化 (non-PD)，依法享有繼續給付至惡化為止！");
+                    "4. 特此提出展延事前審查申請，核發後續之 24 週用藥 (378 粒)。";
+                setAIResult(true, "C50R1 (續評通過)", "已規律用藥滿 24 個月 (2年)，檢附最新影像無惡化 (non-PD)，依法規得繼續給付至疾病惡化為止！");
             }
             syncApplicationFormReason();
         }
