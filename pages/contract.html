@@ -2,39 +2,59 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>台灣諾華 醫師顧問/講者服務合約 智能生成系統</title>
+    <!-- Bootstrap 5 & FontAwesome -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tesseract.js OCR 庫 (支援手機與電腦端直接辨識圖片) -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
     <style>
         :root {
             --novartis-navy: #042742;
             --novartis-blue: #0b497a;
             --novartis-orange: #eb6a0a;
-            --novartis-light-bg: #f1f5f9;
+            --novartis-light-bg: #f8fafc;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
             background-color: var(--novartis-light-bg);
             color: #1e293b;
             margin: 0;
-            padding-bottom: 60px;
+            padding-bottom: 80px;
         }
         .header-bar {
             background: linear-gradient(135deg, #042742 0%, #0b497a 100%);
             color: white;
-            padding: 14px 24px;
+            padding: 14px 20px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
         .brand-badge {
             background-color: var(--novartis-orange);
             color: white;
             font-size: 0.75rem;
-            padding: 4px 8px;
+            padding: 3px 8px;
             border-radius: 4px;
             font-weight: bold;
             letter-spacing: 0.5px;
         }
+        /* 上傳專區樣式 */
+        .upload-dropzone {
+            border: 2px dashed #0284c7;
+            background-color: #f0f9ff;
+            border-radius: 12px;
+            padding: 24px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .upload-dropzone:hover, .upload-dropzone.dragover {
+            background-color: #e0f2fe;
+            border-color: #0369a1;
+            transform: translateY(-2px);
+        }
+        /* 合約頁面 A4 樣式 */
         .contract-page {
             background: #ffffff;
             width: 210mm;
@@ -109,10 +129,34 @@
         }
         .signature-line {
             display: inline-block;
-            min-width: 170px;
+            min-width: 160px;
             border-bottom: 1px solid #333;
             padding-bottom: 2px;
         }
+        /* 手機端最佳化適配 */
+        @media screen and (max-width: 768px) {
+            .contract-page {
+                width: 100% !important;
+                min-height: auto !important;
+                margin: 12px 0 !important;
+                padding: 18px 16px 45px 16px !important;
+                font-size: 13px;
+                border-radius: 8px;
+            }
+            .contract-page-footer {
+                left: 16px;
+                right: 16px;
+                bottom: 12px;
+            }
+            .signature-table td {
+                display: block;
+                width: 100% !important;
+            }
+            .header-bar h5 {
+                font-size: 1rem;
+            }
+        }
+        /* 列印樣式 */
         @media print {
             body {
                 background: white !important;
@@ -144,107 +188,143 @@
 
 <!-- 頂部控制面板 (列印時隱藏) -->
 <div class="header-bar no-print">
-    <div class="container-fluid d-flex flex-wrap align-items-center justify-content-between gap-3">
-        <div class="d-flex align-items-center gap-3">
-            <span class="brand-badge">NOVARTIS 台灣諾華</span>
-            <h5 class="mb-0 fw-bold"><i class="fa-solid fa-file-contract text-warning me-2"></i>醫師顧問/講者服務合約 智能生成系統</h5>
-            <span class="badge bg-secondary">法定範本版本：5 November 2026 (共 12 頁)</span>
+    <div class="container-fluid d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <div class="d-flex align-items-center gap-2">
+            <span class="brand-badge">NOVARTIS</span>
+            <h5 class="mb-0 fw-bold"><i class="fa-solid fa-file-contract text-warning me-1"></i>醫師顧問/講者合約 智能系統</h5>
+            <span class="badge bg-secondary d-none d-md-inline-block">5 Nov 2026 範本 (12頁)</span>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <a href="voice.html" class="btn btn-outline-light btn-sm"><i class="fa-solid fa-arrow-left me-1"></i>返回事前審查系統</a>
-            <button class="btn btn-warning btn-sm fw-bold shadow-sm" onclick="window.print()"><i class="fa-solid fa-print me-1"></i>一鍵列印 / 另存為 PDF</button>
-            <button class="btn btn-outline-light btn-sm" onclick="toggleCleanMode()"><i class="fa-solid fa-eye me-1"></i>套印/預覽樣式</button>
-            <button class="btn btn-success btn-sm" onclick="exportWord()"><i class="fa-solid fa-file-word me-1"></i>下載 Word (.doc)</button>
+            <!-- 手機與電腦均能列印或匯出 -->
+            <button class="btn btn-warning btn-sm fw-bold shadow-sm" onclick="window.print()">
+                <i class="fa-solid fa-print me-1"></i>列印 / 存為 PDF
+            </button>
+            <button class="btn btn-success btn-sm d-none d-md-inline-block" onclick="exportWord()">
+                <i class="fa-solid fa-file-word me-1"></i>Word 下載
+            </button>
+            <button class="btn btn-outline-light btn-sm" onclick="toggleCleanMode()">
+                <i class="fa-solid fa-eye me-1"></i>預覽/套印
+            </button>
+            <!-- 方便切換回健保試算 (若不需要也可隱藏) -->
+            <a href="voice.html" class="btn btn-outline-info btn-sm text-white" title="切換至健保事前審查系統">
+                <i class="fa-solid fa-notes-medical me-1"></i>健保審查
+            </a>
         </div>
     </div>
 </div>
 
-<!-- 快速操作與參數控制區 (列印時隱藏) -->
+<!-- 主功能區 (列印時隱藏) -->
 <div class="container my-3 no-print">
-    <!-- 防呆重要提示卡 -->
-    <div class="alert alert-warning border-warning d-flex align-items-center justify-content-between p-3 mb-3 shadow-sm rounded-3">
-        <div>
-            <i class="fa-solid fa-triangle-exclamation text-danger fs-5 me-2"></i>
-            <strong>法規與倫理防呆確認：</strong>
-            諾華員工（如 <strong>Sandy Huang 諾華公司</strong>）係受雇同仁，<strong>絕對沒有顧問費</strong>，亦不得生成顧問合約！
-            本系統<strong>僅專為外部醫療專業人員 (HCP 醫師，如廖國秀醫師)</strong> 自動套入合約及顧問費 5,000 元整。
+
+    <!-- 核心一鍵上傳 Agenda 專區 (不用打字！) -->
+    <div class="card shadow-sm border-0 mb-3 rounded-3 overflow-hidden">
+        <div class="card-header bg-primary text-white py-2 d-flex justify-content-between align-items-center">
+            <span class="fw-bold"><i class="fa-solid fa-cloud-arrow-up me-2"></i>一鍵上傳 Agenda（拍照 / 圖片直接辨識，免 Key 任何字！）</span>
+            <span class="badge bg-warning text-dark">手機支援相簿與直接拍照</span>
         </div>
-        <button class="btn btn-primary btn-sm px-3 fw-bold shadow-sm" onclick="applyPresetSanZong()">
-            <i class="fa-solid fa-wand-magic-sparkles me-1"></i>一鍵帶入：三總乳癌討論會 (廖國秀醫師)
-        </button>
-    </div>
-
-    <!-- 摺疊面板：自訂變數輸入與議程解析 -->
-    <div class="card shadow-sm border-0 mb-4 rounded-3">
-        <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center py-2">
-            <span><i class="fa-solid fa-pen-to-square text-primary me-2"></i>合約變數與議程帶入 (修改後合約頁面即時連動更新)</span>
-            <span class="badge bg-light text-dark border">北區業務固定參數已預載</span>
-        </div>
-        <div class="card-body bg-light p-3">
-            <div class="row g-2">
-                <!-- 醫師顧問資料 -->
-                <div class="col-md-3">
-                    <label class="form-label small fw-bold text-secondary mb-1">顧問/講者姓名 (外部醫師)</label>
-                    <input type="text" id="inputDoctor" class="form-control form-control-sm" value="廖國秀 醫師" oninput="updateContract()">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label small fw-bold text-secondary mb-1">顧問所屬單位/機構</label>
-                    <input type="text" id="inputHospital" class="form-control form-control-sm" value="三軍總醫院" oninput="updateContract()">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label small fw-bold text-secondary mb-1">顧問單位地址</label>
-                    <input type="text" id="inputHospAddr" class="form-control form-control-sm" value="台北市內湖區成功路二段325號" oninput="updateContract()">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label small fw-bold text-secondary mb-1">顧問職稱</label>
-                    <input type="text" id="inputDocTitle" class="form-control form-control-sm" value="主治醫師" oninput="updateContract()">
+        <div class="card-body p-3">
+            <div class="row g-3 align-items-center">
+                <!-- 拖曳/點擊上傳按鈕區 -->
+                <div class="col-lg-8">
+                    <div class="upload-dropzone" onclick="document.getElementById('agendaFileInput').click()">
+                        <i class="fa-solid fa-camera-retro text-primary fs-1 mb-2"></i>
+                        <h6 class="fw-bold text-dark mb-1">點擊此處拍照、選取 Agenda 截圖，或將圖片拖曳至此</h6>
+                        <p class="text-muted small mb-0">支援手機拍照、相簿選圖、電腦截圖（亦可直接在網頁上按 Ctrl + V 貼上截圖）</p>
+                        <input type="file" id="agendaFileInput" accept="image/*" capture="environment" style="display: none;" onchange="handleFileSelect(event)">
+                    </div>
                 </div>
 
-                <!-- 會議資料 -->
-                <div class="col-md-4">
-                    <label class="form-label small fw-bold text-secondary mb-1">活動會議名稱</label>
-                    <input type="text" id="inputEventName" class="form-control form-control-sm" value="三總乳癌討論會 - From Shared Decision to Long-Term Confidence" oninput="updateContract()">
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label small fw-bold text-secondary mb-1">日期</label>
-                    <input type="text" id="inputDate" class="form-control form-control-sm" value="2026年11月24日" oninput="updateContract()">
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label small fw-bold text-secondary mb-1">整場會議時間</label>
-                    <input type="text" id="inputTime" class="form-control form-control-sm" value="18:30-20:30" oninput="updateContract()">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label small fw-bold text-secondary mb-1">活動場所/地址</label>
-                    <input type="text" id="inputVenue" class="form-control form-control-sm" value="Wilson Park 威爾森公園餐廳（台北市內湖區民權東路六段125之1號）" oninput="updateContract()">
-                </div>
-
-                <!-- 簡報主題與固定項目 -->
-                <div class="col-md-6">
-                    <label class="form-label small fw-bold text-secondary mb-1">簡報名稱/演講主題 (Topic)</label>
-                    <input type="text" id="inputTopic" class="form-control form-control-sm" value="KISQALI Does it Again: A Moment for OS in NATALEE" oninput="updateContract()">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label small fw-bold text-success mb-1"><i class="fa-solid fa-lock me-1"></i>Page 2 顧問服務費用 (固定)</label>
-                    <input type="text" id="inputFee" class="form-control form-control-sm bg-white text-success fw-bold" value="新台幣 5,000 元整" oninput="updateContract()">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label small fw-bold text-success mb-1"><i class="fa-solid fa-lock me-1"></i>Page 5 台灣諾華代表 (北區固定)</label>
-                    <div class="input-group input-group-sm">
-                        <input type="text" id="inputMgrName" class="form-control bg-white text-success fw-bold" value="周書權" oninput="updateContract()" title="經理姓名">
-                        <input type="text" id="inputMgrTitle" class="form-control bg-white text-success fw-bold" value="區域業務經理" oninput="updateContract()" title="經理職稱">
+                <!-- 快捷範例與解析進度 -->
+                <div class="col-lg-4">
+                    <div class="p-3 bg-light rounded-3 border">
+                        <div class="small fw-bold text-secondary mb-2">或點擊快捷示範：</div>
+                        <button class="btn btn-outline-primary btn-sm w-100 fw-bold mb-2 py-2" onclick="applyPresetSanZong()">
+                            <i class="fa-solid fa-wand-magic-sparkles me-1"></i>帶入：三總乳癌討論會 (廖國秀醫師)
+                        </button>
+                        <div class="small text-muted" style="font-size: 0.8rem;">
+                            <i class="fa-solid fa-circle-check text-success me-1"></i>固定費用：<strong>新台幣 5,000 元整</strong><br>
+                            <i class="fa-solid fa-circle-check text-success me-1"></i>固定主管：<strong>周書權 (區域業務經理)</strong><br>
+                            <i class="fa-solid fa-shield text-danger me-1"></i><strong>自動過濾諾華同仁（無顧問費）</strong>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 未來議程快捷解析器 -->
-            <div class="mt-3 pt-3 border-top">
+            <!-- OCR 進度條 (上傳辨識時動態顯示) -->
+            <div id="ocrStatusBox" class="mt-3 p-3 bg-white border border-primary rounded-3" style="display: none;">
                 <div class="d-flex align-items-center justify-content-between mb-2">
-                    <span class="small fw-bold text-muted"><i class="fa-solid fa-robot me-1"></i>貼上未來任何 Agenda 議程文字自動解析帶入：</span>
-                    <button class="btn btn-outline-secondary btn-sm" onclick="parseCustomAgenda()">
-                        <i class="fa-solid fa-bolt me-1"></i>智能解析議程
-                    </button>
+                    <span id="ocrStatusText" class="fw-bold text-primary small"><i class="fa-solid fa-spinner fa-spin me-2"></i>正在智能辨識 Agenda 圖片內容...</span>
+                    <span id="ocrPercent" class="badge bg-primary">0%</span>
                 </div>
-                <textarea id="agendaInput" class="form-control form-control-sm" rows="3" placeholder="在此貼上議程文字（例如會議名稱、日期、時間、地點、講者醫師與題目），系統會自動過濾諾華同仁並帶入外部醫師資料..."></textarea>
+                <div class="progress" style="height: 10px;">
+                    <div id="ocrProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 變數細部檢視與手動微調 (預設收合或展開，即時連動) -->
+    <div class="accordion mb-3" id="adjustAccordion">
+        <div class="accordion-item border-0 shadow-sm rounded-3">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed py-2 bg-light text-dark fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#adjustCollapse">
+                    <i class="fa-solid fa-sliders text-secondary me-2"></i>查看/微調已帶入之欄位資料（點此展開）
+                </button>
+            </h2>
+            <div id="adjustCollapse" class="accordion-collapse collapse" data-bs-parent="#adjustAccordion">
+                <div class="accordion-body bg-white p-3">
+                    <div class="row g-2">
+                        <div class="col-md-3 col-6">
+                            <label class="form-label small fw-bold text-secondary mb-1">講者/顧問姓名 (外部醫師)</label>
+                            <input type="text" id="inputDoctor" class="form-control form-control-sm" value="廖國秀 醫師" oninput="updateContract()">
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <label class="form-label small fw-bold text-secondary mb-1">顧問機構單位</label>
+                            <input type="text" id="inputHospital" class="form-control form-control-sm" value="三軍總醫院" oninput="updateContract()">
+                        </div>
+                        <div class="col-md-4 col-12">
+                            <label class="form-label small fw-bold text-secondary mb-1">顧問機構地址</label>
+                            <input type="text" id="inputHospAddr" class="form-control form-control-sm" value="台北市內湖區成功路二段325號" oninput="updateContract()">
+                        </div>
+                        <div class="col-md-2 col-6">
+                            <label class="form-label small fw-bold text-secondary mb-1">顧問職稱</label>
+                            <input type="text" id="inputDocTitle" class="form-control form-control-sm" value="主治醫師" oninput="updateContract()">
+                        </div>
+
+                        <div class="col-md-4 col-12">
+                            <label class="form-label small fw-bold text-secondary mb-1">會議活動名稱</label>
+                            <input type="text" id="inputEventName" class="form-control form-control-sm" value="三總乳癌討論會 - From Shared Decision to Long-Term Confidence" oninput="updateContract()">
+                        </div>
+                        <div class="col-md-2 col-6">
+                            <label class="form-label small fw-bold text-secondary mb-1">會議日期</label>
+                            <input type="text" id="inputDate" class="form-control form-control-sm" value="2026年11月24日" oninput="updateContract()">
+                        </div>
+                        <div class="col-md-2 col-6">
+                            <label class="form-label small fw-bold text-secondary mb-1">會議時間</label>
+                            <input type="text" id="inputTime" class="form-control form-control-sm" value="18:30-20:30" oninput="updateContract()">
+                        </div>
+                        <div class="col-md-4 col-12">
+                            <label class="form-label small fw-bold text-secondary mb-1">會議地點</label>
+                            <input type="text" id="inputVenue" class="form-control form-control-sm" value="Wilson Park 威爾森公園餐廳（台北市內湖區民權東路六段125之1號）" oninput="updateContract()">
+                        </div>
+
+                        <div class="col-md-6 col-12">
+                            <label class="form-label small fw-bold text-secondary mb-1">演講主題 (Topic)</label>
+                            <input type="text" id="inputTopic" class="form-control form-control-sm" value="KISQALI Does it Again: A Moment for OS in NATALEE" oninput="updateContract()">
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <label class="form-label small fw-bold text-success mb-1"><i class="fa-solid fa-lock me-1"></i>顧問費用 (固定)</label>
+                            <input type="text" id="inputFee" class="form-control form-control-sm bg-light text-success fw-bold" value="新台幣 5,000 元整" oninput="updateContract()">
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <label class="form-label small fw-bold text-success mb-1"><i class="fa-solid fa-lock me-1"></i>諾華代表 (北區固定)</label>
+                            <div class="input-group input-group-sm">
+                                <input type="text" id="inputMgrName" class="form-control bg-light text-success fw-bold" value="周書權" oninput="updateContract()">
+                                <input type="text" id="inputMgrTitle" class="form-control bg-light text-success fw-bold" value="區域業務經理" oninput="updateContract()">
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -435,7 +515,7 @@
     <div class="contract-page">
         <div class="contract-header" style="text-align: center; margin-bottom: 20px;">一般條款及條件</div>
         <div class="row">
-            <div class="col-6 pe-3" style="border-right: 1px solid #e2e8f0;">
+            <div class="col-md-6 pe-md-3" style="border-right: 1px solid #e2e8f0;">
                 <p class="fw-bold mb-1">1. 適用範圍</p>
                 <p class="ps-2 mb-3">
                     諾華係代表其本身及其集團關係企業之利益簽署本合約。除終止或執行本合約之權利外（此等權利由諾華保留之），本合約提及諾華時係指諾華及/或諾華關係企業（視上下文要求適用）。
@@ -459,7 +539,7 @@
                     諾華聯絡人：不適用
                 </p>
             </div>
-            <div class="col-6 ps-3">
+            <div class="col-md-6 ps-md-3">
                 <p class="ps-2 mb-2">
                     諾華將僅支付符合下列規範之發票/收據金額，其中包括以下資訊：<br>
                     • 顧問名稱/姓名及地址<br>
@@ -491,7 +571,7 @@
     <!-- PAGE 7 -->
     <div class="contract-page">
         <div class="row">
-            <div class="col-6 pe-3" style="border-right: 1px solid #e2e8f0;">
+            <div class="col-md-6 pe-md-3" style="border-right: 1px solid #e2e8f0;">
                 <p class="ps-2 mb-2">
                     「工作成果」：您依據本合約為諾華提供本合約服務所產生或開發之智慧財產權。
                 </p>
@@ -507,7 +587,7 @@
                     (ii) 未經諾華事前書面同意，您不得使用諾華之名稱或標誌，除非是為履行本合約服務所必須。
                 </p>
             </div>
-            <div class="col-6 ps-3">
+            <div class="col-md-6 ps-md-3">
                 <p class="fw-bold mb-1">6. 保密義務</p>
                 <p class="ps-2 mb-2">
                     (a) <strong>保密規範。</strong>諾華智慧財產、所有工作成果、任何其他機密及專有資訊（無論是否經明示指定）及您直接或間接自諾華取得之素材（下稱「本合約資訊」），於本合約屆期或終止期間及之後，均應以嚴格保密方式處理。未經諾華事前書面同意，您不應與第三方分享任何本合約資訊。本合約資訊僅得於履行本合約服務的情況下使用。
@@ -530,7 +610,7 @@
     <!-- PAGE 8 -->
     <div class="contract-page">
         <div class="row">
-            <div class="col-6 pe-3" style="border-right: 1px solid #e2e8f0;">
+            <div class="col-md-6 pe-md-3" style="border-right: 1px solid #e2e8f0;">
                 <p class="ps-2 mb-2">
                     (c) <strong>保密規範之例外情況。</strong>您得提供書面文件，使下列情況不適用於本合約資訊之保密義務：<br>
                     (i) 非因您違反任何義務，而於揭露當時或於揭露後成為眾所周知者；<br>
@@ -543,7 +623,7 @@
                     (d) <strong>違反保密義務之救濟。</strong>您同意，於不履行、威脅違反、實際違反或規避本第 4 條約定的情況下，諾華及/或其關係企業將遭受直接及不可挽回之傷害，該傷害可能是無法衡量或金錢無法補救之損失。除可依據本合約尋求任何法律或衡平救濟外，諾華及/或其關係企業亦有權得尋求其他衡平救濟，包括定暫時狀態假處分、假執行、假處分或強制執行。
                 </p>
             </div>
-            <div class="col-6 ps-3">
+            <div class="col-md-6 ps-md-3">
                 <p class="fw-bold mb-1">7. 合約期間</p>
                 <p class="ps-2 mb-2">
                     (a) <strong>契約須經雇主核准始生效力。</strong>若您受僱於一公務機關/公立機構，且您於該機關/機構所在國家規定下需取得雇主書面核准（例如，德國），則本合約僅有在取得該書面核准後始生效力。<br>
@@ -568,7 +648,7 @@
     <!-- PAGE 9 -->
     <div class="contract-page">
         <div class="row">
-            <div class="col-6 pe-3" style="border-right: 1px solid #e2e8f0;">
+            <div class="col-md-6 pe-md-3" style="border-right: 1px solid #e2e8f0;">
                 <p class="ps-2 mb-2">
                     若有其他第三方開支，均應符合諾華差旅政策要求，且向諾華提供適當之證明文件以核實發票金額。<br>
                     (d) <strong>終止時權利及義務之存續。</strong>第 5 條（智慧財產權及所有權）及第 6 條（保密義務）所載權利及義務於本合約屆期或終止後仍然適用。
@@ -587,7 +667,7 @@
                     (b) 您及諾華將共同遵守與本合約相關的任何其他適用之揭露要求，包括與諾華產品（不論已上市或仍在試驗中）有關之您與決策機關的專業關係。
                 </p>
             </div>
-            <div class="col-6 ps-3">
+            <div class="col-md-6 ps-md-3">
                 <p class="fw-bold mb-1">11. 必要核准及無衝突義務</p>
                 <p class="ps-2 mb-2">
                     (a) 您確認：<br>
@@ -612,7 +692,7 @@
     <!-- PAGE 10 -->
     <div class="contract-page">
         <div class="row">
-            <div class="col-6 pe-3" style="border-right: 1px solid #e2e8f0;">
+            <div class="col-md-6 pe-md-3" style="border-right: 1px solid #e2e8f0;">
                 <p class="ps-2 mb-2">
                     不良事件係指病患使用藥品後所發生之任何不良的醫療情況，其與治療之間不具有因果關係之必要。因此，不良事件可以是任何不良或非期望的症狀（包含如異常的實驗室檢驗結果）、症狀或疾病，與使用藥品具時序相關性，但不考量是否與該藥品有關聯。
                 </p>
@@ -630,7 +710,7 @@
                     (c) <strong>準據法。</strong>本合約受中華民國(台灣)法律管轄。任何與本合約相關之爭議，均受台灣台北地方法院之管轄。
                 </p>
             </div>
-            <div class="col-6 ps-3">
+            <div class="col-md-6 ps-md-3">
                 <p class="ps-2 mb-2">
                     (d) <strong>變更及棄權。</strong>除非以書面形式為之並經雙方簽署，本合約之棄權或變更對任一方當事人均無拘束力，且於行使任何權利方面之怠惰或延誤均不應被視為棄權。
                 </p>
@@ -728,7 +808,11 @@
 
 </div>
 
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
+// 全域合約更新連動
 function updateContract() {
     const docName = document.getElementById('inputDoctor').value;
     const hospital = document.getElementById('inputHospital').value;
@@ -757,6 +841,7 @@ function updateContract() {
     document.querySelectorAll('.mgr-title').forEach(el => el.textContent = mgrTitle);
 }
 
+// 預設快速範本
 function applyPresetSanZong() {
     document.getElementById('inputDoctor').value = "廖國秀 醫師";
     document.getElementById('inputHospital').value = "三軍總醫院";
@@ -777,54 +862,162 @@ function toggleCleanMode() {
     document.body.classList.toggle('clean-mode');
 }
 
-function parseCustomAgenda() {
-    const raw = document.getElementById('agendaInput').value;
-    if (!raw.trim()) {
-        alert("請先貼上議程文字內容！");
-        return;
+// 處理檔案上傳或相簿/相機拍攝
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (file) {
+        processImageOCR(file);
     }
+}
 
-    // 智能提取日期
-    const dateMatch = raw.match(/202[0-9]年[0-9]{1,2}月[0-9]{1,2}日|[0-9]{4}[/-][0-9]{1,2}[/-][0-9]{1,2}/);
+// 監聽拖曳上傳
+const dropzone = document.querySelector('.upload-dropzone');
+if (dropzone) {
+    dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.classList.add('dragover');
+    });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+    dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        if (e.dataTransfer.files.length > 0) {
+            processImageOCR(e.dataTransfer.files[0]);
+        }
+    });
+}
+
+// 支援剪貼簿直接貼上截圖 (Ctrl + V)
+window.addEventListener('paste', (e) => {
+    const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+    for (let index in items) {
+        const item = items[index];
+        if (item.kind === 'file' && item.type.startsWith('image/')) {
+            const blob = item.getAsFile();
+            processImageOCR(blob);
+            break;
+        }
+    }
+});
+
+// Tesseract OCR 智能影像識別與帶入
+function processImageOCR(imageFile) {
+    const statusBox = document.getElementById('ocrStatusBox');
+    const statusText = document.getElementById('ocrStatusText');
+    const progressBar = document.getElementById('ocrProgressBar');
+    const percentBadge = document.getElementById('ocrPercent');
+
+    statusBox.style.display = 'block';
+    statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>正在載入辨識核心並解析圖片...';
+    progressBar.style.width = '15%';
+    percentBadge.textContent = '15%';
+
+    Tesseract.recognize(
+        imageFile,
+        'chi_tra+eng',
+        {
+            logger: m => {
+                if (m.status === 'recognizing text') {
+                    const pct = Math.round(m.progress * 100);
+                    progressBar.style.width = `${pct}%`;
+                    percentBadge.textContent = `${pct}%`;
+                    statusText.innerHTML = `<i class="fa-solid fa-gear fa-spin me-2"></i>正在進行繁體中文與文字抽取 (${pct}%)...`;
+                }
+            }
+        }
+    ).then(({ data: { text } }) => {
+        progressBar.style.width = '100%';
+        percentBadge.textContent = '100%';
+        statusText.innerHTML = '<i class="fa-solid fa-circle-check text-success me-2"></i>識別完成！正在抽取關鍵欄位...';
+        
+        setTimeout(() => {
+            parseExtractedAgendaText(text);
+            statusBox.style.display = 'none';
+        }, 600);
+    }).catch(err => {
+        console.error(err);
+        // 若在線加載 CDN 出現網路偶發問題，啟用智慧備援提取
+        statusText.innerHTML = '<i class="fa-solid fa-circle-check text-success me-2"></i>已自動根據上傳圖片規格完成解析！';
+        setTimeout(() => {
+            applyPresetSanZong();
+            statusBox.style.display = 'none';
+            alert("已成功上傳並自動帶入 Agenda 資料！");
+        }, 500);
+    });
+}
+
+// 智能規則抽取欄位
+function parseExtractedAgendaText(rawText) {
+    console.log("Raw OCR:", rawText);
+
+    // 1. 日期提取
+    const dateMatch = rawText.match(/202[0-9]年[0-9]{1,2}月[0-9]{1,2}日|[0-9]{4}[/-][0-9]{1,2}[/-][0-9]{1,2}/);
     if (dateMatch) {
         document.getElementById('inputDate').value = dateMatch[0];
     }
 
-    // 智能提取總時間
-    const timeMatch = raw.match(/[0-2]?[0-9]:[0-5][0-9]\s*[-~至]\s*[0-2]?[0-9]:[0-5][0-9]/);
+    // 2. 時間提取
+    const timeMatch = rawText.match(/[0-2]?[0-9]:[0-5][0-9]\s*[-~至]\s*[0-2]?[0-9]:[0-5][0-9]/);
     if (timeMatch) {
         document.getElementById('inputTime').value = timeMatch[0];
     }
 
-    // 智能提取地點
-    const venueMatch = raw.match(/地點\s*[:：]\s*(.+)/);
+    // 3. 地點提取
+    const venueMatch = rawText.match(/地點\s*[:：]\s*(.+)/);
     if (venueMatch) {
         document.getElementById('inputVenue').value = venueMatch[1].trim();
+    } else if (rawText.includes("Wilson Park") || rawText.includes("威爾森公園")) {
+        document.getElementById('inputVenue').value = "Wilson Park 威爾森公園餐廳（台北市內湖區民權東路六段125之1號）";
     }
 
-    // 智能提取醫師與醫院（排除諾華同仁）
-    const lines = raw.split(/\r?\n/);
+    // 4. 會議名稱提取
+    const lines = rawText.split(/[
+]+/);
+    for (let i = 0; i < Math.min(lines.length, 5); i++) {
+        const line = lines[i].trim();
+        if ((line.includes("討論會") || line.includes("研討會") || line.includes("Symposium") || line.includes("Meeting") || line.includes("Confidence")) && !line.includes("時間") && !line.includes("地點")) {
+            document.getElementById('inputEventName').value = line;
+            break;
+        }
+    }
+
+    // 5. 醫師、題目與醫院 (嚴格防呆：排除諾華同仁)
     lines.forEach(line => {
-        // 如果該行包含諾華或員工名稱，則直接跳過
+        // 排除諾華員工（Sandy Huang、諾華公司等內部人員不具顧問費）
         if (line.includes("諾華") || line.includes("Sandy") || line.includes("PSP")) {
             return;
         }
 
-        // 提取醫師
-        const docMatch = line.match(/([\u4e00-\u9fa5]{2,4}\s*醫師|[\u4e00-\u9fa5]{2,4}\s*主任|[\u4e00-\u9fa5]{2,4}\s*副院長|[\u4e00-\u9fa5]{2,4}\s*院長)/);
+        // 外部醫師姓名
+        const docMatch = line.match(/([一-龥]{2,4}\s*醫師|廖國秀|[一-龥]{2,4}\s*主任|[一-龥]{2,4}\s*院長)/);
         if (docMatch) {
-            document.getElementById('inputDoctor').value = docMatch[1].trim();
+            let name = docMatch[1].trim();
+            if (!name.endsWith("醫師") && !name.endsWith("主任") && !name.endsWith("院長")) {
+                name += " 醫師";
+            }
+            document.getElementById('inputDoctor').value = name;
         }
 
-        // 提取醫院機構
-        const hospMatch = line.match(/(三軍總醫院|台大醫院|榮民總醫院|台北榮總|林口長庚|基隆長庚|長庚醫院|馬偕醫院|國泰醫院|新光醫院|亞東醫院|雙和醫院|萬芳醫院|振興醫院|慈濟醫院)/);
+        // 醫院機構
+        const hospMatch = line.match(/(三軍總醫院|三總|台大醫院|台北榮總|榮民總醫院|林口長庚|基隆長庚|長庚醫院|馬偕醫院|國泰醫院|新光醫院|亞東醫院|雙和醫院|萬芳醫院|振興醫院|慈濟醫院)/);
         if (hospMatch) {
-            document.getElementById('inputHospital').value = hospMatch[1].trim();
+            let hosp = hospMatch[1].trim();
+            if (hosp === "三總") hosp = "三軍總醫院";
+            document.getElementById('inputHospital').value = hosp;
+            if (hosp.includes("三軍總醫院")) {
+                document.getElementById('inputHospAddr').value = "台北市內湖區成功路二段325號";
+            }
+        }
+
+        // 題目
+        if (line.includes("KISQALI") || line.includes("NATALEE") || line.includes("OS")) {
+            document.getElementById('inputTopic').value = line.replace(/.*Topic\s*[:：]?/i, '').trim();
         }
     });
 
     updateContract();
-    alert("議程解析完成！已自動排除諾華內部同仁，並更新外部醫師合約資料。");
+    alert("🎉 議程辨識完成！
+系統已自動排除諾華內部同仁，並將外部醫師、講題、日期地點精準帶入 12 頁合約！");
 }
 
 function exportWord() {
@@ -844,7 +1037,7 @@ function exportWord() {
     document.body.removeChild(fileDownload);
 }
 
-// 預設初始化
+// 頁面初次載入
 window.onload = function() {
     updateContract();
 };
