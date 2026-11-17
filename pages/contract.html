@@ -51,9 +51,9 @@
             background: #ffffff;
             border: 2px solid #0284c7;
             border-radius: 12px;
-            box-shadow: 0 4px 16px rgba(2, 132, 199, 0.12);
-            padding: 16px;
-            margin-bottom: 18px;
+            box-shadow: 0 6px 20px rgba(2, 132, 199, 0.15);
+            padding: 18px;
+            margin-bottom: 20px;
         }
         .btn-action-main {
             font-weight: bold;
@@ -68,6 +68,10 @@
             cursor: pointer;
             width: 100%;
             border: none;
+            transition: transform 0.15s ease;
+        }
+        .btn-action-main:active {
+            transform: scale(0.98);
         }
         /* 合約頁面 A4 樣式 */
         .contract-page {
@@ -104,12 +108,24 @@
             padding-top: 6px;
         }
         .var-field {
-            color: #4c1d95;
+            color: #5b21b6;
             background-color: #ede9fe;
             padding: 2px 6px;
             border-radius: 4px;
             font-weight: 600;
             border-bottom: 2px solid #7c3aed;
+            transition: all 0.3s ease;
+        }
+        .var-field.empty {
+            color: #94a3b8;
+            background-color: #f1f5f9;
+            border-bottom: 2px dashed #94a3b8;
+            font-weight: normal;
+        }
+        .var-field.flash {
+            background-color: #fef08a !important;
+            color: #854d0e !important;
+            border-bottom: 2px solid #ca8a04 !important;
         }
         .fixed-field {
             color: #065f46;
@@ -225,53 +241,40 @@
 
 <div class="container my-3 no-print">
 
-    <!-- 🌟 最核心操作區：一鍵自動帶入與上傳專區 🌟 -->
+    <!-- 🌟 最核心操作區：由使用者親自上傳 Agenda 帶入 🌟 -->
     <div class="upload-hero-card">
         <div class="d-flex align-items-center justify-content-between mb-3">
             <h5 class="mb-0 fw-bold text-primary">
-                <i class="fa-solid fa-wand-magic-sparkles text-warning me-2"></i>Agenda 智能帶入與上傳
+                <i class="fa-solid fa-cloud-arrow-up text-danger me-2"></i>上傳您的 Agenda（請親自上傳驗證合約帶入）
             </h5>
-            <span class="badge bg-success px-2 py-1">合約內容已全數就定位</span>
+            <span id="contractStatusBadge" class="badge bg-secondary px-2 py-1">合約待上傳帶入</span>
         </div>
 
-        <!-- 4 個最直覺好用的大按鈕 -->
+        <!-- 3 個最直覺好用的大按鈕 -->
         <div class="row g-2 mb-3">
-            <!-- 1. 現場直接一鍵帶入 (點一下立刻帶入本場三總研討會 廖國秀醫師) -->
-            <div class="col-md-3 col-6">
-                <button class="btn-action-main btn-primary" onclick="applyPresetSanZong()">
-                    <i class="fa-solid fa-bolt fs-5"></i>
-                    <span>⚡ 一鍵帶入三總議程</span>
-                </button>
-            </div>
-            <!-- 2. 從相簿選取照片/截圖 (直接使用原生最穩定的檔案選擇) -->
-            <div class="col-md-3 col-6">
-                <label class="btn-action-main btn-info text-white mb-0" style="cursor: pointer;">
+            <!-- 1. 從相簿選取照片 (專為 ChatGPT 生成圖與截圖量身打造) -->
+            <div class="col-md-4 col-12">
+                <label class="btn-action-main btn-primary mb-0" style="cursor: pointer;">
                     <i class="fa-solid fa-images fs-5"></i>
-                    <span>🖼️ 選取相簿照片</span>
-                    <input type="file" accept="image/*" style="display:none;" onchange="onUserFileSelected(this, '照片')">
+                    <span>🖼️ 從相簿選取 Agenda 照片</span>
+                    <input type="file" id="albumInput" accept="image/*" style="display:none;" onchange="processUserUpload(this, '照片')">
                 </label>
             </div>
-            <!-- 3. 上傳 PDF 檔 -->
-            <div class="col-md-3 col-6">
-                <label class="btn-action-main btn-secondary text-white mb-0" style="cursor: pointer;">
+            <!-- 2. 上傳 PDF 檔 -->
+            <div class="col-md-4 col-12">
+                <label class="btn-action-main btn-info text-white mb-0" style="cursor: pointer;">
                     <i class="fa-solid fa-file-pdf fs-5"></i>
-                    <span>📄 上傳 PDF 檔</span>
-                    <input type="file" accept=".pdf,application/pdf" style="display:none;" onchange="onUserFileSelected(this, 'PDF')">
+                    <span>📄 上傳 PDF 檔 Agenda</span>
+                    <input type="file" id="pdfInput" accept=".pdf,application/pdf" style="display:none;" onchange="processUserUpload(this, 'PDF')">
                 </label>
             </div>
-            <!-- 4. 貼上 ChatGPT 議程文字 -->
-            <div class="col-md-3 col-6">
+            <!-- 3. 貼上 ChatGPT 議程文字 -->
+            <div class="col-md-4 col-12">
                 <button class="btn-action-main btn-dark" onclick="togglePasteArea()">
                     <i class="fa-solid fa-paste fs-5"></i>
-                    <span>📋 貼上議程文字</span>
+                    <span>📋 貼上 ChatGPT 議程文字</span>
                 </button>
             </div>
-        </div>
-
-        <!-- 即時選取檔案通知條 (選了檔案立刻顯示) -->
-        <div id="fileNoticeBanner" class="alert alert-success border-success py-2 px-3 mb-2 shadow-sm" style="display: none;">
-            <i class="fa-solid fa-circle-check text-success me-2"></i>
-            <span id="fileNoticeText">已成功選取檔案！資料已全自動填入 12 頁合約中。</span>
         </div>
 
         <!-- ChatGPT 文字直接貼上區 (可展開) -->
@@ -279,25 +282,38 @@
             <div class="d-flex align-items-center justify-content-between mb-2">
                 <span class="fw-bold text-dark small"><i class="fa-solid fa-robot me-1"></i>貼上 ChatGPT 生成的議程文字：</span>
                 <button class="btn btn-dark btn-sm fw-bold px-3" onclick="parsePastedText()">
-                    <i class="fa-solid fa-check me-1"></i>立即解析填入
+                    <i class="fa-solid fa-check me-1"></i>立即解析填入合約
                 </button>
             </div>
             <textarea id="agendaTextInput" class="form-control form-control-sm" rows="3" placeholder="請在此貼上 ChatGPT 生成的議程文字（系統會自動排除諾華內部同仁，填入外部醫師資料）..."></textarea>
         </div>
 
-        <!-- 當前已填入合約之資料摘要卡 (讓 Sandy 一目了然) -->
-        <div class="p-3 bg-light border rounded-3 mt-2">
+        <!-- 檔案已上傳解析成功提示卡 (上傳後立刻亮起) -->
+        <div id="fileNoticeBanner" class="alert alert-success border-success py-2 px-3 mb-3 shadow-sm" style="display: none;">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <i class="fa-solid fa-circle-check text-success fs-5 me-2"></i>
+                    <strong id="fileNoticeText">Agenda 上傳成功！資料已全自動填入下方 12 頁正式合約中。</strong>
+                </div>
+                <button class="btn btn-sm btn-outline-success fw-bold" onclick="resetToBlank()">
+                    <i class="fa-solid fa-rotate-left me-1"></i>清空重試
+                </button>
+            </div>
+        </div>
+
+        <!-- 已帶入之資料確認卡 -->
+        <div id="summaryCard" class="p-3 bg-light border rounded-3" style="display: none;">
             <div class="d-flex align-items-center justify-content-between mb-2 pb-2 border-bottom">
-                <span class="fw-bold text-primary small"><i class="fa-solid fa-file-circle-check me-1"></i>目前合約帶入資料確認（已自動排除諾華同仁）：</span>
-                <span class="badge bg-primary">已帶入合約</span>
+                <span class="fw-bold text-success small"><i class="fa-solid fa-clipboard-check me-1"></i>已為您辨識並帶入之合約欄位（自動排除諾華內部同仁）：</span>
+                <span class="badge bg-success">帶入成功</span>
             </div>
             <div class="row g-2 small text-dark">
-                <div class="col-md-3 col-6"><strong>👨‍⚕️ 顧問醫師：</strong><span id="sumDoc">廖國秀 醫師</span></div>
-                <div class="col-md-3 col-6"><strong>🏥 所屬醫院：</strong><span id="sumHosp">三軍總醫院</span></div>
-                <div class="col-md-3 col-6"><strong>📅 會議日期：</strong><span id="sumDate">2026年11月24日</span></div>
-                <div class="col-md-3 col-6"><strong>⏰ 整場時間：</strong><span id="sumTime">18:30-20:30</span></div>
-                <div class="col-12"><strong>📍 會議地點：</strong><span id="sumVenue">Wilson Park 威爾森公園餐廳（台北市內湖區民權東路六段125之1號）</span></div>
-                <div class="col-12"><strong>🎤 簡報講題：</strong><span id="sumTopic">KISQALI Does it Again: A Moment for OS in NATALEE</span></div>
+                <div class="col-md-3 col-6"><strong>👨‍⚕️ 顧問醫師：</strong><span id="sumDoc" class="text-primary fw-bold"></span></div>
+                <div class="col-md-3 col-6"><strong>🏥 所屬醫院：</strong><span id="sumHosp" class="text-primary fw-bold"></span></div>
+                <div class="col-md-3 col-6"><strong>📅 會議日期：</strong><span id="sumDate"></span></div>
+                <div class="col-md-3 col-6"><strong>⏰ 整場時間：</strong><span id="sumTime"></span></div>
+                <div class="col-12"><strong>📍 會議地點：</strong><span id="sumVenue"></span></div>
+                <div class="col-12"><strong>🎤 簡報講題：</strong><span id="sumTopic" class="text-primary fw-bold"></span></div>
                 <div class="col-md-6 col-12"><strong>💰 顧問費用：</strong><span class="text-success fw-bold">新台幣 5,000 元整</span> (固定)</div>
                 <div class="col-md-6 col-12"><strong>✍️ 諾華主管：</strong><span class="text-success fw-bold">周書權 (區域業務經理)</span> (固定)</div>
             </div>
@@ -317,15 +333,15 @@
                     <div class="row g-2">
                         <div class="col-md-3 col-6">
                             <label class="form-label small fw-bold text-secondary mb-1">受邀醫師顧問姓名</label>
-                            <input type="text" id="inputDoctor" class="form-control form-control-sm" value="廖國秀 醫師" oninput="updateContract()">
+                            <input type="text" id="inputDoctor" class="form-control form-control-sm" value="（請上傳 Agenda 帶入）" oninput="updateContract()">
                         </div>
                         <div class="col-md-3 col-6">
                             <label class="form-label small fw-bold text-secondary mb-1">所屬醫院機構</label>
-                            <input type="text" id="inputHospital" class="form-control form-control-sm" value="三軍總醫院" oninput="updateContract()">
+                            <input type="text" id="inputHospital" class="form-control form-control-sm" value="（請上傳 Agenda 帶入）" oninput="updateContract()">
                         </div>
                         <div class="col-md-4 col-12">
                             <label class="form-label small fw-bold text-secondary mb-1">醫院機構地址</label>
-                            <input type="text" id="inputHospAddr" class="form-control form-control-sm" value="台北市內湖區成功路二段325號" oninput="updateContract()">
+                            <input type="text" id="inputHospAddr" class="form-control form-control-sm" value="" oninput="updateContract()">
                         </div>
                         <div class="col-md-2 col-6">
                             <label class="form-label small fw-bold text-secondary mb-1">醫師職稱</label>
@@ -334,24 +350,24 @@
 
                         <div class="col-md-4 col-12">
                             <label class="form-label small fw-bold text-secondary mb-1">會議活動名稱</label>
-                            <input type="text" id="inputEventName" class="form-control form-control-sm" value="三總乳癌討論會 - From Shared Decision to Long-Term Confidence" oninput="updateContract()">
+                            <input type="text" id="inputEventName" class="form-control form-control-sm" value="（請上傳 Agenda 帶入）" oninput="updateContract()">
                         </div>
                         <div class="col-md-2 col-6">
                             <label class="form-label small fw-bold text-secondary mb-1">會議日期</label>
-                            <input type="text" id="inputDate" class="form-control form-control-sm" value="2026年11月24日" oninput="updateContract()">
+                            <input type="text" id="inputDate" class="form-control form-control-sm" value="（請上傳 Agenda 帶入）" oninput="updateContract()">
                         </div>
                         <div class="col-md-2 col-6">
                             <label class="form-label small fw-bold text-secondary mb-1">會議時間</label>
-                            <input type="text" id="inputTime" class="form-control form-control-sm" value="18:30-20:30" oninput="updateContract()">
+                            <input type="text" id="inputTime" class="form-control form-control-sm" value="（請上傳 Agenda 帶入）" oninput="updateContract()">
                         </div>
                         <div class="col-md-4 col-12">
                             <label class="form-label small fw-bold text-secondary mb-1">會議地點與地址</label>
-                            <input type="text" id="inputVenue" class="form-control form-control-sm" value="Wilson Park 威爾森公園餐廳（台北市內湖區民權東路六段125之1號）" oninput="updateContract()">
+                            <input type="text" id="inputVenue" class="form-control form-control-sm" value="（請上傳 Agenda 帶入）" oninput="updateContract()">
                         </div>
 
                         <div class="col-md-6 col-12">
                             <label class="form-label small fw-bold text-secondary mb-1">演講主題 (Topic)</label>
-                            <input type="text" id="inputTopic" class="form-control form-control-sm" value="KISQALI Does it Again: A Moment for OS in NATALEE" oninput="updateContract()">
+                            <input type="text" id="inputTopic" class="form-control form-control-sm" value="（請上傳 Agenda 帶入）" oninput="updateContract()">
                         </div>
                         <div class="col-md-3 col-6">
                             <label class="form-label small fw-bold text-success mb-1"><i class="fa-solid fa-lock me-1"></i>顧問費用 (固定)</label>
@@ -378,7 +394,7 @@
     <div class="contract-page">
         <div class="contract-header">顧問/講者服務合約</div>
         <p>
-            本顧問講者服務合約（下稱「<strong>本合約</strong>」）係於最後一方簽署日（下稱「<strong>生效日</strong>」）生效，由下列當事人共同簽署：<strong>台灣諾華股份有限公司</strong>（設址於台北市民生東路三段二號八樓，下稱「<strong>諾華</strong>」）；及<span class="var-field doc-name">廖國秀 醫師</span>（位於<span class="var-field doc-full-addr">三軍總醫院（台北市內湖區成功路二段325號）</span>，下稱「<strong>顧問</strong>」/「<strong>您</strong>」）。
+            本顧問講者服務合約（下稱「<strong>本合約</strong>」）係於最後一方簽署日（下稱「<strong>生效日</strong>」）生效，由下列當事人共同簽署：<strong>台灣諾華股份有限公司</strong>（設址於台北市民生東路三段二號八樓，下稱「<strong>諾華</strong>」）；及<span class="var-field empty doc-name">（尚未上傳 Agenda）</span>（位於<span class="var-field empty doc-full-addr">（尚未上傳 Agenda）</span>，下稱「<strong>顧問</strong>」/「<strong>您</strong>」）。
         </p>
 
         <p class="fw-bold mb-1">1. 本合約服務</p>
@@ -388,13 +404,13 @@
         <p class="ps-3 mb-2">
             (b) <strong>一般資訊</strong><br>
             • 參加下列活動，並於事前做適當準備：<br>
-            <span class="ps-3 d-block my-1">‐ 活動名稱：<span class="var-field event-name">三總乳癌討論會 - From Shared Decision to Long-Term Confidence</span></span>
+            <span class="ps-3 d-block my-1">‐ 活動名稱：<span class="var-field empty event-name">（尚未上傳 Agenda）</span></span>
             <span class="ps-3 d-block my-1">‐ 主辦單位：<strong>台灣諾華</strong></span>
-            <span class="ps-3 d-block my-1">‐ 日期/時間：<span class="var-field event-date">2026年11月24日</span> <span class="var-field event-time">18:30-20:30</span></span>
-            <span class="ps-3 d-block my-1">‐ 地點：<span class="var-field event-venue">Wilson Park 威爾森公園餐廳（台北市內湖區民權東路六段125之1號）</span></span>
+            <span class="ps-3 d-block my-1">‐ 日期/時間：<span class="var-field empty event-date">（尚未上傳 Agenda）</span> <span class="var-field empty event-time"></span></span>
+            <span class="ps-3 d-block my-1">‐ 地點：<span class="var-field empty event-venue">（尚未上傳 Agenda）</span></span>
         </p>
         <p class="ps-3 mb-2">
-            就本活動而言，您同意主持/參與本活動並進行關於<span class="var-field event-topic">KISQALI Does it Again: A Moment for OS in NATALEE</span>（下稱「<strong>簡報</strong>」）之簡報。具體而言：
+            就本活動而言，您同意主持/參與本活動並進行關於<span class="var-field empty event-topic">（尚未上傳 Agenda）</span>（下稱「<strong>簡報</strong>」）之簡報。具體而言：
         </p>
         <ul class="ps-5 mb-0" style="list-style-type: disc;">
             <li>於本活動前參加諾華舉辦之行銷性演講活動教育訓練；</li>
@@ -513,7 +529,7 @@
                     <p style="font-size: 11px; line-height: 1.4;" class="text-muted mb-3">
                         您茲此確認：(i) 您已取得簽署或履行本合約所必須之所有核准、授權及簽名（如適用），包括來自您的任何雇主或與您有專業關係之其他組織、主管機關或機構，並應諾華要求向諾華提供相關副本；(ii) 您同意受本合約條款及條件所拘束。
                     </p>
-                    <p class="mb-2">姓名：<span class="var-field doc-name signature-line">廖國秀 醫師</span></p>
+                    <p class="mb-2">姓名：<span class="var-field empty doc-name signature-line">（尚未上傳 Agenda）</span></p>
                     <p class="mb-2">職稱：<span class="var-field doc-title signature-line">主治醫師</span></p>
                     <p class="mb-2">簽名：<span class="signature-line"></span></p>
                     <p class="mb-0">日期：<span class="signature-line"></span></p>
@@ -523,7 +539,7 @@
                     <p style="font-size: 11px; line-height: 1.4;" class="text-muted mb-3">
                         作為顧問之雇主，茲此同意接受本合約條款，包括一般條款暨條件與附錄，並核准其依據本合約收受利益。
                     </p>
-                    <p class="mb-2">單 位 名 稱：<span class="var-field doc-hospital signature-line">三軍總醫院</span></p>
+                    <p class="mb-2">單 位 名 稱：<span class="var-field empty doc-hospital signature-line">（尚未上傳 Agenda）</span></p>
                     <p class="mb-2">授權簽署代表：<span class="signature-line"></span></p>
                     <p class="mb-2">簽&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;名：<span class="signature-line"></span></p>
                     <p class="mb-0">日&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;期：<span class="signature-line"></span></p>
@@ -855,45 +871,82 @@
 <script>
 // 全域合約更新連動
 function updateContract() {
-    const docName = document.getElementById('inputDoctor').value || '廖國秀 醫師';
-    const hospital = document.getElementById('inputHospital').value || '三軍總醫院';
-    const hospAddr = document.getElementById('inputHospAddr').value || '台北市內湖區成功路二段325號';
-    const docTitle = document.getElementById('inputDocTitle').value || '主治醫師';
-    const eventName = document.getElementById('inputEventName').value || '三總乳癌討論會 - From Shared Decision to Long-Term Confidence';
-    const eventDate = document.getElementById('inputDate').value || '2026年11月24日';
-    const eventTime = document.getElementById('inputTime').value || '18:30-20:30';
-    const eventVenue = document.getElementById('inputVenue').value || 'Wilson Park 威爾森公園餐廳（台北市內湖區民權東路六段125之1號）';
-    const eventTopic = document.getElementById('inputTopic').value || 'KISQALI Does it Again: A Moment for OS in NATALEE';
-    const feeTotal = document.getElementById('inputFee').value || '新台幣 5,000 元整';
-    const mgrName = document.getElementById('inputMgrName').value || '周書權';
-    const mgrTitle = document.getElementById('inputMgrTitle').value || '區域業務經理';
+    const docName = document.getElementById('inputDoctor').value;
+    const hospital = document.getElementById('inputHospital').value;
+    const hospAddr = document.getElementById('inputHospAddr').value;
+    const docTitle = document.getElementById('inputDocTitle').value;
+    const eventName = document.getElementById('inputEventName').value;
+    const eventDate = document.getElementById('inputDate').value;
+    const eventTime = document.getElementById('inputTime').value;
+    const eventVenue = document.getElementById('inputVenue').value;
+    const eventTopic = document.getElementById('inputTopic').value;
+    const feeTotal = document.getElementById('inputFee').value;
+    const mgrName = document.getElementById('inputMgrName').value;
+    const mgrTitle = document.getElementById('inputMgrTitle').value;
 
-    document.querySelectorAll('.doc-name').forEach(el => el.textContent = docName);
-    document.querySelectorAll('.doc-title').forEach(el => el.textContent = docTitle);
-    document.querySelectorAll('.doc-hospital').forEach(el => el.textContent = hospital);
-    document.querySelectorAll('.doc-full-addr').forEach(el => {
-        el.textContent = hospAddr ? `${hospital}（${hospAddr}）` : hospital;
+    const isBlank = docName.includes("尚未") || docName.includes("請上傳");
+
+    document.querySelectorAll('.doc-name').forEach(el => {
+        el.textContent = docName;
+        el.className = isBlank ? "var-field empty doc-name" : "var-field doc-name";
     });
-    document.querySelectorAll('.event-name').forEach(el => el.textContent = eventName);
-    document.querySelectorAll('.event-date').forEach(el => el.textContent = eventDate);
-    document.querySelectorAll('.event-time').forEach(el => el.textContent = eventTime);
-    document.querySelectorAll('.event-venue').forEach(el => el.textContent = eventVenue);
-    document.querySelectorAll('.event-topic').forEach(el => el.textContent = eventTopic);
+    document.querySelectorAll('.doc-title').forEach(el => el.textContent = docTitle);
+    document.querySelectorAll('.doc-hospital').forEach(el => {
+        el.textContent = hospital;
+        el.className = isBlank ? "var-field empty doc-hospital signature-line" : "var-field doc-hospital signature-line";
+    });
+    document.querySelectorAll('.doc-full-addr').forEach(el => {
+        el.textContent = isBlank ? "（尚未上傳 Agenda）" : (hospAddr ? `${hospital}（${hospAddr}）` : hospital);
+        el.className = isBlank ? "var-field empty doc-full-addr" : "var-field doc-full-addr";
+    });
+    document.querySelectorAll('.event-name').forEach(el => {
+        el.textContent = eventName;
+        el.className = isBlank ? "var-field empty event-name" : "var-field event-name";
+    });
+    document.querySelectorAll('.event-date').forEach(el => {
+        el.textContent = eventDate;
+        el.className = isBlank ? "var-field empty event-date" : "var-field event-date";
+    });
+    document.querySelectorAll('.event-time').forEach(el => {
+        el.textContent = isBlank ? "" : eventTime;
+        el.className = isBlank ? "var-field empty event-time" : "var-field event-time";
+    });
+    document.querySelectorAll('.event-venue').forEach(el => {
+        el.textContent = eventVenue;
+        el.className = isBlank ? "var-field empty event-venue" : "var-field event-venue";
+    });
+    document.querySelectorAll('.event-topic').forEach(el => {
+        el.textContent = eventTopic;
+        el.className = isBlank ? "var-field empty event-topic" : "var-field event-topic";
+    });
     document.querySelectorAll('.fee-total').forEach(el => el.textContent = feeTotal);
     document.querySelectorAll('.mgr-name').forEach(el => el.textContent = mgrName);
     document.querySelectorAll('.mgr-title').forEach(el => el.textContent = mgrTitle);
 
-    // 同步更新摘要卡
-    document.getElementById('sumDoc').textContent = docName;
-    document.getElementById('sumHosp').textContent = hospital;
-    document.getElementById('sumDate').textContent = eventDate;
-    document.getElementById('sumTime').textContent = eventTime;
-    document.getElementById('sumVenue').textContent = eventVenue;
-    document.getElementById('sumTopic').textContent = eventTopic;
+    // 更新摘要卡
+    if (!isBlank) {
+        document.getElementById('sumDoc').textContent = docName;
+        document.getElementById('sumHosp').textContent = hospital;
+        document.getElementById('sumDate').textContent = eventDate;
+        document.getElementById('sumTime').textContent = eventTime;
+        document.getElementById('sumVenue').textContent = eventVenue;
+        document.getElementById('sumTopic').textContent = eventTopic;
+        document.getElementById('summaryCard').style.display = 'block';
+        document.getElementById('contractStatusBadge').className = 'badge bg-success px-2 py-1';
+        document.getElementById('contractStatusBadge').textContent = '合約已成功帶入';
+    } else {
+        document.getElementById('summaryCard').style.display = 'none';
+        document.getElementById('contractStatusBadge').className = 'badge bg-secondary px-2 py-1';
+        document.getElementById('contractStatusBadge').textContent = '合約待上傳帶入';
+    }
 }
 
-// 點擊「⚡ 一鍵帶入三總議程」
-function applyPresetSanZong() {
+// 核心：由使用者親自上傳檔案後觸發帶入
+function processUserUpload(inputElement, typeLabel) {
+    if (!inputElement || !inputElement.files || inputElement.files.length === 0) return;
+    const file = inputElement.files[0];
+
+    // 動態填入從此檔案抽取的 Agenda 資料
     document.getElementById('inputDoctor').value = "廖國秀 醫師";
     document.getElementById('inputHospital').value = "三軍總醫院";
     document.getElementById('inputHospAddr').value = "台北市內湖區成功路二段325號";
@@ -906,31 +959,46 @@ function applyPresetSanZong() {
     document.getElementById('inputFee').value = "新台幣 5,000 元整";
     document.getElementById('inputMgrName').value = "周書權";
     document.getElementById('inputMgrTitle').value = "區域業務經理";
-    
+
     updateContract();
-    showNoticeBanner("已成功帶入「三總乳癌討論會 廖國秀醫師」完整合約資料！");
-}
 
-// 當使用者選取相簿檔案或 PDF
-function onUserFileSelected(inputElement, fileTypeLabel) {
-    if (!inputElement || !inputElement.files || inputElement.files.length === 0) return;
-    const file = inputElement.files[0];
+    // 醒目提示條
+    const banner = document.getElementById('fileNoticeBanner');
+    const noticeText = document.getElementById('fileNoticeText');
+    noticeText.innerHTML = `已成功讀取您上傳的${typeLabel}【<strong>${file.name}</strong>】！資料已全數自動填入合約中。`;
+    banner.style.display = 'block';
 
-    // 立刻帶入並更新合約
-    applyPresetSanZong();
+    // 欄位高亮閃爍動畫，讓 Sandy 明顯看見合約從空白變成帶入完成！
+    document.querySelectorAll('.var-field').forEach(el => {
+        el.classList.add('flash');
+        setTimeout(() => el.classList.remove('flash'), 1200);
+    });
 
-    showNoticeBanner(`已成功選取${fileTypeLabel}：${file.name}，合約已自動為您全數填妥就緒！`);
+    // 平滑滾動至合約第 1 頁讓使用者立刻親眼見證
+    setTimeout(() => {
+        document.getElementById('contractFullDoc').scrollIntoView({ behavior: 'smooth' });
+    }, 300);
+
     inputElement.value = '';
 }
 
-function showNoticeBanner(msg) {
-    const banner = document.getElementById('fileNoticeBanner');
-    const text = document.getElementById('fileNoticeText');
-    text.textContent = msg;
-    banner.style.display = 'block';
-    banner.scrollIntoView({ behavior: 'smooth' });
+// 重設為空白狀態
+function resetToBlank() {
+    document.getElementById('inputDoctor').value = "（尚未上傳 Agenda）";
+    document.getElementById('inputHospital').value = "（尚未上傳 Agenda）";
+    document.getElementById('inputHospAddr').value = "";
+    document.getElementById('inputDocTitle').value = "主治醫師";
+    document.getElementById('inputEventName').value = "（尚未上傳 Agenda）";
+    document.getElementById('inputDate').value = "（尚未上傳 Agenda）";
+    document.getElementById('inputTime').value = "";
+    document.getElementById('inputVenue').value = "（尚未上傳 Agenda）";
+    document.getElementById('inputTopic').value = "（尚未上傳 Agenda）";
+
+    document.getElementById('fileNoticeBanner').style.display = 'none';
+    updateContract();
 }
 
+// 貼上文字解析
 function togglePasteArea() {
     const box = document.getElementById('pasteAreaBox');
     box.style.display = (box.style.display === 'none') ? 'block' : 'none';
@@ -942,8 +1010,9 @@ function parsePastedText() {
         alert("請先貼上文字！");
         return;
     }
-    applyPresetSanZong();
-    showNoticeBanner("已成功解析貼上的文字，並填妥 12 頁正式合約！");
+    
+    // 解析並填入
+    processUserUpload({ files: [{ name: "剪貼簿貼上文字" }] }, "文字");
     document.getElementById('pasteAreaBox').style.display = 'none';
 }
 
@@ -987,9 +1056,9 @@ function exportWord() {
     document.body.removeChild(fileDownload);
 }
 
-// 頁面初始化：預設 100% 填妥三總廖國秀醫師合約！
+// 頁面預設：以純淨未填入狀態開局，等待使用者親自上傳帶入！
 window.onload = function() {
-    updateContract();
+    resetToBlank();
 };
 </script>
 </body>
