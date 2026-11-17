@@ -299,18 +299,19 @@
         </div>
 
         <!-- 3 個最直覺好用的大按鈕 -->
-        <!-- 原生檔案上傳區 (專為 iPhone Safari 原生設計，純原生按鍵，絕不吞點擊、100% 穩定秒開相簿與相機) -->
-        <div class="row g-3 mb-3">
+        <!-- 原生檔案上傳區 (專為 iPhone Safari 設計，提供清楚的步驟一與步驟二實體按鍵) -->
+        <div class="row g-3 mb-2">
             <!-- 1. 從相簿選取照片或拍照 (iPhone Safari 原生按鍵) -->
             <div class="col-md-6 col-12">
                 <div class="card p-3 border-2 border-primary bg-white shadow-sm h-100">
                     <label for="albumInput" class="form-label fw-bold text-primary fs-5 mb-1 d-block">
-                        <i class="fa-solid fa-camera me-2"></i>【點此選取或拍攝 Agenda 照片】
+                        <i class="fa-solid fa-camera me-2"></i>【步驟 1：選取或拍攝照片】
                     </label>
                     <div class="text-secondary small mb-2">
-                        點擊下方原生「選擇檔案」按鈕，立即開啟 iPhone 相簿或相機：
+                        點擊下方原生「選擇檔案」按鈕，挑選 Agenda 照片：
                     </div>
-                    <input type="file" id="albumInput" accept="image/*" class="form-control form-control-lg border-2 border-primary py-2" style="font-size: 1.05rem; cursor: pointer;" onchange="processUserUpload(this, '照片')">
+                    <input type="file" id="albumInput" accept="image/*" class="form-control form-control-lg border-2 border-primary py-2" style="font-size: 1.05rem; cursor: pointer;" onchange="handleFileChosen(this, '照片')">
+                    <div id="albumChosenNotice" class="text-success fw-bold small mt-2" style="display: none;"></div>
                 </div>
             </div>
 
@@ -318,14 +319,25 @@
             <div class="col-md-6 col-12">
                 <div class="card p-3 border-2 border-info bg-white shadow-sm h-100">
                     <label for="pdfInput" class="form-label fw-bold text-dark fs-5 mb-1 d-block">
-                        <i class="fa-solid fa-file-pdf me-2 text-danger"></i>【點此上傳 PDF 格式 Agenda】
+                        <i class="fa-solid fa-file-pdf me-2 text-danger"></i>【步驟 1：或上傳 PDF 檔案】
                     </label>
                     <div class="text-secondary small mb-2">
-                        若議程為 PDF，點擊下方原生「選擇檔案」按鈕選取檔案：
+                        若議程為 PDF，點擊下方「選擇檔案」選取檔案：
                     </div>
-                    <input type="file" id="pdfInput" accept=".pdf,application/pdf" class="form-control form-control-lg border-2 border-info py-2" style="font-size: 1.05rem; cursor: pointer;" onchange="processUserUpload(this, 'PDF')">
+                    <input type="file" id="pdfInput" accept=".pdf,application/pdf" class="form-control form-control-lg border-2 border-info py-2" style="font-size: 1.05rem; cursor: pointer;" onchange="handleFileChosen(this, 'PDF')">
+                    <div id="pdfChosenNotice" class="text-info fw-bold small mt-2" style="display: none;"></div>
                 </div>
             </div>
+        </div>
+
+        <!-- 步驟 2：超大實體開始按鈕 (點擊此處立即觸發 AI 辨識！) -->
+        <div class="card p-3 bg-white border-2 border-success shadow mb-3 text-center">
+            <button id="btnStartAI" type="button" class="btn btn-success btn-lg w-100 py-3 fw-bold fs-5 shadow-sm" onclick="triggerManualAnalysis()">
+                <i class="fa-solid fa-wand-magic-sparkles me-2 text-warning"></i>【步驟 2：點此立即開始 AI 深度辨識並帶入合約】
+            </button>
+            <small class="text-muted mt-2 d-block">
+                選好上方照片或 PDF 後，<strong>請按此按鈕</strong>，Gemini 3.1 視覺 AI 將立即開始深度辨識並帶入 12 頁合約！
+            </small>
         </div>
 
         <!-- 3. ChatGPT 文字貼上區塊 -->
@@ -341,7 +353,7 @@
             <textarea id="agendaTextInput" class="form-control" rows="3" placeholder="請在此貼上議程文字（系統將自動排除 Sandy Huang 諾華同仁，精準帶入外部醫師顧問）..."></textarea>
         </div>
 
-        <div id="fileNoticeBanner" class="alert alert-success border-success py-2 px-3 mb-3 shadow-sm" style="display: none;">
+        <div id="fileNoticeBanner"  class="alert alert-success border-success py-2 px-3 mb-3 shadow-sm" style="display: none;">
             <div class="d-flex align-items-center justify-content-between">
                 <div>
                     <i class="fa-solid fa-circle-check text-success fs-5 me-2"></i>
@@ -1009,6 +1021,61 @@ function updateContract() {
 // ==================== 🤖 Google Gemini 1.5 視覺 AI 多位醫師真辨識整合 ====================
 
 let currentEventData = null;
+let currentSelectedFile = null;
+let currentSelectedType = '照片';
+
+function handleFileChosen(inputElement, typeLabel) {
+    if (!inputElement || !inputElement.files || inputElement.files.length === 0) return;
+    const file = inputElement.files[0];
+    currentSelectedFile = file;
+    currentSelectedType = typeLabel;
+
+    const noticeId = (typeLabel === '照片') ? 'albumChosenNotice' : 'pdfChosenNotice';
+    const noticeEl = document.getElementById(noticeId);
+    if (noticeEl) {
+        noticeEl.innerHTML = `<i class="fa-solid fa-circle-check text-success me-1"></i>已成功選取【${file.name}】（${(file.size / 1024).toFixed(1)} KB）！請按下方【步驟 2】開始辨識！`;
+        noticeEl.style.display = 'block';
+    }
+
+    const btn = document.getElementById('btnStartAI');
+    if (btn) {
+        btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles me-2 text-warning"></i>【步驟 2：立即開始辨識 ${file.name}】`;
+    }
+
+    // 自動啟動辨識
+    processUserUpload(file, typeLabel);
+}
+
+function triggerManualAnalysis() {
+    let fileToProcess = currentSelectedFile;
+    let typeToProcess = currentSelectedType;
+
+    if (!fileToProcess) {
+        const albumEl = document.getElementById('albumInput');
+        const pdfEl = document.getElementById('pdfInput');
+        if (albumEl && albumEl.files && albumEl.files.length > 0) {
+            fileToProcess = albumEl.files[0];
+            typeToProcess = '照片';
+        } else if (pdfEl && pdfEl.files && pdfEl.files.length > 0) {
+            fileToProcess = pdfEl.files[0];
+            typeToProcess = 'PDF';
+        }
+    }
+
+    if (fileToProcess) {
+        processUserUpload(fileToProcess, typeToProcess);
+        return;
+    }
+
+    const textEl = document.getElementById('agendaTextInput');
+    if (textEl && textEl.value.trim().length > 10) {
+        parsePastedText();
+        return;
+    }
+
+    alert("請先點選上方的「選擇檔案」挑選一張 Agenda 照片或 PDF 檔喔！");
+}
+
 let currentDoctorIndex = 0;
 
 // 取得與更新本機 API Key
@@ -1156,17 +1223,31 @@ function readFileAsBase64(file) {
 }
 
 // 核心：上傳照片或 PDF 後，交由 Gemini 1.5 視覺 AI 深度解析全場多位醫師 (Speakers 與 Moderators)！
-async function processUserUpload(inputElement, typeLabel) {
-    if (!inputElement || !inputElement.files || inputElement.files.length === 0) return;
-    const file = inputElement.files[0];
+async function processUserUpload(source, typeLabel) {
+    let file = null;
+    if (source instanceof File) {
+        file = source;
+    } else if (source && source.files && source.files.length > 0) {
+        file = source.files[0];
+    }
+    if (!file) return;
 
-    // 第一時間顯示載入動畫，確保使用者手機立即可見系統正在全力運作
+    currentSelectedFile = file;
+    currentSelectedType = typeLabel;
+
+    // 按鈕切換為正在運作中動畫
+    const btn = document.getElementById('btnStartAI');
+    if (btn) {
+        btn.disabled = true;
+        btn.className = 'btn btn-warning btn-lg w-100 py-3 fw-bold fs-5 shadow-sm text-dark';
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status"></span>Gemini 3.1 視覺 AI 深度解析中（約需 3~5 秒），請稍候...`;
+    }
+
     const aiBox = document.getElementById('aiAnalyzingBox');
     const aiDetail = document.getElementById('aiStatusDetail');
     if (aiBox) {
         aiBox.style.display = 'block';
-        aiDetail.innerHTML = `<i class="fa-solid fa-spinner fa-spin me-2 text-warning"></i>已接收到【<strong>${file.name}</strong>】，正在交由 Gemini 3.1 視覺 AI 深度分析中...`;
-        aiBox.scrollIntoView({ behavior: 'smooth' });
+        aiDetail.innerHTML = `<i class="fa-solid fa-spinner fa-spin me-2 text-warning"></i>已接收到 <strong>${file.name}</strong>（${(file.size / 1024).toFixed(1)} KB），正在交由 Gemini 3.1 視覺 AI 深度分析...`;
     }
 
     const apiKey = getStoredApiKey();
@@ -1278,13 +1359,25 @@ async function processUserUpload(inputElement, typeLabel) {
 
     } catch (err) {
         console.error("Gemini Vision Error:", err);
-        alert(`【AI 辨識發生問題】
+        alert(`【AI 辨識提醒】
 ${err.message}
 
-系統已為您記錄錯誤，請再次點擊或更換照片試試！`);
+請確認網路連線或重新點擊【步驟 2】重試！`);
+        const btn = document.getElementById('btnStartAI');
+        if (btn) {
+            btn.disabled = false;
+            btn.className = 'btn btn-success btn-lg w-100 py-3 fw-bold fs-5 shadow-sm';
+            btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles me-2 text-warning"></i>【步驟 2：點此重試 AI 深度辨識】`;
+        }
     } finally {
+        const aiBox = document.getElementById('aiAnalyzingBox');
         if (aiBox) aiBox.style.display = 'none';
-        inputElement.value = '';
+        const btn = document.getElementById('btnStartAI');
+        if (btn && !btn.innerHTML.includes('重試')) {
+            btn.disabled = false;
+            btn.className = 'btn btn-outline-success btn-lg w-100 py-3 fw-bold fs-5 shadow-sm';
+            btn.innerHTML = `<i class="fa-solid fa-circle-check me-2"></i>【AI 辨識成功！合約已生成，若需重新解析請再點此】`;
+        }
     }
 }
 
