@@ -2544,8 +2544,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             if (!apiKey) {
                 document.getElementById('apiKeyConfigBox').style.display = 'block';
                 document.getElementById('apiKeyConfigBox').scrollIntoView({ behavior: 'smooth' });
-                alert("【請先設定 Gemini API Key】
-為確保病理報告是透過真實視覺 AI 深度判讀，請先在黃色區塊貼上您的 Google Gemini API Key（免費取得）！");
+                alert("【請先設定 Gemini API Key】\n為確保病理報告是透過真實視覺 AI 深度判讀，請先在黃色區塊貼上您的 Google Gemini API Key（免費取得）！");
                 event.target.value = '';
                 return;
             }
@@ -2702,8 +2701,7 @@ ${err.message}
             if (!apiKey) {
                 document.getElementById('apiKeyConfigBox').style.display = 'block';
                 document.getElementById('apiKeyConfigBox').scrollIntoView({ behavior: 'smooth' });
-                alert("【請先設定 Gemini API Key】
-請先貼上您的 Google Gemini API Key 以啟用病理文字語意分析！");
+                alert("【請先設定 Gemini API Key】\n請先貼上您的 Google Gemini API Key 以啟用病理文字語意分析！");
                 return;
             }
 
@@ -2779,8 +2777,7 @@ ${raw}`;
                 new bootstrap.Collapse(collapseEl, { show: true });
 
                 recalculateFromInputs();
-                alert("✨ Gemini AI 英文病理報告分析完成！
-" + (data.evidence_notes || "已自動帶入各項數值並試算。"));
+                alert("✨ Gemini AI 英文病理報告分析完成！\n" + (data.evidence_notes || "已自動帶入各項數值並試算。"));
 
             } catch (err) {
                 alert("文字辨識失敗：" + err.message);
