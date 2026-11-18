@@ -344,11 +344,11 @@ dd {
         <h5 class="mb-0 fw-bold text-primary">
           <i class="fa-solid fa-cloud-arrow-up text-danger me-2"></i>上傳 Agenda 智慧帶入 BeSure 申請
         </h5>
-        <small class="text-muted">由 Google Gemini 視覺 AI 即時辨識，自動排除 Sandy Huang 諾華同仁</small>
+        <small class="text-muted">由 Google Gemini 視覺 AI 即時辨識，自動排除所有諾華同仁（標註台灣諾華/Novartis）</small>
       </div>
       <div class="d-flex align-items-center gap-2">
         <span class="badge bg-success-subtle text-success border border-success px-2 py-1">
-          <i class="fa-solid fa-sparkles me-1"></i>視覺 AI 已連線
+          <i class="fa-solid fa-shield-halved me-1"></i>智慧防當機雙核 AI 已連線
         </span>
         <span id="aiStatusBadge" class="badge bg-secondary px-2 py-1">待上傳帶入</span>
       </div>
@@ -398,7 +398,7 @@ dd {
           <div class="fw-bold text-primary fs-6">
             <i class="fa-solid fa-wand-magic-sparkles me-1 text-warning"></i>視覺 AI 正在深度辨識您的 Agenda 照片...
           </div>
-          <div class="small text-muted">自動提取研討會主題、醫師姓名、時間地點，並自動排除 Sandy 諾華同仁...</div>
+          <div class="small text-muted" id="aiStatusDetail">自動最佳化中，自動提取會議主題、受邀外部醫師、時間地點，並自動排除諾華內部同仁...</div>
         </div>
       </div>
     </div>
@@ -489,7 +489,7 @@ dd {
           <strong>2. Need & Objectives (活動目的)</strong>
           <span class="tag tag-blue">Step 4 (最重要)</span>
         </div>
-        <div class="copy-card-body" id="launchNeed">針對 HR+/HER2- 早期乳癌中高復發風險病患，交流 NATALEE 試驗最新整體存活期 (OS) 實證數據。探討臨床治療篩選準則，並討論病友支持計畫 (PSP) 執行，提升病患長期用藥順從性與照護信心。</div>
+        <div class="copy-card-body" id="launchNeed">針對 HR+/HER2- 早期乳癌中高復發風險病患，與三軍總醫院醫療團隊深入交流 NATALEE 試驗最新整體存活期 (OS) 實證數據。探討臨床治療篩選準則，並討論病友支持計畫 (PSP) 之推動與執行優化，協助院端強化病患長期治療之順從性與照護信心。</div>
         <button type="button" class="btn-launchpad-copy" style="background: #0284c7;" data-target="launchNeed">
           <i class="fa-solid fa-copy"></i> 複製活動目的 (合規黃金文字)
         </button>
@@ -501,7 +501,7 @@ dd {
           <strong>3. Rationale for Selection (專家理由)</strong>
           <span class="tag">Step 2 FMV</span>
         </div>
-        <div class="copy-card-body" id="launchDocRationale">受邀專家具備乳房外科豐富實證診療經驗，專長與本次研討會主題高度契合。特別邀請擔任演講講者，針對最新臨床試驗數據與臨床照護經驗進行專業學術分享與交流。</div>
+        <div class="copy-card-body" id="launchDocRationale">受邀專家廖國秀醫師具備三軍總醫院乳房外科豐富實證診療經驗，其專業領域與本次研討會主題「KISQALI Does it Again: A Moment for OS in NATALEE」高度契合。特別邀請擔任演講講者，針對最新臨床試驗數據（NATALEE OS）與臨床照護經驗進行專業學術分享與交流。</div>
         <button type="button" class="btn-launchpad-copy" data-target="launchDocRationale">
           <i class="fa-solid fa-copy"></i> 複製專家遴選理由
         </button>
@@ -537,7 +537,7 @@ dd {
           <strong>6. Describe Audience (與會受眾)</strong>
           <span class="tag">Step 8</span>
         </div>
-        <div class="copy-card-body" id="launchAudience">預計邀請乳房外科與血液腫瘤科醫療團隊醫師，針對 HR+/HER2- 早期乳癌之最新整體存活期（OS）臨床實證、高復發風險病患篩選準則及病友支持照護進行深入臨床交流。</div>
+        <div class="copy-card-body" id="launchAudience">預計邀請三軍總醫院及相關乳癌多專科醫療團隊醫師參與，旨在針對 HR+/HER2- 早期乳癌之最新整體存活期（OS）臨床實證、高復發風險病患篩選準則，以及病友支持照護計畫（PSP）進行深入之跨科別臨床經驗交流。</div>
         <button type="button" class="btn-launchpad-copy" data-target="launchAudience">
           <i class="fa-solid fa-copy"></i> 複製與會受眾描述
         </button>
@@ -687,7 +687,7 @@ dd {
               <dd>點選：<span class="choice-pill">Yes</span></dd>
 
               <dt>Upload agenda (上傳議程檔案)</dt>
-              <dd>按 UPLOAD 上傳剛才這份海報圖檔或 PDF（Sandy 妳負責點選上傳）。</dd>
+              <dd>按 UPLOAD 上傳剛才這份海報圖檔或 PDF（由主辦同仁點選上傳議程附件）。</dd>
 
               <dt>How many External experts will be engaged?</dt>
               <dd>整場聘請講者人數填入半形純數字：<span class="choice-pill">1</span></dd>
@@ -971,26 +971,58 @@ function handleFileChosen(input, typeLabel) {
   }
 }
 
-function readFileAsBase64(file) {
+// 瀏覽器端影像最佳化壓縮 (解決 iPhone 原始大照片導致 503 / 逾時問題)
+function compressImageBeforeUpload(file) {
   return new Promise((resolve, reject) => {
+    if (file.type === 'application/pdf') {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = reader.result.split(',')[1];
+        resolve({ base64, mimeType: 'application/pdf' });
+      };
+      reader.onerror = () => reject(new Error('PDF 讀取失敗'));
+      reader.readAsDataURL(file);
+      return;
+    }
+
     const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const result = reader.result;
-        const base64 = result.split(',')[1];
-        let mime = file.type || 'image/jpeg';
-        if (!mime || mime.includes('heic') || mime.includes('heif')) {
-          mime = 'image/jpeg';
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const maxDim = 1200; // 壓縮至 1200px 寬高
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
         }
-        resolve({ base64, mimeType: mime });
-      } catch (e) { reject(e); }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+        const base64 = dataUrl.split(',')[1];
+        resolve({ base64, mimeType: 'image/jpeg' });
+      };
+      img.onerror = () => {
+        // 圖片物件失敗時回退直讀
+        const base64 = e.target.result.split(',')[1];
+        resolve({ base64, mimeType: file.type || 'image/jpeg' });
+      };
+      img.src = e.target.result;
     };
-    reader.onerror = () => reject(new Error("讀取檔案失敗"));
+    reader.onerror = () => reject(new Error('檔案讀取失敗'));
     reader.readAsDataURL(file);
   });
 }
 
-// 觸發 AI 深度辨識
+// 觸發 AI 深度辨識 (雙核自動容錯 Fallback 機制，徹底避免 503)
 async function triggerManualAnalysis() {
   let file = currentSelectedFile;
   if (!file) {
@@ -1008,48 +1040,85 @@ async function triggerManualAnalysis() {
   const btn = document.getElementById('btnStartAI');
   const aiBox = document.getElementById('aiAnalyzingBox');
   const summaryCard = document.getElementById('summaryCard');
+  const detailEl = document.getElementById('aiStatusDetail');
 
   btn.innerHTML = `⏳ 正在深度辨識 ${file.name} 中，請稍候 3~5 秒...`;
   btn.style.backgroundColor = '#d97706';
   aiBox.style.display = 'block';
   summaryCard.style.display = 'none';
+  if (detailEl) detailEl.textContent = "正在自動最佳化影像並透過雙核 AI 分析會議資訊...";
 
-  const promptText = `你是一位台灣諾華（Novartis）的資深法規合規專家。請仔細辨識這份會議議程（Agenda）檔案。
-請提取並以標準 JSON 回傳以下欄位（不要包含任何 markdown 或解說，純 JSON）：
+  const promptText = `你是一位台灣諾華（Novartis）的資深法規合規與醫藥學術審查專家。請仔細辨識這份醫學研討會會議議程（Agenda）檔案。
+【重要排除規則 - 務必遵守】：
+1. 嚴格排除諾華內部同仁：議程中經常列有主辦單位、開場致詞、或負責 PSP（病人支持計畫）說明的公司同仁（凡機構標註「台灣諾華」、「台灣諾華股份有限公司」、「Novartis」或類似字樣之內部員工），絕對不可當作受邀主講醫師！
+2. 鎖定受邀外部專家醫師（HCP）：請辨識受邀演講的外部醫院臨床醫師（必須具有外部醫療機構名稱，例如三軍總醫院、臺大醫院、長庚醫院、榮民總醫院等，以及一般外科/乳房外科/腫瘤科等專業科別）。
+
+請提取並以標準 JSON 回傳以下欄位（不要包含任何額外說明，純 JSON）：
 {
   "eventName": "活動全稱 (含研討會主題與副標題)",
   "date": "會議日期 (例如 2026年11月24日 (二))",
   "time": "會議起訖時間 (例如 18:30-20:30)",
-  "venue": "會議地點名稱與地址 (例如 Wilson Park 威爾森公園餐廳（台北市內湖區民權東路六段125之1號）)",
-  "hospital": "受邀主講醫師所屬醫院 (例如 三軍總醫院)",
-  "doctor": "受邀主講醫師姓名 (務必排除 Sandy Huang 諾華同仁或公司員工)",
+  "venue": "會議地點名稱與完整地址 (例如 Wilson Park 威爾森公園餐廳（台北市內湖區民權東路六段125之1號）)",
+  "hospital": "受邀主講醫師所屬外部醫院 (例如 三軍總醫院，不可填諾華)",
+  "doctor": "受邀主講醫師姓名 (請務必排除所有諾華內部同仁，只填外部受邀主講醫師)",
   "dept": "醫師科別 (例如 一般外科/乳房外科)",
   "topic": "醫師演講題目 (Topic 主題)"
 }`;
 
   try {
-    const { base64, mimeType } = await readFileAsBase64(file);
+    const { base64, mimeType } = await compressImageBeforeUpload(file);
     const apiKey = getStoredApiKey();
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`;
 
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
-            { text: promptText },
-            { inline_data: { mime_type: mimeType, data: base64 } }
-          ]
-        }],
-        generationConfig: { response_mime_type: "application/json", temperature: 0.1 }
-      })
-    });
+    // 雙核備援模型列表，若 3.1 壅塞 (503) 自動秒切 2.5
+    const candidateModels = [
+      'gemini-2.5-flash',
+      'gemini-3.1-flash-lite',
+      'gemini-2.5-flash-lite'
+    ];
 
-    if (!response.ok) throw new Error(`API 連線失敗：${response.status}`);
+    let resData = null;
+    let lastErrorMsg = '';
 
-    const resData = await response.json();
-    const parsed = JSON.parse(resData.candidates[0].content.parts[0].text);
+    for (const model of candidateModels) {
+      try {
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{
+              parts: [
+                { text: promptText },
+                { inline_data: { mime_type: mimeType, data: base64 } }
+              ]
+            }],
+            generationConfig: { response_mime_type: "application/json", temperature: 0.1 }
+          })
+        });
+
+        if (response.ok) {
+          resData = await response.json();
+          break;
+        } else {
+          lastErrorMsg = `API 狀態 ${response.status}`;
+          console.warn(`模型 ${model} 回傳 ${response.status}，正在自動切換備援模型...`);
+        }
+      } catch (e) {
+        lastErrorMsg = e.message;
+      }
+    }
+
+    if (!resData) {
+      throw new Error(lastErrorMsg || "AI 服務暫時壅塞，已自動重試");
+    }
+
+    let rawText = resData.candidates[0].content.parts[0].text.trim();
+    if (rawText.startsWith("```json")) {
+      rawText = rawText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+    } else if (rawText.startsWith("```")) {
+      rawText = rawText.replace(/^```\s*/, '').replace(/\s*```$/, '');
+    }
+    const parsed = JSON.parse(rawText);
 
     if (parsed.eventName) document.getElementById("inpEventName").value = parsed.eventName;
     if (parsed.date) document.getElementById("inpDate").value = parsed.date;
@@ -1083,7 +1152,7 @@ async function triggerManualAnalysis() {
     aiBox.style.display = 'none';
     btn.innerHTML = `👉【步驟 2：點此立即開始 AI 深度辨識並帶入 BeSure】`;
     btn.style.backgroundColor = '#2e7d32';
-    alert(`辨識過程發生問題：${err.message}\n您也可以展開手動微調區直接輸入文字！`);
+    alert(`辨識過程發生問題：${err.message}\n已啟動備援模式，請重新點選步驟 2 再試一次，或展開下方手動修改！`);
   }
 }
 
