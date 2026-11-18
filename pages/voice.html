@@ -1791,6 +1791,11 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             if (!text) return "";
             let s = text;
 
+            // Handle non-metastatic lymph node negatives first so "無轉移" doesn't trigger MBC
+            s = s.replace(/(?:無|沒有|未|0|零)\s*淋巴(?:結)?(?:轉移|侵犯)?|(?:淋巴(?:結)?(?:無|沒有|未|0|零)(?:轉移|侵犯)?)/gi, ' N0 淋巴0顆 ');
+            s = s.replace(/淋巴(?:結)?\s*(?:是|為)?\s*(?:0|零)\s*(?:顆|個)?/gi, ' N0 淋巴0顆 ');
+            s = s.replace(/腫瘤\s*(?:大小|直徑|為|最大徑)?\s*(?:2|二|兩|两)\s*(?:公分|cm)?(?!\.)/gi, ' 腫瘤2公分 T2 ');
+
             // Normalize HER2 speech recognition variations (HER2, HER-2, HER two, HER to, HER too, HER 陰性, 赫2)
             s = s.replace(/\bher\s*[-_]?(?:2|two|to|too|二|兩|两)\b|\bher\s*[-_]?(?:2|two|to|too|二|兩|两)/gi, ' HER2 ');
             s = s.replace(/赫\s*[-_]?(?:2|二|兩|两)|賀\s*[-_]?(?:2|二|兩|两)/gi, ' HER2 ');
@@ -2088,7 +2093,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             }
 
             // SCENARIO 2: Post-menopausal Metastatic 1st line
-            if (/晚期|轉移|停經後|四期|stage\s*iv|第四期|(?:骨轉移.*(?:肝|肺|內臟))|(?:(?:肝|肺|內臟).*轉移)/i.test(raw)) {
+            if ((!/淋巴.*無轉移|無淋巴.*轉移/i.test(raw) && /晚期|遠端轉移|骨轉移|內臟轉移|肺轉移|肝轉移|腦轉移|停經後晚期|第四期|stage\s*iv/i.test(raw))) {
                 if (effectiveER < 1 && effectivePR < 1) {
                     return {
                         scenario: 2, eligible: false,
@@ -3113,28 +3118,40 @@ ${raw}`;
                     conditionTitle = "條件 IV (第四點：腫瘤 > 5cm / 局部侵犯 T4，即使 N0 給付)";
                     conditionRationale = `病患腫瘤最大徑 ${sizeVal}cm (${isT4Val ? 'T4' : 'T3 > 5cm'})，符合健保 9.72 第 4 點條件 IV（第四點），即使腋下淋巴結無轉移 (0 顆/N0) 亦享有全額給付！`;
                 } else {
-                    conditionTitle = "條件 II (第二點：陽性淋巴結 1-3 顆 且 腫瘤 > 2cm)";
-                    conditionRationale = `病患陽性淋巴結 ${nodesVal} 顆 (pN1) 且 腫瘤最大徑 ${sizeVal}cm (T2 > 2cm)，符合健保 9.72 第 4 點條件 II 之給付門檻。`;
+                    // T1N0, T2N0, or T1N1 G1/2: Ineligible under Taiwan NHI 9.72 & NATALEE Matrix!
+                    conditionTitle = "";
+                    conditionRationale = "";
                 }
             }
 
-            if (customData && customData.eligible === false) {
+            // Determine eligibility strictly based on NATALEE 4 Conditions Matrix
+            const isEbcEligible = (customData && customData.eligible !== undefined) 
+                ? customData.eligible 
+                : (conditionTitle !== "");
+
+            if (!isEbcEligible) {
+                const notEligibleReason = (nodesVal === 0)
+                    ? `病患腋下淋巴結無轉移 (0顆 / N0) 且腫瘤最大徑 ${sizeVal}cm (≦ 5cm)，依據台灣健保 9.72 第 4 點及官方 NATALEE 健保核准矩陣，T1N0 與 T2N0 明文排除給付！`
+                    : `病患數值（腫瘤 ${sizeVal}cm、淋巴結 ${nodesVal} 顆、Grade ${gradeVal}）未達 115/12/1 健保 4 大高復發門檻。`;
+
                 viewReasonEl.innerHTML = `
 <strong>【AI 健保防退件攔截警報 (未符健保 9.72 給付標準)】：</strong>
 
 <strong>1. 健保給付規定合規：</strong>
-暫不符合 115 年 12 月 1 日健保規定 9.72 第 4 點早期乳癌高復發風險給付門檻。
+<span class="text-danger fw-bold">❌ 暫不符合 115 年 12 月 1 日健保規定 9.72 第 4 點早期乳癌高復發風險給付門檻。</span>
 
-<strong>2. 病患現階段實際狀況：</strong>
-• 臨床數值：腫瘤最大徑 ${sizeVal} cm，陽性淋巴結 ${nodesVal} 顆，分化分級 Grade ${gradeVal}。
+<strong>2. 病患現階段實際狀況 (與 NATALEE 健保核准矩陣比對)：</strong>
+• 臨床分期：${stagingText}, ${nodeStaging}, 組織學分級 Grade ${gradeVal}。
+• 腫瘤最大徑：${sizeVal} cm，陽性淋巴結：${nodesVal} 顆。
 • 荷爾蒙受體：ER ${erText}、PR ${prText}${kiText}。
-• 攔截退件要件：${customData.spoken || customData.details}
+• 攔截退件要件：${(customData && (customData.spoken || customData.details)) || notEligibleReason}
 
 <strong>3. 臨床處置建議：</strong>
-避免無效事前審查送件被核扣，建議常規輔助治療或引導加入「擊癌利自費存摺專案 (買一送一/買四送八)」。
+健保署嚴格審查早期高復發要件，此案若送審必遭退件核扣！建議維持常規輔助治療，或引導病患加入「擊癌利自費存摺專案 (買一送一 / 買四送八)」。
                 `.trim();
                 return;
             }
+
 
             viewReasonEl.innerHTML = `
 <strong>【全民健保藥品事前審查申請理由 (依據 115/12/1 健保規定 9.72 第 4 點)】：</strong>
