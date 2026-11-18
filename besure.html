@@ -1,26 +1,1267 @@
 <!doctype html>
-<html lang="zh-Hant"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>BeSure 活動申請小助理</title>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BeSure II 活動申請智慧小助理 (動態議程帶入版)</title>
 <style>
-:root{color-scheme:light;--ink:#17253e;--muted:#49617c;--blue:#174f83;--edge:#dbe5ef;--pale:#eaf3fb}
-*{box-sizing:border-box}body{margin:0;background:#f3f7fb;color:var(--ink);font:16px/1.65 "Microsoft JhengHei","PingFang TC",system-ui,sans-serif}header{background:#132c48;color:white;padding:2rem max(1rem,calc((100% - 1130px)/2));border-bottom:5px solid #54a6d9}h1{margin:0;font-size:clamp(1.8rem,5vw,2.55rem);line-height:1.2}header p{margin:.65rem 0 0;color:#d9ebfa}.layout{max-width:1160px;margin:auto;display:grid;grid-template-columns:250px 1fr;gap:1.25rem;padding:1rem}nav{align-self:start;position:sticky;top:1rem;background:white;border:1px solid var(--edge);border-radius:12px;padding:.85rem}nav h2{font-size:1rem;margin:0 0 .45rem}nav a{display:block;color:var(--blue);padding:.22rem .35rem;text-decoration:none}nav a:hover{text-decoration:underline}.intro,.controls,section{background:white;border:1px solid var(--edge);border-radius:12px;margin:0 0 .8rem}.intro,.controls{padding:1rem}.intro p{margin:0}.controls label{font-weight:bold;display:block}.controls input,textarea{width:100%;font:inherit;border:1px solid #8095ab;border-radius:8px;padding:.55rem;color:var(--ink);background:white}.buttons{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.65rem}button{font:inherit;background:var(--pale);color:#164571;border:1px solid #aac6dc;border-radius:7px;padding:.32rem .65rem;cursor:pointer}button:hover{background:#dbeeff}summary{cursor:pointer;display:flex;align-items:center;gap:.75rem;padding:.85rem 1rem}summary:after{content:"＋";margin-left:auto;color:var(--blue)}details[open]>summary:after{content:"−"}summary strong{display:block;font-size:1.12rem}small{color:var(--muted);display:block}.num{flex:none;width:2.15rem;text-align:center;background:var(--pale);color:var(--blue);border-radius:8px;font-weight:700}.body{border-top:1px solid var(--edge);padding:0 1rem 1rem}dt{font-weight:700;color:var(--blue);margin-top:.8rem}dd{margin:.1rem 0 .55rem}aside{background:var(--pale);padding:.75rem;border-radius:8px;margin:.65rem 0}aside p{margin:.2rem 0}aside label{font-weight:700;display:block;margin-bottom:.3rem}.done{display:block;margin-top:.9rem}input[type=checkbox]{accent-color:var(--blue)}#status{margin:.45rem 0 0;color:var(--muted)}[hidden]{display:none!important}section{scroll-margin-top:1rem}
-@media(max-width:760px){.layout{display:block}nav{position:static;margin-bottom:.75rem}nav div{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr))}}@media print{nav,.controls,.done,.copy{display:none}.layout{display:block}section{break-inside:avoid}header{color:#17253e;background:white}header p{color:#17253e}}
+:root {
+  --novartis-navy: #042742;
+  --novartis-blue: #0b497a;
+  --novartis-sky: #0284c7;
+  --novartis-orange: #eb6a0a;
+  --novartis-light-bg: #f3f7fb;
+  --ink: #17253e;
+  --muted: #4b647f;
+  --edge: #d3e2ef;
+  --pale: #eaf3fb;
+  --success: #16a34a;
+  --warning-bg: #fffbeb;
+  --warning-border: #fde68a;
+  --card-shadow: 0 4px 14px rgba(4, 39, 66, 0.08);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--novartis-light-bg);
+  color: var(--ink);
+  font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", "PingFang TC", sans-serif;
+}
+header {
+  background: linear-gradient(135deg, var(--novartis-navy) 0%, var(--novartis-blue) 100%);
+  color: white;
+  padding: 1.5rem 1.25rem;
+  border-bottom: 4px solid var(--novartis-sky);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.header-inner {
+  max-width: 1180px;
+  margin: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+h1 {
+  margin: 0;
+  font-size: clamp(1.4rem, 4vw, 2.1rem);
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.brand-pill {
+  background: var(--novartis-orange);
+  color: white;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+header p {
+  margin: 0.35rem 0 0;
+  color: #cde4f7;
+  font-size: 0.95rem;
+}
+
+/* 頂部 Agenda 智慧帶入卡片 */
+.agenda-hero-card {
+  max-width: 1180px;
+  margin: 1.25rem auto 0;
+  padding: 0 1rem;
+}
+.hero-box {
+  background: #ffffff;
+  border: 2px solid var(--novartis-sky);
+  border-radius: 14px;
+  padding: 1.25rem;
+  box-shadow: 0 8px 24px rgba(2, 132, 199, 0.12);
+}
+.hero-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+.hero-title h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--novartis-blue);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.preset-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+.btn-preset {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  padding: 0.35rem 0.8rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-preset:hover {
+  background: #0284c7;
+  color: white;
+}
+.agenda-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 0.85rem;
+}
+.field-group {
+  display: flex;
+  flex-direction: column;
+}
+.field-group label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--novartis-blue);
+  margin-bottom: 0.25rem;
+}
+.field-group input, .field-group select, .field-group textarea {
+  font: inherit;
+  font-size: 0.92rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid #94a3b8;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: var(--ink);
+  transition: border-color 0.15s, background-color 0.15s;
+}
+.field-group input:focus, .field-group select:focus, .field-group textarea:focus {
+  outline: none;
+  border-color: var(--novartis-sky);
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+}
+
+.text-parser-box {
+  margin-top: 1rem;
+  background: #f8fafc;
+  border: 1px dashed #94a3b8;
+  border-radius: 10px;
+  padding: 0.85rem;
+}
+.text-parser-box summary {
+  font-weight: 700;
+  color: var(--novartis-blue);
+  cursor: pointer;
+  user-select: none;
+}
+.parser-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.btn-parse {
+  background: var(--novartis-sky);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.45rem 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn-parse:hover { background: #0369a1; }
+
+/* 2欄佈局 */
+.layout {
+  max-width: 1180px;
+  margin: 1rem auto;
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 1.25rem;
+  padding: 0 1rem;
+}
+nav {
+  align-self: start;
+  position: sticky;
+  top: 1rem;
+  background: white;
+  border: 1px solid var(--edge);
+  border-radius: 12px;
+  padding: 0.85rem;
+  box-shadow: var(--card-shadow);
+}
+nav h2 {
+  font-size: 1rem;
+  margin: 0 0 0.5rem;
+  color: var(--novartis-navy);
+  border-bottom: 2px solid var(--novartis-sky);
+  padding-bottom: 0.35rem;
+}
+nav a {
+  display: block;
+  color: var(--novartis-blue);
+  padding: 0.25rem 0.4rem;
+  text-decoration: none;
+  font-size: 0.88rem;
+  border-radius: 6px;
+  transition: background 0.1s;
+}
+nav a:hover {
+  background: var(--pale);
+  text-decoration: underline;
+}
+
+/* 控制列與主要內容卡片 */
+.controls, section {
+  background: white;
+  border: 1px solid var(--edge);
+  border-radius: 12px;
+  margin-bottom: 1rem;
+  box-shadow: var(--card-shadow);
+}
+.controls {
+  padding: 1rem;
+}
+.controls label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 0.35rem;
+}
+.controls input[type="search"] {
+  width: 100%;
+  font: inherit;
+  border: 1px solid #94a3b8;
+  border-radius: 8px;
+  padding: 0.55rem 0.75rem;
+  background: white;
+}
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+}
+button.btn-ctrl {
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: var(--pale);
+  color: var(--novartis-blue);
+  border: 1px solid #bae6fd;
+  border-radius: 7px;
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+}
+button.btn-ctrl:hover { background: #bae6fd; }
+
+/* 折疊區塊 */
+summary {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.95rem 1.15rem;
+  background: #ffffff;
+  border-radius: 12px;
+  user-select: none;
+}
+summary:hover {
+  background: #f8fafc;
+}
+summary:after {
+  content: "＋";
+  margin-left: auto;
+  font-weight: bold;
+  color: var(--novartis-sky);
+  font-size: 1.25rem;
+}
+details[open] > summary:after { content: "−"; }
+details[open] > summary {
+  border-bottom: 1px solid var(--edge);
+  border-radius: 12px 12px 0 0;
+}
+summary strong {
+  display: block;
+  font-size: 1.1rem;
+  color: var(--novartis-navy);
+}
+summary small {
+  color: var(--muted);
+  display: block;
+  font-size: 0.85rem;
+  font-weight: normal;
+}
+.num {
+  flex: none;
+  width: 2.3rem;
+  height: 2.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--pale);
+  color: var(--novartis-blue);
+  border-radius: 8px;
+  font-weight: 800;
+  font-size: 1rem;
+  border: 1px solid #bae6fd;
+}
+.body {
+  padding: 1.15rem;
+}
+dl { margin: 0; }
+dt {
+  font-weight: 700;
+  color: var(--novartis-navy);
+  margin-top: 0.9rem;
+  font-size: 0.98rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+dt:first-child { margin-top: 0; }
+dd {
+  margin: 0.25rem 0 0.8rem;
+  color: #334155;
+  font-size: 0.95rem;
+}
+
+/* 視覺化藥丸標籤 (Pill) */
+.choice-pill {
+  display: inline-block;
+  background: #dcfce7;
+  color: #15803d;
+  border: 1.5px solid #86efac;
+  font-weight: 800;
+  padding: 2px 10px;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  margin: 0 4px;
+}
+.choice-pill-warning {
+  background: #fef3c7;
+  color: #b45309;
+  border-color: #fde68a;
+}
+.choice-pill-info {
+  background: #e0f2fe;
+  color: #0369a1;
+  border-color: #7dd3fc;
+}
+
+/* 動態複製區塊 */
+.dynamic-copy-box {
+  background: #f8fafc;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  margin: 0.75rem 0;
+  position: relative;
+}
+.dynamic-copy-box.highlight {
+  border-color: var(--novartis-sky);
+  background: #f0f9ff;
+}
+.dynamic-label {
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: var(--novartis-blue);
+  margin-bottom: 0.35rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.dynamic-content {
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: #0f172a;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: #ffffff;
+  padding: 0.65rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+.btn-copy-dynamic {
+  background: #0284c7;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  transition: all 0.15s;
+}
+.btn-copy-dynamic:hover {
+  background: #0369a1;
+}
+.btn-copy-dynamic.copied {
+  background: var(--success);
+}
+
+.done {
+  display: block;
+  margin-top: 1rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid #e2e8f0;
+  font-weight: 600;
+  color: var(--muted);
+}
+input[type=checkbox] { accent-color: var(--novartis-blue); transform: scale(1.1); margin-right: 6px; }
+#status { margin: 0.5rem 0 0; color: var(--muted); font-size: 0.88rem; }
+[hidden] { display: none !important; }
+section { scroll-margin-top: 1rem; }
+
+@media(max-width: 820px) {
+  .layout { display: block; }
+  nav { position: static; margin-bottom: 1rem; }
+  nav div { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+}
+@media print {
+  nav, .controls, .agenda-hero-card, .done, .btn-copy-dynamic { display: none; }
+  .layout { display: block; }
+  section { break-inside: avoid; }
+  header { color: #17253e; background: white; }
+  header p { color: #17253e; }
+}
 </style>
-<header><h1>BeSure 活動申請小助理</h1><p>從 Create Request 到 Submit Request · 依 2026／11／18 操作畫面整理</p></header>
-<div class="layout"><nav aria-label="流程目錄"><h2>流程目錄</h2><div><a href="#create">1. 建立申請</a><a href="#fmv">2. 登錄外部專家與酬金</a><a href="#ack">3. 確認活動主責與聲明</a><a href="#activity">4. 活動資料、議程與擬聘人數</a><a href="#experts">5. 本次已選專家與聘請方式</a><a href="#venue">6. 活動形式與場地</a><a href="#financial">7. 餐旅費、酬金總額與報價單</a><a href="#people">8. 外部與會者與跨國邀請</a><a href="#assessment">9. 確認活動評估與標準合約</a><a href="#review">10. 外部專家事前評估</a><a href="#mitigation">11. 風險緩解措施</a><a href="#docs">12. 檢查議程及補充附件</a><a href="#submit">13. 核對、送審與查詢</a><a href="#troubleshoot">14. 紅字與卡關排除</a></div></nav>
-<main><div class="intro"><p>以三總乳癌討論會的填寫情境為例。活動類別、名單、費率、場地和審查人依本筆申請及公司現行指引確認。可用下方搜尋找英文欄位、中文解釋或錯誤訊息。</p></div>
-<div class="controls"><label for="search">搜尋欄位或錯誤訊息</label><input id="search" type="search" placeholder="例如 FMV、交通時間、not an integer"><div class="buttons"><button id="expand">全部展開</button><button id="collapse">全部收合</button><button id="print">列印／另存 PDF</button></div><p id="status" role="status"></p></div>
-<section id="create"><details open><summary><span class="num">01</span><span><strong>建立申請</strong><small>New Request · General Information</small></span></summary><div class="body"><dl><dt>Create Request</dt><dd>在 BeSure 首頁建立申請。進入表單後可在 Request Basic Details 核對申請編號，日後用同一筆編號查找草稿及送審狀態。</dd><dt>Choose Activity</dt><dd>依實際主辦方式及活動目的選類別。拿不準時點 Check your activity category here。照片沒有拍到展開後的選項，請依現行選單及公司分類說明選擇。</dd><dt>Organizational Unit / Requester</dt><dd>核對是否為 Taiwan 與你的申請帳號。Requester 是送件人，Activity Owner 是活動實際負責人。</dd><dt>Who is the Activity Owner?</dt><dd>自己負責就選 Myself；替其他同事建案就選 Another Associate，並依畫面指定負責人。核對 Activity Owner’s Department 是否正確，例如 Sales。</dd><dt>Estimated Total Cost Currency</dt><dd>本次預算以新台幣編列就選 TWD。金額欄出現時按本場預算填，和後續 Financials 的明細核對。</dd></dl><label class="done"><input type="checkbox"> 標記這一步已核對</label></div></details></section><section id="fmv"><details ><summary><span class="num">02</span><span><strong>登錄外部專家與酬金</strong><small>Fair Market Value · Add New Engagement</small></span></summary><div class="body"><dl><dt>＋ Add New Engagement</dt><dd>在 Fair Market Value 按藍色按鈕。No FMV added 表示尚未新增紀錄。這裡登錄本場聘請的外部專家及服務費用。</dd><dt>Engagement Type / Country / HCP Tier</dt><dd>以台灣醫師為例選 HCP / Taiwan。Tier 依該醫師適用的公司 FMV 分級選擇。截圖案例顯示 Specialist: Tier 1 與每小時 TWD 5,000，此為該次畫面示例。</dd><dt>HCP identified yet?</dt><dd>已知擬聘醫師就選 Yes，於出現的名單中核對姓名與專科等資料，勾選正確的一列並點名單旁的 SAVE。尚未知道人選就依實況選 No，再依畫面提示填寫。</dd><dt>HCP threshold 提示</dt><dd>畫面會顯示國別門檻及該醫師當年度已核准的合作次數與金額。遇到接近門檻或提示時，看公司指引和系統後續要求。</dd><dt>Service Time</dt><dd>依實際提供服務的時間填 Hours／Minutes，並與議程角色、時段核對。</dd><dt>Preparation Time / Travel Time</dt><dd>點各欄下方 General and Local Guidance Notes，確認哪些時間可計入。截圖中交通時間上限是 0h 0m，因此該筆填 00 小時 00 分鐘。</dd><dt>Rate / Tax / Total Cost</dt><dd>上方 Hourly Rate 是每小時費率。Total Amount 區的 Rate 隨可計入的時間計算，Tax 按公司填寫規則處理，再核對 Total Cost 與合約金額。</dd><dt>Rationale for selection of the External Expert</dt><dd>此欄必填。交代醫師的相關專長、臨床經驗、與議題的關聯，以及這次受邀的角色。完成後依畫面儲存該筆，回 FMV 確認清單已出現紀錄。</dd></dl><aside><strong>以截圖費率試算</strong><p>40 分鐘服務約 NT$3,333.33。若實際有 20 分鐘備課，且公司指引允許計入，合計 60 分鐘為 NT$5,000（畫面 Tax 為 0 的情境）。若有差額，核對合約、分級及時間，依實際可計入的工時申報。</p></aside><aside><label for="copy-fmv">填寫範例 · 貼上前依實況調整</label><textarea readonly id="copy-fmv" rows="3">受邀醫師具乳癌診療與乳房外科臨床經驗，專長與本次乳癌討論會議題相關，因此邀請擔任講者，分享臨床經驗並參與專業交流。</textarea><button class="copy" data-copy="copy-fmv">複製範例</button></aside><label class="done"><input type="checkbox"> 標記這一步已核對</label></div></details></section><section id="ack"><details ><summary><span class="num">03</span><span><strong>確認活動主責與聲明</strong><small>Acknowledgement</small></span></summary><div class="body"><dl><dt>Will the event be co-owned by other Novartis functions?</dt><dd>Sales 單獨主責選 No。若 Medical 或其他諾華部門共同負責活動則選 Yes。出席、提供資料或協助審閱本身不代表共同主責。</dd><dt>跨部門活動</dt><dd>畫面要求清楚區分推廣性與非推廣性議程內容。依實際分工及公司指引核對。</dd><dt>Novartis Events must…</dt><dd>畫面提醒活動須具正當目的，聘請外部專家時至少有一位諾華同仁出席，並清楚告知參與者主辦方。虛擬或混合活動用公司核准工具。活動物品及內容審核依畫面列出的公司規定處理。</dd></dl><label class="done"><input type="checkbox"> 標記這一步已核對</label></div></details></section><section id="activity"><details ><summary><span class="num">04</span><span><strong>活動資料、議程與擬聘人數</strong><small>Activity Details</small></span></summary><div class="body"><dl><dt>活動資料</dt><dd>以本筆申請的最新議程核對活動名稱、日期、講者及角色。活動名稱和日期欄位的完整畫面未拍到，依實際表單填寫。</dd><dt>主辦方提示</dt><dd>議程、邀請函等資料要清楚標示實際主辦方。截圖提示由諾華主辦的活動應向與會者清楚揭露。</dd><dt>Upload agenda</dt><dd>按 UPLOAD 或藍色＋新增最新版議程，確認檔案已列出。之後可在 Request Documents 再核對。</dd><dt>How many External experts will be engaged?</dt><dd>填整場預計聘請提供專業服務的人數。受聘講者、主持人或主席依實際角色計入，一般出席者不計。畫面提醒醫療專業人員擔任主持／主席的人數不可超過講者人數。</dd><dt>Do you know already external experts suggested to be engaged?</dt><dd>擬聘人選已知選 Yes，再依實況選 External Expert 類別，例如 Healthcare Professionals (HCP)。如畫面要求，回 FMV 填姓名與資料。</dd></dl><label class="done"><input type="checkbox"> 標記這一步已核對</label></div></details></section><section id="experts"><details ><summary><span class="num">05</span><span><strong>本次已選專家與聘請方式</strong><small>External Expert Questions</small></span></summary><div class="body"><dl><dt>Total number of External Experts selected in this submission</dt><dd>填這次申請已選定的外部專家人數，與實際名單和 FMV 紀錄核對。這欄是本次已選定人數，前一欄是整場預計聘請人數。</dd><dt>Will any External Experts be engaged through a Third Party?</dt><dd>諾華直接聘請醫師、未經第三方，就選 No。若經代理商等第三方聘請，依欄下說明判斷。說明指出第三方須為非該 HCP 的雇主，且非該 HCP 直接擁有。</dd><dt>Is the HCP engaged to speak within their own institution?</dt><dd>依演講地點判斷。若是在醫師任職的醫院或診所內，選 Yes。若醫師在院外餐廳會場演講，選 No。</dd><dt>Is any External Expert’s country of practice different?</dt><dd>比較專家執業地與活動發起國。若活動由台灣發起且所有外部專家都在台灣執業，選 No。</dd></dl><label class="done"><input type="checkbox"> 標記這一步已核對</label></div></details></section><section id="venue"><details ><summary><span class="num">06</span><span><strong>活動形式與場地</strong><small>Format and Venue</small></span></summary><div class="body"><dl><dt>What is the format of event?</dt><dd>依實況選實體、線上或混合。實體場次找 In-person／Face-to-face 的對應項目，名稱以你看到的選單為準。</dd><dt>Type of venue</dt><dd>在餐廳舉辦可選 Restaurant。其他場地依實際類型選。</dd><dt>The detail of venue</dt><dd>必填。寫場地名稱、地點及實際選址理由，例如便於多數與會者抵達，空間能安排簡報與討論。按畫面指引考量場地適切性、費用、交通，以及娛樂或觀光場所限制。</dd><dt>Upload additional documents / Comments</dt><dd>場地佐證或說明有需要再補，依表單實際要求處理。</dd></dl><aside><label for="copy-venue">填寫範例 · 貼上前依實況調整</label><textarea readonly id="copy-venue" rows="3">本次乳癌討論會於 Wilson Park 舉行。場地便於預計與會者抵達，空間可配合醫師簡報與討論。</textarea><button class="copy" data-copy="copy-venue">複製範例</button></aside><label class="done"><input type="checkbox"> 標記這一步已核對</label></div></details></section><section id="financial"><details ><summary><span class="num">07</span><span><strong>餐旅費、酬金總額與報價單</strong><small>Financials</small></span></summary><div class="body"><dl><dt>Travel, accommodation and hospitality cost breakdown</dt><dd>有餐費、交通、住宿預算時，按 ＋ Add New Row，依費用類型分列。Type of costs 選實際類別，Costs 填該筆預估總額，Comments 說明預算計算方式。</dd><dt>Meals and refreshments limits</dt><dd>截圖可讀到餐飲累計 NT$3,500／人／日與 Virtual Event Limit NT$500，金額包含稅、服務及配送費。單餐等其他限額請看當頁完整指引；按當次適用的上限核對。</dd><dt>External experts honoraria (total costs)</dt><dd>填完成 FMV 後所有外部專家的總酬金。若當次只有一位、FMV Total Cost 是 TWD 5,000，填半形 5000。餐飲與交通等按各自費用明細列。</dd><dt>Upload vendor/travel agent quotation, if any</dt><dd>有餐廳或其他廠商報價單，依欄位提示上傳。Upload additional documents, if needed 可加上其他佐證。</dd><dt>禮品提示</dt><dd>畫面提醒不得提供禮品予 HCP、HCO、病友組織、病人及其家屬，亦不鼓勵提供給其他利害關係人。</dd></dl><aside><label for="copy-financial">填寫範例 · 貼上前依實況調整</label><textarea readonly id="copy-financial" rows="3">Wilson Park 晚餐，預計 __ 人，每人 NT$__，含適用費用後預估共 NT$__。</textarea><button class="copy" data-copy="copy-financial">複製範例</button></aside><label class="done"><input type="checkbox"> 標記這一步已核對</label></div></details></section><section id="people"><details ><summary><span class="num">08</span><span><strong>外部與會者與跨國邀請</strong><small>Participants and Attendees</small></span></summary><div class="body"><dl><dt>Select type of external stakeholders and audience</dt><dd>依實際邀請對象選類別。若外部與會者是醫療專業人員，選 Healthcare Professionals (HCP) 或畫面對應的類別。</dd><dt>Describe external stakeholders and audience</dt><dd>寫預計邀請的院所、科別或職類，以及這群人的工作如何與活動主題相關。科別按實際名單調整。</dd><dt>Is it planned to invite any HCPs from outside their country of residence or practice?</dt><dd>台灣活動若未計畫跨國邀請 HCP，就選 No。有跨國邀請時依實況作答並查看後續欄位。</dd><dt>External participants 提示</dt><dd>對象應和議題相關。若擬邀請曾參加同主題諾華活動的人員，畫面要求有合理理由。</dd></dl><aside><label for="copy-people">填寫範例 · 貼上前依實況調整</label><textarea readonly id="copy-people" rows="3">預計邀請三軍總醫院乳房外科與血液腫瘤科中參與乳癌照護的醫師，針對乳癌治療與臨床照護進行專業交流。</textarea><button class="copy" data-copy="copy-people">複製範例</button></aside><label class="done"><input type="checkbox"> 標記這一步已核對</label></div></details></section><section id="assessment"><details ><summary><span class="num">09</span><span><strong>確認活動評估與標準合約</strong><small>Activity Assessment</small></span></summary><div class="body"><dl><dt>Assess to ensure…</dt><dd>依活動實況檢視醫學、科學、教育及／或臨床內容的適切性與品質，完成適用的檢視再勾選。</dd><dt>Adverse event reporting</dt><dd>若活動中可能得知疑似不良事件，畫面提醒依公司內部流程通報。</dd><dt>Confirm that you will be using a standard contract template…</dt><dd>這題問是否採用包含所有必備條款的公司標準合約。若確認採用適用版本並保留條款即可選 Yes。可從當頁標準範本連結核對；用合約生成器產出的文件也要核對版本與條款。</dd></dl><label class="done"><input type="checkbox"> 標記這一步已核對</label></div></details></section><section id="review"><details ><summary><span class="num">10</span><span><strong>外部專家事前評估</strong><small>Expert Assessment</small></span></summary><div class="body"><dl><dt>Were the HCPs pre-assessed by the Medical function?</dt><dd>此題問 Medical 是否直接完成事前評估。已確認完成選 Yes；未由 Medical 直接評估選 No，並查看是否出現後續欄位。</dd><dt>Medical 預核標準</dt><dd>畫面指出亦可依 Medical 預先核准的標準評估。若走這條路，確認已依適用標準完成並遵循後續要求。</dd><dt>紀錄未確認</dt><dd>按 Save as Draft，向負責同事確認適用的評估方式與紀錄，再回原申請繼續。FMV 資料用來核算酬金。</dd></dl><label class="done"><input type="checkbox"> 標記這一步已核對</label></div></details></section><section id="mitigation"><details ><summary><span class="num">11</span><span><strong>風險緩解措施</strong><small>Mitigation Actions</small></span></summary><div class="body"><dl><dt>Mitigation actions plan (if necessary)</dt><dd>前面評估完成且沒有需要額外處理的事項時，可留空並按 Next。有需處理的事項，記錄具體措施、負責人及完成時間。</dd><dt>評估結果不清楚或不完整</dt><dd>畫面指示諮詢相關風險職能。可先存草稿，補齊評估及處理方式後繼續。</dd></dl><label class="done"><input type="checkbox"> 標記這一步已核對</label></div></details></section><section id="docs"><details ><summary><span class="num">12</span><span><strong>檢查議程及補充附件</strong><small>Request Documents</small></span></summary><div class="body"><dl><dt>Mandatory Documents</dt><dd>確認 agenda 已出現在清單，Document Purpose 顯示 Upload agenda。點檔名核對內容確實是本場活動的最新版。</dd><dt>Additional Documents</dt><dd>有需要而前面尚未附上的報價或佐證，可透過 Add Additional Documents 補上。確認清單顯示已上傳。</dd></dl><label class="done"><input type="checkbox"> 標記這一步已核對</label></div></details></section><section id="submit"><details ><summary><span class="num">13</span><span><strong>核對、送審與查詢</strong><small>Medical Risk Expert · Submit Request</small></span></summary><div class="body"><dl><dt>Medical Risk Expert</dt><dd>必填。從 Select 選公司分派的適用 Medical 審查人。若不知道選誰，先用 Save as Draft 保存同一筆，再向主管或負責窗口確認。</dd><dt>Line Manager Approval / Comment</dt><dd>核對系統列出的直屬主管。Comment 在截圖未標示必填，可補充需要讓審批人知道的事項。</dd><dt>Click here to go to request summary and export PDF</dt><dd>開啟摘要核對活動名稱與日期、場地、最終議程、人數及名單、FMV 和合約酬金、餐旅費、附件與審查人。需要留存時可用這個入口匯出 PDF。</dd><dt>Submit Request / Requests</dt><dd>核對無誤後按 Submit Request，查看送出提示或到 Requests 查同一申請編號的最新狀態。送出後依狀態追蹤審批。截圖拍到送審按鈕，未顯示送出後的結果。</dd></dl><label class="done"><input type="checkbox"> 標記這一步已核對</label></div></details></section><section id="troubleshoot"><details ><summary><span class="num">14</span><span><strong>紅字與卡關排除</strong><small>常見問題</small></span></summary><div class="body"><dl><dt>The value provided is not an integer</dt><dd>先清空人數欄。切至 ENG 英文鍵盤再打半形數字，例如一位填 1（全形為１）。按 Tab 離開欄位。如果英文鍵盤切不過去，可直接貼半形數字。仍有紅字先存草稿，確認成功後從 Requests 重開同一筆；持續報錯請附申請編號和錯誤文字給公司 BeSure 支援。</dd><dt>Time for engagement cannot exceed 0h 0m</dt><dd>先看紅字出現在哪個欄位。截圖出現在 Travel Time，這筆上限為 0 小時 0 分鐘。改回 00／00，再核對 Total Cost。</dd><dt>金額不一致</dt><dd>核對 HCP Tier、Hourly Rate、實際可計入時間與 Tax。再比較 FMV Total Cost、Financials 酬金總額和合約。</dd><dt>看不到下一步或不確定是否存好</dt><dd>往頁底找 Next／Save as Draft。若已保存，從 Requests 看同一筆申請。草稿尚未保存時，先保留表單畫面。</dd></dl></div></details></section></main></div>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div>
+      <h1><span class="brand-pill">NOVARTIS</span> BeSure II 申請小助理</h1>
+      <p>動態議程帶入 · 一鍵產出專屬 BeSure 欄位 · 14 步完全對照答案卡</p>
+    </div>
+    <div>
+      <span style="background: rgba(255,255,255,0.15); padding: 5px 12px; border-radius: 20px; font-size: 0.88rem;">
+        ⚡ 台灣諾華 DBE 合規標準版
+      </span>
+    </div>
+  </div>
+</header>
+
+<!-- 🌟 核心引擎：Agenda 參數輸入與即時解析 🌟 -->
+<div class="agenda-hero-card">
+  <div class="hero-box">
+    <div class="hero-title">
+      <h2><span style="font-size: 1.4rem;">📝</span> 第一步：填寫或貼上本次會議 Agenda</h2>
+      <div>
+        <span style="font-size: 0.85rem; color: #64748b;">修改下方任何欄位，全頁 14 個步驟將<b>即時動態更新</b></span>
+      </div>
+    </div>
+
+    <!-- 快速載入常用範本 -->
+    <div class="preset-bar">
+      <span style="font-size: 0.85rem; font-weight: bold; color: var(--novartis-blue); align-self: center;">⚡ 快速套用範本：</span>
+      <button type="button" class="btn-preset" onclick="loadPreset('tsgh_1124')">三總 11/24 (廖國秀醫師 / Wilson Park)</button>
+      <button type="button" class="btn-preset" onclick="loadPreset('vgh_sample')">北榮科會 (院內演講範例)</button>
+      <button type="button" class="btn-preset" onclick="loadPreset('cgh_sample')">國泰科會 (院外餐廳範例)</button>
+    </div>
+
+    <!-- 即時參數輸入表單 -->
+    <div class="agenda-grid">
+      <div class="field-group">
+        <label for="inpEventName">活動名稱 (中英文主題)</label>
+        <input type="text" id="inpEventName" value="三總乳癌討論會 - From Shared Decision to Long-Term Confidence" oninput="updateAllSteps()">
+      </div>
+      <div class="field-group">
+        <label for="inpDate">活動日期</label>
+        <input type="text" id="inpDate" value="2026年11月24日 (二)" oninput="updateAllSteps()">
+      </div>
+      <div class="field-group">
+        <label for="inpTime">活動時間</label>
+        <input type="text" id="inpTime" value="18:30-20:30" oninput="updateAllSteps()">
+      </div>
+      <div class="field-group">
+        <label for="inpVenue">活動場地 (餐廳或醫院會議室)</label>
+        <input type="text" id="inpVenue" value="Wilson Park 威爾森公園餐廳" oninput="updateAllSteps()">
+      </div>
+      <div class="field-group">
+        <label for="inpVenueAddress">場地地址</label>
+        <input type="text" id="inpVenueAddress" value="台北市內湖區民權東路六段125之1號" oninput="updateAllSteps()">
+      </div>
+      <div class="field-group">
+        <label for="inpHospital">主辦醫院 / 目標醫院</label>
+        <input type="text" id="inpHospital" value="三軍總醫院" oninput="updateAllSteps()">
+      </div>
+      <div class="field-group">
+        <label for="inpDoctor">受聘外部專家 (醫師姓名)</label>
+        <input type="text" id="inpDoctor" value="廖國秀" oninput="updateAllSteps()">
+      </div>
+      <div class="field-group">
+        <label for="inpDept">醫師專科 / 部門</label>
+        <input type="text" id="inpDept" value="一般外科 / 乳房外科" oninput="updateAllSteps()">
+      </div>
+      <div class="field-group">
+        <label for="inpTopic">演講主題 (Topic)</label>
+        <input type="text" id="inpTopic" value="KISQALI Does it Again: A Moment for OS in NATALEE" oninput="updateAllSteps()">
+      </div>
+      <div class="field-group">
+        <label for="inpMinutes">演講分鐘數 (Minutes)</label>
+        <input type="number" id="inpMinutes" value="40" min="10" max="240" oninput="updateAllSteps()">
+      </div>
+      <div class="field-group">
+        <label for="inpPrepMinutes">簡報準備分鐘數 (Prep Minutes)</label>
+        <input type="number" id="inpPrepMinutes" value="30" min="0" max="120" oninput="updateAllSteps()">
+      </div>
+      <div class="field-group">
+        <label for="inpAttendees">預計全場與會人數 (含同仁與醫師)</label>
+        <input type="number" id="inpAttendees" value="10" min="2" max="100" oninput="updateAllSteps()">
+      </div>
+    </div>
+
+    <!-- 摺疊：整段文字智慧貼上解析 -->
+    <details class="text-parser-box">
+      <summary>📋 或直接貼上整段 Agenda 文字讓小助理智慧解析 ▾</summary>
+      <div style="margin-top: 0.65rem;">
+        <textarea id="rawAgendaText" rows="4" style="width: 100%; font: inherit; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 6px;" placeholder="在此直接貼上海報文字或 Word 議程，例如：&#10;三總乳癌討論會&#10;時間：2026年11月24日 18:30-20:30&#10;地點：Wilson Park 威爾森公園餐廳&#10;講者：廖國秀醫師 三軍總醫院&#10;題目：KISQALI Does it Again: A Moment for OS in NATALEE"></textarea>
+        <div class="parser-actions">
+          <button type="button" class="btn-parse" onclick="parseRawAgenda()">⚡ 智慧帶入各欄位</button>
+          <span id="parseHint" style="font-size: 0.85rem; color: #64748b; align-self: center;"></span>
+        </div>
+      </div>
+    </details>
+  </div>
+</div>
+
+<div class="layout">
+  <!-- 側邊導航目錄 -->
+  <nav aria-label="流程目錄">
+    <h2>流程目錄</h2>
+    <div>
+      <a href="#create">1. 建立申請</a>
+      <a href="#fmv">2. 登錄外部專家與酬金</a>
+      <a href="#ack">3. 確認活動主責與聲明</a>
+      <a href="#activity">4. 活動資料與議程</a>
+      <a href="#experts">5. 專家與聘請方式</a>
+      <a href="#venue">6. 活動形式與場地</a>
+      <a href="#financial">7. 餐旅費與酬金總額</a>
+      <a href="#people">8. 外部與會者</a>
+      <a href="#assessment">9. 活動評估與標準合約</a>
+      <a href="#review">10. 外部專家事前評估</a>
+      <a href="#mitigation">11. 風險緩解措施</a>
+      <a href="#docs">12. 檢查議程與附件</a>
+      <a href="#submit">13. 核對、送審與查詢</a>
+      <a href="#troubleshoot">14. 紅字與卡關排除</a>
+    </div>
+  </nav>
+
+  <!-- 主要內容區 -->
+  <main>
+    <div class="controls">
+      <label for="search">搜尋欄位、關鍵字或錯誤訊息</label>
+      <input id="search" type="search" placeholder="例如 FMV、交通時間、not an integer、Wilson Park">
+      <div class="buttons">
+        <button id="expand" class="btn-ctrl">全部展開</button>
+        <button id="collapse" class="btn-ctrl">全部收合</button>
+        <button id="print" class="btn-ctrl">列印 / 另存 PDF</button>
+      </div>
+      <p id="status" role="status"></p>
+    </div>
+
+    <!-- Step 01 -->
+    <section id="create">
+      <details open>
+        <summary>
+          <span class="num">01</span>
+          <span>
+            <strong>建立申請</strong>
+            <small>New Request · General Information</small>
+          </span>
+        </summary>
+        <div class="body">
+          <dl>
+            <dt>Create Request</dt>
+            <dd>在 BeSure II 首頁點擊 <b>Create Request</b>。系統生成申請編號後，日後可隨時在 Requests 頁籤找到草稿。</dd>
+
+            <dt>Activity Title (活動名稱)</dt>
+            <dd>
+              <div class="dynamic-copy-box highlight">
+                <div class="dynamic-label">
+                  <span>建議填入之活動名稱 (中英文)</span>
+                  <button type="button" class="btn-copy-dynamic" data-target="boxEventTitle">📋 一鍵複製</button>
+                </div>
+                <div class="dynamic-content" id="boxEventTitle"></div>
+              </div>
+            </dd>
+
+            <dt>Choose Activity (活動類別)</dt>
+            <dd>點選下拉選單：<span class="choice-pill">Speaker Meeting</span> 或 <span class="choice-pill-info">Hospital Scientific Meeting / Round Table</span>。<br><small class="text-muted">（⚠️ 切勿選成 Advisory Board，否則會觸發全球高階醫學審批）</small></dd>
+
+            <dt>Organizational Unit / Requester</dt>
+            <dd>確認為 <span class="choice-pill">Taiwan</span> 與自己的申請員工編號。</dd>
+
+            <dt>Who is the Activity Owner? (活動負責人)</dt>
+            <dd>自己負責請點選：<span class="choice-pill">Myself</span>；Activity Owner’s Department 核對為 <span class="choice-pill">Sales</span>。</dd>
+
+            <dt>Estimated Total Cost Currency</dt>
+            <dd>點選：<span class="choice-pill">TWD</span> (新台幣)。</dd>
+          </dl>
+          <label class="done"><input type="checkbox"> 標記這一步已核對完成</label>
+        </div>
+      </details>
+    </section>
+
+    <!-- Step 02 -->
+    <section id="fmv">
+      <details open>
+        <summary>
+          <span class="num">02</span>
+          <span>
+            <strong>登錄外部專家與酬金</strong>
+            <small>Fair Market Value · Add New Engagement</small>
+          </span>
+        </summary>
+        <div class="body">
+          <dl>
+            <dt>＋ Add New Engagement (新增受聘專家)</dt>
+            <dd>在 Fair Market Value 區塊點擊藍色 <b>＋ Add New Engagement</b> 按鈕。</dd>
+
+            <dt>Engagement Type / Country / HCP Tier</dt>
+            <dd>
+              Engagement Type 選 <span class="choice-pill">HCP</span>，Country 選 <span class="choice-pill">Taiwan</span>。<br>
+              HCP Tier 依醫師資歷選擇：<span class="choice-pill">Specialist: Tier 1</span>（參考費率 TWD 5,000 / hr）。
+            </dd>
+
+            <dt>HCP identified yet? (是否已知人選)</dt>
+            <dd>
+              點選：<span class="choice-pill">Yes</span>。<br>
+              在彈出的搜尋列輸入：<b id="docSearchName">廖國秀</b>，核對所屬醫院為 <b id="docSearchHospital">三軍總醫院</b>，勾選並點擊名單旁的 <b>SAVE</b>。
+            </dd>
+
+            <dt>Service Time & Preparation Time (工時填寫 - 系統自動計算)</dt>
+            <dd>
+              <div class="dynamic-copy-box">
+                <div class="dynamic-label">
+                  <span>本次議程工時拆解建議</span>
+                </div>
+                <div class="dynamic-content" id="boxTimeBreakdown"></div>
+              </div>
+            </dd>
+
+            <dt>Travel Time (交通時間 - 地雷防卡關！)</dt>
+            <dd>
+              <span class="choice-pill-warning">⚠️ 填寫 00 Hours 00 Minutes</span><br>
+              <small class="text-muted">若系統顯示交通時間上限為 0h 0m，請直接填 00/00，避免觸發「Time for engagement cannot exceed 0h 0m」紅字！</small>
+            </dd>
+
+            <dt>Rationale for selection of the External Expert (專家遴選理由 - 必填)</dt>
+            <dd>
+              <div class="dynamic-copy-box highlight">
+                <div class="dynamic-label">
+                  <span>合規遴選理由 (已依本次醫師與主題客製)</span>
+                  <button type="button" class="btn-copy-dynamic" data-target="boxDocRationale">📋 一鍵複製</button>
+                </div>
+                <div class="dynamic-content" id="boxDocRationale"></div>
+              </div>
+            </dd>
+          </dl>
+          <label class="done"><input type="checkbox"> 標記這一步已核對完成</label>
+        </div>
+      </details>
+    </section>
+
+    <!-- Step 03 -->
+    <section id="ack">
+      <details>
+        <summary>
+          <span class="num">03</span>
+          <span>
+            <strong>確認活動主責與聲明</strong>
+            <small>Acknowledgement</small>
+          </span>
+        </summary>
+        <div class="body">
+          <dl>
+            <dt>Will the event be co-owned by other Novartis functions?</dt>
+            <dd>
+              點選：<span class="choice-pill">No</span><br>
+              <small class="text-muted">（Sales 單獨主辦請選 No。若選 Yes 會將 Medical 列為共同主辦並要求更冗長的審查流程）</small>
+            </dd>
+
+            <dt>Novartis Events must… (合規聲明確認)</dt>
+            <dd>閱讀並確認公司政策宣告：活動具備正當醫療科學目的、至少一位諾華同仁出席、向參與者明確揭露諾華為主辦方。</dd>
+          </dl>
+          <label class="done"><input type="checkbox"> 標記這一步已核對完成</label>
+        </div>
+      </details>
+    </section>
+
+    <!-- Step 04 -->
+    <section id="activity">
+      <details open>
+        <summary>
+          <span class="num">04</span>
+          <span>
+            <strong>活動資料、議程與擬聘人數</strong>
+            <small>Activity Details</small>
+          </span>
+        </summary>
+        <div class="body">
+          <dl>
+            <dt>Upload agenda (上傳議程)</dt>
+            <dd>點擊 <b>UPLOAD</b> 或藍色 <b>＋</b>，上傳最新版議程圖檔或 PDF。請確認議程上已印有諾華合規文字（未受邀同行者不得參加）。</dd>
+
+            <dt>How many External experts will be engaged?</dt>
+            <dd>整場聘請專業講者/主席人數請填：<span class="choice-pill">1</span>（半形數字）。</dd>
+
+            <dt>Do you know already external experts suggested to be engaged?</dt>
+            <dd>點選：<span class="choice-pill">Yes</span> ➡️ 類別選 <span class="choice-pill">Healthcare Professionals (HCP)</span>。</dd>
+          </dl>
+          <label class="done"><input type="checkbox"> 標記這一步已核對完成</label>
+        </div>
+      </details>
+    </section>
+
+    <!-- Step 05 -->
+    <section id="experts">
+      <details open>
+        <summary>
+          <span class="num">05</span>
+          <span>
+            <strong>本次已選專家與聘請方式</strong>
+            <small>External Expert Questions</small>
+          </span>
+        </summary>
+        <div class="body">
+          <dl>
+            <dt>Total number of External Experts selected in this submission</dt>
+            <dd>填入：<span class="choice-pill">1</span>（半形數字）。</dd>
+
+            <dt>Will any External Experts be engaged through a Third Party?</dt>
+            <dd>點選：<span class="choice-pill">No</span>（諾華直接聘請，未經公關/代理商第三方）。</dd>
+
+            <dt>Is the HCP engaged to speak within their own institution? (是否在自己院內演講)</dt>
+            <dd>
+              <div id="boxInInstitutionTip"></div>
+            </dd>
+
+            <dt>Is any External Expert’s country of practice different?</dt>
+            <dd>點選：<span class="choice-pill">No</span>（醫師在台灣執業）。</dd>
+          </dl>
+          <label class="done"><input type="checkbox"> 標記這一步已核對完成</label>
+        </div>
+      </details>
+    </section>
+
+    <!-- Step 06 -->
+    <section id="venue">
+      <details open>
+        <summary>
+          <span class="num">06</span>
+          <span>
+            <strong>活動形式與場地</strong>
+            <small>Format and Venue</small>
+          </span>
+        </summary>
+        <div class="body">
+          <dl>
+            <dt>What is the format of event? (活動形式)</dt>
+            <dd>點選：<span class="choice-pill">In-person</span> 或 <span class="choice-pill">Face-to-face</span>。</dd>
+
+            <dt>Type of venue (場地類型)</dt>
+            <dd>
+              依地點選取：<span class="choice-pill" id="badgeVenueType">Restaurant</span>
+            </dd>
+
+            <dt>The detail of venue (場地詳細說明與合規理由 - 必填)</dt>
+            <dd>
+              <div class="dynamic-copy-box highlight">
+                <div class="dynamic-label">
+                  <span>場地合規理由 (已依本次地點自動生成)</span>
+                  <button type="button" class="btn-copy-dynamic" data-target="boxVenueDetail">📋 一鍵複製</button>
+                </div>
+                <div class="dynamic-content" id="boxVenueDetail"></div>
+              </div>
+            </dd>
+          </dl>
+          <label class="done"><input type="checkbox"> 標記這一步已核對完成</label>
+        </div>
+      </details>
+    </section>
+
+    <!-- Step 07 -->
+    <section id="financial">
+      <details open>
+        <summary>
+          <span class="num">07</span>
+          <span>
+            <strong>餐旅費、酬金總額與報價單</strong>
+            <small>Financials</small>
+          </span>
+        </summary>
+        <div class="body">
+          <dl>
+            <dt>Meals and Refreshments limits (餐費上限規範)</dt>
+            <dd>
+              台灣諾華餐費標準：上限 <b>NT$ 3,500／人／日</b>（含稅及服務費）。<br>
+              以本次預計 <b id="finAttendeeCount">10</b> 人為例，全場合規餐費上限為：<b id="finMealLimit">NT$ 35,000</b>。
+            </dd>
+
+            <dt>External experts honoraria (total costs - 講師總酬金)</dt>
+            <dd>
+              填入半形純數字：<span class="choice-pill" id="finHonorariaNum">5000</span><br>
+              <small class="text-muted">（⚠️ 請勿輸入全形數字或逗號，必須與 FMV Total Cost 保持一致）</small>
+            </dd>
+
+            <dt>Comments on Financials (餐飲費用說明)</dt>
+            <dd>
+              <div class="dynamic-copy-box highlight">
+                <div class="dynamic-label">
+                  <span>餐飲與預算說明範例</span>
+                  <button type="button" class="btn-copy-dynamic" data-target="boxFinComments">📋 一鍵複製</button>
+                </div>
+                <div class="dynamic-content" id="boxFinComments"></div>
+              </div>
+            </dd>
+
+            <dt>Upload vendor quotation (報價單上傳)</dt>
+            <dd>若餐廳有提供菜單報價單，請於此處上傳；若無則依公司規定處理。</dd>
+          </dl>
+          <label class="done"><input type="checkbox"> 標記這一步已核對完成</label>
+        </div>
+      </details>
+    </section>
+
+    <!-- Step 08 -->
+    <section id="people">
+      <details open>
+        <summary>
+          <span class="num">08</span>
+          <span>
+            <strong>外部與會者與跨國邀請</strong>
+            <small>Participants and Attendees</small>
+          </span>
+        </summary>
+        <div class="body">
+          <dl>
+            <dt>Select type of external stakeholders and audience</dt>
+            <dd>點選：<span class="choice-pill">Healthcare Professionals (HCP)</span>。</dd>
+
+            <dt>Describe external stakeholders and audience (與會者對象描述)</dt>
+            <dd>
+              <div class="dynamic-copy-box highlight">
+                <div class="dynamic-label">
+                  <span>與會者客製描述</span>
+                  <button type="button" class="btn-copy-dynamic" data-target="boxAudience">📋 一鍵複製</button>
+                </div>
+                <div class="dynamic-content" id="boxAudience"></div>
+              </div>
+            </dd>
+
+            <dt>Is it planned to invite any HCPs from outside their country?</dt>
+            <dd>點選：<span class="choice-pill">No</span>（無跨國邀請）。</dd>
+          </dl>
+          <label class="done"><input type="checkbox"> 標記這一步已核對完成</label>
+        </div>
+      </details>
+    </section>
+
+    <!-- Step 09 -->
+    <section id="assessment">
+      <details>
+        <summary>
+          <span class="num">09</span>
+          <span>
+            <strong>確認活動評估與標準合約</strong>
+            <small>Activity Assessment</small>
+          </span>
+        </summary>
+        <div class="body">
+          <dl>
+            <dt>Assess to ensure…</dt>
+            <dd>勾選確認已檢視醫學/科學內容品質，確保符合臨床適切性。</dd>
+
+            <dt>Adverse event reporting (不良事件通報聲明)</dt>
+            <dd>知悉若活動中獲悉疑似藥物不良反應，將依公司法規時限通報。</dd>
+
+            <dt>Confirm that you will be using a standard contract template…</dt>
+            <dd>點選：<span class="choice-pill">Yes</span>（確認採用諾華標準醫師委聘合約範本）。</dd>
+          </dl>
+          <label class="done"><input type="checkbox"> 標記這一步已核對完成</label>
+        </div>
+      </details>
+    </section>
+
+    <!-- Step 10 -->
+    <section id="review">
+      <details>
+        <summary>
+          <span class="num">10</span>
+          <span>
+            <strong>外部專家事前評估</strong>
+            <small>Expert Assessment</small>
+          </span>
+        </summary>
+        <div class="body">
+          <dl>
+            <dt>Were the HCPs pre-assessed by the Medical function?</dt>
+            <dd>
+              依實況點選：<span class="choice-pill">Yes</span>（若醫學部已預先評估該醫師）或 <span class="choice-pill-warning">No</span>。<br>
+              <small class="text-muted">若不確定，可先點 Save as Draft 向主管或 Medical Advisor 確認。</small>
+            </dd>
+          </dl>
+          <label class="done"><input type="checkbox"> 標記這一步已核對完成</label>
+        </div>
+      </details>
+    </section>
+
+    <!-- Step 11 -->
+    <section id="mitigation">
+      <details>
+        <summary>
+          <span class="num">11</span>
+          <span>
+            <strong>風險緩解措施</strong>
+            <small>Mitigation Actions</small>
+          </span>
+        </summary>
+        <div class="body">
+          <dl>
+            <dt>Mitigation actions plan (if necessary)</dt>
+            <dd>
+              若前面各項評估皆合規且無異常，此欄可<span class="choice-pill-info">直接留空</span>，按 <b>Next</b> 進入下一步。
+            </dd>
+          </dl>
+          <label class="done"><input type="checkbox"> 標記這一步已核對完成</label>
+        </div>
+      </details>
+    </section>
+
+    <!-- Step 12 -->
+    <section id="docs">
+      <details>
+        <summary>
+          <span class="num">12</span>
+          <span>
+            <strong>檢查議程及補充附件</strong>
+            <small>Request Documents</small>
+          </span>
+        </summary>
+        <div class="body">
+          <dl>
+            <dt>Mandatory Documents</dt>
+            <dd>確認已上傳之 Agenda 檔案列在清單中，Purpose 顯示為 <code>Upload agenda</code>。</dd>
+
+            <dt>Additional Documents</dt>
+            <dd>如有場地報價單或其他佐證，點擊 <code>Add Additional Documents</code> 補上。</dd>
+          </dl>
+          <label class="done"><input type="checkbox"> 標記這一步已核對完成</label>
+        </div>
+      </details>
+    </section>
+
+    <!-- Step 13 -->
+    <section id="submit">
+      <details open>
+        <summary>
+          <span class="num">13</span>
+          <span>
+            <strong>核對、送審與查詢</strong>
+            <small>Medical Risk Expert · Submit Request</small>
+          </span>
+        </summary>
+        <div class="body">
+          <dl>
+            <dt>Medical Risk Expert (醫學審查人 - 必填)</dt>
+            <dd>從 <b>Select</b> 下拉選單中指派公司分派的 Medical Advisor（醫學部審查人）。</dd>
+
+            <dt>Line Manager Approval / Comment</dt>
+            <dd>核對系統顯示之直屬業務主管姓名；Comment 可選填補充訊息。</dd>
+
+            <dt>Export Summary PDF</dt>
+            <dd>點擊 <code>Click here to go to request summary and export PDF</code> 留存完整申請表備份。</dd>
+
+            <dt>Submit Request</dt>
+            <dd>確認無誤後點擊 <b>Submit Request</b> 送出！系統將自動觸發跨部門電子簽核。</dd>
+          </dl>
+          <label class="done"><input type="checkbox"> 標記這一步已核對完成</label>
+        </div>
+      </details>
+    </section>
+
+    <!-- Step 14 -->
+    <section id="troubleshoot">
+      <details open>
+        <summary>
+          <span class="num">14</span>
+          <span>
+            <strong>紅字與常見卡關排除</strong>
+            <small>Troubleshooting</small>
+          </span>
+        </summary>
+        <div class="body">
+          <dl>
+            <dt>❌ 錯誤 1：The value provided is not an integer</dt>
+            <dd>
+              <b>原因</b>：輸入法在中文狀態下輸入了全形數字（如 <code>１</code>、<code>５０００</code>）。<br>
+              <b>解法</b>：切換至英文輸入法 (ENG)，重新輸入半形純數字 <code>1</code> 或 <code>5000</code>，按 Tab 離開欄位。
+            </dd>
+
+            <dt>❌ 錯誤 2：Time for engagement cannot exceed 0h 0m</dt>
+            <dd>
+              <b>原因</b>：系統規則設定該場地或等級之交通時間上限為 0 小時 0 分鐘。<br>
+              <b>解法</b>：將 Travel Time 欄位改為 <code>00</code> Hours <code>00</code> Minutes，點 Save 即恢復正常。
+            </dd>
+
+            <dt>❌ 錯誤 3：金額不一致 (Financial mismatch)</dt>
+            <dd>
+              <b>檢查</b>：核對 <b>FMV Total Cost</b>（工時 × 費率）與 <b>Financials</b> 中的 <code>External experts honoraria</code> 是否完全吻合。
+            </dd>
+          </dl>
+        </div>
+      </details>
+    </section>
+  </main>
+</div>
+
 <script>
+// 預設資料庫範本
+const PRESETS = {
+  tsgh_1124: {
+    name: "三總乳癌討論會 - From Shared Decision to Long-Term Confidence",
+    date: "2026年11月24日 (二)",
+    time: "18:30-20:30",
+    venue: "Wilson Park 威爾森公園餐廳",
+    venueAddress: "台北市內湖區民權東路六段125之1號",
+    hospital: "三軍總醫院",
+    doctor: "廖國秀",
+    dept: "一般外科 / 乳房外科",
+    topic: "KISQALI Does it Again: A Moment for OS in NATALEE",
+    minutes: 40,
+    prepMinutes: 30,
+    attendees: 10
+  },
+  vgh_sample: {
+    name: "北榮乳癌醫療團隊學術討論會 - Kisqali Adjuvant Evidence",
+    date: "2026年12月10日 (四)",
+    time: "12:00-13:30",
+    venue: "台北榮總 中正樓 6樓 討論室",
+    venueAddress: "台北市北投區石牌路二段201號",
+    hospital: "台北榮民總醫院",
+    doctor: "曾令民",
+    dept: "乳房醫學中心",
+    topic: "Optimizing Adjuvant CDK4/6i Therapy: Clinical Insights from NATALEE",
+    minutes: 50,
+    prepMinutes: 40,
+    attendees: 12
+  },
+  cgh_sample: {
+    name: "國泰乳癌臨床實證研討會 - Early Breast Cancer Updates",
+    date: "2026年12月18日 (五)",
+    time: "18:30-20:30",
+    venue: "隨意鳥地方 101 觀景餐廳",
+    venueAddress: "台北市信義區信義路五段7號85樓",
+    hospital: "國泰綜合醫院",
+    doctor: "蔡愛真",
+    dept: "乳房外科",
+    topic: "Translating OS Data into Daily Practice for HR+/HER2- Patients",
+    minutes: 45,
+    prepMinutes: 30,
+    attendees: 8
+  }
+};
+
+function loadPreset(key) {
+  const p = PRESETS[key];
+  if (!p) return;
+  document.getElementById("inpEventName").value = p.name;
+  document.getElementById("inpDate").value = p.date;
+  document.getElementById("inpTime").value = p.time;
+  document.getElementById("inpVenue").value = p.venue;
+  document.getElementById("inpVenueAddress").value = p.venueAddress;
+  document.getElementById("inpHospital").value = p.hospital;
+  document.getElementById("inpDoctor").value = p.doctor;
+  document.getElementById("inpDept").value = p.dept;
+  document.getElementById("inpTopic").value = p.topic;
+  document.getElementById("inpMinutes").value = p.minutes;
+  document.getElementById("inpPrepMinutes").value = p.prepMinutes;
+  document.getElementById("inpAttendees").value = p.attendees;
+  updateAllSteps();
+}
+
+// 智慧文字分析
+function parseRawAgenda() {
+  const txt = document.getElementById("rawAgendaText").value;
+  const hint = document.getElementById("parseHint");
+  if (!txt.trim()) {
+    hint.textContent = "請先貼上文字！";
+    return;
+  }
+
+  // 嘗試解析活動名稱 (第一行或包含討論會/研討會)
+  const lines = txt.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+  if (lines.length > 0) {
+    document.getElementById("inpEventName").value = lines[0];
+  }
+
+  // 日期解析
+  const dateMatch = txt.match(/202\d[年\/\-\.]\d{1,2}[月\/\-\.]\d{1,2}[日號]?(\s*\([一二三四五六日]\))?/);
+  if (dateMatch) document.getElementById("inpDate").value = dateMatch[0];
+
+  // 時間解析
+  const timeMatch = txt.match(/\d{1,2}:\d{2}\s*[\-~–]\s*\d{1,2}:\d{2}/);
+  if (timeMatch) document.getElementById("inpTime").value = timeMatch[0];
+
+  // 地點解析
+  const venueMatch = txt.match(/地點[:：]?\s*([^\r\n（(]+)/);
+  if (venueMatch) {
+    document.getElementById("inpVenue").value = venueMatch[1].trim();
+  }
+  const addrMatch = txt.match(/[（(]([台北新北台中台南高雄市縣][^）)]+)[）)]/);
+  if (addrMatch) {
+    document.getElementById("inpVenueAddress").value = addrMatch[1].trim();
+  }
+
+  // 醫師解析
+  const docMatch = txt.match(/([^\s]+)\s*醫師/);
+  if (docMatch) {
+    document.getElementById("inpDoctor").value = docMatch[1].replace(/講者[:：]/, '').trim();
+  }
+
+  // 題目解析
+  const topicMatch = txt.match(/(KISQALI[^\r\n]+|Optimizing[^\r\n]+|NATALEE[^\r\n]+|Translating[^\r\n]+)/i);
+  if (topicMatch) {
+    document.getElementById("inpTopic").value = topicMatch[1].trim();
+  }
+
+  hint.textContent = "✅ 已成功智慧辨識並填入！";
+  setTimeout(() => hint.textContent = "", 3000);
+  updateAllSteps();
+}
+
+// 動態更新全頁 14 個步驟中的所有變數
+function updateAllSteps() {
+  const eventName = document.getElementById("inpEventName").value.trim();
+  const date = document.getElementById("inpDate").value.trim();
+  const time = document.getElementById("inpTime").value.trim();
+  const venue = document.getElementById("inpVenue").value.trim();
+  const venueAddress = document.getElementById("inpVenueAddress").value.trim();
+  const hospital = document.getElementById("inpHospital").value.trim();
+  const doctor = document.getElementById("inpDoctor").value.trim();
+  const dept = document.getElementById("inpDept").value.trim();
+  const topic = document.getElementById("inpTopic").value.trim();
+  const minutes = parseInt(document.getElementById("inpMinutes").value) || 40;
+  const prepMinutes = parseInt(document.getElementById("inpPrepMinutes").value) || 30;
+  const attendees = parseInt(document.getElementById("inpAttendees").value) || 10;
+
+  // 工時與費用試算 (以 Tier 1: 5000/hr 為基準)
+  const serviceHoursDecimal = (minutes / 60).toFixed(2);
+  const prepHoursDecimal = (prepMinutes / 60).toFixed(2);
+  const totalHoursDecimal = ((minutes + prepMinutes) / 60).toFixed(2);
+  const hourlyRate = 5000;
+  const totalHonoraria = Math.round(((minutes + prepMinutes) / 60) * hourlyRate);
+
+  // 1. Step 1: 活動名稱
+  document.getElementById("boxEventTitle").textContent = eventName;
+
+  // 2. Step 2: 醫師搜尋與時數拆解
+  document.getElementById("docSearchName").textContent = doctor;
+  document.getElementById("docSearchHospital").textContent = hospital;
+  document.getElementById("boxTimeBreakdown").innerHTML = `
+    • <b>演講時數 (Service Time)</b>：00 Hours ${minutes} Minutes (約 ${serviceHoursDecimal} hr)<br>
+    • <b>簡報準備時數 (Preparation Time)</b>：00 Hours ${prepMinutes} Minutes (約 ${prepHoursDecimal} hr)<br>
+    • <b>交通時間 (Travel Time)</b>：00 Hours 00 Minutes (防紅字設定)<br>
+    • <b>可計費總時數</b>：約 ${totalHoursDecimal} 小時 (以 Tier 1 試算總酬金約 NT$ ${totalHonoraria.toLocaleString()})
+  `;
+
+  // 專家遴選理由
+  document.getElementById("boxDocRationale").textContent = 
+    `受邀專家${doctor}醫師具備${hospital}${dept}豐富之臨床診療實務經驗，其專業領域與本次研討會主題「${topic}」高度契合。特別邀請${doctor}醫師擔任演講講者，針對最新臨床試驗數據（NATALEE OS）與臨床照護經驗進行專業學術分享與交流。`;
+
+  // 3. Step 5: 是否在自己院內演講判斷
+  const isHospitalInVenue = venue.includes(hospital) || venue.includes("醫院") || venue.includes("院區") || venue.includes("醫學中心");
+  const inInstTip = document.getElementById("boxInInstitutionTip");
+  if (isHospitalInVenue) {
+    document.getElementById("badgeVenueType").textContent = "Hospital / Institution";
+    inInstTip.innerHTML = `
+      點選：<span class="choice-pill">Yes</span><br>
+      <small class="text-muted">（因活動地點在「${venue}」，屬於醫師所任職之院內會議室）</small>
+    `;
+  } else {
+    document.getElementById("badgeVenueType").textContent = "Restaurant";
+    inInstTip.innerHTML = `
+      點選：<span class="choice-pill">No</span><br>
+      <small class="text-muted">（因活動地點在院外餐廳「${venue}」，非醫師所屬院內設施）</small>
+    `;
+  }
+
+  // 4. Step 6: 場地說明
+  document.getElementById("boxVenueDetail").textContent = 
+    `本次學術討論會議於「${venue}」（地址：${venueAddress}）舉行。場地便於${hospital}預計與會醫師抵達，現場具備獨立且安靜之討論空間，適合進行專業醫學簡報投影與臨床深度交流。場地純屬一般商務餐飲，無任何娛樂、休閒、觀光或渡假設施，完全符合諾華場地合規標準與餐飲招待指引。`;
+
+  // 5. Step 7: 預算與餐費試算
+  document.getElementById("finAttendeeCount").textContent = attendees;
+  const maxMealBudget = attendees * 3500;
+  document.getElementById("finMealLimit").textContent = `NT$ ${maxMealBudget.toLocaleString()}`;
+  document.getElementById("finHonorariaNum").textContent = totalHonoraria;
+  
+  const estMealPerHead = 1500;
+  const totalMealCost = attendees * estMealPerHead;
+  const totalBudget = totalMealCost + totalHonoraria;
+  document.getElementById("boxFinComments").textContent = 
+    `預計於${venue}舉行商務討論餐會，預計與會人數共 ${attendees} 人（含外部醫療專業人員與諾華內部人員）。餐費預估每人 NT$ ${estMealPerHead.toLocaleString()}，全場餐飲總預估約 NT$ ${totalMealCost.toLocaleString()}（遠低於公司上限 NT$ 3,500/人/日）；另編列外部專家講者酬金 NT$ ${totalHonoraria.toLocaleString()}，活動預估總預算約為 NT$ ${totalBudget.toLocaleString()}。`;
+
+  // 6. Step 8: 與會者描述
+  document.getElementById("boxAudience").textContent = 
+    `預計邀請${hospital}${dept}及相關乳癌多專科醫療團隊醫師參與，旨在針對 HR+/HER2- 早期乳癌之最新整體存活期（OS）臨床實證、高復發風險病患篩選準則，以及病友支持照護計畫（PSP）進行深入之跨科別臨床經驗交流。`;
+}
+
+// 快速複製按鈕監聽
+document.addEventListener("click", async (e) => {
+  if (e.target && e.target.classList.contains("btn-copy-dynamic")) {
+    const btn = e.target;
+    const targetId = btn.getAttribute("data-target");
+    const el = document.getElementById(targetId);
+    if (!el) return;
+    const textToCopy = el.textContent || el.innerText;
+    
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      const originalText = btn.innerHTML;
+      btn.innerHTML = "✅ 已複製！";
+      btn.classList.add("copied");
+      setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.classList.remove("copied");
+      }, 2000);
+    } catch (err) {
+      // 容錯選取
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      btn.innerHTML = "已選取，請按 Ctrl+C";
+    }
+  }
+});
+
+// 折疊與搜尋系統
 const sections = [...document.querySelectorAll("main section")];
 const search = document.querySelector("#search");
-const status = document.querySelector("#status");
+const statusEl = document.querySelector("#status");
 const checks = [...document.querySelectorAll(".done input")];
+
 function updateStatus(message = "") {
   const visible = sections.filter(section => !section.hidden).length;
   const completed = checks.filter(check => check.checked).length;
-  status.textContent = (message ? message + " · " : "") + "顯示 " + visible + " 個章節 · 已核對 " + completed + " / " + checks.length + " 步";
+  statusEl.textContent = (message ? message + " · " : "") + "顯示 " + visible + " 個步驟 · 已核對 " + completed + " / " + checks.length + " 步";
 }
+
 search.addEventListener("input", () => {
   const query = search.value.trim().toLowerCase();
   sections.forEach(section => {
@@ -30,6 +1271,7 @@ search.addEventListener("input", () => {
   });
   updateStatus();
 });
+
 document.querySelectorAll("nav a").forEach(link => link.addEventListener("click", () => {
   const section = document.querySelector(link.hash);
   if (section.hidden) {
@@ -38,19 +1280,18 @@ document.querySelectorAll("nav a").forEach(link => link.addEventListener("click"
   }
   section.querySelector("details").open = true;
 }));
-document.querySelector("#expand").onclick = () => sections.forEach(section => {if (!section.hidden) section.querySelector("details").open = true;});
-document.querySelector("#collapse").onclick = () => sections.forEach(section => {section.querySelector("details").open = false;});
+
+document.querySelector("#expand").onclick = () => sections.forEach(section => { if (!section.hidden) section.querySelector("details").open = true; });
+document.querySelector("#collapse").onclick = () => sections.forEach(section => { section.querySelector("details").open = false; });
 document.querySelector("#print").onclick = () => {
-  const previous = sections.map(section => [section.hidden, section.querySelector("details").open]);
-  sections.forEach(section => {section.hidden = false; section.querySelector("details").open = true;});
+  sections.forEach(section => { section.hidden = false; section.querySelector("details").open = true; });
   window.print();
-  sections.forEach((section, index) => {section.hidden = previous[index][0]; section.querySelector("details").open = previous[index][1];});
 };
 checks.forEach(check => check.addEventListener("change", () => updateStatus()));
-document.querySelectorAll(".copy").forEach(button => button.addEventListener("click", async () => {
-  const box = document.getElementById(button.dataset.copy);
-  try { await navigator.clipboard.writeText(box.value); button.textContent = "已複製"; }
-  catch { box.focus(); box.select(); button.textContent = "文字已選取，請按 Ctrl+C"; }
-}));
+
+// 初始啟動
+updateAllSteps();
 updateStatus();
-</script></html>
+</script>
+</body>
+</html>
