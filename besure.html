@@ -90,6 +90,14 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+  cursor: pointer !important;
+  user-select: none;
+}
+.launchpad-header h4:hover {
+  color: #0f766e;
+}
+button, .btn, .btn-launchpad-copy, [onclick], .choice-pill, summary {
+  cursor: pointer !important;
 }
 .copy-grid {
   display: grid;
@@ -471,10 +479,18 @@ dd {
   <!-- 🚀 第一層：最頂端【乳癌專案 · 一鍵複製極速發射台】 🚀 -->
   <div class="launchpad-card">
     <div class="launchpad-header">
-      <h4><i class="fa-solid fa-rocket text-success"></i>【乳癌專案 · 一鍵複製極速發射台】</h4>
-      <span class="badge bg-success-subtle text-success border border-success px-2 py-1">
-        所有在 BeSure 需打字的欄位都在這裡 · 點按鈕直接貼上！
-      </span>
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <h4 onclick="copyAllLaunchpadData(document.getElementById('btnCopyAllLaunchpad'))" title="點擊可一鍵複製發射台全部內容">
+          <i class="fa-solid fa-rocket text-success"></i>【乳癌專案 · 一鍵複製極速發射台】
+        </h4>
+        <span class="badge bg-success-subtle text-success border border-success px-2 py-1">
+          所有在 BeSure 需打字的欄位都在這裡 · 點下方按鈕直接貼上！
+        </span>
+      </div>
+      <!-- 🌟 超顯眼大按鈕：移上去必顯小手，點擊一鍵複製全部 🌟 -->
+      <button type="button" id="btnCopyAllLaunchpad" class="btn btn-success btn-lg fw-bold shadow-sm" onclick="copyAllLaunchpadData(this)" style="cursor: pointer !important; font-size: 1.05rem; padding: 10px 22px; border-radius: 12px; background-color: #16a34a; border: 2px solid #15803d; transition: all 0.2s;">
+        <i class="fa-solid fa-copy me-2"></i>🚀 點此【一鍵複製極速發射台】全部內容 (一次打包)
+      </button>
     </div>
 
     <div class="copy-grid">
@@ -1703,6 +1719,56 @@ function checkUrlHashData() {
     }
   } catch (err) {
     console.error("Hash sync error:", err);
+  }
+}
+
+
+// 🚀 一鍵複製極速發射台全部內容 (打包所有 6 大欄位)
+async function copyAllLaunchpadData(btn) {
+  const targetBtn = btn || document.getElementById('btnCopyAllLaunchpad');
+  const budgetNum = document.getElementById("displayTotalBudgetNumber") ? document.getElementById("displayTotalBudgetNumber").innerText.trim() : "5,000";
+  const title = document.getElementById("launchTitle") ? document.getElementById("launchTitle").innerText.trim() : "";
+  const need = document.getElementById("launchNeed") ? document.getElementById("launchNeed").innerText.trim() : "";
+  const docRationale = document.getElementById("launchDocRationale") ? document.getElementById("launchDocRationale").innerText.trim() : "";
+  const venue = document.getElementById("launchVenue") ? document.getElementById("launchVenue").innerText.trim() : "";
+  const fin = document.getElementById("launchFin") ? document.getElementById("launchFin").innerText.trim() : "";
+  const audience = document.getElementById("launchAudience") ? document.getElementById("launchAudience").innerText.trim() : "";
+
+  const allText = `【BeSure II 填表必備資料 · 發射台一鍵打包】
+--------------------------------------------
+【1. 預算金額 (Step 1)】：TWD ${budgetNum}
+【1-2. 財務合規說明 (Step 7)】：
+${fin}
+
+【2. 活動名稱 (Step 1)】：
+${title}
+
+【3. 活動目的與需求 (Step 4)】：
+${need}
+
+【4. 受聘專家遴選理由 (Step 4)】：
+${docRationale}
+
+【5. 場地詳細與合規說明 (Step 5)】：
+${venue}
+
+【6. 目標與會受眾說明 (Step 6)】：
+${audience}
+--------------------------------------------`;
+
+  try {
+    await navigator.clipboard.writeText(allText);
+    if (targetBtn) {
+      const origHtml = targetBtn.innerHTML;
+      targetBtn.innerHTML = `<i class="fa-solid fa-check"></i> ✅ 已成功複製發射台全部內容！`;
+      targetBtn.style.backgroundColor = '#0284c7';
+      setTimeout(() => {
+        targetBtn.innerHTML = origHtml;
+        targetBtn.style.backgroundColor = '#16a34a';
+      }, 3000);
+    }
+  } catch (err) {
+    prompt("請按 Ctrl+C 複製發射台全部內容：", allText);
   }
 }
 
