@@ -1823,6 +1823,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             s = s.replace(/\b[tT]\s*[-_]?\s*(?:3|三)\b|[tT]\s*[-_]?\s*(?:3|三)/gi, ' T3 ');
             s = s.replace(/\b[tT]\s*[-_]?\s*(?:2|二|兩|两)\b|[tT]\s*[-_]?\s*(?:2|二|兩|两)/gi, ' T2 ');
             s = s.replace(/\b[tT]\s*[-_]?\s*(?:1|一)\b|[tT]\s*[-_]?\s*(?:1|一)/gi, ' T1 ');
+            s = s.replace(/\b[tT]\s*[-_]?\s*(?:0|零)\b|[tT]\s*[-_]?\s*(?:0|零)/gi, ' T0 ');
 
             // 2. Normalize N Staging: N0, N1, N2, N3
             // Handles: N1, n1, N 1, N-1, N一, N E, NE, Ne, pN1, pN1a, N one
@@ -2197,6 +2198,14 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             } else {
                 const sm2 = raw.match(/(?<!淋巴[^\d]{0,5})(\d+(?:\.\d+)?)\s*(?:公分|cm)/i);
                 if (sm2) size = parseFloat(sm2[1]);
+            }
+
+            // TNM Shorthand mapping if explicit size not spoken
+            if (size === null) {
+                if (/\bt0\b/i.test(raw)) size = 0.0;
+                else if (/\bt1\b/i.test(raw)) size = 1.5;
+                else if (/\bt2\b/i.test(raw)) size = 2.4;
+                else if (/\bt3\b/i.test(raw)) size = 5.5;
             }
 
             let grade = null;
@@ -3129,9 +3138,14 @@ ${raw}`;
                 : (conditionTitle !== "");
 
             if (!isEbcEligible) {
-                const notEligibleReason = (nodesVal === 0)
-                    ? `病患腋下淋巴結無轉移 (0顆 / N0) 且腫瘤最大徑 ${sizeVal}cm (≦ 5cm)，依據台灣健保 9.72 第 4 點及官方 NATALEE 健保核准矩陣，T1N0 與 T2N0 明文排除給付！`
-                    : `病患數值（腫瘤 ${sizeVal}cm、淋巴結 ${nodesVal} 顆、Grade ${gradeVal}）未達 115/12/1 健保 4 大高復發門檻。`;
+                let notEligibleReason = "";
+                if (nodesVal === 0) {
+                    notEligibleReason = `病患腋下淋巴結無轉移 (0 顆 / N0) 且腫瘤最大徑 ${sizeVal}cm (≦ 5cm)，依據台灣健保 9.72 第 4 點與官方 NATALEE 矩陣，T1N0 與 T2N0 明文排除給付！`;
+                } else if (nodesVal >= 1 && nodesVal <= 3 && sizeVal <= 2.0 && gradeVal < 3) {
+                    notEligibleReason = `病患為 ${sizeVal === 0 ? 'T0N1' : 'T1N1'} (腫瘤 ≦ 2cm，淋巴 1-3 顆) 且細胞分化為 Grade ${gradeVal}，依據官方 NATALEE 矩陣：T0N1/T1N1 僅「Grade 3 高惡性度」才符合條件 III 給付！Grade 1 或 2 健保明文不給付！`;
+                } else {
+                    notEligibleReason = `病患數值（腫瘤 ${sizeVal}cm、淋巴結 ${nodesVal} 顆、Grade ${gradeVal}）未達 115/12/1 健保 4 大高復發門檻。`;
+                }
 
                 viewReasonEl.innerHTML = `
 <strong>【AI 健保防退件攔截警報 (未符健保 9.72 給付標準)】：</strong>
