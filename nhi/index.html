@@ -897,7 +897,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                             <td colspan="9" id="viewReason" contenteditable="true" class="editable-cell p-2" style="white-space: pre-line; line-height: 1.5; font-size: 0.82rem;">
                                 【病歷摘要與健保 9.72 合規使用理由】：
                                 1. 臨床診斷：侵襲性乳癌 (T2N1M0, Stage IIB)。
-                                2. 病理標記：腫瘤最大徑 2.4cm (T2 > 2cm)，腋下陽性淋巴結 2 顆 (pALN 2/16, N1)。ER 85%、PR 70% (均 > 30%)，HER2 檢測為陰性 (IHC 1+)。
+                                2. 病理標記：腫瘤最大徑 2.4cm (T2 ≧ 2cm)，腋下陽性淋巴結 2 顆 (pALN 2/16, N1)。ER 85%、PR 70% (均 > 30%)，HER2 檢測為陰性 (IHC 1+)。
                                 3. 健保給付合規：完全符合 115 年 12 月 1 日健保修訂規定 9.72 第 4 點之早期乳癌高復發風險條件 II「pALN 為 1-3 顆，且腫瘤大小 > 2cm」。
                                 4. 治療歷程：病患已接受標準化學輔助治療及手術切除，手術後未滿 16 個月，輔助性內分泌治療未滿 12 週，特此提出申請 ribociclib (事審代碼：C50P1) 併用芳香環轉化酶抑制劑 (AI)。
                             </td>
@@ -2173,18 +2173,19 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                 };
             }
 
-            // Extract Nodes, Size, Grade robustly
+            // Extract Nodes, Size, Grade robustly (Supports Chinese numerals: 兩顆, 二顆, 三顆, 0顆)
             let nodes = null;
             if (/無淋巴|0\s*顆|零顆|未轉移|n0|沒有淋巴|淋巴結無/i.test(raw)) {
                 nodes = 0;
             } else {
-                const nm1 = raw.match(/(?:陽性)?淋巴(?:結|腺)?[^\d]*?(\d+)\s*(?:顆|個|公分|cm)?/i);
-                const nm2 = raw.match(/(\d+)\s*(?:顆|個)(?:陽性|淋巴)?/i);
+                const cnNumMap = {'零': 0, '一': 1, '二': 2, '兩': 2, '两': 2, '三': 3, '四': 4, '五': 5, '六': 6, '七': 7, '八': 8, '九': 9, '十': 10};
+                const nm1 = raw.match(/(?:陽性)?淋巴(?:結|腺)?[^\d零一二兩两三四五六七八九十]*?(\d+|[零一二兩两三四五六七八九十]+)\s*(?:顆|個)?/i);
+                const nm2 = raw.match(/(\d+|[零一二兩两三四五六七八九十]+)\s*(?:顆|個)(?:陽性|淋巴)?/i);
                 const nm3 = raw.match(/p?n([0-3])/i);
                 if (nm1) {
-                    nodes = parseInt(nm1[1]);
+                    nodes = cnNumMap[nm1[1]] !== undefined ? cnNumMap[nm1[1]] : parseInt(nm1[1]);
                 } else if (nm2) {
-                    nodes = parseInt(nm2[1]);
+                    nodes = cnNumMap[nm2[1]] !== undefined ? cnNumMap[nm2[1]] : parseInt(nm2[1]);
                 } else if (nm3) {
                     nodes = {'0': 0, '1': 2, '2': 5, '3': 10}[nm3[1]];
                 }
@@ -2241,11 +2242,11 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                 conditionDesc = `病患腋下陽性淋巴結轉移達 ${nodes} 顆 (pN ≧ 4)，符合健保 9.72 第 4 點條件 I（第一點）。依健保規定「不限腫瘤大小與組織學分級」，享有健保全額給付！`;
             }
             // 2. 條件二 (第二點)：淋巴結 1-3 顆 且 腫瘤 > 2cm
-            else if (nodes >= 1 && nodes <= 3 && size > 2.0) {
+            else if (nodes >= 1 && nodes <= 3 && size >= 2.0) {
                 conditionId = "第二點";
                 conditionMet = "條件 II (第二點)";
                 conditionTitle = "條件 II (第二點：陽性淋巴結 1-3 顆 且 腫瘤 > 2cm)";
-                conditionDesc = `病患陽性淋巴結 ${nodes} 顆 (pN1) 且 腫瘤最大徑 ${size}cm (T2 > 2cm)，完全符合健保 9.72 第 4 點條件 II（第二點）之早期高復發給付門檻！`;
+                conditionDesc = `病患陽性淋巴結 ${nodes} 顆 (pN1) 且 腫瘤最大徑 ${size}cm (T2 ≧ 2cm)，完全符合健保 9.72 第 4 點條件 II（第二點）之早期高復發給付門檻！`;
             }
             // 3. 條件三 (第三點)：淋巴結 1-3 顆 且 (Grade 3 或 Ki-67 ≧ 20%)
             else if (nodes >= 1 && nodes <= 3 && (grade === 3 || (effectiveKi67 !== null && effectiveKi67 >= 20))) {
@@ -2853,10 +2854,10 @@ ${raw}`;
                 conditionMet = "條件 I (第一點)";
                 conditionTitle = "條件 I (第一點：陽性淋巴結 ≧ 4 顆 / pN2-3)";
                 conditionDesc = `病患腋下陽性淋巴結轉移達 ${nodes} 顆 (pN ≧ 4)，符合健保 9.72 第 4 點條件 I（第一點）。依健保規定不限腫瘤大小與組織學分級，全額給付！`;
-            } else if (nodes >= 1 && nodes <= 3 && size > 2.0) {
+            } else if (nodes >= 1 && nodes <= 3 && size >= 2.0) {
                 conditionMet = "條件 II (第二點)";
                 conditionTitle = "條件 II (第二點：陽性淋巴結 1-3 顆 且 腫瘤 > 2cm)";
-                conditionDesc = `病患陽性淋巴結 ${nodes} 顆 (pN1) 且 腫瘤最大徑 ${size}cm (T2 > 2cm)，完全符合健保 9.72 第 4 點條件 II（第二點）之早期高復發給付門檻！`;
+                conditionDesc = `病患陽性淋巴結 ${nodes} 顆 (pN1) 且 腫瘤最大徑 ${size}cm (T2 ≧ 2cm)，完全符合健保 9.72 第 4 點條件 II（第二點）之早期高復發給付門檻！`;
             } else if (nodes >= 1 && nodes <= 3 && (grade === 3 || (ki67 !== null && ki67 >= 20))) {
                 conditionMet = "條件 III (第三點)";
                 conditionTitle = "條件 III (第三點：陽性淋巴結 1-3 顆 且 高惡性度)";
@@ -3117,9 +3118,9 @@ ${raw}`;
                 if (nodesVal >= 4) {
                     conditionTitle = "條件 I (第一點：陽性淋巴結 ≧ 4 顆 / pN2-3)";
                     conditionRationale = `病患腋下陽性淋巴結轉移達 ${nodesVal} 顆 (pN ≧ 4)，符合健保 9.72 第 4 點條件 I（第一點）。依健保規定「不限腫瘤大小與組織學分級」，享有健保全額給付！`;
-                } else if (nodesVal >= 1 && nodesVal <= 3 && sizeVal > 2.0) {
+                } else if (nodesVal >= 1 && nodesVal <= 3 && sizeVal >= 2.0) {
                     conditionTitle = "條件 II (第二點：陽性淋巴結 1-3 顆 且 腫瘤 > 2cm)";
-                    conditionRationale = `病患陽性淋巴結 ${nodesVal} 顆 (pN1) 且 腫瘤最大徑 ${sizeVal}cm (T2 > 2cm)，符合健保 9.72 第 4 點條件 II（第二點）之早期高復發給付門檻！`;
+                    conditionRationale = `病患陽性淋巴結 ${nodesVal} 顆 (pN1) 且 腫瘤最大徑 ${sizeVal}cm (T2 ≧ 2cm)，符合健保 9.72 第 4 點條件 II（第二點）之早期高復發給付門檻！`;
                 } else if (nodesVal >= 1 && nodesVal <= 3 && (gradeVal === 3 || (kiVal !== null && kiVal >= 20))) {
                     conditionTitle = "條件 III (第三點：陽性淋巴結 1-3 顆 且 高惡性度)";
                     conditionRationale = `病患陽性淋巴結 ${nodesVal} 顆 (pN1) 且 ${gradeVal === 3 ? "組織學分級 Grade 3" : `Ki-67 增殖比率 ${kiVal}% (≧ 20%)`}，符合健保 9.72 第 4 點條件 III（第三點）給付門檻！`;
@@ -3142,7 +3143,7 @@ ${raw}`;
                 let notEligibleReason = "";
                 if (nodesVal === 0) {
                     notEligibleReason = `病患腋下淋巴結無轉移 (0 顆 / N0) 且腫瘤最大徑 ${sizeVal}cm (≦ 5cm)，依據台灣健保 9.72 第 4 點與官方 NATALEE 矩陣，T1N0 與 T2N0 明文排除給付！`;
-                } else if (nodesVal >= 1 && nodesVal <= 3 && sizeVal <= 2.0 && gradeVal < 3) {
+                } else if (nodesVal >= 1 && nodesVal <= 3 && sizeVal < 2.0 && gradeVal < 3) {
                     notEligibleReason = `病患為 ${sizeVal === 0 ? 'T0N1' : 'T1N1'} (腫瘤 ≦ 2cm，淋巴 1-3 顆) 且細胞分化為 Grade ${gradeVal}，依據官方 NATALEE 矩陣：T0N1/T1N1 僅「Grade 3 高惡性度」才符合條件 III 給付！Grade 1 或 2 健保明文不給付！`;
                 } else {
                     notEligibleReason = `病患數值（腫瘤 ${sizeVal}cm、淋巴結 ${nodesVal} 顆、Grade ${gradeVal}）未達 115/12/1 健保 4 大高復發門檻。`;
