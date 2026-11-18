@@ -425,11 +425,19 @@ dd {
         <strong class="text-primary d-block mb-1"><i class="fa-solid fa-user-doctor me-1"></i>受聘外部專家名單 (含 Speaker 講者與 Moderator 座長，每位 5,000 元)：</strong>
         <div id="sumExpertsChips" class="d-flex flex-wrap gap-2"></div>
       </div>
-      <!-- 📤 傳送至公司電腦免防火牆連結按鈕 -->
-      <div class="mt-3 pt-2 border-top d-flex flex-column flex-sm-row gap-2">
-        <button id="btnShareToPC" type="button" class="btn btn-outline-success fw-bold w-100 py-2 shadow-sm" onclick="generateAndCopyPCLink(this)">
-          <i class="fa-solid fa-laptop-medical me-1"></i> 📤 複製「傳送至公司電腦免防火牆連結」
+      <!-- 📤 傳送至公司電腦免防火牆連結與 Email 按鈕 -->
+      <div class="mt-3 pt-2 border-top">
+        <button id="btnOpenEmail" type="button" class="btn btn-primary fw-bold w-100 py-3 shadow-sm fs-5 mb-2" onclick="sendToCompanyEmail()">
+          <i class="fa-solid fa-envelope-open-text me-2"></i>📧 一鍵彈出 Gmail / 郵件（直接寄到公司信箱）
         </button>
+        <div class="d-flex flex-column flex-sm-row gap-2">
+          <button id="btnShareToPC" type="button" class="btn btn-outline-success fw-bold flex-grow-1 py-2 shadow-sm" onclick="generateAndCopyPCLink(this)">
+            <i class="fa-solid fa-copy me-1"></i>📋 複製免防火牆連結
+          </button>
+          <button id="btnNativeShare" type="button" class="btn btn-outline-primary fw-bold flex-grow-1 py-2 shadow-sm" onclick="shareViaNativeShare(this)">
+            <i class="fa-solid fa-share-nodes me-1"></i>📲 透過 LINE / Teams 分享
+          </button>
+        </div>
       </div>
       <div id="pcShareNotice" class="small text-success mt-2 p-2 bg-white rounded border border-success" style="display: none;"></div>
     </div>
@@ -487,10 +495,15 @@ dd {
           所有在 BeSure 需打字的欄位都在這裡 · 點下方按鈕直接貼上！
         </span>
       </div>
-      <!-- 🌟 超顯眼大按鈕：移上去必顯小手，點擊一鍵複製全部 🌟 -->
-      <button type="button" id="btnCopyAllLaunchpad" class="btn btn-success btn-lg fw-bold shadow-sm" onclick="copyAllLaunchpadData(this)" style="cursor: pointer !important; font-size: 1.05rem; padding: 10px 22px; border-radius: 12px; background-color: #16a34a; border: 2px solid #15803d; transition: all 0.2s;">
-        <i class="fa-solid fa-copy me-2"></i>🚀 點此【一鍵複製極速發射台】全部內容 (一次打包)
-      </button>
+      <!-- 🌟 超顯眼大按鈕群：移上去必顯小手 🌟 -->
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <button type="button" class="btn btn-primary fw-bold shadow-sm" onclick="sendToCompanyEmail()" style="cursor: pointer !important; font-size: 0.95rem; padding: 10px 18px; border-radius: 12px; background-color: #0284c7; border: 2px solid #0369a1;">
+          <i class="fa-solid fa-envelope-open-text me-1"></i>📧 彈出 Gmail 寄到公司信箱
+        </button>
+        <button type="button" id="btnCopyAllLaunchpad" class="btn btn-success fw-bold shadow-sm" onclick="copyAllLaunchpadData(this)" style="cursor: pointer !important; font-size: 0.95rem; padding: 10px 18px; border-radius: 12px; background-color: #16a34a; border: 2px solid #15803d; transition: all 0.2s;">
+          <i class="fa-solid fa-copy me-1"></i>🚀 一鍵打包複製全部內容
+        </button>
+      </div>
     </div>
 
     <div class="copy-grid">
@@ -1609,6 +1622,85 @@ document.addEventListener("click", async (e) => {
   }
 });
 
+
+
+function getPcSyncUrl() {
+  const data = {
+    eventName: document.getElementById("inpEventName") ? document.getElementById("inpEventName").value : "",
+    date: document.getElementById("inpDate") ? document.getElementById("inpDate").value : "",
+    time: document.getElementById("inpTime") ? document.getElementById("inpTime").value : "",
+    venue: document.getElementById("inpVenue") ? document.getElementById("inpVenue").value : "",
+    attendees: document.getElementById("inpBudgetAttendees") ? document.getElementById("inpBudgetAttendees").value : "",
+    meal: document.getElementById("inpBudgetMeal") ? document.getElementById("inpBudgetMeal").value : "",
+    travel: document.getElementById("inpBudgetTravel") ? document.getElementById("inpBudgetTravel").value : "",
+    experts: window.detectedExperts || []
+  };
+
+  const jsonStr = JSON.stringify(data);
+  const b64 = btoa(encodeURIComponent(jsonStr).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode('0x' + p1)));
+  return {
+    data: data,
+    url: window.location.origin + window.location.pathname + '#m=' + b64
+  };
+}
+
+// 📧 直接彈出 Gmail / 手機預設郵件，預填好信件主題、內容與免防火牆電腦連結
+function sendToCompanyEmail() {
+  const { data, url } = getPcSyncUrl();
+  const budgetNum = document.getElementById("displayTotalBudgetNumber") ? document.getElementById("displayTotalBudgetNumber").innerText.trim() : "5,000";
+  const title = data.eventName || "醫學研討會";
+  
+  const subject = `【BeSure 會議資料免防火牆同步】${title}`;
+  const body = `Hi Sandy,
+
+這是您在手機上完成 AI 辨識的 BeSure 申請資料！
+
+👉 在諾華公司電腦請直接點此連結打開：
+${url}
+
+（在公司電腦點開後，整場活動、所有講者/座長與總預算會自動載入，100% 免受公司防火牆阻擋！）
+
+========================================
+【填表備忘速覽】
+========================================
+- 活動名稱：${title}
+- 日期地點：${data.date} ${data.time} / ${data.venue}
+- 預估總金額：TWD ${budgetNum}
+- 外部專家名單 (${(data.experts || []).length} 位)：
+${(data.experts || []).map(e => `  * ${e.role === 'Moderator' ? '[座長]' : '[講者]'} ${e.name} 醫師 (${e.hospital || ''}) - 酬金 NT$ 5,000`).join('
+')}
+
+- 財務合規說明 (Step 7)：
+${document.getElementById("launchFin") ? document.getElementById("launchFin").innerText.trim() : ''}
+`;
+
+  const mailtoUri = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  window.location.href = mailtoUri;
+}
+
+// 📲 透過手機原生分享 (可選 LINE、Teams、Gmail、Outlook 等)
+async function shareViaNativeShare(btn) {
+  const { data, url } = getPcSyncUrl();
+  const title = data.eventName || "BeSure 會議資料同步";
+  const text = `【BeSure 免受防火牆同步連結】請在公司電腦點開：
+${url}`;
+
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: title,
+        text: text,
+        url: url
+      });
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        generateAndCopyPCLink(btn);
+      }
+    }
+  } else {
+    generateAndCopyPCLink(btn);
+  }
+}
 
 // 📤 生成並複製傳送至公司電腦免防火牆連結 (Base64 Hash URL)
 function generateAndCopyPCLink(btn) {
