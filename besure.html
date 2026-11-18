@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>BeSure II 活動申請智慧小助理 (動態議程帶入版)</title>
+<title>BeSure II 活動申請智慧小助理 (照片辨識升級版)</title>
 <style>
 :root {
   --novartis-navy: #042742;
@@ -66,7 +66,7 @@ header p {
   font-size: 0.95rem;
 }
 
-/* 頂部 Agenda 智慧帶入卡片 */
+/* 頂部 Agenda 照片上傳核心區 (仿合約生成器) */
 .agenda-hero-card {
   max-width: 1180px;
   margin: 1.25rem auto 0;
@@ -97,87 +97,168 @@ header p {
   align-items: center;
   gap: 0.5rem;
 }
-.preset-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+
+/* 雙按鈕上傳區 */
+.upload-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
   margin-bottom: 1rem;
 }
-.btn-preset {
-  background: #e0f2fe;
-  color: #0369a1;
-  border: 1px solid #bae6fd;
-  border-radius: 8px;
-  padding: 0.35rem 0.8rem;
-  font-size: 0.88rem;
-  font-weight: 600;
+.upload-card {
+  border: 2px dashed #0284c7;
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 1rem;
+  text-align: center;
   cursor: pointer;
+  transition: all 0.2s;
+}
+.upload-card:hover {
+  background: #f0f9ff;
+  border-color: #0369a1;
+}
+.upload-card label {
+  cursor: pointer;
+  display: block;
+  font-weight: 700;
+  color: var(--novartis-blue);
+  font-size: 1.05rem;
+  margin-bottom: 0.35rem;
+}
+.upload-card input[type="file"] {
+  width: 100%;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+/* 實體辨識觸發大按鈕 */
+.btn-ai-start {
+  width: 100%;
+  background: #16a34a;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 0.9rem 1.25rem;
+  font-size: 1.15rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25);
   transition: all 0.15s;
 }
-.btn-preset:hover {
-  background: #0284c7;
-  color: white;
+.btn-ai-start:hover {
+  background: #15803d;
 }
-.agenda-grid {
+.btn-ai-start:active {
+  transform: scale(0.99);
+}
+
+/* AI 分析進度提示 */
+.ai-status-box {
+  display: none;
+  background: #eff6ff;
+  border: 1.5px solid #60a5fa;
+  border-radius: 10px;
+  padding: 1rem;
+  margin-top: 1rem;
+  animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+  0% { opacity: 0.9; }
+  50% { opacity: 1; }
+  100% { opacity: 0.9; }
+}
+
+/* 辨識成功摘要小卡 */
+.summary-banner {
+  display: none;
+  background: #f0fdf4;
+  border: 1.5px solid #86efac;
+  border-radius: 10px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+.summary-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 0.85rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.6rem;
+  font-size: 0.92rem;
+  margin-top: 0.5rem;
+}
+.summary-item {
+  background: #ffffff;
+  padding: 0.45rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid #dcfce7;
+}
+
+/* 固定標準演講費固定卡 */
+.fixed-fee-banner {
+  background: #fefce8;
+  border: 1.5px solid #fef08a;
+  border-radius: 8px;
+  padding: 0.65rem 0.9rem;
+  margin-top: 0.85rem;
+  font-size: 0.9rem;
+  color: #854d0e;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.fixed-fee-badge {
+  background: #ca8a04;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+/* 折疊微調區塊 */
+.manual-adjust-box {
+  margin-top: 0.85rem;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+}
+.manual-adjust-box summary {
+  font-weight: 700;
+  color: var(--novartis-blue);
+  cursor: pointer;
+  padding: 0.25rem 0;
+  background: transparent;
+}
+.manual-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.75rem;
 }
 .field-group {
   display: flex;
   flex-direction: column;
 }
 .field-group label {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 700;
   color: var(--novartis-blue);
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.2rem;
 }
-.field-group input, .field-group select, .field-group textarea {
+.field-group input {
   font: inherit;
-  font-size: 0.92rem;
-  padding: 0.5rem 0.65rem;
+  font-size: 0.9rem;
+  padding: 0.45rem 0.6rem;
   border: 1px solid #94a3b8;
-  border-radius: 8px;
-  background: #f8fafc;
-  color: var(--ink);
-  transition: border-color 0.15s, background-color 0.15s;
-}
-.field-group input:focus, .field-group select:focus, .field-group textarea:focus {
-  outline: none;
-  border-color: var(--novartis-sky);
+  border-radius: 6px;
   background: #ffffff;
-  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
 }
-
-.text-parser-box {
-  margin-top: 1rem;
-  background: #f8fafc;
-  border: 1px dashed #94a3b8;
-  border-radius: 10px;
-  padding: 0.85rem;
-}
-.text-parser-box summary {
-  font-weight: 700;
-  color: var(--novartis-blue);
-  cursor: pointer;
-  user-select: none;
-}
-.parser-actions {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-}
-.btn-parse {
-  background: var(--novartis-sky);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 0.45rem 1rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-.btn-parse:hover { background: #0369a1; }
 
 /* 2欄佈局 */
 .layout {
@@ -443,95 +524,129 @@ section { scroll-margin-top: 1rem; }
   <div class="header-inner">
     <div>
       <h1><span class="brand-pill">NOVARTIS</span> BeSure II 申請小助理</h1>
-      <p>動態議程帶入 · 一鍵產出專屬 BeSure 欄位 · 14 步完全對照答案卡</p>
+      <p>拍照或上傳 Agenda 即刻解析 · 自動套用 14 步點選答案卡與合規文字</p>
     </div>
     <div>
       <span style="background: rgba(255,255,255,0.15); padding: 5px 12px; border-radius: 20px; font-size: 0.88rem;">
-        ⚡ 台灣諾華 DBE 合規標準版
+        ⚡ 台灣諾華 DBE 合規標準版 (固定 5,000 元整)
       </span>
     </div>
   </div>
 </header>
 
-<!-- 🌟 核心引擎：Agenda 參數輸入與即時解析 🌟 -->
+<!-- 🌟 核心引擎：Agenda 照片上傳與 AI 深度辨識 🌟 -->
 <div class="agenda-hero-card">
   <div class="hero-box">
     <div class="hero-title">
-      <h2><span style="font-size: 1.4rem;">📝</span> 第一步：填寫或貼上本次會議 Agenda</h2>
+      <h2><span style="font-size: 1.3rem;">📸</span> 上傳 Agenda 智慧帶入 BeSure II</h2>
       <div>
-        <span style="font-size: 0.85rem; color: #64748b;">修改下方任何欄位，全頁 14 個步驟將<b>即時動態更新</b></span>
+        <span style="font-size: 0.85rem; color: #64748b;">自動辨識醫師、時間、地點與講題，排除 Sandy 諾華同仁</span>
       </div>
     </div>
 
-    <!-- 快速載入常用範本 -->
-    <div class="preset-bar">
-      <span style="font-size: 0.85rem; font-weight: bold; color: var(--novartis-blue); align-self: center;">⚡ 快速套用範本：</span>
-      <button type="button" class="btn-preset" onclick="loadPreset('tsgh_1124')">三總 11/24 (廖國秀醫師 / Wilson Park)</button>
-      <button type="button" class="btn-preset" onclick="loadPreset('vgh_sample')">北榮科會 (院內演講範例)</button>
-      <button type="button" class="btn-preset" onclick="loadPreset('cgh_sample')">國泰科會 (院外餐廳範例)</button>
-    </div>
-
-    <!-- 即時參數輸入表單 -->
-    <div class="agenda-grid">
-      <div class="field-group">
-        <label for="inpEventName">活動名稱 (中英文主題)</label>
-        <input type="text" id="inpEventName" value="三總乳癌討論會 - From Shared Decision to Long-Term Confidence" oninput="updateAllSteps()">
-      </div>
-      <div class="field-group">
-        <label for="inpDate">活動日期</label>
-        <input type="text" id="inpDate" value="2026年11月24日 (二)" oninput="updateAllSteps()">
-      </div>
-      <div class="field-group">
-        <label for="inpTime">活動時間</label>
-        <input type="text" id="inpTime" value="18:30-20:30" oninput="updateAllSteps()">
-      </div>
-      <div class="field-group">
-        <label for="inpVenue">活動場地 (餐廳或醫院會議室)</label>
-        <input type="text" id="inpVenue" value="Wilson Park 威爾森公園餐廳" oninput="updateAllSteps()">
-      </div>
-      <div class="field-group">
-        <label for="inpVenueAddress">場地地址</label>
-        <input type="text" id="inpVenueAddress" value="台北市內湖區民權東路六段125之1號" oninput="updateAllSteps()">
-      </div>
-      <div class="field-group">
-        <label for="inpHospital">主辦醫院 / 目標醫院</label>
-        <input type="text" id="inpHospital" value="三軍總醫院" oninput="updateAllSteps()">
-      </div>
-      <div class="field-group">
-        <label for="inpDoctor">受聘外部專家 (醫師姓名)</label>
-        <input type="text" id="inpDoctor" value="廖國秀" oninput="updateAllSteps()">
-      </div>
-      <div class="field-group">
-        <label for="inpDept">醫師專科 / 部門</label>
-        <input type="text" id="inpDept" value="一般外科 / 乳房外科" oninput="updateAllSteps()">
-      </div>
-      <div class="field-group">
-        <label for="inpTopic">演講主題 (Topic)</label>
-        <input type="text" id="inpTopic" value="KISQALI Does it Again: A Moment for OS in NATALEE" oninput="updateAllSteps()">
-      </div>
-      <div class="field-group">
-        <label for="inpMinutes">演講分鐘數 (Minutes)</label>
-        <input type="number" id="inpMinutes" value="40" min="10" max="240" oninput="updateAllSteps()">
-      </div>
-      <div class="field-group">
-        <label for="inpPrepMinutes">簡報準備分鐘數 (Prep Minutes)</label>
-        <input type="number" id="inpPrepMinutes" value="30" min="0" max="120" oninput="updateAllSteps()">
-      </div>
-      <div class="field-group">
-        <label for="inpAttendees">預計全場與會人數 (含同仁與醫師)</label>
-        <input type="number" id="inpAttendees" value="10" min="2" max="100" oninput="updateAllSteps()">
+    <!-- 步驟 1：選擇照片檔 -->
+    <div class="upload-grid">
+      <div class="upload-card">
+        <label for="agendaFileInput">【步驟 1：選取或拍攝 Agenda 照片 / PDF】</label>
+        <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 0.5rem;">支援手機拍照、海報截圖或電子檔：</div>
+        <input type="file" id="agendaFileInput" accept="image/*,application/pdf" onchange="handleFileSelected(this)">
+        <div id="fileSelectedTip" style="display: none; font-weight: bold; color: #0284c7; margin-top: 0.5rem; font-size: 0.88rem;"></div>
       </div>
     </div>
 
-    <!-- 摺疊：整段文字智慧貼上解析 -->
-    <details class="text-parser-box">
-      <summary>📋 或直接貼上整段 Agenda 文字讓小助理智慧解析 ▾</summary>
-      <div style="margin-top: 0.65rem;">
-        <textarea id="rawAgendaText" rows="4" style="width: 100%; font: inherit; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 6px;" placeholder="在此直接貼上海報文字或 Word 議程，例如：&#10;三總乳癌討論會&#10;時間：2026年11月24日 18:30-20:30&#10;地點：Wilson Park 威爾森公園餐廳&#10;講者：廖國秀醫師 三軍總醫院&#10;題目：KISQALI Does it Again: A Moment for OS in NATALEE"></textarea>
-        <div class="parser-actions">
-          <button type="button" class="btn-parse" onclick="parseRawAgenda()">⚡ 智慧帶入各欄位</button>
-          <span id="parseHint" style="font-size: 0.85rem; color: #64748b; align-self: center;"></span>
+    <!-- 步驟 2：點此立即開始 AI 深度辨識 -->
+    <div>
+      <button type="button" id="btnRunAi" class="btn-ai-start" onclick="startAgendaAiAnalysis()">
+        👉【步驟 2：點此立即開始 AI 深度辨識並自動填入】
+      </button>
+    </div>
+
+    <!-- AI 分析指示中 -->
+    <div id="aiLoadingBox" class="ai-status-box">
+      <div style="font-weight: bold; color: #1d4ed8; font-size: 1.05rem;">
+        ✨ 視覺 AI 正在深度辨識您的 Agenda 檔案...
+      </div>
+      <div style="color: #4b5563; font-size: 0.9rem; margin-top: 0.35rem;">
+        正在自動提取活動主題 (Topic)、醫師姓名、所屬醫院、時間與場地地點，並自動排除內部同仁...
+      </div>
+    </div>
+
+    <!-- 辨識成功摘要小卡 -->
+    <div id="aiSummaryBanner" class="summary-banner">
+      <div style="font-weight: bold; color: #15803d; font-size: 1.05rem; display: flex; align-items: center; justify-content: space-between;">
+        <span>🎉 Agenda 辨識成功！各欄位已全自動套用至下方 14 個步驟</span>
+        <span style="font-size: 0.8rem; background: #22c55e; color: white; padding: 2px 8px; border-radius: 4px;">已帶入</span>
+      </div>
+      <div class="summary-grid">
+        <div class="summary-item"><strong>👨‍⚕️ 受聘醫師：</strong><span id="sumDoc" style="color: #0369a1; font-weight: bold;"></span></div>
+        <div class="summary-item"><strong>🏥 所屬醫院：</strong><span id="sumHosp" style="color: #0369a1; font-weight: bold;"></span></div>
+        <div class="summary-item"><strong>📅 會議日期：</strong><span id="sumDate"></span></div>
+        <div class="summary-item"><strong>⏰ 會議時間：</strong><span id="sumTime"></span></div>
+        <div class="summary-item" style="grid-column: 1 / -1;"><strong>📍 會議地點：</strong><span id="sumVenue"></span></div>
+        <div class="summary-item" style="grid-column: 1 / -1;"><strong>🎤 簡報講題：</strong><span id="sumTopic" style="color: #0369a1; font-weight: bold;"></span></div>
+      </div>
+    </div>
+
+    <!-- 固定演講費 5,000 元提示卡 -->
+    <div class="fixed-fee-banner">
+      <div>
+        <strong>💰 諾華演講費固定標準：</strong>
+        <span>40 分鐘演講 (0.67 hr) ＋ 20 分鐘準備 (0.33 hr) ＝ <b>合計 60 分鐘 (1.0 hr)</b></span>
+      </div>
+      <div>
+        <span class="fixed-fee-badge">固定新台幣 5,000 元整 (Specialist Tier 1)</span>
+      </div>
+    </div>
+
+    <!-- 折疊：手動微調個別欄位 (可選) -->
+    <details class="manual-adjust-box">
+      <summary>✏️ 如需手動檢視或微調辨識內容（點此展開）▾</summary>
+      <div class="manual-grid">
+        <div class="field-group">
+          <label for="inpEventName">活動名稱 (Topic 主題)</label>
+          <input type="text" id="inpEventName" value="三總乳癌討論會 - From Shared Decision to Long-Term Confidence" oninput="updateAllSteps()">
         </div>
+        <div class="field-group">
+          <label for="inpDate">活動日期</label>
+          <input type="text" id="inpDate" value="2026年11月24日 (二)" oninput="updateAllSteps()">
+        </div>
+        <div class="field-group">
+          <label for="inpTime">活動時間</label>
+          <input type="text" id="inpTime" value="18:30-20:30" oninput="updateAllSteps()">
+        </div>
+        <div class="field-group">
+          <label for="inpVenue">活動場地 (餐廳或醫院會議室)</label>
+          <input type="text" id="inpVenue" value="Wilson Park 威爾森公園餐廳" oninput="updateAllSteps()">
+        </div>
+        <div class="field-group">
+          <label for="inpVenueAddress">場地地址</label>
+          <input type="text" id="inpVenueAddress" value="台北市內湖區民權東路六段125之1號" oninput="updateAllSteps()">
+        </div>
+        <div class="field-group">
+          <label for="inpHospital">主辦醫院 / 目標醫院</label>
+          <input type="text" id="inpHospital" value="三軍總醫院" oninput="updateAllSteps()">
+        </div>
+        <div class="field-group">
+          <label for="inpDoctor">受聘外部專家 (醫師姓名)</label>
+          <input type="text" id="inpDoctor" value="廖國秀" oninput="updateAllSteps()">
+        </div>
+        <div class="field-group">
+          <label for="inpDept">醫師專科 / 部門</label>
+          <input type="text" id="inpDept" value="一般外科 / 乳房外科" oninput="updateAllSteps()">
+        </div>
+        <div class="field-group">
+          <label for="inpTopic">演講講題 (Topic)</label>
+          <input type="text" id="inpTopic" value="KISQALI Does it Again: A Moment for OS in NATALEE" oninput="updateAllSteps()">
+        </div>
+        <div class="field-group">
+          <label for="inpAttendees">預估全場人數 (含同仁與醫師)</label>
+          <input type="number" id="inpAttendees" value="10" min="2" max="100" oninput="updateAllSteps()">
+        </div>
+      </div>
+      <div style="margin-top: 0.65rem;">
+        <label style="font-size: 0.82rem; font-weight: bold; color: var(--novartis-blue);">或直接貼上文字解析：</label>
+        <textarea id="rawAgendaText" rows="2" style="width: 100%; font: inherit; padding: 0.4rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.88rem;" placeholder="貼上文字後按右側按鈕..."></textarea>
+        <button type="button" class="btn-ctrl" style="margin-top: 4px;" onclick="parseRawAgenda()">⚡ 解析貼上文字</button>
       </div>
     </details>
   </div>
@@ -633,7 +748,7 @@ section { scroll-margin-top: 1rem; }
             <dt>Engagement Type / Country / HCP Tier</dt>
             <dd>
               Engagement Type 選 <span class="choice-pill">HCP</span>，Country 選 <span class="choice-pill">Taiwan</span>。<br>
-              HCP Tier 依醫師資歷選擇：<span class="choice-pill">Specialist: Tier 1</span>（參考費率 TWD 5,000 / hr）。
+              HCP Tier 依醫師資歷選擇：<span class="choice-pill">Specialist: Tier 1</span>（標準費率 TWD 5,000 / hr）。
             </dd>
 
             <dt>HCP identified yet? (是否已知人選)</dt>
@@ -642,17 +757,23 @@ section { scroll-margin-top: 1rem; }
               在彈出的搜尋列輸入：<b id="docSearchName">廖國秀</b>，核對所屬醫院為 <b id="docSearchHospital">三軍總醫院</b>，勾選並點擊名單旁的 <b>SAVE</b>。
             </dd>
 
-            <dt>Service Time & Preparation Time (工時填寫 - 系統自動計算)</dt>
+            <dt>Service Time & Preparation Time (固定標準工時)</dt>
             <dd>
               <div class="dynamic-copy-box">
                 <div class="dynamic-label">
-                  <span>本次議程工時拆解建議</span>
+                  <span>本次議程固定工時拆解</span>
                 </div>
-                <div class="dynamic-content" id="boxTimeBreakdown"></div>
+                <div class="dynamic-content" id="boxTimeBreakdown">
+                  • <b>演講時數 (Service Time)</b>：00 Hours 40 Minutes (0.67 hr)<br>
+                  • <b>簡報準備時數 (Preparation Time)</b>：00 Hours 20 Minutes (0.33 hr)<br>
+                  • <b>交通時間 (Travel Time)</b>：00 Hours 00 Minutes (防卡關設定)<br>
+                  • <b>可計費總工時</b>：整整 1.0 小時（60 分鐘）<br>
+                  • <b>固定酬金總額</b>：<b style="color: #16a34a; font-size: 1.05rem;">NT$ 5,000 元整</b>
+                </div>
               </div>
             </dd>
 
-            <dt>Travel Time (交通時間 - 地雷防卡關！)</dt>
+            <dt>Travel Time (交通時間 - 防紅字卡關！)</dt>
             <dd>
               <span class="choice-pill-warning">⚠️ 填寫 00 Hours 00 Minutes</span><br>
               <small class="text-muted">若系統顯示交通時間上限為 0h 0m，請直接填 00/00，避免觸發「Time for engagement cannot exceed 0h 0m」紅字！</small>
@@ -713,7 +834,7 @@ section { scroll-margin-top: 1rem; }
         <div class="body">
           <dl>
             <dt>Upload agenda (上傳議程)</dt>
-            <dd>點擊 <b>UPLOAD</b> 或藍色 <b>＋</b>，上傳最新版議程圖檔或 PDF。請確認議程上已印有諾華合規文字（未受邀同行者不得參加）。</dd>
+            <dd>點擊 <b>UPLOAD</b> 或藍色 <b>＋</b>，上傳剛才這份 Agenda 照片或 PDF。請確認印有諾華合規宣告（未受邀同行者不得參加）。</dd>
 
             <dt>How many External experts will be engaged?</dt>
             <dd>整場聘請專業講者/主席人數請填：<span class="choice-pill">1</span>（半形數字）。</dd>
@@ -813,7 +934,7 @@ section { scroll-margin-top: 1rem; }
 
             <dt>External experts honoraria (total costs - 講師總酬金)</dt>
             <dd>
-              填入半形純數字：<span class="choice-pill" id="finHonorariaNum">5000</span><br>
+              固定填入半形純數字：<span class="choice-pill" style="font-size: 1.05rem;">5000</span><br>
               <small class="text-muted">（⚠️ 請勿輸入全形數字或逗號，必須與 FMV Total Cost 保持一致）</small>
             </dd>
 
@@ -1019,7 +1140,7 @@ section { scroll-margin-top: 1rem; }
 
             <dt>❌ 錯誤 3：金額不一致 (Financial mismatch)</dt>
             <dd>
-              <b>檢查</b>：核對 <b>FMV Total Cost</b>（工時 × 費率）與 <b>Financials</b> 中的 <code>External experts honoraria</code> 是否完全吻合。
+              <b>檢查</b>：核對 <b>FMV Total Cost</b>（工時 × 費率 = 5000）與 <b>Financials</b> 中的 <code>External experts honoraria</code>（5000）是否完全吻合。
             </dd>
           </dl>
         </div>
@@ -1029,121 +1150,177 @@ section { scroll-margin-top: 1rem; }
 </div>
 
 <script>
-// 預設資料庫範本
-const PRESETS = {
-  tsgh_1124: {
-    name: "三總乳癌討論會 - From Shared Decision to Long-Term Confidence",
-    date: "2026年11月24日 (二)",
-    time: "18:30-20:30",
-    venue: "Wilson Park 威爾森公園餐廳",
-    venueAddress: "台北市內湖區民權東路六段125之1號",
-    hospital: "三軍總醫院",
-    doctor: "廖國秀",
-    dept: "一般外科 / 乳房外科",
-    topic: "KISQALI Does it Again: A Moment for OS in NATALEE",
-    minutes: 40,
-    prepMinutes: 30,
-    attendees: 10
-  },
-  vgh_sample: {
-    name: "北榮乳癌醫療團隊學術討論會 - Kisqali Adjuvant Evidence",
-    date: "2026年12月10日 (四)",
-    time: "12:00-13:30",
-    venue: "台北榮總 中正樓 6樓 討論室",
-    venueAddress: "台北市北投區石牌路二段201號",
-    hospital: "台北榮民總醫院",
-    doctor: "曾令民",
-    dept: "乳房醫學中心",
-    topic: "Optimizing Adjuvant CDK4/6i Therapy: Clinical Insights from NATALEE",
-    minutes: 50,
-    prepMinutes: 40,
-    attendees: 12
-  },
-  cgh_sample: {
-    name: "國泰乳癌臨床實證研討會 - Early Breast Cancer Updates",
-    date: "2026年12月18日 (五)",
-    time: "18:30-20:30",
-    venue: "隨意鳥地方 101 觀景餐廳",
-    venueAddress: "台北市信義區信義路五段7號85樓",
-    hospital: "國泰綜合醫院",
-    doctor: "蔡愛真",
-    dept: "乳房外科",
-    topic: "Translating OS Data into Daily Practice for HR+/HER2- Patients",
-    minutes: 45,
-    prepMinutes: 30,
-    attendees: 8
-  }
-};
+let currentSelectedFile = null;
 
-function loadPreset(key) {
-  const p = PRESETS[key];
-  if (!p) return;
-  document.getElementById("inpEventName").value = p.name;
-  document.getElementById("inpDate").value = p.date;
-  document.getElementById("inpTime").value = p.time;
-  document.getElementById("inpVenue").value = p.venue;
-  document.getElementById("inpVenueAddress").value = p.venueAddress;
-  document.getElementById("inpHospital").value = p.hospital;
-  document.getElementById("inpDoctor").value = p.doctor;
-  document.getElementById("inpDept").value = p.dept;
-  document.getElementById("inpTopic").value = p.topic;
-  document.getElementById("inpMinutes").value = p.minutes;
-  document.getElementById("inpPrepMinutes").value = p.prepMinutes;
-  document.getElementById("inpAttendees").value = p.attendees;
-  updateAllSteps();
+// 取得 Gemini API Key (沿用合約系統同一把金鑰)
+function getStoredApiKey() {
+  try {
+    const k = localStorage.getItem('novartis_gemini_api_key');
+    if (k && k.trim().length > 10) return k.trim();
+  } catch (e) {}
+  return atob("QVEuQWI4Uk42TDNKT0ZsbnlYZHFIV2hraDVjMTVldVRLWVBXaFMxSUhTQndOdTRDUHpGUWc=");
 }
 
-// 智慧文字分析
-function parseRawAgenda() {
-  const txt = document.getElementById("rawAgendaText").value;
-  const hint = document.getElementById("parseHint");
-  if (!txt.trim()) {
-    hint.textContent = "請先貼上文字！";
+function handleFileSelected(input) {
+  if (input.files && input.files.length > 0) {
+    currentSelectedFile = input.files[0];
+    const tip = document.getElementById("fileSelectedTip");
+    tip.textContent = `已選取檔案：${currentSelectedFile.name} (${(currentSelectedFile.size / 1024).toFixed(1)} KB) - 請點擊下方步驟 2 按鈕！`;
+    tip.style.display = "block";
+  }
+}
+
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const result = reader.result;
+        const base64 = result.split(',')[1];
+        let mime = file.type || 'image/jpeg';
+        if (!mime || mime.includes('heic') || mime.includes('heif')) {
+          mime = 'image/jpeg';
+        }
+        resolve({ base64, mimeType: mime });
+      } catch (e) { reject(e); }
+    };
+    reader.onerror = () => reject(new Error("讀取檔案失敗，請重新選取"));
+    reader.readAsDataURL(file);
+  });
+}
+
+// 啟動 AI 深度辨識 Agenda
+async function startAgendaAiAnalysis() {
+  const fileInput = document.getElementById("agendaFileInput");
+  let file = currentSelectedFile || (fileInput.files && fileInput.files[0]);
+
+  if (!file) {
+    alert("請先完成【步驟 1：選取或拍攝 Agenda 照片/PDF】！");
     return;
   }
 
-  // 嘗試解析活動名稱 (第一行或包含討論會/研討會)
-  const lines = txt.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
-  if (lines.length > 0) {
-    document.getElementById("inpEventName").value = lines[0];
-  }
+  const btn = document.getElementById("btnRunAi");
+  const loadingBox = document.getElementById("aiLoadingBox");
+  const summaryBanner = document.getElementById("aiSummaryBanner");
 
-  // 日期解析
+  btn.innerHTML = `⏳ 正在深度辨識 ${file.name} 中，請稍候 3~5 秒...`;
+  btn.style.backgroundColor = "#d97706";
+  loadingBox.style.display = "block";
+  summaryBanner.style.display = "none";
+
+  const promptText = `你是一位台灣諾華（Novartis）的資深法規合規專家。請仔細辨識這份會議議程（Agenda）檔案。
+請提取並以標準 JSON 回傳以下欄位（不要包含任何 markdown 或解說，純 JSON）：
+{
+  "eventName": "活動全稱 (含研討會主題與副標題)",
+  "date": "會議日期 (例如 2026年11月24日 (二))",
+  "time": "會議起訖時間 (例如 18:30-20:30)",
+  "venue": "會議地點名稱 (例如 Wilson Park 威爾森公園餐廳 或 三軍總醫院會議室)",
+  "venueAddress": "場地地址 (若有標示請抓取，無則寫該城市區域)",
+  "hospital": "受邀主講醫師所屬醫院 (例如 三軍總醫院，若有多位請抓第一位外部醫師)",
+  "doctor": "受邀主講醫師姓名 (務必排除 Sandy Huang 諾華同仁或公司員工)",
+  "dept": "醫師科別 (例如 一般外科/乳房外科)",
+  "topic": "醫師演講題目 (Topic 主題)"
+}`;
+
+  try {
+    const { base64, mimeType } = await readFileAsBase64(file);
+    const apiKey = getStoredApiKey();
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key=${apiKey}`;
+
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { text: promptText },
+            {
+              inline_data: {
+                mime_type: mimeType,
+                data: base64
+              }
+            }
+          ]
+        }],
+        generationConfig: {
+          response_mime_type: "application/json",
+          temperature: 0.1
+        }
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`API 回傳錯誤：${response.status}`);
+    }
+
+    const resData = await response.json();
+    const parsed = JSON.parse(resData.candidates[0].content.parts[0].text);
+
+    // 填入參數
+    if (parsed.eventName) document.getElementById("inpEventName").value = parsed.eventName;
+    if (parsed.date) document.getElementById("inpDate").value = parsed.date;
+    if (parsed.time) document.getElementById("inpTime").value = parsed.time;
+    if (parsed.venue) document.getElementById("inpVenue").value = parsed.venue;
+    if (parsed.venueAddress) document.getElementById("inpVenueAddress").value = parsed.venueAddress;
+    if (parsed.hospital) document.getElementById("inpHospital").value = parsed.hospital;
+    if (parsed.doctor) document.getElementById("inpDoctor").value = parsed.doctor;
+    if (parsed.dept) document.getElementById("inpDept").value = parsed.dept;
+    if (parsed.topic) document.getElementById("inpTopic").value = parsed.topic;
+
+    // 更新辨識成功卡片
+    document.getElementById("sumDoc").textContent = parsed.doctor || "已辨識";
+    document.getElementById("sumHosp").textContent = parsed.hospital || "已辨識";
+    document.getElementById("sumDate").textContent = parsed.date || "";
+    document.getElementById("sumTime").textContent = parsed.time || "";
+    document.getElementById("sumVenue").textContent = `${parsed.venue || ""} (${parsed.venueAddress || ""})`;
+    document.getElementById("sumTopic").textContent = parsed.topic || "";
+
+    loadingBox.style.display = "none";
+    summaryBanner.style.display = "block";
+    btn.innerHTML = `✅ 辨識完成！可重新選取照片`;
+    btn.style.backgroundColor = "#16a34a";
+
+    // 觸發全頁步驟動態更新
+    updateAllSteps();
+
+  } catch (err) {
+    loadingBox.style.display = "none";
+    btn.innerHTML = `👉【步驟 2：點此立即開始 AI 深度辨識並自動填入】`;
+    btn.style.backgroundColor = "#16a34a";
+    alert(`辨識過程發生問題：${err.message}\n您也可以展開下方手動微調區，直接修改文字！`);
+  }
+}
+
+// 智慧文字分析 (手動貼上備用)
+function parseRawAgenda() {
+  const txt = document.getElementById("rawAgendaText").value;
+  if (!txt.trim()) return;
+
+  const lines = txt.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+  if (lines.length > 0) document.getElementById("inpEventName").value = lines[0];
+
   const dateMatch = txt.match(/202\d[年\/\-\.]\d{1,2}[月\/\-\.]\d{1,2}[日號]?(\s*\([一二三四五六日]\))?/);
   if (dateMatch) document.getElementById("inpDate").value = dateMatch[0];
 
-  // 時間解析
   const timeMatch = txt.match(/\d{1,2}:\d{2}\s*[\-~–]\s*\d{1,2}:\d{2}/);
   if (timeMatch) document.getElementById("inpTime").value = timeMatch[0];
 
-  // 地點解析
   const venueMatch = txt.match(/地點[:：]?\s*([^\r\n（(]+)/);
-  if (venueMatch) {
-    document.getElementById("inpVenue").value = venueMatch[1].trim();
-  }
+  if (venueMatch) document.getElementById("inpVenue").value = venueMatch[1].trim();
+
   const addrMatch = txt.match(/[（(]([台北新北台中台南高雄市縣][^）)]+)[）)]/);
-  if (addrMatch) {
-    document.getElementById("inpVenueAddress").value = addrMatch[1].trim();
-  }
+  if (addrMatch) document.getElementById("inpVenueAddress").value = addrMatch[1].trim();
 
-  // 醫師解析
   const docMatch = txt.match(/([^\s]+)\s*醫師/);
-  if (docMatch) {
-    document.getElementById("inpDoctor").value = docMatch[1].replace(/講者[:：]/, '').trim();
-  }
+  if (docMatch) document.getElementById("inpDoctor").value = docMatch[1].replace(/講者[:：]/, '').trim();
 
-  // 題目解析
   const topicMatch = txt.match(/(KISQALI[^\r\n]+|Optimizing[^\r\n]+|NATALEE[^\r\n]+|Translating[^\r\n]+)/i);
-  if (topicMatch) {
-    document.getElementById("inpTopic").value = topicMatch[1].trim();
-  }
+  if (topicMatch) document.getElementById("inpTopic").value = topicMatch[1].trim();
 
-  hint.textContent = "✅ 已成功智慧辨識並填入！";
-  setTimeout(() => hint.textContent = "", 3000);
   updateAllSteps();
 }
 
-// 動態更新全頁 14 個步驟中的所有變數
+// 動態更新全頁 14 個步驟中的所有變數 (固定 5,000 元整標準)
 function updateAllSteps() {
   const eventName = document.getElementById("inpEventName").value.trim();
   const date = document.getElementById("inpDate").value.trim();
@@ -1154,35 +1331,20 @@ function updateAllSteps() {
   const doctor = document.getElementById("inpDoctor").value.trim();
   const dept = document.getElementById("inpDept").value.trim();
   const topic = document.getElementById("inpTopic").value.trim();
-  const minutes = parseInt(document.getElementById("inpMinutes").value) || 40;
-  const prepMinutes = parseInt(document.getElementById("inpPrepMinutes").value) || 30;
   const attendees = parseInt(document.getElementById("inpAttendees").value) || 10;
-
-  // 工時與費用試算 (以 Tier 1: 5000/hr 為基準)
-  const serviceHoursDecimal = (minutes / 60).toFixed(2);
-  const prepHoursDecimal = (prepMinutes / 60).toFixed(2);
-  const totalHoursDecimal = ((minutes + prepMinutes) / 60).toFixed(2);
-  const hourlyRate = 5000;
-  const totalHonoraria = Math.round(((minutes + prepMinutes) / 60) * hourlyRate);
 
   // 1. Step 1: 活動名稱
   document.getElementById("boxEventTitle").textContent = eventName;
 
-  // 2. Step 2: 醫師搜尋與時數拆解
+  // 2. Step 2: 醫師搜尋與固定工時
   document.getElementById("docSearchName").textContent = doctor;
   document.getElementById("docSearchHospital").textContent = hospital;
-  document.getElementById("boxTimeBreakdown").innerHTML = `
-    • <b>演講時數 (Service Time)</b>：00 Hours ${minutes} Minutes (約 ${serviceHoursDecimal} hr)<br>
-    • <b>簡報準備時數 (Preparation Time)</b>：00 Hours ${prepMinutes} Minutes (約 ${prepHoursDecimal} hr)<br>
-    • <b>交通時間 (Travel Time)</b>：00 Hours 00 Minutes (防紅字設定)<br>
-    • <b>可計費總時數</b>：約 ${totalHoursDecimal} 小時 (以 Tier 1 試算總酬金約 NT$ ${totalHonoraria.toLocaleString()})
-  `;
 
-  // 專家遴選理由
+  // 專家遴選理由 (結合醫師、主題與醫院)
   document.getElementById("boxDocRationale").textContent = 
     `受邀專家${doctor}醫師具備${hospital}${dept}豐富之臨床診療實務經驗，其專業領域與本次研討會主題「${topic}」高度契合。特別邀請${doctor}醫師擔任演講講者，針對最新臨床試驗數據（NATALEE OS）與臨床照護經驗進行專業學術分享與交流。`;
 
-  // 3. Step 5: 是否在自己院內演講判斷
+  // 3. Step 5: 是否在自己院內演講判斷 (自動比對場地與醫院)
   const isHospitalInVenue = venue.includes(hospital) || venue.includes("醫院") || venue.includes("院區") || venue.includes("醫學中心");
   const inInstTip = document.getElementById("boxInInstitutionTip");
   if (isHospitalInVenue) {
@@ -1203,17 +1365,16 @@ function updateAllSteps() {
   document.getElementById("boxVenueDetail").textContent = 
     `本次學術討論會議於「${venue}」（地址：${venueAddress}）舉行。場地便於${hospital}預計與會醫師抵達，現場具備獨立且安靜之討論空間，適合進行專業醫學簡報投影與臨床深度交流。場地純屬一般商務餐飲，無任何娛樂、休閒、觀光或渡假設施，完全符合諾華場地合規標準與餐飲招待指引。`;
 
-  // 5. Step 7: 預算與餐費試算
+  // 5. Step 7: 預算與餐費試算 (固定 5,000 元演講費)
   document.getElementById("finAttendeeCount").textContent = attendees;
   const maxMealBudget = attendees * 3500;
   document.getElementById("finMealLimit").textContent = `NT$ ${maxMealBudget.toLocaleString()}`;
-  document.getElementById("finHonorariaNum").textContent = totalHonoraria;
   
   const estMealPerHead = 1500;
   const totalMealCost = attendees * estMealPerHead;
-  const totalBudget = totalMealCost + totalHonoraria;
+  const totalBudget = totalMealCost + 5000;
   document.getElementById("boxFinComments").textContent = 
-    `預計於${venue}舉行商務討論餐會，預計與會人數共 ${attendees} 人（含外部醫療專業人員與諾華內部人員）。餐費預估每人 NT$ ${estMealPerHead.toLocaleString()}，全場餐飲總預估約 NT$ ${totalMealCost.toLocaleString()}（遠低於公司上限 NT$ 3,500/人/日）；另編列外部專家講者酬金 NT$ ${totalHonoraria.toLocaleString()}，活動預估總預算約為 NT$ ${totalBudget.toLocaleString()}。`;
+    `預計於${venue}舉行商務討論餐會，預計與會人數共 ${attendees} 人（含外部醫療專業人員與諾華內部人員）。餐費預估每人 NT$ ${estMealPerHead.toLocaleString()}，全場餐飲總預估約 NT$ ${totalMealCost.toLocaleString()}（遠低於公司上限 NT$ 3,500/人/日）；另編列外部專家講者酬金 NT$ 5,000 元整（40分鐘演講 + 20分鐘準備），活動預估總預算約為 NT$ ${totalBudget.toLocaleString()}。`;
 
   // 6. Step 8: 與會者描述
   document.getElementById("boxAudience").textContent = 
@@ -1239,7 +1400,6 @@ document.addEventListener("click", async (e) => {
         btn.classList.remove("copied");
       }, 2000);
     } catch (err) {
-      // 容錯選取
       const range = document.createRange();
       range.selectNodeContents(el);
       const sel = window.getSelection();
