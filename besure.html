@@ -378,13 +378,13 @@ dd {
       </div>
     </div>
 
-    <!-- 步驟 2 啟動按鈕 -->
+    <!-- 啟動與狀態按鈕 (選取檔案時會自動觸發，亦可手動點擊) -->
     <div style="background: #e8f5e9; border: 2px solid #2e7d32; padding: 15px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
       <button id="btnStartAI" type="button" class="btn btn-success btn-lg w-100" style="font-size: 1.2rem; font-weight: bold; padding: 14px; background-color: #2e7d32; border-color: #1b5e20;" onclick="triggerManualAnalysis()">
-        👉【步驟 2：點此立即開始 AI 深度辨識並帶入 BeSure】
+        👉【點此立即辨識 Agenda 檔案】
       </button>
       <div style="color: #1b5e20; font-weight: bold; margin-top: 8px; font-size: 0.95rem;">
-        選好上方照片或 PDF 後，直接點此按鈕啟動辨識！
+        ⚡ 選取上方照片或 PDF 後，系統已為您「自動秒速啟動辨識」！亦可隨時點此重試。
       </div>
     </div>
 
@@ -957,7 +957,7 @@ function handleFileChosen(input, typeLabel) {
   if (input.files && input.files.length > 0) {
     currentSelectedFile = input.files[0];
     const notice = document.getElementById(typeLabel === '照片' ? 'albumChosenNotice' : 'pdfChosenNotice');
-    notice.innerHTML = `<i class="fa-solid fa-circle-check me-1"></i>已選取${typeLabel}：${currentSelectedFile.name} - 請按下方步驟 2 按鈕！`;
+    notice.innerHTML = `<i class="fa-solid fa-circle-check me-1"></i>已選取${typeLabel}：<strong>${currentSelectedFile.name}</strong><br><span style="color:#059669; font-weight:bold;">⚡ AI 視覺辨識已自動為您啟動，請稍候 3 秒...</span>`;
     notice.style.display = 'block';
 
     const otherNotice = document.getElementById(typeLabel === '照片' ? 'pdfChosenNotice' : 'albumChosenNotice');
@@ -966,8 +966,11 @@ function handleFileChosen(input, typeLabel) {
     const badge = document.getElementById('aiStatusBadge');
     if (badge) {
       badge.className = 'badge bg-warning text-dark px-2 py-1';
-      badge.textContent = '檔案已選取，請按步驟 2';
+      badge.textContent = 'AI 視覺辨識中...';
     }
+
+    // 🌟 選好照片後立即自動啟動 AI 辨識，無需多按一次！
+    triggerManualAnalysis();
   }
 }
 
@@ -1042,11 +1045,16 @@ async function triggerManualAnalysis() {
   const summaryCard = document.getElementById('summaryCard');
   const detailEl = document.getElementById('aiStatusDetail');
 
-  btn.innerHTML = `⏳ 正在深度辨識 ${file.name} 中，請稍候 3~5 秒...`;
+  btn.innerHTML = `⏳ 視覺 AI 正在深度辨識 ${file.name} 中...`;
   btn.style.backgroundColor = '#d97706';
   aiBox.style.display = 'block';
   summaryCard.style.display = 'none';
-  if (detailEl) detailEl.textContent = "正在自動最佳化影像並透過雙核 AI 分析會議資訊...";
+  if (detailEl) detailEl.textContent = `正在全速掃描 ${file.name}，自動提取主題、受邀醫師、時間地點...`;
+
+  // 🌟 立即切換為載入狀態，徹底清除上一場活動舊資料
+  document.getElementById("launchTitle").innerHTML = `<span class="spinner-border spinner-border-sm text-primary me-2"></span>正在深度解析【${file.name}】活動名稱...`;
+  document.getElementById("launchDocRationale").innerHTML = `<span class="spinner-border spinner-border-sm text-primary me-2"></span>正在辨識外部醫師與講題，請稍候 3 秒...`;
+  document.getElementById("launchNeed").innerHTML = `<span class="spinner-border spinner-border-sm text-primary me-2"></span>正在比對醫療團隊與乳癌專案目的...`;
 
   const promptText = `你是一位台灣諾華（Novartis）的資深法規合規與醫藥學術審查專家。請仔細辨識這份醫學研討會會議議程（Agenda）檔案。
 【重要排除規則 - 務必遵守】：
@@ -1069,11 +1077,11 @@ async function triggerManualAnalysis() {
     const { base64, mimeType } = await compressImageBeforeUpload(file);
     const apiKey = getStoredApiKey();
 
-    // 雙核備援模型列表，若 3.1 壅塞 (503) 自動秒切 2.5
+    // 最新 2026 高可用輕量視覺模型列表
     const candidateModels = [
-      'gemini-2.5-flash',
+      'gemini-3.5-flash-lite',
       'gemini-3.1-flash-lite',
-      'gemini-2.5-flash-lite'
+      'gemini-flash-lite-latest'
     ];
 
     let resData = null;
@@ -1137,13 +1145,13 @@ async function triggerManualAnalysis() {
 
     aiBox.style.display = 'none';
     summaryCard.style.display = 'block';
-    btn.innerHTML = `✅ 辨識完成！點此可重新辨識新檔案`;
+    btn.innerHTML = `✅ 已成功辨識【${parsed.doctor || ''} 醫師】！點此可重新辨識新檔案`;
     btn.style.backgroundColor = '#2e7d32';
 
     const badge = document.getElementById('aiStatusBadge');
     if (badge) {
       badge.className = 'badge bg-success px-2 py-1';
-      badge.textContent = '已辨識帶入';
+      badge.textContent = `已成功辨識：${parsed.doctor || ''} 醫師`;
     }
 
     updateAllSteps();
