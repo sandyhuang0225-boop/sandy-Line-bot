@@ -346,21 +346,11 @@
 
         <!-- 檔案已上傳解析成功提示卡 -->
         <div id="fileNoticeBanner" class="alert alert-success border-success py-2 px-3 mb-3 shadow-sm" style="display: none;">
-            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="d-flex align-items-center justify-content-between">
                 <div>
                     <i class="fa-solid fa-circle-check text-success fs-5 me-2"></i>
                     <strong id="fileNoticeText">Agenda 上傳成功！資料已全自動填入下方 12 頁正式合約中。</strong>
                 </div>
-                <div class="d-flex gap-2 flex-wrap">
-                    <button type="button" class="btn btn-sm btn-primary fw-bold" onclick="sendContractToCompanyEmail()">
-                        <i class="fa-solid fa-envelope me-1"></i> 📧 彈出 Gmail 寄到公司信箱
-                    </button>
-                    <button type="button" id="btnShareContractToPC" class="btn btn-sm btn-outline-success fw-bold" onclick="generateAndCopyContractPCLink(this)">
-                        <i class="fa-solid fa-laptop-medical me-1"></i> 📤 複製免防火牆連結
-                    </button>
-                </div>
-            </div>
-            <div id="contractPcNotice" class="small text-success mt-2 p-1 bg-white rounded border border-success" style="display:none;"></div>
                 <button class="btn btn-sm btn-outline-success fw-bold" onclick="resetToBlank()">
                     清空重試
                 </button>
