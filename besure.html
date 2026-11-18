@@ -405,17 +405,17 @@ dd {
 
     <!-- 辨識成功摘要卡 -->
     <div id="summaryCard" class="p-3 bg-light border rounded-3 mb-2" style="display: none;">
-      <div class="d-flex align-items-center justify-content-between mb-2 pb-2 border-bottom">
+      <div class="d-flex align-items-center justify-content-between mb-2 pb-2 border-bottom flex-wrap gap-2">
         <span class="fw-bold text-success small"><i class="fa-solid fa-clipboard-check me-1"></i>已辨識並帶入之 BeSure 欄位：</span>
-        <span class="badge bg-success">帶入成功</span>
+        <span id="sumBadgeCount" class="badge bg-success">共辨識出 1 位專家</span>
       </div>
-      <div class="row g-2 small text-dark">
-        <div class="col-md-3 col-6"><strong>👨‍⚕️ 受聘醫師：</strong><span id="sumDoc" class="text-primary fw-bold"></span></div>
-        <div class="col-md-3 col-6"><strong>🏥 所屬醫院：</strong><span id="sumHosp" class="text-primary fw-bold"></span></div>
-        <div class="col-md-3 col-6"><strong>📅 會議日期：</strong><span id="sumDate"></span></div>
-        <div class="col-md-3 col-6"><strong>⏰ 整場時間：</strong><span id="sumTime"></span></div>
-        <div class="col-12"><strong>📍 會議地點：</strong><span id="sumVenue"></span></div>
-        <div class="col-12"><strong>🎤 簡報講題：</strong><span id="sumTopic" class="text-primary fw-bold"></span></div>
+      <div class="row g-2 small text-dark mb-2">
+        <div class="col-md-6 col-12"><strong>📅 會議日期時間：</strong><span id="sumDateTime"></span></div>
+        <div class="col-md-6 col-12"><strong>📍 會議地點：</strong><span id="sumVenue"></span></div>
+      </div>
+      <div class="p-2 bg-white rounded border small" id="sumExpertsContainer">
+        <strong class="text-primary d-block mb-1"><i class="fa-solid fa-user-doctor me-1"></i>受聘外部專家名單 (含 Speaker 講者與 Moderator 座長，每位 5,000 元)：</strong>
+        <div id="sumExpertsChips" class="d-flex flex-wrap gap-2"></div>
       </div>
     </div>
 
@@ -495,16 +495,28 @@ dd {
         </button>
       </div>
 
-      <!-- 3. 專家遴選理由 -->
-      <div class="copy-card">
-        <div class="copy-card-title">
-          <strong>3. Rationale for Selection (專家理由)</strong>
-          <span class="tag">Step 2 FMV</span>
+      <!-- 3. 專家遴選理由 (支援 Speaker 與 Moderator 一體納入) -->
+      <div class="copy-card" style="grid-column: 1 / -1;">
+        <div class="copy-card-title d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <strong>3. Rationale for Selection (專家遴選理由)</strong>
+            <span class="tag">Step 2 FMV</span>
+          </div>
+          <span id="expertCountBadge" class="badge bg-warning text-dark px-2 py-1 fs-6">
+            本場共 1 位外部專家（1 講者 + 0 座長 · 每位固定 NT$ 5,000）
+          </span>
         </div>
-        <div class="copy-card-body" id="launchDocRationale">受邀專家廖國秀醫師具備三軍總醫院乳房外科豐富實證診療經驗，其專業領域與本次研討會主題「KISQALI Does it Again: A Moment for OS in NATALEE」高度契合。特別邀請擔任演講講者，針對最新臨床試驗數據（NATALEE OS）與臨床照護經驗進行專業學術分享與交流。</div>
-        <button type="button" class="btn-launchpad-copy" data-target="launchDocRationale">
-          <i class="fa-solid fa-copy"></i> 複製專家遴選理由
-        </button>
+        <div class="copy-card-body mb-2" id="launchDocRationale">
+          受邀專家廖國秀醫師具備三軍總醫院乳房外科豐富實證診療經驗，其專業領域與本次研討會主題「KISQALI Does it Again: A Moment for OS in NATALEE」高度契合。特別邀請擔任演講講者，針對最新臨床試驗數據（NATALEE OS）與臨床照護經驗進行專業學術分享與交流。
+        </div>
+        <div class="d-flex gap-2 flex-wrap mb-3">
+          <button type="button" class="btn-launchpad-copy" data-target="launchDocRationale" style="background: #2563eb;">
+            <i class="fa-solid fa-copy"></i> 複製全體專家合併理由
+          </button>
+        </div>
+
+        <!-- 🌟 逐位專家獨立卡片清單 (Speaker 與 Moderator 分別獨立複製) 🌟 -->
+        <div id="expertCardList" class="row g-2"></div>
       </div>
 
       <!-- 4. 場地合規理由 -->
@@ -613,6 +625,14 @@ dd {
           </summary>
           <div class="step-body">
             <dl>
+              <dt>How many engagements to add in BeSure? (登錄外部專家次數)</dt>
+              <dd>
+                <div class="alert alert-warning py-2 px-3 mb-2 small fw-bold" id="step2FmvCountBanner">
+                  本場共有 1 位外部專家（1 位 Speaker + 0 位 Moderator），請在 BeSure 點擊「+ Add New Engagement」共 1 次！
+                </div>
+                所有專家（無論 Speaker 講者或 Moderator 座長）之標準工時與酬金一律相同：
+              </dd>
+
               <dt>Engagement Type / Country / Tier (合作類型與等級)</dt>
               <dd>
                 Type 選 <span class="choice-pill">HCP</span> ｜ Country 選 <span class="choice-pill">Taiwan</span> ｜ Tier 選 <span class="choice-pill">Specialist: Tier1</span>（費率 5000/hr）
@@ -625,7 +645,7 @@ dd {
 
               <dt>工時拆解 (固定標準 5,000 元模式 - 照著打)：</dt>
               <dd>
-                • <b>Service Time (演講時間)</b>：輸入 <span class="choice-pill">00 Hours 40 Minutes</span><br>
+                • <b>Service Time (演講/主持時間)</b>：輸入 <span class="choice-pill">00 Hours 40 Minutes</span><br>
                 • <b>Preparation Time (準備時間)</b>：輸入 <span class="choice-pill">00 Hours 20 Minutes</span><br>
                 • <b>Travel Time (交通時間 - 防紅字！)</b>：輸入 <span class="choice-pill-warning">00 Hours 00 Minutes</span><br>
                 • <b>Rate / Total Cost</b>：系統自動帶出 <span class="choice-pill">TWD 5,000.00</span>
@@ -633,7 +653,7 @@ dd {
 
               <dt>Rationale for selection of the External Expert (遴選理由)</dt>
               <dd>
-                直接點最上方發射台第 3 號按鈕，一鍵複製貼上！
+                直接點最上方發射台第 3 號區塊，複製個別醫師理由或合併理由貼上！
               </dd>
             </dl>
           </div>
@@ -689,8 +709,8 @@ dd {
               <dt>Upload agenda (上傳議程檔案)</dt>
               <dd>按 UPLOAD 上傳剛才這份海報圖檔或 PDF（由主辦同仁點選上傳議程附件）。</dd>
 
-              <dt>How many External experts will be engaged?</dt>
-              <dd>整場聘請講者人數填入半形純數字：<span class="choice-pill">1</span></dd>
+              <dt>How many External experts will be engaged? (整場外部專家總人數)</dt>
+              <dd>填入純半形數字：<span class="choice-pill" id="step4ExpertCountPill">1</span> <small class="text-muted">(包含 Speaker 講者與 Moderator 座長之總人數)</small></dd>
             </dl>
           </div>
         </details>
@@ -944,6 +964,36 @@ dd {
 <script>
 let currentSelectedFile = null;
 
+// 全局受聘專家名單 (含 Speaker 與 Moderator)
+window.detectedExperts = [
+  {
+    name: "廖國秀",
+    hospital: "三軍總醫院",
+    dept: "乳房外科",
+    role: "Speaker",
+    topic: "KISQALI Does it Again: A Moment for OS in NATALEE"
+  }
+];
+
+// 直接複製字串到剪貼簿 (個別醫師姓名與理由按鍵專用)
+async function copyTextDirect(text, btn) {
+  if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text.trim());
+    const orig = btn.innerHTML;
+    btn.innerHTML = `<i class="fa-solid fa-check"></i> ✅ 已複製！`;
+    btn.style.borderColor = '#16a34a';
+    btn.style.color = '#16a34a';
+    setTimeout(() => {
+      btn.innerHTML = orig;
+      btn.style.borderColor = '';
+      btn.style.color = '';
+    }, 2000);
+  } catch (err) {
+    alert("複製失敗，請手動複製：" + text);
+  }
+}
+
 // 取得 Gemini API Key (沿用合約系統同一把金鑰)
 function getStoredApiKey() {
   try {
@@ -1057,20 +1107,27 @@ async function triggerManualAnalysis() {
   document.getElementById("launchNeed").innerHTML = `<span class="spinner-border spinner-border-sm text-primary me-2"></span>正在比對醫療團隊與乳癌專案目的...`;
 
   const promptText = `你是一位台灣諾華（Novartis）的資深法規合規與醫藥學術審查專家。請仔細辨識這份醫學研討會會議議程（Agenda）檔案。
-【重要排除規則 - 務必遵守】：
-1. 嚴格排除諾華內部同仁：議程中經常列有主辦單位、開場致詞、或負責 PSP（病人支持計畫）說明的公司同仁（凡機構標註「台灣諾華」、「台灣諾華股份有限公司」、「Novartis」或類似字樣之內部員工），絕對不可當作受邀主講醫師！
-2. 鎖定受邀外部專家醫師（HCP）：請辨識受邀演講的外部醫院臨床醫師（必須具有外部醫療機構名稱，例如三軍總醫院、臺大醫院、長庚醫院、榮民總醫院等，以及一般外科/乳房外科/腫瘤科等專業科別）。
+【重要專家提取與排除規則 - 務必遵守】：
+1. 嚴格排除諾華內部同仁：議程中經常列有主辦單位、開場致詞、或負責 PSP（病人支持計畫）說明的公司同仁（凡機構標註「台灣諾華」、「台灣諾華股份有限公司」、「Novartis」或無外部醫院職稱之內部員工），絕對不可當作受聘外部專家！
+2. 全面提取所有外部專家醫師（包含 Speaker 演講者 與 Moderator/Chairman 座長/主持人）：
+   - 在醫學研討會中，Speaker（主講醫師）和 Moderator（座長/主持人）都是諾華依合規標準聘請的外部專家顧問 (HCP)，每位專家服務時間（演講或主持 40 分鐘 + 準備 20 分鐘）與酬金（固定 5,000 元）均相同，兩者都必須完整列出！
+   - 請提取每一位外部醫師的：姓名 (name)、所屬醫院機構 (hospital)、科別 (dept)、角色 (role: "Speaker" 或 "Moderator")、以及對應的演講題目或主持時段 (topic)。
 
-請提取並以標準 JSON 回傳以下欄位（不要包含任何額外說明，純 JSON）：
+請提取並以標準 JSON 回傳以下結構（不要包含任何額外說明，純 JSON）：
 {
   "eventName": "活動全稱 (含研討會主題與副標題)",
   "date": "會議日期 (例如 2026年11月24日 (二))",
   "time": "會議起訖時間 (例如 18:30-20:30)",
   "venue": "會議地點名稱與完整地址 (例如 Wilson Park 威爾森公園餐廳（台北市內湖區民權東路六段125之1號）)",
-  "hospital": "受邀主講醫師所屬外部醫院 (例如 三軍總醫院，不可填諾華)",
-  "doctor": "受邀主講醫師姓名 (請務必排除所有諾華內部同仁，只填外部受邀主講醫師)",
-  "dept": "醫師科別 (例如 一般外科/乳房外科)",
-  "topic": "醫師演講題目 (Topic 主題)"
+  "experts": [
+    {
+      "name": "醫師姓名",
+      "hospital": "醫師所屬醫院 (例如 三軍總醫院，不可填諾華)",
+      "dept": "科別 (例如 一般外科/乳房外科/血液腫瘤科)",
+      "role": "Speaker 或 Moderator",
+      "topic": "演講題目 (若為 Moderator 則填主持時段或研討會主題)"
+    }
+  ]
 }`;
 
   try {
@@ -1132,33 +1189,63 @@ async function triggerManualAnalysis() {
     if (parsed.date) document.getElementById("inpDate").value = parsed.date;
     if (parsed.time) document.getElementById("inpTime").value = parsed.time;
     if (parsed.venue) document.getElementById("inpVenue").value = parsed.venue;
-    if (parsed.hospital) document.getElementById("inpHospital").value = parsed.hospital;
-    if (parsed.doctor) document.getElementById("inpDoctor").value = parsed.doctor;
-    if (parsed.topic) document.getElementById("inpTopic").value = parsed.topic;
 
-    document.getElementById("sumDoc").textContent = parsed.doctor || "已辨識";
-    document.getElementById("sumHosp").textContent = parsed.hospital || "已辨識";
-    document.getElementById("sumDate").textContent = parsed.date || "";
-    document.getElementById("sumTime").textContent = parsed.time || "";
-    document.getElementById("sumVenue").textContent = parsed.venue || "";
-    document.getElementById("sumTopic").textContent = parsed.topic || "";
+    if (parsed.experts && Array.isArray(parsed.experts) && parsed.experts.length > 0) {
+      window.detectedExperts = parsed.experts;
+    } else if (parsed.doctor) {
+      window.detectedExperts = [{
+        name: parsed.doctor,
+        hospital: parsed.hospital || "外部醫院",
+        dept: parsed.dept || "乳房外科",
+        role: "Speaker",
+        topic: parsed.topic || parsed.eventName || ""
+      }];
+    }
+
+    // 更新第一個醫師到微調欄位
+    if (window.detectedExperts && window.detectedExperts.length > 0) {
+      const first = window.detectedExperts[0];
+      if (document.getElementById("inpDoctor")) document.getElementById("inpDoctor").value = first.name || "";
+      if (document.getElementById("inpHospital")) document.getElementById("inpHospital").value = first.hospital || "";
+      if (document.getElementById("inpTopic")) document.getElementById("inpTopic").value = first.topic || "";
+    }
+
+    const expCount = window.detectedExperts ? window.detectedExperts.length : 1;
+    const spkCount = window.detectedExperts ? window.detectedExperts.filter(e => (e.role || '').toLowerCase().includes('speaker') || (e.role || '').includes('講')).length : 1;
+    const modCount = window.detectedExperts ? window.detectedExperts.filter(e => (e.role || '').toLowerCase().includes('mod') || (e.role || '').includes('座') || (e.role || '').includes('主')).length : 0;
+
+    const sumDateTimeEl = document.getElementById("sumDateTime");
+    if (sumDateTimeEl) sumDateTimeEl.textContent = `${parsed.date || ''} ${parsed.time || ''}`;
+    const sumVenueEl = document.getElementById("sumVenue");
+    if (sumVenueEl) sumVenueEl.textContent = parsed.venue || '';
+    const sumBadgeEl = document.getElementById("sumBadgeCount");
+    if (sumBadgeEl) sumBadgeEl.textContent = `共辨識出 ${expCount} 位專家（${spkCount} 講者 + ${modCount} 座長）`;
+
+    const chipsEl = document.getElementById("sumExpertsChips");
+    if (chipsEl && window.detectedExperts) {
+      chipsEl.innerHTML = window.detectedExperts.map(e => `
+        <span class="badge ${e.role === 'Moderator' ? 'bg-primary' : 'bg-warning text-dark'} px-2 py-1 fs-6">
+          ${e.role === 'Moderator' ? '🧑‍⚖️ Moderator 座長' : '🎤 Speaker 講者'}: ${e.name} 醫師 (${e.hospital || ''}) · 固定 NT$ 5,000
+        </span>
+      `).join('');
+    }
 
     aiBox.style.display = 'none';
     summaryCard.style.display = 'block';
-    btn.innerHTML = `✅ 已成功辨識【${parsed.doctor || ''} 醫師】！點此可重新辨識新檔案`;
+    btn.innerHTML = `✅ 已成功辨識 ${expCount} 位專家（含講者與座長）！點此可重新辨識新檔案`;
     btn.style.backgroundColor = '#2e7d32';
 
     const badge = document.getElementById('aiStatusBadge');
     if (badge) {
       badge.className = 'badge bg-success px-2 py-1';
-      badge.textContent = `已成功辨識：${parsed.doctor || ''} 醫師`;
+      badge.textContent = `已辨識：${expCount} 位專家 (含 Moderator)`;
     }
 
     updateAllSteps();
 
   } catch (err) {
     aiBox.style.display = 'none';
-    btn.innerHTML = `👉【步驟 2：點此立即開始 AI 深度辨識並帶入 BeSure】`;
+    btn.innerHTML = `👉【點此立即辨識 Agenda 檔案】`;
     btn.style.backgroundColor = '#2e7d32';
     alert(`辨識過程發生問題：${err.message}\n已啟動備援模式，請重新點選步驟 2 再試一次，或展開下方手動修改！`);
   }
@@ -1170,45 +1257,141 @@ function updateAllSteps() {
   const date = document.getElementById("inpDate").value.trim();
   const time = document.getElementById("inpTime").value.trim();
   const venue = document.getElementById("inpVenue").value.trim();
-  const hospital = document.getElementById("inpHospital").value.trim();
-  const doctor = document.getElementById("inpDoctor").value.trim();
-  const topic = document.getElementById("inpTopic").value.trim();
   const attendees = parseInt(document.getElementById("inpAttendees").value) || 10;
+
+  // 若使用者在展開的微調框手動修改，同步至第一個專家
+  if (window.detectedExperts && window.detectedExperts.length > 0) {
+    const manualDoc = document.getElementById("inpDoctor") ? document.getElementById("inpDoctor").value.trim() : "";
+    const manualHosp = document.getElementById("inpHospital") ? document.getElementById("inpHospital").value.trim() : "";
+    const manualTopic = document.getElementById("inpTopic") ? document.getElementById("inpTopic").value.trim() : "";
+    if (manualDoc) window.detectedExperts[0].name = manualDoc;
+    if (manualHosp) window.detectedExperts[0].hospital = manualHosp;
+    if (manualTopic) window.detectedExperts[0].topic = manualTopic;
+  }
+
+  const experts = (window.detectedExperts && window.detectedExperts.length > 0) 
+    ? window.detectedExperts 
+    : [{
+        name: document.getElementById("inpDoctor").value.trim() || "廖國秀",
+        hospital: document.getElementById("inpHospital").value.trim() || "三軍總醫院",
+        dept: "乳房外科",
+        role: "Speaker",
+        topic: document.getElementById("inpTopic").value.trim() || "KISQALI Does it Again: A Moment for OS in NATALEE"
+      }];
+
+  const totalExperts = experts.length;
+  const speakerCount = experts.filter(e => (e.role || '').toLowerCase().includes('speaker') || (e.role || '').includes('講')).length;
+  const moderatorCount = experts.filter(e => (e.role || '').toLowerCase().includes('mod') || (e.role || '').includes('座') || (e.role || '').includes('主')).length;
+  const totalHonoraria = totalExperts * 5000;
+  const totalMealCost = attendees * 1500;
+  const totalBudget = totalMealCost + totalHonoraria;
+
+  const primaryHospital = experts[0].hospital || "三軍總醫院";
 
   // 1. 發射台 - 1. Activity Title
   document.getElementById("launchTitle").textContent = eventName;
 
   // 2. 發射台 - 2. Need & Objectives (乳癌專案黃金合規文字)
   document.getElementById("launchNeed").textContent = 
-    `針對 HR+/HER2- 早期乳癌中高復發風險病患，與${hospital}醫療團隊深入交流 NATALEE 試驗最新整體存活期 (OS) 實證數據。探討臨床治療篩選準則，並討論病友支持計畫 (PSP) 之推動與執行優化，協助院端強化病患長期治療之順從性與照護信心。`;
+    `針對 HR+/HER2- 早期乳癌中高復發風險病患，與${primaryHospital}醫療團隊深入交流 NATALEE 試驗最新整體存活期 (OS) 實證數據。探討臨床治療篩選準則，並討論病友支持計畫 (PSP) 之推動與執行優化，協助院端強化病患長期治療之順從性與照護信心。`;
 
-  // 3. 發射台 - 3. Rationale for Selection
-  document.getElementById("launchDocRationale").textContent = 
-    `受邀專家${doctor}醫師具備${hospital}乳房外科豐富實證診療經驗，其專業領域與本次研討會主題「${topic}」高度契合。特別邀請擔任演講講者，針對最新臨床試驗數據（NATALEE OS）與臨床照護經驗進行專業學術分享與交流。`;
+  // 3. 發射台 - 3. Rationale for Selection (更新專家總數徽章與合併理由)
+  const countBadgeEl = document.getElementById("expertCountBadge");
+  if (countBadgeEl) {
+    countBadgeEl.textContent = `本場共 ${totalExperts} 位外部專家（${speakerCount} 講者 + ${moderatorCount} 座長 · 每位固定 NT$ 5,000）`;
+  }
+
+  // 產生每位專家的獨立理由文字
+  experts.forEach(e => {
+    if (e.role === 'Moderator') {
+      e.rationale = `受邀專家${e.name}醫師為${e.hospital || primaryHospital}${e.dept || '乳房外科'}資深臨床權威，具備主持大型醫學研討會之豐富經驗。特別邀請擔任本次會議座長（Moderator），主持臨床個案討論與多專科問答環節，引導醫療團隊針對早期乳癌最新治療策略與病友照護深入交流。`;
+    } else {
+      e.rationale = `受邀專家${e.name}醫師具備${e.hospital || primaryHospital}${e.dept || '乳房外科'}豐富實證診療經驗，其專業領域與本次研討會主題「${e.topic || eventName}」高度契合。特別邀請擔任演講講者，針對最新臨床試驗數據（NATALEE OS）與臨床照護經驗進行專業學術分享與交流。`;
+    }
+  });
+
+  // 合併理由
+  if (totalExperts === 1) {
+    document.getElementById("launchDocRationale").textContent = experts[0].rationale;
+  } else {
+    document.getElementById("launchDocRationale").textContent = 
+      `本次學術研討會共聘請 ${totalExperts} 位外部臨床專家顧問（包含 ${speakerCount} 位主講講者及 ${moderatorCount} 位座長主持人）：` +
+      experts.map(e => `【${e.name}】醫師（${e.hospital || ''}${e.dept || ''}，擔任 ${e.role === 'Moderator' ? '座長主持' : '主講'}「${e.topic || 'NATALEE 臨床討論'}」）`).join('、') +
+      `。各受邀專家皆具備乳癌領域豐富臨床診療與學術主持經驗，其專業與本次研討會議題高度契合，特邀進行專業學術分享、跨科別個案交流與臨床討論引領。`;
+  }
+
+  // 渲染逐位專家獨立卡片清單
+  const cardListEl = document.getElementById("expertCardList");
+  if (cardListEl) {
+    cardListEl.innerHTML = experts.map((e, idx) => `
+      <div class="col-md-6 col-12">
+        <div class="card p-3 border shadow-sm bg-white h-100" style="border-left: 4px solid ${e.role === 'Moderator' ? '#2563eb' : '#d97706'} !important;">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="badge ${e.role === 'Moderator' ? 'bg-primary' : 'bg-warning text-dark'} px-2 py-1 fw-bold">
+              ${e.role === 'Moderator' ? '🧑‍⚖️ Moderator 座長/主持' : '🎤 Speaker 主講醫師'}
+            </span>
+            <span class="badge bg-success-subtle text-success border border-success fw-bold">固定 TWD 5,000.00</span>
+          </div>
+          <div class="fw-bold fs-6 text-dark mb-1">
+            ${e.name} 醫師 <span class="text-secondary small fw-normal">(${e.hospital || ''} ${e.dept || ''})</span>
+          </div>
+          <div class="text-muted small mb-2 text-truncate" title="${e.topic || ''}">
+            <strong>講題/主持：</strong>${e.topic || '乳癌臨床實證討論'}
+          </div>
+          <div class="d-flex flex-wrap gap-1 mb-2 small">
+            <span class="badge bg-light text-dark border">演講/主持 00h 40m</span>
+            <span class="badge bg-light text-dark border">準備 00h 20m</span>
+            <span class="badge bg-light text-dark border">交通 00h 00m</span>
+          </div>
+          <div class="p-2 bg-light rounded text-secondary small mb-2 border" id="expertRationaleText_${idx}" style="font-size: 0.85rem; line-height: 1.4;">
+            ${e.rationale}
+          </div>
+          <div class="d-flex gap-2 mt-auto">
+            <button type="button" class="btn btn-outline-secondary btn-sm flex-fill fw-bold" onclick="copyTextDirect('${e.name}', this)">
+              <i class="fa-solid fa-copy me-1"></i>複製姓名
+            </button>
+            <button type="button" class="btn btn-primary btn-sm flex-fill fw-bold" onclick="copyTextDirect(document.getElementById('expertRationaleText_${idx}').innerText, this)">
+              <i class="fa-solid fa-copy me-1"></i>複製此位理由
+            </button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
 
   // 4. 發射台 - 4. Venue Justification
   document.getElementById("launchVenue").textContent = 
-    `本次學術討論會議於「${venue}」舉行。場地便於${hospital}預計與會醫師抵達，現場具備獨立且安靜之討論空間，適合進行專業醫學簡報投影與臨床深度交流。場地純屬一般商務餐飲，無任何娛樂、休閒、觀光或渡假設施，完全符合諾華場地合規標準與餐飲招待指引。`;
+    `本次學術討論會議於「${venue}」舉行。場地便於${primaryHospital}預計與會醫師抵達，現場具備獨立且安靜之討論空間，適合進行專業醫學簡報投影與臨床深度交流。場地純屬一般商務餐飲，無任何娛樂、休閒、觀光或渡假設施，完全符合諾華場地合規標準與餐飲招待指引。`;
 
   // 5. 發射台 - 5. Financial Comments
-  const totalMealCost = attendees * 1500;
-  const totalBudget = totalMealCost + 5000;
   document.getElementById("launchFin").textContent = 
-    `預計於${venue}舉行商務討論餐會，預計與會人數共 ${attendees} 人。餐費預估每人 NT$ 1,500，全場餐飲總預估約 NT$ ${totalMealCost.toLocaleString()}（遠低於公司上限 NT$ 3,500/人/日）；另編列外部專家講者酬金 NT$ 5,000 元整（40分演講+20分準備），活動預估總預算約為 NT$ ${totalBudget.toLocaleString()}。`;
+    `預計於${venue}舉行商務討論餐會，預計與會人數共 ${attendees} 人。餐費預估每人 NT$ 1,500，全場餐飲總預估約 NT$ ${totalMealCost.toLocaleString()}（遠低於公司上限 NT$ 3,500/人/日）；另聘請 ${totalExperts} 位外部專家顧問（包含 ${speakerCount} 位主講者及 ${moderatorCount} 位座長/主持人），每位依公司合規標準編列 40 分鐘服務 + 20 分鐘準備（1小時），每位專家酬金 NT$ 5,000 元整，專家酬金小計 NT$ ${totalHonoraria.toLocaleString()} 元。活動預估總預算約為 NT$ ${totalBudget.toLocaleString()} 元，整體活動預算合規。`;
 
   // 6. 發射台 - 6. Describe Audience
   document.getElementById("launchAudience").textContent = 
-    `預計邀請${hospital}及相關乳癌多專科醫療團隊醫師參與，旨在針對 HR+/HER2- 早期乳癌之最新整體存活期（OS）臨床實證、高復發風險病患篩選準則，以及病友支持照護計畫（PSP）進行深入之跨科別臨床經驗交流。`;
+    `預計邀請${primaryHospital}及相關乳癌多專科醫療團隊醫師參與，旨在針對 HR+/HER2- 早期乳癌之最新整體存活期（OS）臨床實證、高復發風險病患篩選準則，以及病友支持照護計畫（PSP）進行深入之跨科別臨床經驗交流。`;
 
   // 院內外演講判斷
-  const isHospitalInVenue = venue.includes(hospital) || venue.includes("醫院") || venue.includes("院區") || venue.includes("醫學中心");
+  const isHospitalInVenue = venue.includes(primaryHospital) || venue.includes("醫院") || venue.includes("院區") || venue.includes("醫學中心");
   const inInstTip = document.getElementById("boxInInstitutionTip");
-  if (isHospitalInVenue) {
-    document.getElementById("badgeVenueType").textContent = "Hospital / Institution";
-    inInstTip.innerHTML = `點選：<span class="choice-pill">Yes</span> <small class="text-muted">(在院內會議室)</small>`;
-  } else {
-    document.getElementById("badgeVenueType").textContent = "Restaurant";
-    inInstTip.innerHTML = `點選：<span class="choice-pill">No</span> <small class="text-muted">(在院外餐廳)</small>`;
+  if (inInstTip) {
+    if (isHospitalInVenue) {
+      document.getElementById("badgeVenueType").textContent = "Hospital / Institution";
+      inInstTip.innerHTML = `點選：<span class="choice-pill">Yes</span> <small class="text-muted">(在院內會議室)</small>`;
+    } else {
+      document.getElementById("badgeVenueType").textContent = "Restaurant";
+      inInstTip.innerHTML = `點選：<span class="choice-pill">No</span> <small class="text-muted">(在院外餐廳)</small>`;
+    }
+  }
+
+  // 14 步導航聯動更新
+  const fmvBanner = document.getElementById("step2FmvCountBanner");
+  if (fmvBanner) {
+    fmvBanner.innerHTML = `本場共有 <strong class="text-danger fs-6">${totalExperts}</strong> 位外部專家（${speakerCount} 位 Speaker + ${moderatorCount} 位 Moderator），請在 BeSure 點擊「<strong>+ Add New Engagement</strong>」共 <strong class="text-danger fs-6">${totalExperts}</strong> 次！`;
+  }
+  const step4Pill = document.getElementById("step4ExpertCountPill");
+  if (step4Pill) {
+    step4Pill.textContent = `${totalExperts}`;
   }
 }
 
