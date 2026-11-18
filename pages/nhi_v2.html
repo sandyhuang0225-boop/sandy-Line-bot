@@ -333,10 +333,12 @@
                         <!-- Scenario 5: 24 Months Renewal (Slate Purple) -->
                         <button class="btn btn-outline-secondary btn-scenario" style="border-left: 4px solid #475569 !important; background: #f8fafc;" onclick="setScenario(5, this)">
                             <div class="d-flex justify-content-between align-items-center">
-                                <strong style="font-size: 0.95rem; color: #1e293b;">📈 5. 用藥滿 24 個月 (2年) 無惡化續約展延</strong>
-                                <span class="badge bg-dark">C50R1 展延審查</span>
+                                <strong style="font-size: 0.95rem; color: #1e293b;"><i class="fa-solid fa-clock-rotate-left text-secondary me-1"></i>5. 滿兩年停藥或目前自費病人 ── 轉健保續用至 PD</strong>
+                                <span class="badge bg-dark">C50R1 續用至 PD</span>
                             </div>
-                            <small class="text-muted d-block mt-1" style="font-size: 0.74rem;">檢附近 4 週 RECIST 影像評估 non-PD，申請繼續展延核發 24 週 (378 粒)</small>
+                            <div class="text-secondary mt-1 fw-medium" style="font-size: 0.75rem;">
+                                • <strong>舊病人與自費病人銜接</strong>：曾用滿兩年停藥或目前自費病人，經事審通過皆可轉健保使用至 PD 為止
+                            </div>
                         </button>
                     </div>
                 </div>
@@ -2026,14 +2028,14 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
                 };
             }
 
-            // SCENARIO 6: 24 Months Renewal
-            if (/24\s*個月|兩年|2年|二年|續約|展延|續審|non-PD|延續申請|延續/i.test(raw)) {
+            // SCENARIO 5: 滿兩年已停藥或現階段自費病人轉健保續用至 PD
+            if (/滿兩年|滿2年|兩年|2年|停藥|自費.*轉|自費.*續|轉健保|續用至\s*pd|用到\s*pd|展延/i.test(raw)) {
                 return {
-                    scenario: 6, eligible: true,
-                    badgeClass: "badge bg-success fs-6", badgeText: "✅ 健保【展延續審給付】！",
-                    code: "事審代碼：C50R1 (展延)", borderClass: "border-success",
-                    spoken: "報告醫師，用藥滿 24 個月無惡化續約，檢附近期電腦斷層及骨骼掃描確認疾病無惡化（non-PD），依健保 9.72 規定得繼續申請給付。已為您備妥展延申請書！",
-                    details: "【24 個月展延續審】：\n• 判定依據：用藥滿 24 個月且影像學檢查無疾病進展 (non-PD)\n• 事審代碼：C50R1 (健保碼：KC01004100)\n• 申請數量：378 粒 (24 週用量)",
+                    scenario: 5, eligible: true,
+                    badgeClass: "badge bg-dark fs-6", badgeText: "✅ 健保【轉健保續用至 PD】！",
+                    code: "事審代碼：C50R1 (續用至 PD)", borderClass: "border-dark",
+                    spoken: "報告醫師，曾用滿兩年之已停藥病人，或現階段自費使用中之病人，經事前審查通過後，皆可全額轉健保給付，持續使用至疾病惡化 (PD) 為止！事前審查代碼 C50R1，已為您備妥申請書！",
+                    details: "【滿兩年停藥或現階段自費轉健保續用至 PD】：\n• 適用對象：曾用滿兩年已停藥病人、現階段自費病人\n• 給付條件：經事前審查通過，全額健保給付使用至 PD 為止\n• 事審代碼：C50R1 (健保藥碼：KC01004100)",
                     er: effectiveER, pr: effectivePR, ki67: effectiveKi67, her2: effectiveHER2, erSpoken: erSpoken, prSpoken: prSpoken, ki67Spoken: ki67Spoken
                 };
             }
@@ -3009,20 +3011,21 @@ ${raw}`;
             if (currentScenario === 5 || currentScenario === 6) {
                 document.getElementById("viewIcd").textContent = "C50.919";
                 viewReasonEl.innerHTML = `
-<strong>【全民健保藥品事前審查申請理由 (健保規定 9.72 第 5 點及第 7 點)】：</strong>
+<strong>【全民健保藥品事前審查申請理由 (健保規定 9.72 續用至 PD 條文)】：</strong>
 
 <strong>1. 健保給付規定合規：</strong>
-符合健保規定 9.72 第 5 點及第 7 點：核准後每 24 週檢附療效評估資料，用藥滿 24 個月無惡化續約展延。原事前審查核准文號：(填入前次文號)。
+符合健保 9.72 續用條文規定：曾用滿兩年之已停藥病人，或現階段自費使用中之病人，經事前審查核准，得全額健保給付使用至疾病進展 (PD) 為止。
 
-<strong>2. 病患現階段實際狀況 (依醫師口述與影像報告)：</strong>
-• 臨床診斷：轉移性乳癌 (Stage IV)。
-• 治療評估：病患規律使用擊癌利 (ribociclib) 合併內分泌治療已滿 24 個月。
-• 影像追蹤：檢附近期胸腹 CT 及全身骨骼掃描報告，依 RECIST 1.1 確認維持穩定、無疾病進展 (non-PD)。
+<strong>2. 病患現階段實際狀況 (歷次治療史與評估)：</strong>
+• 臨床診斷：晚期轉移性乳癌 (Stage IV)。
+• 病患歷程：病患曾使用擊癌利 (ribociclib) 滿兩年已停藥，或現階段持續自費使用中且無疾病惡化。
+• 申請目的：依最新健保給付條文申請轉入健保，全額給付持續治療至疾病進展 (PD) 為止。
 
 <strong>3. 事前審查申請代碼與品項：</strong>
-• 事前審查代碼：<strong>C50R1 (展延續審)</strong> (健保藥碼：KC01004100)
-• 藥品名稱：<strong>擊癌利膜衣錠 200毫克</strong> (ribociclib 200mg)
-• 處方規劃：每次 3 粒 (600mg) 每日口服一次，服 21 天停 7 天，申請 <strong>378 粒</strong> (24 週用量)。
+• 事前審查代碼：<strong>C50R1 (續用至 PD)</strong> (健保藥碼：KC01004100)
+• 藥品名稱：<strong>擊癌利膜衣錠 200毫克</strong> (Ribociclib film-coated tablets 200mg)
+• 處方規劃：每次 3 粒 (600mg) 口服每日一次，連續服用 21 天後停藥 7 天 (28天為一週期)。
+• 給付期限：經事前審查核准後，全額健保給付持續使用至疾病惡化 (PD) 為止。
                 `.trim();
                 return;
             }
@@ -3313,15 +3316,15 @@ ${raw}`;
                         <td class="align-middle text-center"><strong>16 支</strong><br><small class="text-muted">(24週用量)</small></td>
                     </tr>
                 `;
-            } else if (currentScenario === 5 || currentScenario === 6) { // 24 months renewal
+            } else if (currentScenario === 5 || currentScenario === 6) { // Renewal to PD
                 tbody.innerHTML = `
                     <tr>
                         <td class="text-center align-middle">1</td>
-                        <td class="align-middle"><strong class="text-success">C50R1 (續評展延)</strong><br><small class="text-muted">原核准案號展延申請</small></td>
+                        <td class="align-middle"><strong class="text-dark">C50R1 (續用至 PD)</strong><br><small class="text-muted">轉健保/展延申請</small></td>
                         <td class="align-middle"><strong>擊癌利膜衣錠 200毫克</strong><br><small class="text-muted">Ribociclib 200mg</small></td>
                         <td class="align-middle">200mg/錠，每日口服一次，<strong>每次 3 粒 (600mg)</strong>，服 21 天停 7 天。</td>
                         <td class="align-middle text-center">台灣諾華<br><small class="text-muted">Novartis</small></td>
-                        <td class="align-middle text-center"><strong>378 粒</strong><br><small class="text-muted">(24週用量)</small></td>
+                        <td class="align-middle text-center"><strong>每次核定 24 週</strong><br><small class="text-success fw-bold">健保給付至 PD 為止</small></td>
                         ${REVIEW_COL_HTML}
                     </tr>
                     <tr>
