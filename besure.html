@@ -417,6 +417,13 @@ dd {
         <strong class="text-primary d-block mb-1"><i class="fa-solid fa-user-doctor me-1"></i>受聘外部專家名單 (含 Speaker 講者與 Moderator 座長，每位 5,000 元)：</strong>
         <div id="sumExpertsChips" class="d-flex flex-wrap gap-2"></div>
       </div>
+      <!-- 📤 傳送至公司電腦免防火牆連結按鈕 -->
+      <div class="mt-3 pt-2 border-top d-flex flex-column flex-sm-row gap-2">
+        <button id="btnShareToPC" type="button" class="btn btn-outline-success fw-bold w-100 py-2 shadow-sm" onclick="generateAndCopyPCLink(this)">
+          <i class="fa-solid fa-laptop-medical me-1"></i> 📤 複製「傳送至公司電腦免防火牆連結」
+        </button>
+      </div>
+      <div id="pcShareNotice" class="small text-success mt-2 p-2 bg-white rounded border border-success" style="display: none;"></div>
     </div>
 
     <!-- 手動微調輸入框 (折疊) -->
@@ -1329,7 +1336,11 @@ async function triggerManualAnalysis() {
     aiBox.style.display = 'none';
     btn.innerHTML = `👉【點此立即辨識 Agenda 檔案】`;
     btn.style.backgroundColor = '#2e7d32';
-    alert(`辨識過程發生問題：${err.message}\n已啟動備援模式，請重新點選步驟 2 再試一次，或展開下方手動修改！`);
+    if ((err.message || '').toLowerCase().includes('fetch') || (err.message || '').includes('Failed to fetch')) {
+      alert(`⚠️【檢測到公司電腦網路防火牆阻擋】\n\n原因：您目前使用的公司電腦連接著企業內網/資安防護（如 Zscaler/VPN），阻擋了對外連線到 Google AI 伺服器的 API 請求（Failed to fetch）。\n\n💡 最佳解決方法（超方便！）：\n1. 請改用「手機」（吃個人 4G/5G 網路）開啟此網址上傳 Agenda 辨識（只需 3 秒！）。\n2. 辨識成功後，點擊畫面上新增的「📤 複製傳送至公司電腦免防火牆連結」。\n3. 貼到 Email 寄給自己，在公司電腦打開即可直接使用，所有資料自動填好，100% 免受防火牆阻擋！`);
+    } else {
+      alert(`辨識過程發生問題：${err.message}\n已啟動備援模式，請重新點選步驟 2 再試一次，或展開下方手動修改！`);
+    }
   }
 }
 
@@ -1582,7 +1593,121 @@ document.addEventListener("click", async (e) => {
   }
 });
 
-// 初始啟動
+
+// 📤 生成並複製傳送至公司電腦免防火牆連結 (Base64 Hash URL)
+function generateAndCopyPCLink(btn) {
+  const data = {
+    eventName: document.getElementById("inpEventName") ? document.getElementById("inpEventName").value : "",
+    date: document.getElementById("inpDate") ? document.getElementById("inpDate").value : "",
+    time: document.getElementById("inpTime") ? document.getElementById("inpTime").value : "",
+    venue: document.getElementById("inpVenue") ? document.getElementById("inpVenue").value : "",
+    attendees: document.getElementById("inpBudgetAttendees") ? document.getElementById("inpBudgetAttendees").value : "",
+    meal: document.getElementById("inpBudgetMeal") ? document.getElementById("inpBudgetMeal").value : "",
+    travel: document.getElementById("inpBudgetTravel") ? document.getElementById("inpBudgetTravel").value : "",
+    experts: window.detectedExperts || []
+  };
+
+  const jsonStr = JSON.stringify(data);
+  const b64 = btoa(encodeURIComponent(jsonStr).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode('0x' + p1)));
+  const targetUrl = window.location.origin + window.location.pathname + '#m=' + b64;
+
+  navigator.clipboard.writeText(targetUrl).then(() => {
+    const origText = btn.innerHTML;
+    btn.innerHTML = `<i class="fa-solid fa-check text-success"></i> ✅ 連結複製成功！已存入剪貼簿`;
+    const notice = document.getElementById("pcShareNotice");
+    if (notice) {
+      notice.style.display = "block";
+      notice.innerHTML = `<i class="fa-solid fa-circle-check me-1"></i> <strong>已成功複製專屬免防火牆連結！</strong><br>您可以將此連結寄到公司信箱（或 Teams 傳給自己），在諾華公司電腦打開時，<strong>所有會議與專家資料自動全數載入，完全不連外部 AI，100% 免受公司防火牆阻擋！</strong>`;
+    }
+    setTimeout(() => {
+      btn.innerHTML = origText;
+    }, 4000);
+  }).catch(e => {
+    prompt("請複製以下連結（可直接寄到公司信箱在電腦打開）：", targetUrl);
+  });
+}
+
+// 檢測網址是否有手機同步過來的資料 (#m= 或 #data=)
+function checkUrlHashData() {
+  try {
+    const hash = window.location.hash;
+    if (hash && (hash.startsWith('#m=') || hash.startsWith('#data='))) {
+      const b64 = hash.replace(/^#(m|data)=/, '');
+      const jsonStr = decodeURIComponent(Array.prototype.map.call(atob(b64), function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      const parsed = JSON.parse(jsonStr);
+
+      if (parsed.eventName) document.getElementById("inpEventName").value = parsed.eventName;
+      if (parsed.date) document.getElementById("inpDate").value = parsed.date;
+      if (parsed.time) document.getElementById("inpTime").value = parsed.time;
+      if (parsed.venue) document.getElementById("inpVenue").value = parsed.venue;
+      if (parsed.attendees && document.getElementById("inpBudgetAttendees")) {
+        document.getElementById("inpBudgetAttendees").value = parsed.attendees;
+      }
+      if (parsed.meal && document.getElementById("inpBudgetMeal")) {
+        document.getElementById("inpBudgetMeal").value = parsed.meal;
+      }
+      if (parsed.travel && document.getElementById("inpBudgetTravel")) {
+        document.getElementById("inpBudgetTravel").value = parsed.travel;
+      }
+
+      if (parsed.experts && Array.isArray(parsed.experts) && parsed.experts.length > 0) {
+        window.detectedExperts = parsed.experts;
+      }
+
+      if (window.detectedExperts && window.detectedExperts.length > 0) {
+        const first = window.detectedExperts[0];
+        if (document.getElementById("inpDoctor")) document.getElementById("inpDoctor").value = first.name || "";
+        if (document.getElementById("inpHospital")) document.getElementById("inpHospital").value = first.hospital || "";
+        if (document.getElementById("inpTopic")) document.getElementById("inpTopic").value = first.topic || "";
+      }
+
+      const expCount = window.detectedExperts ? window.detectedExperts.length : 1;
+      const spkCount = window.detectedExperts ? window.detectedExperts.filter(e => (e.role || '').toLowerCase().includes('speaker') || (e.role || '').includes('講')).length : 1;
+      const modCount = window.detectedExperts ? window.detectedExperts.filter(e => (e.role || '').toLowerCase().includes('mod') || (e.role || '').includes('座') || (e.role || '').includes('主')).length : 0;
+
+      const sumDateTimeEl = document.getElementById("sumDateTime");
+      if (sumDateTimeEl) sumDateTimeEl.textContent = `${parsed.date || ''} ${parsed.time || ''}`;
+      const sumVenueEl = document.getElementById("sumVenue");
+      if (sumVenueEl) sumVenueEl.textContent = parsed.venue || '';
+      const sumBadgeEl = document.getElementById("sumBadgeCount");
+      if (sumBadgeEl) sumBadgeEl.textContent = `已同步 ${expCount} 位專家（${spkCount} 講者 + ${modCount} 座長）`;
+
+      const chipsEl = document.getElementById("sumExpertsChips");
+      if (chipsEl && window.detectedExperts) {
+        chipsEl.innerHTML = window.detectedExperts.map(e => `
+          <span class="badge ${e.role === 'Moderator' ? 'bg-primary' : 'bg-warning text-dark'} px-2 py-1 fs-6">
+            ${e.role === 'Moderator' ? '🎤 Moderator 座長' : '🗣️ Speaker 講者'}: ${e.name} 醫師 (${e.hospital || ''}) · 酬金 NT$ 5,000
+          </span>
+        `).join('');
+      }
+
+      const summaryCard = document.getElementById('summaryCard');
+      if (summaryCard) summaryCard.style.display = 'block';
+
+      // 頂部顯示免防火牆同步成功提示卡
+      const syncBanner = document.createElement("div");
+      syncBanner.className = "alert alert-success border-2 shadow-sm d-flex align-items-center mb-3";
+      syncBanner.innerHTML = `
+        <i class="fa-solid fa-cloud-arrow-down fs-2 text-success me-3"></i>
+        <div>
+          <h6 class="mb-0 fw-bold text-success">🎉 已成功由手機同步會議資料！</h6>
+          <div class="small text-dark mt-1">活動【${parsed.eventName || '醫學研討會'}】、${expCount} 位專家名單與地點時間已全數載入！<strong>完全不受公司電腦防火牆影響</strong>，請在下方【第一欄位】自填餐費與人數即可產出總預算！</div>
+        </div>
+      `;
+      const launchpadBox = document.querySelector(".launchpad-box");
+      if (launchpadBox && launchpadBox.parentNode) {
+        launchpadBox.parentNode.insertBefore(syncBanner, launchpadBox);
+      }
+    }
+  } catch (err) {
+    console.error("Hash sync error:", err);
+  }
+}
+
+// 初始啟動 (若有手機同步之 Hash 則先載入)
+checkUrlHashData();
 updateAllSteps();
 </script>
 </body>
