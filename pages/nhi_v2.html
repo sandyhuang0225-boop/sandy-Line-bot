@@ -317,7 +317,7 @@
                                 <span class="badge bg-primary">雙藥健保：C50R1 ＋ 停經針</span>
                             </div>
                             <div class="text-primary-emphasis mt-1 fw-medium" style="font-size: 0.75rem;">
-                                • <strong>適用對象：女性停經前或男性</strong>（健保全額給付雙藥：擊癌利 ＋ LHRH 停經針 6 支）
+                                • <strong>門檻放寬至 ER/PR ≧ 1%，無腦轉移，非單純骨轉移</strong>（女性停經前或男性，健保全額給付雙藥：擊癌利 ＋ 停經針）
                             </div>
                         </button>
 
@@ -1796,7 +1796,7 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             s = s.replace(/淋巴(?:結)?\s*(?:是|為)?\s*(?:0|零)\s*(?:顆|個)?/gi, ' N0 淋巴0顆 ');
             s = s.replace(/腫瘤\s*(?:大小|直徑|為|最大徑)?\s*(?:2|二|兩|两)\s*(?:公分|cm)?(?!\.)/gi, ' 腫瘤2公分 T2 ');
 
-            // Normalize HER2 speech recognition variations (HER2, HER-2, HER two, HER to, HER too, HER 陰性, 赫2)
+            // Normalize HER2 speech recognition variations
             s = s.replace(/\bher\s*[-_]?(?:2|two|to|too|二|兩|两)\b|\bher\s*[-_]?(?:2|two|to|too|二|兩|两)/gi, ' HER2 ');
             s = s.replace(/赫\s*[-_]?(?:2|二|兩|两)|賀\s*[-_]?(?:2|二|兩|两)/gi, ' HER2 ');
             s = s.replace(/\bher\s*(?:陰性|陽性|positive|negative|\+|\-)/gi, (m) => m.replace(/her/i, 'HER2 '));
@@ -1818,26 +1818,23 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             ];
             numWords.forEach(([p, r]) => { s = s.replace(p, r); });
 
-            // 1. Normalize T Staging: T1, T2, T3, T4
-            // Handles: T2, t2, T 2, T-2, T二, T兩, T两, T two, T 2.0
+            // 1. Normalize Grade FIRST (Supports English, Chinese, Phonetic 'Great', 'Gray', 'G3', 'Grade 三')
+            s = s.replace(/(?:grade|great|gray|grey|g|格雷|分化|分級|級別)\s*[-_:]?\s*(?:3|三|third)|第\s*(?:3|三)\s*級|第三級|高惡性|分化不良|低分化|high\s*grade/gi, ' Grade 3 ');
+            s = s.replace(/(?:grade|great|gray|grey|g|格雷|分化|分級|級別)\s*[-_:]?\s*(?:2|二|兩|两|second)|第\s*(?:2|二|兩|两)\s*級|第二級|中度分化|intermediate\s*grade/gi, ' Grade 2 ');
+            s = s.replace(/(?:grade|great|gray|grey|g|格雷|分化|分級|級別)\s*[-_:]?\s*(?:1|一|first)|第\s*(?:1|一)\s*級|第一級|高分化|良好分化|low\s*grade/gi, ' Grade 1 ');
+
+            // 2. Normalize T Staging: T0, T1, T2, T3, T4
             s = s.replace(/\b[tT]\s*[-_]?\s*(?:4|四)\b|[tT]\s*[-_]?\s*(?:4|四)/gi, ' T4 ');
             s = s.replace(/\b[tT]\s*[-_]?\s*(?:3|三)\b|[tT]\s*[-_]?\s*(?:3|三)/gi, ' T3 ');
             s = s.replace(/\b[tT]\s*[-_]?\s*(?:2|二|兩|两)\b|[tT]\s*[-_]?\s*(?:2|二|兩|两)/gi, ' T2 ');
             s = s.replace(/\b[tT]\s*[-_]?\s*(?:1|一)\b|[tT]\s*[-_]?\s*(?:1|一)/gi, ' T1 ');
             s = s.replace(/\b[tT]\s*[-_]?\s*(?:0|零)\b|[tT]\s*[-_]?\s*(?:0|零)/gi, ' T0 ');
 
-            // 2. Normalize N Staging: N0, N1, N2, N3
-            // Handles: N1, n1, N 1, N-1, N一, N E, NE, Ne, pN1, pN1a, N one
+            // 3. Normalize N Staging: N0, N1, N2, N3
             s = s.replace(/(?:p)?[nN]\s*[-_]?\s*(?:3|三)\b|(?:p)?[nN]\s*[-_]?\s*(?:3|三)/gi, ' N3 ');
             s = s.replace(/(?:p)?[nN]\s*[-_]?\s*(?:2|二|兩|两)\b|(?:p)?[nN]\s*[-_]?\s*(?:2|二|兩|两)/gi, ' N2 ');
-            // Crucial: N + E / e / 1 / 一 (phonetic sound-alike for '一' yi -> E)
             s = s.replace(/(?:p)?[nN]\s*[-_]?\s*(?:1|一|[eE])\b|(?:p)?[nN]\s*[-_]?\s*(?:1|一|[eE])/gi, ' N1 ');
             s = s.replace(/(?:p)?[nN]\s*[-_]?\s*(?:0|零|[oO])\b|(?:p)?[nN]\s*[-_]?\s*(?:0|零|[oO])/gi, ' N0 ');
-
-            // 3. Normalize Grade: Grade 1, 2, 3
-            s = s.replace(/[gG]\s*[-_]?\s*(?:3|三)\b|Grade\s*[-_]?\s*(?:3|三)\b|第\s*3\s*級|第三級/gi, ' Grade 3 ');
-            s = s.replace(/[gG]\s*[-_]?\s*(?:2|二)\b|Grade\s*[-_]?\s*(?:2|二)\b|第\s*2\s*級|第二級/gi, ' Grade 2 ');
-            s = s.replace(/[gG]\s*[-_]?\s*(?:1|一|[eE])\b|Grade\s*[-_]?\s*(?:1|一|[eE])\b|第\s*1\s*級|第一級/gi, ' Grade 1 ');
 
             return s.replace(/\s+/g, ' ').trim();
         }
@@ -2210,9 +2207,9 @@ ER: positive (85%), PR: positive (70%), HER2: negative (1+)..."></textarea>
             }
 
             let grade = null;
-            if (/grade\s*3|g3|第\s*3\s*級|第三級|分化不良|低分化|high\s*grade/i.test(raw)) grade = 3;
-            else if (/grade\s*2|g2|第\s*2\s*級|第二級|中度分化/i.test(raw)) grade = 2;
-            else if (/grade\s*1|g1|第\s*1\s*級|第一級|高分化/i.test(raw)) grade = 1;
+            if (/grade\s*3|g3|第\s*3\s*級|第三級|分化不良|低分化|high\s*grade|三級|3級/i.test(raw)) grade = 3;
+            else if (/grade\s*2|g2|第\s*2\s*級|第二級|中度分化|二級|2級/i.test(raw)) grade = 2;
+            else if (/grade\s*1|g1|第\s*1\s*級|第一級|高分化|一級|1級/i.test(raw)) grade = 1;
 
             // Use DOM fallbacks if user didn't speak them
             if (nodes === null) {
