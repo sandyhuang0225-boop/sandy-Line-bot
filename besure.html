@@ -455,7 +455,7 @@ dd {
         </div>
         <div class="col-md-2 col-6">
           <label class="form-label small fw-bold text-secondary mb-1">預估全場人數</label>
-          <input type="number" id="inpAttendees" class="form-control form-control-sm" value="10" oninput="updateAllSteps()">
+          <input type="number" id="inpAttendees" class="form-control form-control-sm" placeholder="自填人數" oninput="if(document.getElementById('inpBudgetAttendees')) document.getElementById('inpBudgetAttendees').value=this.value; calculateCustomBudget();">
         </div>
       </div>
     </details>
@@ -471,10 +471,103 @@ dd {
     </div>
 
     <div class="copy-grid">
-      <!-- 1. 活動名稱 -->
+      <!-- 1. 總預算即時計算機與財務合規說明 (第一欄位 · 總預算 = 餐費 + 演講費 + 交通費) -->
+      <div class="copy-card" style="grid-column: 1 / -1; border-top: 4px solid #10b981; background: #f0fdf4;">
+        <div class="copy-card-title d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <strong class="fs-5 text-success"><i class="fa-solid fa-calculator me-2"></i>1. Total Budget & Financial Comments (活動總預算即時試算)</strong>
+            <span class="tag tag-blue">Step 1 & Step 7</span>
+          </div>
+          <span class="badge bg-success-subtle text-success border border-success px-2 py-1 fs-6">
+            總預算 = 餐費 + 演講主持費 + 全部的交通費 · 自動計算
+          </span>
+        </div>
+
+        <!-- 🌟 預算四大項目自填與自動帶入區 🌟 -->
+        <div class="p-3 bg-white rounded border mb-3 shadow-sm">
+          <div class="row g-3">
+            <!-- 參加人數 (空白自填) -->
+            <div class="col-md-3 col-6">
+              <label class="form-label small fw-bold text-dark mb-1">
+                👥 預估參加人數 (空白自填)
+              </label>
+              <div class="input-group">
+                <input type="number" id="inpBudgetAttendees" class="form-control fw-bold border-2" placeholder="請自填 (例: 10)" min="1" oninput="calculateCustomBudget()">
+                <span class="input-group-text bg-light">人</span>
+              </div>
+              <small class="text-muted d-block mt-1">留白由您自行填寫</small>
+            </div>
+
+            <!-- 餐飲費用總額 (空白自填) -->
+            <div class="col-md-3 col-6">
+              <label class="form-label small fw-bold text-dark mb-1">
+                🍽️ 餐飲費用總額 (空白自填)
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-light">NT$</span>
+                <input type="number" id="inpBudgetMeal" class="form-control fw-bold text-success border-2" placeholder="請自填餐費 (例: 15000)" oninput="calculateCustomBudget()">
+              </div>
+              <small class="text-muted d-block mt-1">留白由您自行填寫</small>
+            </div>
+
+            <!-- 演講/主持費 (AI 視覺鎖定，固定 5,000/人) -->
+            <div class="col-md-3 col-6">
+              <label class="form-label small fw-bold text-dark mb-1">
+                🎤 演講主持費 (AI 視覺鎖定)
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-light">NT$</span>
+                <input type="text" id="inpBudgetHonoraria" class="form-control fw-bold text-primary bg-light border-2" readonly>
+              </div>
+              <small class="text-muted d-block mt-1 text-primary fw-bold" id="tipHonorariaCount">每位固定 5,000 元</small>
+            </div>
+
+            <!-- 全部的交通費 (空白自填) -->
+            <div class="col-md-3 col-6">
+              <label class="form-label small fw-bold text-dark mb-1">
+                🚄 全部的交通費 (空白自填)
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-light">NT$</span>
+                <input type="number" id="inpBudgetTravel" class="form-control fw-bold border-2" placeholder="請自填交通費 (無填 0)" oninput="calculateCustomBudget()">
+              </div>
+              <small class="text-muted d-block mt-1">留白由您自行填寫</small>
+            </div>
+          </div>
+
+          <!-- 🌟 每人餐費即時試算與晚餐 3500 合規把關條 🌟 -->
+          <div class="mt-3" id="mealComplianceNotice"></div>
+
+          <!-- 即時總金額大顯示區 (總預算 = 餐費 + 演講費 + 交通費) -->
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3 pt-3 border-top">
+            <div>
+              <span class="text-secondary small fw-bold">BeSure Step 1 所需填入之【預估總預算 (Estimated Total Cost)】：</span>
+              <div class="fs-2 fw-bold text-success">
+                TWD <span id="displayTotalBudgetNumber">5,000</span>
+              </div>
+            </div>
+            <button type="button" class="btn btn-success btn-lg fw-bold px-3 py-2" onclick="copyTextDirect(document.getElementById('displayTotalBudgetNumber').innerText.replace(/,/g, ''), this)">
+              <i class="fa-solid fa-copy me-1"></i>複製總金額數字 (貼入 Step 1)
+            </button>
+          </div>
+        </div>
+
+        <!-- 複製完整合規財務說明 (貼入 Step 7 Financial Comments) -->
+        <div class="text-secondary small fw-bold mb-1">
+          📋 完整財務合規說明 (貼入 Step 7 Financial Comments)：
+        </div>
+        <div class="copy-card-body mb-2" id="launchFin" style="white-space: pre-line; line-height: 1.6; background: #ffffff;">
+          本場醫學研討會預估總費用為 TWD 5,000 元整...
+        </div>
+        <button type="button" class="btn-launchpad-copy" data-target="launchFin" style="background: #059669;">
+          <i class="fa-solid fa-copy"></i> 複製完整財務合規說明 (貼入 Step 7)
+        </button>
+      </div>
+
+      <!-- 2. 活動名稱 -->
       <div class="copy-card">
         <div class="copy-card-title">
-          <strong>1. Activity Title (活動名稱)</strong>
+          <strong>2. Activity Title (活動名稱)</strong>
           <span class="tag">Step 1</span>
         </div>
         <div class="copy-card-body" id="launchTitle">三總乳癌討論會 - From Shared Decision to Long-Term Confidence</div>
@@ -483,10 +576,10 @@ dd {
         </button>
       </div>
 
-      <!-- 2. 活動目的與需求 (乳癌專屬黃金文字) -->
+      <!-- 3. 活動目的與需求 (乳癌專屬黃金文字) -->
       <div class="copy-card primary-focus">
         <div class="copy-card-title">
-          <strong>2. Need & Objectives (活動目的)</strong>
+          <strong>3. Need & Objectives (活動目的)</strong>
           <span class="tag tag-blue">Step 4 (最重要)</span>
         </div>
         <div class="copy-card-body" id="launchNeed">針對 HR+/HER2- 早期乳癌中高復發風險病患，與三軍總醫院醫療團隊深入交流 NATALEE 試驗最新整體存活期 (OS) 實證數據。探討臨床治療篩選準則，並討論病友支持計畫 (PSP) 之推動與執行優化，協助院端強化病患長期治療之順從性與照護信心。</div>
@@ -495,11 +588,11 @@ dd {
         </button>
       </div>
 
-      <!-- 3. 專家遴選理由 (支援 Speaker 與 Moderator 一體納入) -->
+      <!-- 4. 專家遴選理由 (支援 Speaker 與 Moderator 一體納入) -->
       <div class="copy-card" style="grid-column: 1 / -1;">
         <div class="copy-card-title d-flex justify-content-between align-items-center flex-wrap gap-2">
           <div>
-            <strong>3. Rationale for Selection (專家遴選理由)</strong>
+            <strong>4. Rationale for Selection (專家遴選理由)</strong>
             <span class="tag">Step 2 FMV</span>
           </div>
           <span id="expertCountBadge" class="badge bg-warning text-dark px-2 py-1 fs-6">
@@ -519,112 +612,17 @@ dd {
         <div id="expertCardList" class="row g-2"></div>
       </div>
 
-      <!-- 4. 場地合規理由 -->
+      <!-- 5. 場地合規理由 -->
       <div class="copy-card">
         <div class="copy-card-title">
-          <strong>4. Venue Justification (場地理由)</strong>
+          <strong>5. Venue Justification (場地理由)</strong>
           <span class="tag">Step 6</span>
         </div>
         <div class="copy-card-body" id="launchVenue">本次學術討論會議於指定場地舉行。便於醫師抵達，現場具備獨立且安靜之討論空間，適合進行專業簡報投影與臨床交流。純屬一般商務餐飲，無娛樂度假設施，符合諾華餐飲合規指引。</div>
         <button type="button" class="btn-launchpad-copy" data-target="launchVenue">
           <i class="fa-solid fa-copy"></i> 複製場地合規理由
         </button>
-      </div>
-
-      <!-- 5. 總預算即時計算機與財務合規說明 (支援餐費 + 演講費 + 交通費) -->
-      <div class="copy-card" style="grid-column: 1 / -1; border-top: 3px solid #10b981;">
-        <div class="copy-card-title d-flex justify-content-between align-items-center flex-wrap gap-2">
-          <div>
-            <strong>5. Total Budget & Financial Comments (總預算即時計算與財務說明)</strong>
-            <span class="tag">Step 1 & Step 7</span>
-          </div>
-          <span class="badge bg-success-subtle text-success border border-success px-2 py-1 fs-6">
-            總預算 = 餐費 + 演講費 + 全部的交通費 · 自動計算
-          </span>
-        </div>
-
-        <!-- 🌟 預算四大項目自填與自動帶入區 🌟 -->
-        <div class="p-3 bg-light rounded border mb-3">
-          <div class="row g-3">
-            <!-- 參加人數 -->
-            <div class="col-md-3 col-6">
-              <label class="form-label small fw-bold text-dark mb-1">
-                👥 預估參加人數 (人)
-              </label>
-              <div class="input-group">
-                <input type="number" id="inpBudgetAttendees" class="form-control fw-bold" value="10" min="1" oninput="calculateCustomBudget()">
-                <span class="input-group-text bg-white">人</span>
-              </div>
-              <small class="text-muted d-block mt-1">含專家與全場醫師</small>
-            </div>
-
-            <!-- 餐飲費用總額 (空白自填) -->
-            <div class="col-md-3 col-6">
-              <label class="form-label small fw-bold text-dark mb-1">
-                🍽️ 餐飲費用總額 (空白自填)
-              </label>
-              <div class="input-group">
-                <span class="input-group-text bg-white">NT$</span>
-                <input type="number" id="inpBudgetMeal" class="form-control fw-bold text-success" placeholder="請填餐費 (例如 15000)" oninput="calculateCustomBudget()">
-              </div>
-              <small class="text-muted d-block mt-1">空白讓您自行填寫</small>
-            </div>
-
-            <!-- 演講/主持費 (依 Speaker + Moderator 自動帶入，也可手動微調) -->
-            <div class="col-md-3 col-6">
-              <label class="form-label small fw-bold text-dark mb-1">
-                🎤 演講與主持費 (每位 5,000)
-              </label>
-              <div class="input-group">
-                <span class="input-group-text bg-white">NT$</span>
-                <input type="number" id="inpBudgetHonoraria" class="form-control fw-bold text-primary" placeholder="自動依專家數帶入" oninput="calculateCustomBudget()">
-              </div>
-              <small class="text-muted d-block mt-1" id="tipHonorariaCount">已自動帶入</small>
-            </div>
-
-            <!-- 全部的交通費 (空白讓使用者自行填寫) -->
-            <div class="col-md-3 col-6">
-              <label class="form-label small fw-bold text-dark mb-1">
-                🚄 全部的交通費 (空白自填)
-              </label>
-              <div class="input-group">
-                <span class="input-group-text bg-white">NT$</span>
-                <input type="number" id="inpBudgetTravel" class="form-control fw-bold" placeholder="差旅費 (無填 0)" value="0" oninput="calculateCustomBudget()">
-              </div>
-              <small class="text-muted d-block mt-1">留白自填，無則填 0</small>
-            </div>
-          </div>
-
-          <!-- 🌟 每人餐費即時試算與晚餐 3500 合規把關條 🌟 -->
-          <div class="mt-3" id="mealComplianceNotice"></div>
-
-          <!-- 即時總金額大顯示區 (總預算 = 餐費 + 演講費 + 交通費) -->
-          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3 pt-3 border-top">
-            <div>
-              <span class="text-secondary small fw-bold">BeSure Step 1 所需填入之【預估總預算 (Estimated Total Cost)】：</span>
-              <div class="fs-3 fw-bold text-success">
-                TWD <span id="displayTotalBudgetNumber">5,000</span>
-              </div>
-            </div>
-            <button type="button" class="btn btn-outline-success btn-sm fw-bold px-3 py-2" onclick="copyTextDirect(document.getElementById('displayTotalBudgetNumber').innerText.replace(/,/g, ''), this)">
-              <i class="fa-solid fa-copy me-1"></i>複製總金額數字 (貼入 Step 1)
-            </button>
-          </div>
-        </div>
-
-        <!-- 複製完整合規財務說明 (貼入 Step 7 Financial Comments) -->
-        <div class="text-secondary small fw-bold mb-1">
-          📋 完整財務合規說明 (貼入 Step 7 Financial Comments)：
-        </div>
-        <div class="copy-card-body mb-2" id="launchFin" style="white-space: pre-line; line-height: 1.6;">
-          本場醫學研討會預估總費用為 TWD 5,000 元整...
-        </div>
-        <button type="button" class="btn-launchpad-copy" data-target="launchFin" style="background: #059669;">
-          <i class="fa-solid fa-copy"></i> 複製完整財務合規說明 (貼入 Step 7)
-        </button>
-      </div>
-
-      <!-- 6. 與會受眾描述 -->
+      </div>      <!-- 6. 與會受眾描述 -->
       <div class="copy-card">
         <div class="copy-card-title">
           <strong>6. Describe Audience (與會受眾)</strong>
