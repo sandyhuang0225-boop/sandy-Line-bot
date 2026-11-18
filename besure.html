@@ -531,15 +531,96 @@ dd {
         </button>
       </div>
 
-      <!-- 5. 餐飲與預算說明 -->
-      <div class="copy-card">
-        <div class="copy-card-title">
-          <strong>5. Financial Comments (餐費預算)</strong>
-          <span class="tag">Step 7</span>
+      <!-- 5. 總預算即時計算機與財務合規說明 (支援餐費 + 演講費 + 交通費) -->
+      <div class="copy-card" style="grid-column: 1 / -1; border-top: 3px solid #10b981;">
+        <div class="copy-card-title d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <strong>5. Total Budget & Financial Comments (總預算即時計算與財務說明)</strong>
+            <span class="tag">Step 1 & Step 7</span>
+          </div>
+          <span class="badge bg-success-subtle text-success border border-success px-2 py-1 fs-6">
+            總預算 = 餐費 + 演講費 + 全部的交通費 · 自動計算
+          </span>
         </div>
-        <div class="copy-card-body" id="launchFin">商務討論餐會預計 10 人，人均預算約 NT$ 1,500（遠低於公司上限 NT$ 3,500/人/日）；另編列外部專家講者酬金 NT$ 5,000 元整（40分演講+20分準備），活動預算合規。</div>
-        <button type="button" class="btn-launchpad-copy" data-target="launchFin">
-          <i class="fa-solid fa-copy"></i> 複製餐飲預算說明
+
+        <!-- 🌟 預算四大項目自填與自動帶入區 🌟 -->
+        <div class="p-3 bg-light rounded border mb-3">
+          <div class="row g-3">
+            <!-- 參加人數 -->
+            <div class="col-md-3 col-6">
+              <label class="form-label small fw-bold text-dark mb-1">
+                👥 預估參加人數 (人)
+              </label>
+              <div class="input-group">
+                <input type="number" id="inpBudgetAttendees" class="form-control fw-bold" value="10" min="1" oninput="calculateCustomBudget()">
+                <span class="input-group-text bg-white">人</span>
+              </div>
+              <small class="text-muted d-block mt-1">含專家與全場醫師</small>
+            </div>
+
+            <!-- 餐飲費用總額 (空白自填) -->
+            <div class="col-md-3 col-6">
+              <label class="form-label small fw-bold text-dark mb-1">
+                🍽️ 餐飲費用總額 (空白自填)
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-white">NT$</span>
+                <input type="number" id="inpBudgetMeal" class="form-control fw-bold text-success" placeholder="請填餐費 (例如 15000)" oninput="calculateCustomBudget()">
+              </div>
+              <small class="text-muted d-block mt-1">空白讓您自行填寫</small>
+            </div>
+
+            <!-- 演講/主持費 (依 Speaker + Moderator 自動帶入，也可手動微調) -->
+            <div class="col-md-3 col-6">
+              <label class="form-label small fw-bold text-dark mb-1">
+                🎤 演講與主持費 (每位 5,000)
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-white">NT$</span>
+                <input type="number" id="inpBudgetHonoraria" class="form-control fw-bold text-primary" placeholder="自動依專家數帶入" oninput="calculateCustomBudget()">
+              </div>
+              <small class="text-muted d-block mt-1" id="tipHonorariaCount">已自動帶入</small>
+            </div>
+
+            <!-- 全部的交通費 (空白讓使用者自行填寫) -->
+            <div class="col-md-3 col-6">
+              <label class="form-label small fw-bold text-dark mb-1">
+                🚄 全部的交通費 (空白自填)
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-white">NT$</span>
+                <input type="number" id="inpBudgetTravel" class="form-control fw-bold" placeholder="差旅費 (無填 0)" value="0" oninput="calculateCustomBudget()">
+              </div>
+              <small class="text-muted d-block mt-1">留白自填，無則填 0</small>
+            </div>
+          </div>
+
+          <!-- 🌟 每人餐費即時試算與晚餐 3500 合規把關條 🌟 -->
+          <div class="mt-3" id="mealComplianceNotice"></div>
+
+          <!-- 即時總金額大顯示區 (總預算 = 餐費 + 演講費 + 交通費) -->
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3 pt-3 border-top">
+            <div>
+              <span class="text-secondary small fw-bold">BeSure Step 1 所需填入之【預估總預算 (Estimated Total Cost)】：</span>
+              <div class="fs-3 fw-bold text-success">
+                TWD <span id="displayTotalBudgetNumber">5,000</span>
+              </div>
+            </div>
+            <button type="button" class="btn btn-outline-success btn-sm fw-bold px-3 py-2" onclick="copyTextDirect(document.getElementById('displayTotalBudgetNumber').innerText.replace(/,/g, ''), this)">
+              <i class="fa-solid fa-copy me-1"></i>複製總金額數字 (貼入 Step 1)
+            </button>
+          </div>
+        </div>
+
+        <!-- 複製完整合規財務說明 (貼入 Step 7 Financial Comments) -->
+        <div class="text-secondary small fw-bold mb-1">
+          📋 完整財務合規說明 (貼入 Step 7 Financial Comments)：
+        </div>
+        <div class="copy-card-body mb-2" id="launchFin" style="white-space: pre-line; line-height: 1.6;">
+          本場醫學研討會預估總費用為 TWD 5,000 元整...
+        </div>
+        <button type="button" class="btn-launchpad-copy" data-target="launchFin" style="background: #059669;">
+          <i class="fa-solid fa-copy"></i> 複製完整財務合規說明 (貼入 Step 7)
         </button>
       </div>
 
@@ -608,6 +689,9 @@ dd {
 
               <dt>Estimated Total Cost Currency</dt>
               <dd>幣別請選：<span class="choice-pill">TWD</span> (新台幣)</dd>
+
+              <dt>Estimated Total Cost (預估活動總預算)</dt>
+              <dd>請輸入：<span class="choice-pill" id="step1TotalBudgetPill">5,000</span> <small class="text-muted">(直接點最上方第 5 號【複製總金額數字】貼上)</small></dd>
             </dl>
           </div>
         </details>
@@ -787,12 +871,12 @@ dd {
           </summary>
           <div class="step-body">
             <dl>
-              <dt>External experts honoraria (講師總酬金)</dt>
-              <dd>固定填入半形純數字：<span class="choice-pill" style="font-size: 1rem;">5000</span></dd>
+              <dt>External experts honoraria (外部專家總酬金)</dt>
+              <dd>填入半形純數字：<span class="choice-pill" id="step7HonorariaPill" style="font-size: 1rem;">5000</span> <small class="text-muted">(含 Speaker 與 Moderator 每位各 5,000 元之總額)</small></dd>
 
-              <dt>Comments on Financials (餐飲費用說明)</dt>
+              <dt>Comments on Financials (財務費用合規說明)</dt>
               <dd>
-                直接點最上方發射台第 5 號按鈕，一鍵複製貼上！
+                直接點最上方發射台第 5 號【複製完整財務合規說明】，一鍵複製貼上！
               </dd>
 
               <dt>餐費上限提醒</dt>
@@ -1251,6 +1335,73 @@ async function triggerManualAnalysis() {
   }
 }
 
+// 🌟 總預算即時試算器 (總預算 = 餐費 + 演講費 + 交通費，並把關每人餐費 ≤ 3500)
+function calculateCustomBudget() {
+  const attendeesInput = document.getElementById("inpBudgetAttendees");
+  const attendees = parseInt(attendeesInput ? attendeesInput.value : 10) || 10;
+  // 同步微調框人數
+  if (document.getElementById("inpAttendees")) {
+    document.getElementById("inpAttendees").value = attendees;
+  }
+
+  const meal = parseFloat(document.getElementById("inpBudgetMeal") ? document.getElementById("inpBudgetMeal").value : 0) || 0;
+  const honoraria = parseFloat(document.getElementById("inpBudgetHonoraria") ? document.getElementById("inpBudgetHonoraria").value : 0) || 0;
+  const travel = parseFloat(document.getElementById("inpBudgetTravel") ? document.getElementById("inpBudgetTravel").value : 0) || 0;
+  const total = meal + honoraria + travel;
+
+  // 計算平均每人餐費 (晚餐上限 NT$ 3,500 含稅)
+  const perPersonMeal = meal > 0 ? Math.round(meal / attendees) : 0;
+
+  // 更新餐費合規警示條
+  const noticeEl = document.getElementById("mealComplianceNotice");
+  if (noticeEl) {
+    if (meal === 0) {
+      noticeEl.className = "alert alert-secondary py-2 px-3 mb-0 small";
+      noticeEl.innerHTML = `<i class="fa-solid fa-circle-info me-1"></i>請輸入餐費總額，系統將自動計算每人費用（公司規定晚餐上限為 <strong>NT$ 3,500 元/人含稅</strong>）。`;
+    } else if (perPersonMeal <= 3500) {
+      noticeEl.className = "alert alert-success py-2 px-3 mb-0 small fw-bold";
+      noticeEl.innerHTML = `<i class="fa-solid fa-circle-check me-1 text-success"></i>平均每人餐費：<span class="fs-6 text-success">NT$ ${perPersonMeal.toLocaleString()}</span> 元/人 (含稅) ｜ ✅ 完全合規（未超過公司晚餐上限 NT$ 3,500 元/人）`;
+    } else {
+      noticeEl.className = "alert alert-danger py-2 px-3 mb-0 small fw-bold";
+      noticeEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation me-1 text-danger"></i>平均每人餐費：<span class="fs-6 text-danger">NT$ ${perPersonMeal.toLocaleString()}</span> 元/人 (含稅) ｜ ⚠️ 警告：已超過公司晚餐上限 NT$ 3,500 元/人！請增加報備人數或調降餐費！`;
+    }
+  }
+
+  // 顯示總預算金額
+  const displayNumEl = document.getElementById("displayTotalBudgetNumber");
+  if (displayNumEl) displayNumEl.textContent = total.toLocaleString();
+
+  // 聯動更新 Step 1 與 Step 7 的導航 pill
+  const step1Pill = document.getElementById("step1TotalBudgetPill");
+  if (step1Pill) step1Pill.textContent = total.toLocaleString();
+  const step7Pill = document.getElementById("step7HonorariaPill");
+  if (step7Pill) step7Pill.textContent = honoraria.toLocaleString();
+
+  // 生成完整 Financial Comments 文字
+  const venue = document.getElementById("inpVenue") ? document.getElementById("inpVenue").value.trim() : "指定餐廳";
+  const experts = (window.detectedExperts && window.detectedExperts.length > 0) ? window.detectedExperts : [];
+  const totalExperts = experts.length || 1;
+  const speakerCount = experts.filter(e => (e.role || '').toLowerCase().includes('speaker') || (e.role || '').includes('講')).length || 1;
+  const moderatorCount = experts.filter(e => (e.role || '').toLowerCase().includes('mod') || (e.role || '').includes('座') || (e.role || '').includes('主')).length;
+
+  let finText = `本場醫學研討會預估總費用為 TWD ${total.toLocaleString()} 元整，各項目預算拆解與合規說明如下：\n`;
+  finText += `1. 外部專家演講與主持酬金：聘請 ${totalExperts} 位外部臨床專家顧問（包含 ${speakerCount} 位主講醫師及 ${moderatorCount} 位座長/主持人），每位依公司法規標準編列 40 分鐘服務 + 20 分鐘準備（1小時），每位酬金 NT$ 5,000 元整，專家酬金小計 NT$ ${honoraria.toLocaleString()} 元。\n`;
+  if (meal > 0) {
+    finText += `2. 商務餐飲費用：預估與會人數共 ${attendees} 人於「${venue}」舉行商務討論餐會，餐費總額預算 NT$ ${meal.toLocaleString()} 元整。經核算平均每人餐費為 NT$ ${perPersonMeal.toLocaleString()} 元（含稅），完全符合台灣諾華餐飲合規上限（晚餐 NT$ 3,500 元/人/日含稅），絕無超標情事。\n`;
+  } else {
+    finText += `2. 商務餐飲費用：本次會議餐費預估總額 NT$ 0 元。\n`;
+  }
+  if (travel > 0) {
+    finText += `3. 差旅交通費用：預估受邀專家差旅交通費用總計 NT$ ${travel.toLocaleString()} 元整（依公司規定實報實銷）。\n`;
+  } else {
+    finText += `3. 差旅交通費用：受邀專家皆為鄰近/在地院區執業醫師，無跨縣市差旅補助（交通費 NT$ 0 元）。\n`;
+  }
+  finText += `總預算（餐費 NT$ ${meal.toLocaleString()} + 演講主持費 NT$ ${honoraria.toLocaleString()} + 交通費 NT$ ${travel.toLocaleString()}）合計 TWD ${total.toLocaleString()} 元，整體活動預算編列合理合規。`;
+
+  const finEl = document.getElementById("launchFin");
+  if (finEl) finEl.innerText = finText;
+}
+
 // 動態更新全頁內容（發射台 + 14 步導航）
 function updateAllSteps() {
   const eventName = document.getElementById("inpEventName").value.trim();
@@ -1363,9 +1514,18 @@ function updateAllSteps() {
   document.getElementById("launchVenue").textContent = 
     `本次學術討論會議於「${venue}」舉行。場地便於${primaryHospital}預計與會醫師抵達，現場具備獨立且安靜之討論空間，適合進行專業醫學簡報投影與臨床深度交流。場地純屬一般商務餐飲，無任何娛樂、休閒、觀光或渡假設施，完全符合諾華場地合規標準與餐飲招待指引。`;
 
-  // 5. 發射台 - 5. Financial Comments
-  document.getElementById("launchFin").textContent = 
-    `預計於${venue}舉行商務討論餐會，預計與會人數共 ${attendees} 人。餐費預估每人 NT$ 1,500，全場餐飲總預估約 NT$ ${totalMealCost.toLocaleString()}（遠低於公司上限 NT$ 3,500/人/日）；另聘請 ${totalExperts} 位外部專家顧問（包含 ${speakerCount} 位主講者及 ${moderatorCount} 位座長/主持人），每位依公司合規標準編列 40 分鐘服務 + 20 分鐘準備（1小時），每位專家酬金 NT$ 5,000 元整，專家酬金小計 NT$ ${totalHonoraria.toLocaleString()} 元。活動預估總預算約為 NT$ ${totalBudget.toLocaleString()} 元，整體活動預算合規。`;
+  // 5. 發射台 - 5. 總預算與 Financial Comments
+  const honorariaInput = document.getElementById("inpBudgetHonoraria");
+  if (honorariaInput && (!honorariaInput.value || honorariaInput.getAttribute("data-auto") !== "false")) {
+    honorariaInput.value = totalHonoraria;
+  }
+  const honorariaTip = document.getElementById("tipHonorariaCount");
+  if (honorariaTip) {
+    honorariaTip.textContent = `已自動帶入：${totalExperts} 位專家（${speakerCount} 講者 + ${moderatorCount} 座長）x 5,000 = ${totalHonoraria.toLocaleString()}`;
+  }
+
+  // 執行總預算即時計算與合規說明生成
+  calculateCustomBudget();
 
   // 6. 發射台 - 6. Describe Audience
   document.getElementById("launchAudience").textContent = 
