@@ -186,11 +186,19 @@
         </button>
       </div>
 
+      <!-- 🌟 複製網址與 LINE 分享 🌟 -->
+      <button type="button" class="btn btn-success btn-sm fw-bold shadow-sm" onclick="copyEventShareLink(this)">
+        <i class="fa-solid fa-share-nodes me-1"></i>複製報名網址
+      </button>
+      <button type="button" class="btn btn-outline-light btn-sm fw-bold shadow-sm" onclick="shareEventToLine()">
+        <i class="fa-brands fa-line me-1 text-success fs-6"></i>LINE 分享
+      </button>
+      <button type="button" class="btn btn-outline-light btn-sm fw-bold shadow-sm" onclick="syncLiveAttendeesFromServer(this)">
+        <i class="fa-solid fa-arrows-rotate me-1 text-warning"></i>同步 Google 試算表
+      </button>
+
       <!-- 🌟 Sandy 登入後展開的管理控制列 🌟 -->
       <div id="adminControlsGroup" style="display: none;" class="d-flex gap-2 align-items-center">
-        <button type="button" class="btn btn-info btn-sm text-dark fw-bold" onclick="copyEventShareLink(this)">
-          <i class="fa-solid fa-share-nodes me-1"></i>複製醫師報名網址
-        </button>
         <button type="button" class="btn btn-outline-danger btn-sm" onclick="logoutAdmin()" title="登出主辦人">
           <i class="fa-solid fa-right-from-bracket me-1"></i>登出
         </button>
@@ -205,6 +213,17 @@
 </header>
 
 <div class="container" style="max-width: 960px;">
+
+  <!-- 提示橫幅：Google 雲端試算表連線狀態與複製捷徑 -->
+  <div class="alert alert-success d-flex align-items-center justify-content-between flex-wrap gap-2 py-2 px-3 mb-3 shadow-sm rounded-3 hide-on-print border-success">
+    <div class="small fw-bold text-success-emphasis d-flex align-items-center">
+      <i class="fa-solid fa-cloud-check fs-5 me-2 text-success"></i>
+      <span>Google 雲端試算表已連線！活動設定跨裝置同步，醫師報名自動存入試算表。</span>
+    </div>
+    <button type="button" class="btn btn-sm btn-success fw-bold text-nowrap" onclick="copyEventShareLink(this)">
+      <i class="fa-solid fa-copy me-1"></i>點此複製報名網址傳給醫師
+    </button>
+  </div>
 
   <!-- 活動資訊橫幅卡片 -->
   <div class="custom-card border-primary border-2 hide-on-print" style="background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);">
@@ -763,6 +782,7 @@
 const STORAGE_EVENTS_KEY = 'novartis_events_store_v2';
 const STORAGE_CURRENT_EVENT_KEY = 'novartis_current_event_id_v2';
 const STORAGE_ADMIN_AUTH_KEY = 'novartis_admin_authed_v2';
+const API_BASE = 'https://sandy-line-bot.onrender.com/api/meeting';
 
 const DEFAULT_EVENTS = {
   '1204_table': {
@@ -1019,10 +1039,27 @@ function loadEventsDb() {
   } else {
     currentEventId = Object.keys(eventsDb)[0] || '1204_table';
   }
+
+  // 自動向 Google Sheet 雲端資料庫拉取最新活動設定 (保證跨裝置與醫師端即時更新)
+  fetch(`${API_BASE}/events?t=${Date.now()}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data && data.status === 'ok' && data.events && Object.keys(data.events).length > 0) {
+        Object.assign(eventsDb, data.events);
+        saveEventsDb();
+        renderEventSelector();
+        renderCurrentEvent();
+      }
+    })
+    .catch(err => console.log('雲端活動讀取使用本地備份:', err));
 }
 
 function saveEventsDb() {
-  localStorage.setItem(STORAGE_EVENTS_KEY, JSON.stringify(eventsDb));
+  try {
+    localStorage.setItem(STORAGE_EVENTS_KEY, JSON.stringify(eventsDb));
+  } catch (e) {
+    console.warn('localStorage 限額防呆，略過本機快存:', e);
+  }
 }
 
 function switchEvent(eventId) {
@@ -1196,6 +1233,7 @@ function renderCurrentEvent() {
   }
 
   renderAttendeesAndTally();
+  syncLiveAttendeesFromServer();
 }
 
 function selectSetMain(name, idx) {
@@ -1424,11 +1462,47 @@ function printSignInSheet() {
   window.print();
 }
 
+// 向 Google 試算表同步即時名冊
+function syncLiveAttendeesFromServer(btnEl) {
+  if (btnEl) {
+    btnEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>同步中...';
+  }
+  fetch(`${API_BASE}/attendees?e=${currentEventId}&t=${Date.now()}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data && data.status === 'ok' && Array.isArray(data.attendees)) {
+        if (eventsDb[currentEventId]) {
+          eventsDb[currentEventId].attendees = data.attendees;
+          saveEventsDb();
+          renderAttendeesAndTally();
+        }
+        if (btnEl) {
+          btnEl.innerHTML = '<i class="fa-solid fa-check text-success me-1"></i>已同步 Google 試算表！';
+          setTimeout(() => btnEl.innerHTML = '<i class="fa-solid fa-arrows-rotate me-1 text-warning"></i>同步 Google 試算表', 2500);
+        }
+      }
+    })
+    .catch(err => {
+      console.log('雲端名冊讀取使用本機快照:', err);
+      if (btnEl) {
+        btnEl.innerHTML = '<i class="fa-solid fa-arrows-rotate me-1 text-warning"></i>已為最新';
+        setTimeout(() => btnEl.innerHTML = '<i class="fa-solid fa-arrows-rotate me-1 text-warning"></i>同步 Google 試算表', 2000);
+      }
+    });
+}
+
 function handleRegistrationSubmit(e) {
   e.preventDefault();
 
   const ev = eventsDb[currentEventId];
   if (!ev) return;
+
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  const origBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>傳送中，同步至 Google 試算表...';
+  }
 
   const name = document.getElementById('regName').value.trim();
   const city = document.getElementById('regCity').value;
@@ -1444,22 +1518,26 @@ function handleRegistrationSubmit(e) {
   const dietNotes = document.getElementById('regDietNotes').value.trim();
 
   let mealChoice = '出席';
+  let drink = '';
   if (ev.mealMode === 'TABLE') {
     mealChoice = '桌菜出席';
   } else if (ev.mealMode === 'SET') {
     const main = document.getElementById('selectedMainDish').value;
-    const drink = document.getElementById('selectedDrink').value;
+    drink = document.getElementById('selectedDrink').value;
     mealChoice = `${main} (${drink})`;
   }
 
   lastSubmitted = {
     id: Date.now(),
+    eventId: currentEventId,
+    eventTitle: ev.title,
     name: name,
     city: city,
     hospital: hospital,
     dept: dept,
     title: title,
     mealChoice: mealChoice,
+    drink: drink,
     dietNotes: dietNotes,
     time: new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })
   };
@@ -1469,25 +1547,53 @@ function handleRegistrationSubmit(e) {
   saveEventsDb();
   renderAttendeesAndTally();
 
-  document.getElementById('successSummaryText').innerHTML = `
-    <strong>${name} (${hospital})</strong> 您好，主辦單位已收到您的出席資料！<br>
-    活動名稱：<strong>${ev.title}</strong><br>
-    ${ev.mealMode === 'TABLE' ? '本場次為中式桌宴，現場直接入席享用。' : (ev.mealMode === 'SET' ? `您選擇的特餐：<strong>${mealChoice}</strong>` : '')}<br>
-    活動當天現場直接簽名即可。
-  `;
-  new bootstrap.Modal(document.getElementById('successModal')).show();
+  // 跨裝置同步至 Google 試算表 (RTD_通用會議報名名冊) 與 LINE 推播
+  fetch(`${API_BASE}/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(lastSubmitted)
+  })
+  .then(res => res.json())
+  .then(resData => {
+    console.log('✅ Google 試算表同步成功:', resData);
+    syncLiveAttendeesFromServer();
+  })
+  .catch(err => console.log('雲端連線失敗，保留本機快照:', err))
+  .finally(() => {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = origBtnHtml;
+    }
 
-  document.getElementById('regName').value = '';
-  document.getElementById('regDietNotes').value = '';
+    document.getElementById('successSummaryText').innerHTML = `
+      <strong>${name} (${hospital})</strong> 您好，主辦單位已收到您的出席資料！<br>
+      活動名稱：<strong>${ev.title}</strong><br>
+      ${ev.mealMode === 'TABLE' ? '本場次為中式桌宴，現場直接入席享用。' : (ev.mealMode === 'SET' ? `您選擇的特餐：<strong>${mealChoice}</strong>` : '')}<br>
+      資料已成功同步至<strong>諾華會議專用 Google 試算表</strong>。<br>
+      活動當天現場直接簽名即可。
+    `;
+    new bootstrap.Modal(document.getElementById('successModal')).show();
+
+    document.getElementById('regName').value = '';
+    document.getElementById('regDietNotes').value = '';
+  });
 }
 
 function deleteAttendee(id) {
   if (!confirm('確定要移除此筆與會人員嗎？')) return;
   const ev = eventsDb[currentEventId];
   if (!ev) return;
-  ev.attendees = (ev.attendees || []).filter(a => a.id !== id);
+  const target = (ev.attendees || []).find(a => a.id == id);
+  ev.attendees = (ev.attendees || []).filter(a => a.id != id);
   saveEventsDb();
   renderAttendeesAndTally();
+
+  fetch(`${API_BASE}/delete_attendee`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ eventId: currentEventId, id: id, name: target ? target.name : '' })
+  }).then(() => syncLiveAttendeesFromServer())
+  .catch(e => console.log('刪除請求:', e));
 }
 
 function injectCurrentEventSample() {
@@ -1510,6 +1616,7 @@ function injectCurrentEventSample() {
   }
   saveEventsDb();
   renderAttendeesAndTally();
+  syncLiveAttendeesFromServer();
 }
 
 function copyRestaurantSummary(btn) {
@@ -1549,9 +1656,24 @@ function copyEventShareLink(btn) {
   const shareUrl = `${window.location.origin}${window.location.pathname}?e=${currentEventId}`;
   navigator.clipboard.writeText(shareUrl).then(() => {
     const orig = btn.innerHTML;
-    btn.innerHTML = `<i class="fa-solid fa-check text-success"></i> 已複製報名網址！`;
-    setTimeout(() => btn.innerHTML = orig, 2500);
+    btn.innerHTML = `<i class="fa-solid fa-check text-white me-1"></i>已複製報名網址！`;
+    btn.classList.add('btn-primary');
+    alert(`✅ 報名網址已成功複製！\n\n網址：\n${shareUrl}\n\n您可以直接切換到 LINE 貼上傳給醫師報名囉！`);
+    setTimeout(() => {
+      btn.innerHTML = orig;
+      btn.classList.remove('btn-primary');
+    }, 3000);
+  }).catch(() => {
+    prompt('請複製以下醫師專屬報名網址傳給醫師：', shareUrl);
   });
+}
+
+function shareEventToLine() {
+  const ev = eventsDb[currentEventId] || {};
+  const shareUrl = `${window.location.origin}${window.location.pathname}?e=${currentEventId}`;
+  const text = `您好！誠摯邀請您出席【${ev.title || '醫學研討會'}】。\n\n活動時間：${ev.date || ''} ${ev.time || ''}\n活動地點：${ev.venue || ''}\n\n敬請點擊以下專屬連結確認出席並點選餐點：\n👉 ${shareUrl}\n\n期待您的蒞臨！`;
+  const lineShareUrl = `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
+  window.open(lineShareUrl, '_blank');
 }
 
 function exportCsvSignInSheet() {
@@ -1595,7 +1717,7 @@ function sendLineConfirmation() {
   window.open(lineUrl, '_blank');
 }
 
-// 🌟 手機/相簿圖片點選即時壓縮轉換為 Base64 🌟
+// 🌟 手機/相簿圖片點選即時壓縮並上傳雲端伺服器 (解決 5MB localStorage 限制與跨裝置共享) 🌟
 function handleImageFilePick(inputEl, previewImgId, hiddenDataId) {
   const file = inputEl.files[0];
   if (!file) return;
@@ -1604,11 +1726,11 @@ function handleImageFilePick(inputEl, previewImgId, hiddenDataId) {
   reader.onload = function(e) {
     const img = new Image();
     img.onload = function() {
-      // 進行適度壓縮縮圖以利本地儲存
+      // 進行高效壓縮縮圖至 800px, 0.65
       const canvas = document.createElement('canvas');
       let w = img.width;
       let h = img.height;
-      const maxDim = 1200;
+      const maxDim = 800;
       if (w > maxDim || h > maxDim) {
         if (w > h) {
           h = Math.round((h * maxDim) / w);
@@ -1622,12 +1744,28 @@ function handleImageFilePick(inputEl, previewImgId, hiddenDataId) {
       canvas.height = h;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, w, h);
-      const compressedData = canvas.toDataURL('image/jpeg', 0.85);
+      const compressedData = canvas.toDataURL('image/jpeg', 0.65);
 
+      // 本地即時預覽
       document.getElementById(hiddenDataId).value = compressedData;
       const previewImg = document.getElementById(previewImgId);
       previewImg.src = compressedData;
       previewImg.parentElement.style.display = 'block';
+
+      // 同步上傳至雲端伺服器取得跨裝置永久圖片網址
+      fetch(`${API_BASE}/upload_image`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: compressedData, filename: file.name })
+      })
+      .then(res => res.json())
+      .then(resData => {
+        if (resData && resData.status === 'ok' && resData.url) {
+          document.getElementById(hiddenDataId).value = resData.url;
+          console.log('✅ 圖片已成功上傳至雲端伺服器:', resData.url);
+        }
+      })
+      .catch(err => console.log('圖片上傳伺服器失敗，保留本地 Base64:', err));
     };
     img.src = e.target.result;
   };
@@ -1751,7 +1889,7 @@ function saveEventConfig(e) {
 
   const existingAttendees = eventsDb[id] ? eventsDb[id].attendees : [];
 
-  eventsDb[id] = {
+  const newEventData = {
     id: id,
     badge: badge || title,
     title: title,
@@ -1767,13 +1905,26 @@ function saveEventConfig(e) {
     attendees: existingAttendees
   };
 
+  eventsDb[id] = newEventData;
   currentEventId = id;
   saveEventsDb();
   renderEventSelector();
   renderCurrentEvent();
 
-  bootstrap.Modal.getInstance(document.getElementById('eventEditorModal')).hide();
-  alert('活動設定已成功儲存！');
+  // 🌟 即刻同步活動設定至 Google 試算表 (RTD_通用會議活動設定) 🌟
+  fetch(`${API_BASE}/save_event`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(newEventData)
+  })
+  .then(res => res.json())
+  .then(resData => console.log('✅ 活動設定已成功同步至 Google 試算表:', resData))
+  .catch(err => console.log('活動設定上傳失敗:', err));
+
+  const modalEl = document.getElementById('eventEditorModal');
+  const modalInst = bootstrap.Modal.getInstance(modalEl);
+  if (modalInst) modalInst.hide();
+  alert('🎉 活動設定已成功儲存並同步至 Google 試算表！\n醫師點開網址將立即看到全新議程與菜單！');
 }
 
 function deleteCurrentEvent() {

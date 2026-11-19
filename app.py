@@ -2310,6 +2310,300 @@ def api_rtd_delete():
         return resp, 500
 
 
+# ==================== 諾華 通用醫學會議系統 (meeting.html) 雲端連動 API ====================
+
+@app.route("/api/meeting/upload_image", methods=['POST', 'OPTIONS'])
+def api_meeting_upload_image():
+    if request.method == 'OPTIONS':
+        resp = jsonify({'status': 'ok'})
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        resp.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+        resp.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        return resp
+    try:
+        data = request.get_json(silent=True) or {}
+        img_b64 = data.get('image', '')
+        filename = data.get('filename', '')
+        
+        import base64
+        import uuid
+        upload_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'static', 'uploads')
+        os.makedirs(upload_dir, exist_ok=True)
+
+        if not filename:
+            filename = f"img_{uuid.uuid4().hex[:12]}.jpg"
+        else:
+            filename = f"{uuid.uuid4().hex[:6]}_{filename}"
+
+        if 'file' in request.files:
+            f = request.files['file']
+            save_path = os.path.join(upload_dir, filename)
+            f.save(save_path)
+        elif img_b64:
+            if ',' in img_b64:
+                img_b64 = img_b64.split(',', 1)[1]
+            img_bytes = base64.b64decode(img_b64)
+            save_path = os.path.join(upload_dir, filename)
+            with open(save_path, 'wb') as f_out:
+                f_out.write(img_bytes)
+        else:
+            resp = jsonify({'status': 'error', 'message': '無圖片資料'})
+            resp.headers['Access-Control-Allow-Origin'] = '*'
+            return resp, 400
+
+        public_url = f"https://sandy-line-bot.onrender.com/static/uploads/{filename}"
+        resp = jsonify({'status': 'ok', 'url': public_url})
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        return resp
+    except Exception as e:
+        resp = jsonify({'status': 'error', 'message': str(e)})
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        return resp, 500
+
+
+@app.route("/api/meeting/save_event", methods=['POST', 'OPTIONS'])
+def api_meeting_save_event():
+    if request.method == 'OPTIONS':
+        resp = jsonify({'status': 'ok'})
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        resp.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+        resp.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        return resp
+    try:
+        ev = request.get_json(force=True) or {}
+        event_id = str(ev.get('id', '')).strip()
+        if not event_id:
+            resp = jsonify({'status': 'error', 'message': '活動 ID 不得為空'})
+            resp.headers['Access-Control-Allow-Origin'] = '*'
+            return resp, 400
+
+        badge = str(ev.get('badge', '')).strip()
+        title = str(ev.get('title', '')).strip()
+        date = str(ev.get('date', '')).strip()
+        time_str = str(ev.get('time', '')).strip()
+        venue = str(ev.get('venue', '')).strip()
+        meal_mode = str(ev.get('mealMode', 'TABLE')).strip()
+        now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        # 存入 Google Sheet 'RTD_通用會議活動設定'
+        sh = get_spreadsheet()
+        if sh:
+            try:
+                ws_cfg = sh.worksheet('RTD_通用會議活動設定')
+            except Exception:
+                ws_cfg = sh.add_worksheet(title='RTD_通用會議活動設定', rows=50, cols=10)
+                ws_cfg.append_row(['場次ID', '活動標籤', '活動名稱', '會議日期', '會議時間', '會議地點', '供餐型態', '更新時間', '活動設定JSON'])
+
+            row_data = [event_id, badge, title, date, time_str, venue, meal_mode, now_str, json.dumps(ev, ensure_ascii=False)]
+            rows = ws_cfg.get_all_values()
+            matched_idx = None
+            for idx, r in enumerate(rows):
+                if idx > 0 and r[0].strip() == event_id:
+                    matched_idx = idx + 1
+                    break
+            
+            if matched_idx:
+                ws_cfg.update(values=[row_data], range_name=f'A{matched_idx}:I{matched_idx}', value_input_option='USER_ENTERED')
+            else:
+                ws_cfg.append_row(row_data)
+
+        resp = jsonify({'status': 'ok', 'message': '活動設定已成功同步存入 Google 試算表！'})
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        return resp
+    except Exception as e:
+        resp = jsonify({'status': 'error', 'message': str(e)})
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        return resp, 500
+
+
+@app.route("/api/meeting/events", methods=['GET', 'OPTIONS'])
+def api_meeting_events():
+    if request.method == 'OPTIONS':
+        resp = jsonify({'status': 'ok'})
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        resp.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+        resp.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        return resp
+    try:
+        sh = get_spreadsheet()
+        events = {}
+        if sh:
+            try:
+                ws_cfg = sh.worksheet('RTD_通用會議活動設定')
+                rows = ws_cfg.get_all_values()
+                for r in rows[1:]:
+                    if len(r) >= 9 and r[8].strip():
+                        try:
+                            ev = json.loads(r[8])
+                            events[ev['id']] = ev
+                        except Exception:
+                            pass
+            except Exception:
+                pass
+
+        resp = jsonify({'status': 'ok', 'events': events})
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        return resp
+    except Exception as e:
+        resp = jsonify({'status': 'error', 'message': str(e), 'events': {}})
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        return resp, 500
+
+
+@app.route("/api/meeting/register", methods=['POST', 'OPTIONS'])
+def api_meeting_register():
+    if request.method == 'OPTIONS':
+        resp = jsonify({'status': 'ok'})
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        resp.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+        resp.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        return resp
+    try:
+        data = request.get_json(force=True) or {}
+        event_id = str(data.get('eventId', '1204_table')).strip()
+        event_title = str(data.get('eventTitle', '醫學會議')).strip()
+        name = str(data.get('name', '')).strip()
+        if not name:
+            resp = jsonify({'status': 'error', 'message': '姓名為必填'})
+            resp.headers['Access-Control-Allow-Origin'] = '*'
+            return resp, 400
+
+        city = str(data.get('city', '台北市')).strip()
+        hospital = str(data.get('hospital', '')).strip()
+        dept = str(data.get('dept', '')).strip()
+        title = str(data.get('title', '醫師')).strip()
+        meal_choice = str(data.get('mealChoice', '出席')).strip()
+        drink = str(data.get('drink', '')).strip()
+        diet_notes = str(data.get('dietNotes', '')).strip()
+        now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        sh = get_spreadsheet()
+        next_no = 1
+        if sh:
+            try:
+                ws_att = sh.worksheet('RTD_通用會議報名名冊')
+            except Exception:
+                ws_att = sh.add_worksheet(title='RTD_通用會議報名名冊', rows=100, cols=12)
+                ws_att.append_row(['場次ID', '活動名稱', '序號', '填表時間', '縣市', '服務醫院/機構', '科別/單位', '職稱', '姓名', '用餐型態/主餐', '佐餐飲品', '特殊飲食備註'])
+            
+            rows = ws_att.get_all_values()
+            next_no = len(rows)
+            row_data = [event_id, event_title, next_no, now_str, city, hospital, dept, title, name, meal_choice, drink, diet_notes]
+            ws_att.append_row(row_data)
+
+        # LINE 推播通知 Sandy
+        try:
+            line_msg = (
+                f"🎉 【{event_title} 新醫師報名】\n"
+                f"━━━━━━━━━━━━━━━\n"
+                f"👤 醫師姓名：{name} ({title})\n"
+                f"🏥 服務機構：{hospital}\n"
+                f"🩺 科別單位：{dept}\n"
+                f"🍽️ 用餐選擇：{meal_choice}\n"
+                f"{('🍷 佐餐飲品：' + drink + chr(10)) if drink else ''}"
+                f"{('⚠️ 飲食備註：' + diet_notes + chr(10)) if diet_notes else ''}"
+                f"⏰ 登記時間：{now_str}\n"
+                f"━━━━━━━━━━━━━━━\n"
+                f"📊 Google 試算表（通用報名總表）已即時同步存入！"
+            )
+            line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(text=line_msg))
+        except Exception as err:
+            print(f"⚠️ LINE 通知推送失敗: {err}")
+
+        resp = jsonify({'status': 'ok', 'message': '報名成功且已同步 Google 試算表！', 'id': next_no})
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        return resp
+    except Exception as e:
+        resp = jsonify({'status': 'error', 'message': str(e)})
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        return resp, 500
+
+
+@app.route("/api/meeting/attendees", methods=['GET', 'OPTIONS'])
+def api_meeting_attendees():
+    if request.method == 'OPTIONS':
+        resp = jsonify({'status': 'ok'})
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        resp.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+        resp.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        return resp
+    try:
+        event_id = request.args.get('e', '').strip()
+        sh = get_spreadsheet()
+        attendees = []
+        if sh:
+            try:
+                ws_att = sh.worksheet('RTD_通用會議報名名冊')
+                rows = ws_att.get_all_values()
+                for idx, r in enumerate(rows[1:]):
+                    if len(r) >= 9 and r[8].strip():
+                        if not event_id or r[0].strip() == event_id:
+                            attendees.append({
+                                'eventId': r[0] if len(r) > 0 else '',
+                                'eventTitle': r[1] if len(r) > 1 else '',
+                                'id': r[2] if (len(r) > 2 and r[2].strip()) else (idx + 1),
+                                'time': r[3] if len(r) > 3 else '',
+                                'city': r[4] if (len(r) > 4 and r[4].strip()) else '台北市',
+                                'hospital': r[5] if len(r) > 5 else '',
+                                'dept': r[6] if len(r) > 6 else '',
+                                'title': r[7] if len(r) > 7 else '醫師',
+                                'name': r[8] if len(r) > 8 else '',
+                                'mealChoice': r[9] if len(r) > 9 else '出席',
+                                'drink': r[10] if len(r) > 10 else '',
+                                'dietNotes': r[11] if len(r) > 11 else ''
+                            })
+            except Exception:
+                pass
+
+        resp = jsonify({'status': 'ok', 'attendees': attendees})
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        return resp
+    except Exception as e:
+        resp = jsonify({'status': 'error', 'message': str(e), 'attendees': []})
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        return resp, 500
+
+
+@app.route("/api/meeting/delete_attendee", methods=['POST', 'OPTIONS'])
+def api_meeting_delete_attendee():
+    if request.method == 'OPTIONS':
+        resp = jsonify({'status': 'ok'})
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        resp.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+        resp.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        return resp
+    try:
+        data = request.get_json(force=True) or {}
+        event_id = str(data.get('eventId', '')).strip()
+        row_id = str(data.get('id', '')).strip()
+        name = str(data.get('name', '')).strip()
+
+        sh = get_spreadsheet()
+        if sh:
+            ws_att = sh.worksheet('RTD_通用會議報名名冊')
+            rows = ws_att.get_all_values()
+            for idx, r in enumerate(rows):
+                if idx > 0:
+                    matched = False
+                    if event_id and r[0].strip() != event_id:
+                        continue
+                    if row_id and len(r) > 2 and r[2].strip() == row_id:
+                        matched = True
+                    elif name and len(r) > 8 and r[8].strip() == name:
+                        matched = True
+                    if matched:
+                        ws_att.delete_rows(idx + 1)
+                        break
+
+        resp = jsonify({'status': 'ok', 'message': '已自 Google 試算表移除'})
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        return resp
+    except Exception as e:
+        resp = jsonify({'status': 'error', 'message': str(e)})
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        return resp, 500
+
+
 # ==================== 👑 Sandy 總裁財務與資產決策月報 ====================
 
 EXECUTIVE_REPORT_HTML = """
