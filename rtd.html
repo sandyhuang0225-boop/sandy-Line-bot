@@ -26,15 +26,18 @@
       font-family: 'Noto Sans TC', system-ui, -apple-system, sans-serif;
       background: #f8fafc;
       color: #0f172a;
-      padding-bottom: 60px;
+      padding-bottom: 80px;
     }
 
-    /* 頂部品牌列 (純粹專業的會議報名橫幅，零內部系統連結) */
+    /* 頂部導覽列 */
     .top-header-banner {
       background: linear-gradient(135deg, var(--novartis-blue) 0%, #1e3a8a 100%);
       color: white;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-      padding: 16px 20px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+      padding: 14px 20px;
+      position: sticky;
+      top: 0;
+      z-index: 1020;
     }
 
     /* 區塊卡片 */
@@ -47,27 +50,34 @@
       margin-bottom: 24px;
     }
 
-    /* 餐點選項單選卡片 */
+    /* 餐點單選防呆卡片 (互斥 Radio 綁定) */
     .meal-option-card {
       border: 2px solid #cbd5e1;
       border-radius: 12px;
-      padding: 14px 16px;
+      padding: 16px;
       cursor: pointer !important;
-      transition: all 0.2s;
+      transition: all 0.2s ease-in-out;
       background: #ffffff;
       height: 100%;
       display: flex;
       align-items: center;
       gap: 12px;
+      position: relative;
     }
     .meal-option-card:hover {
       border-color: #38bdf8;
       background: #f0f9ff;
     }
+    /* 選中狀態樣式：鮮明藍底加粗框與勾選標籤 */
     .meal-option-card.selected {
-      border-color: #0284c7;
-      background: #e0f2fe;
-      box-shadow: 0 0 0 2px #0284c7;
+      border-color: #0284c7 !important;
+      background: #e0f2fe !important;
+      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.3) !important;
+    }
+    .meal-option-card .form-check-input {
+      width: 1.35em;
+      height: 1.35em;
+      cursor: pointer;
     }
 
     /* 圖片縮圖卡片 */
@@ -83,25 +93,88 @@
       transform: translateY(-2px);
       box-shadow: 0 6px 18px rgba(0,0,0,0.1);
     }
+
+    /* 簽到表列印專用樣式 */
+    .signin-sheet-container {
+      background: white;
+      border: 2px solid #334155;
+      padding: 24px;
+      border-radius: 6px;
+      font-family: 'Noto Sans TC', sans-serif;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    .signin-sheet-table th, .signin-sheet-table td {
+      border: 1px solid #334155 !important;
+      padding: 6px 8px !important;
+      vertical-align: middle;
+      font-size: 0.88rem;
+    }
+    .signin-sheet-table th {
+      background-color: #f1f5f9 !important;
+      color: #0f172a;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    /* 列印控制 (完全專注於 A4 簽到表，自動隱藏所有網頁介面) */
+    @media print {
+      body {
+        background: #ffffff !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        color: #000000 !important;
+      }
+      .no-print, header, nav, .top-header-banner, .hide-on-print {
+        display: none !important;
+      }
+      .signin-sheet-container {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+      }
+      .signin-sheet-table th, .signin-sheet-table td {
+        border: 1px solid #000000 !important;
+        color: #000000 !important;
+      }
+      .signin-sheet-table th {
+        background-color: #f1f5f9 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      @page {
+        size: A4 portrait;
+        margin: 12mm 10mm 12mm 10mm;
+      }
+    }
   </style>
 </head>
 <body>
 
-<!-- 頂部品牌標題列 (純粹的會議報名介面) -->
-<header class="top-header-banner mb-4">
+<!-- 頂部品牌與 Sandy 專屬捷徑列 -->
+<header class="top-header-banner mb-4 no-print">
   <div class="container d-flex align-items-center justify-content-between flex-wrap gap-2">
     <div class="d-flex align-items-center gap-2">
       <span class="badge bg-warning text-dark px-2 py-1 fw-bold fs-6">RTD</span>
       <h5 class="mb-0 fw-bold">台灣諾華 醫學研討會線上報名與選餐系統</h5>
     </div>
-    <span class="small text-white-50">Novartis Medical Conference Registration</span>
+    <div class="d-flex align-items-center gap-2">
+      <a href="#signinSheetSection" class="btn btn-outline-light btn-sm fw-bold">
+        <i class="fa-solid fa-list-check me-1"></i>檢視簽到名單 (<span id="topAttendeeCount">0</span>人)
+      </a>
+      <!-- 🌟 Sandy 的一鍵列印簽到表按鈕 🌟 -->
+      <button type="button" class="btn btn-warning text-dark fw-black shadow-sm" onclick="printSignInSheet()">
+        <i class="fa-solid fa-print me-1"></i>一鍵列印簽到表
+      </button>
+    </div>
   </div>
 </header>
 
-<div class="container" style="max-width: 900px;">
+<div class="container" style="max-width: 960px;">
 
   <!-- 活動與會議簡介卡片 -->
-  <div class="custom-card border-primary border-2" style="background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);">
+  <div class="custom-card border-primary border-2 hide-on-print" style="background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);">
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2 pb-2 border-bottom">
       <span class="badge bg-primary px-3 py-2 fs-6">
         <i class="fa-solid fa-ribbon me-1"></i>三總乳癌討論會
@@ -129,7 +202,7 @@
   </div>
 
   <!-- 🌟 原圖展示區塊：官方會議 Agenda 與 Wilson Park 菜單 🌟 -->
-  <div class="row g-3 mb-4">
+  <div class="row g-3 mb-4 hide-on-print">
     <!-- 官方 Agenda 議程圖 -->
     <div class="col-md-6 col-12">
       <div class="custom-card h-100 p-3">
@@ -140,13 +213,13 @@
           <span class="badge bg-primary-subtle text-primary border border-primary small">點圖可放大看</span>
         </div>
         <div class="preview-img-box text-center p-2 mb-2" onclick="openImageModal('assets/rtt_agenda.jpg', '三總乳癌討論會 正式議程')">
-          <img src="assets/rtt_agenda.jpg" alt="三總乳癌討論會 議程" class="img-fluid rounded" style="max-height: 250px; object-fit: contain;">
+          <img src="assets/rtt_agenda.jpg" alt="三總乳癌討論會 議程" class="img-fluid rounded" style="max-height: 240px; object-fit: contain;">
         </div>
         <div class="table-responsive small">
           <table class="table table-sm table-striped mb-0">
             <tbody>
               <tr>
-                <td style="width: 100px;"><strong>18:30~19:00</strong></td>
+                <td style="width: 95px;"><strong>18:30~19:00</strong></td>
                 <td><strong>Reception 接待與報到</strong></td>
                 <td class="text-end text-muted">ALL</td>
               </tr>
@@ -187,7 +260,7 @@
           <span class="badge bg-success-subtle text-success border border-success small">點圖可放大看</span>
         </div>
         <div class="preview-img-box text-center p-2 mb-2" onclick="openImageModal('assets/rtt_menu.jpg', 'Wilson Park 餐廳特製菜單')">
-          <img src="assets/rtt_menu.jpg" alt="Wilson Park 菜單" class="img-fluid rounded" style="max-height: 250px; object-fit: contain;">
+          <img src="assets/rtt_menu.jpg" alt="Wilson Park 菜單" class="img-fluid rounded" style="max-height: 240px; object-fit: contain;">
         </div>
         <div class="p-2 bg-light rounded border small">
           <div class="row g-1 text-secondary">
@@ -197,7 +270,7 @@
             <div class="col-6">🍮 威士忌海膽布丁</div>
             <div class="col-12 mt-1 border-top pt-1">
               <strong class="text-dark">主餐三選一：</strong>嫩煎菲力牛排 / 蟹黃海鮮燉飯 / 西班牙伊比利老饕豬<br>
-              <strong class="text-dark">飲品四選一：</strong>單杯紅酒白酒 / 無酒精氣泡飲 / 獅王伯爵茶 / 美式咖啡<br>
+              <strong class="text-dark">飲品四選一：</strong>單杯紅白酒 / 無酒精氣泡飲 / 獅王伯爵茶 / 美式咖啡<br>
               <strong class="text-dark">主廚甜點：</strong>熔岩巧克力蛋糕
             </div>
           </div>
@@ -207,9 +280,9 @@
   </div>
 
   <!-- 報名表單卡片 -->
-  <div class="custom-card">
+  <div class="custom-card hide-on-print">
     <h4 class="fw-bold text-primary mb-3">
-      <i class="fa-solid fa-id-card-clip me-2"></i>與會者資料填寫
+      <i class="fa-solid fa-id-card-clip me-2"></i>與會者資料填寫 & 餐點點選
     </h4>
 
     <form id="rtdForm" onsubmit="handleRegistrationSubmit(event)">
@@ -254,7 +327,7 @@
               <option value="婦產部">婦產部 (Gynecology)</option>
               <option value="整型外科">整型外科</option>
               <option value="病理部">病理部 (Pathology)</option>
-              <option value="放射診斷/放射腫瘤">放射部 (Radiology)</option>
+              <option value="放射部">放射部 (Radiology)</option>
               <option value="護理部">護理部 (Nursing)</option>
               <option value="藥劑部">藥劑部 (Pharmacy)</option>
               <option value="OTHER">自行輸入其他科別...</option>
@@ -289,81 +362,118 @@
 
       <hr class="my-4">
 
-      <!-- 菜單點選區塊 -->
+      <!-- 菜單點選區塊 (🌟 強制嚴格防呆互斥機制：三選一只能選一個 🌟) -->
       <div class="mb-4">
-        <div class="d-flex align-items-center justify-content-between mb-2">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
           <h4 class="fw-bold text-success mb-0">
             <i class="fa-solid fa-utensils me-2"></i>請點選您的專屬特餐
           </h4>
           <span class="badge bg-success-subtle text-success border border-success px-2 py-1">含精緻前菜、沙拉、濃湯與熔岩巧克力蛋糕</span>
         </div>
 
-        <!-- 主餐選擇 (三選一) -->
-        <label class="form-label fw-bold text-dark mt-2 mb-2 fs-6">
-          <span class="badge bg-dark me-1">步驟 1</span> 請選擇一道精緻主餐 (Main Course)：
-        </label>
+        <!-- 主餐選擇 (三選一，絕對互斥防呆) -->
+        <div class="d-flex justify-content-between align-items-center mt-3 mb-2 flex-wrap gap-1">
+          <label class="form-label fw-bold text-dark mb-0 fs-6">
+            <span class="badge bg-dark me-1">步驟 1</span> 請選擇一道精緻主餐 (Main Course · 三選一)：
+          </label>
+          <span class="badge bg-primary px-2 py-1" id="mainDishStatusPill">
+            <i class="fa-solid fa-check me-1"></i>已選：嫩煎菲力牛排
+          </span>
+        </div>
+
         <div class="row g-3 mb-4">
+          <!-- 選項 1: 牛排 -->
           <div class="col-md-4 col-12">
-            <div class="meal-option-card selected" onclick="selectMainDish(this, '嫩煎菲力牛排')">
+            <div class="meal-option-card selected" id="card_steak" onclick="selectMainDish('嫩煎菲力牛排')">
+              <input class="form-check-input" type="radio" name="mainDishRadio" id="radio_steak" value="嫩煎菲力牛排" checked onchange="selectMainDish('嫩煎菲力牛排')">
               <i class="fa-solid fa-drumstick-bite fs-3 text-danger"></i>
-              <div>
-                <h6 class="fw-bold mb-0 text-dark">嫩煎菲力牛排</h6>
-                <small class="text-muted">鮮嫩多汁 · 經典主廚推薦</small>
+              <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h6 class="fw-bold mb-0 text-dark">嫩煎菲力牛排</h6>
+                  <span class="badge bg-danger-subtle text-danger small dish-status-tag" id="tag_steak">已選取</span>
+                </div>
+                <small class="text-muted d-block">鮮嫩多汁 · 經典主廚推薦</small>
               </div>
             </div>
           </div>
+
+          <!-- 選項 2: 燉飯 -->
           <div class="col-md-4 col-12">
-            <div class="meal-option-card" onclick="selectMainDish(this, '蟹黃海鮮燉飯')">
+            <div class="meal-option-card" id="card_rice" onclick="selectMainDish('蟹黃海鮮燉飯')">
+              <input class="form-check-input" type="radio" name="mainDishRadio" id="radio_rice" value="蟹黃海鮮燉飯" onchange="selectMainDish('蟹黃海鮮燉飯')">
               <i class="fa-solid fa-bowl-rice fs-3 text-warning"></i>
-              <div>
-                <h6 class="fw-bold mb-0 text-dark">蟹黃海鮮燉飯</h6>
-                <small class="text-muted">濃郁蟹黃 · 嚴選當季海味</small>
+              <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h6 class="fw-bold mb-0 text-dark">蟹黃海鮮燉飯</h6>
+                  <span class="badge bg-light text-secondary small dish-status-tag" id="tag_rice">點擊選取</span>
+                </div>
+                <small class="text-muted d-block">濃郁蟹黃 · 嚴選當季海味</small>
               </div>
             </div>
           </div>
+
+          <!-- 選項 3: 老饕豬 -->
           <div class="col-md-4 col-12">
-            <div class="meal-option-card" onclick="selectMainDish(this, '西班牙伊比利老饕豬')">
+            <div class="meal-option-card" id="card_pork" onclick="selectMainDish('西班牙伊比利老饕豬')">
+              <input class="form-check-input" type="radio" name="mainDishRadio" id="radio_pork" value="西班牙伊比利老饕豬" onchange="selectMainDish('西班牙伊比利老饕豬')">
               <i class="fa-solid fa-bacon fs-3 text-primary"></i>
-              <div>
-                <h6 class="fw-bold mb-0 text-dark">西班牙伊比利老饕豬</h6>
-                <small class="text-muted">國寶級橡實豬 · 外酥內嫩</small>
+              <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h6 class="fw-bold mb-0 text-dark">西班牙伊比利老饕豬</h6>
+                  <span class="badge bg-light text-secondary small dish-status-tag" id="tag_pork">點擊選取</span>
+                </div>
+                <small class="text-muted d-block">國寶級橡實豬 · 外酥內嫩</small>
               </div>
             </div>
           </div>
         </div>
         <input type="hidden" id="selectedMainDish" value="嫩煎菲力牛排">
 
-        <!-- 飲品選擇 (四選一) -->
-        <label class="form-label fw-bold text-dark mb-2 fs-6">
-          <span class="badge bg-dark me-1">步驟 2</span> 請選擇佐餐飲品 (Beverage)：
-        </label>
+        <!-- 飲品選擇 (四選一，絕對互斥防呆) -->
+        <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-1">
+          <label class="form-label fw-bold text-dark mb-0 fs-6">
+            <span class="badge bg-dark me-1">步驟 2</span> 請選擇佐餐飲品 (Beverage · 四選一)：
+          </label>
+          <span class="badge bg-info text-dark px-2 py-1" id="drinkStatusPill">
+            <i class="fa-solid fa-check me-1"></i>已選：單杯紅白酒
+          </span>
+        </div>
+
         <div class="row g-2 mb-3">
+          <!-- 飲品 1 -->
           <div class="col-md-3 col-6">
-            <div class="meal-option-card selected" onclick="selectDrink(this, '獨家單杯紅酒/白酒')">
+            <div class="meal-option-card selected" id="card_drink_wine" onclick="selectDrink('獨家單杯紅白酒')">
+              <input class="form-check-input" type="radio" name="drinkRadio" id="radio_wine" value="獨家單杯紅白酒" checked onchange="selectDrink('獨家單杯紅白酒')">
               <i class="fa-solid fa-wine-glass text-danger fs-4"></i>
-              <span class="small fw-bold">單杯紅酒/白酒</span>
+              <span class="small fw-bold">單杯紅白酒</span>
             </div>
           </div>
+          <!-- 飲品 2 -->
           <div class="col-md-3 col-6">
-            <div class="meal-option-card" onclick="selectDrink(this, '無酒精氣泡飲')">
+            <div class="meal-option-card" id="card_drink_soda" onclick="selectDrink('無酒精氣泡飲')">
+              <input class="form-check-input" type="radio" name="drinkRadio" id="radio_soda" value="無酒精氣泡飲" onchange="selectDrink('無酒精氣泡飲')">
               <i class="fa-solid fa-champagne-glasses text-info fs-4"></i>
               <span class="small fw-bold">無酒精氣泡飲</span>
             </div>
           </div>
+          <!-- 飲品 3 -->
           <div class="col-md-3 col-6">
-            <div class="meal-option-card" onclick="selectDrink(this, '獅王伯爵茶')">
+            <div class="meal-option-card" id="card_drink_tea" onclick="selectDrink('獅王伯爵茶')">
+              <input class="form-check-input" type="radio" name="drinkRadio" id="radio_tea" value="獅王伯爵茶" onchange="selectDrink('獅王伯爵茶')">
               <i class="fa-solid fa-mug-hot text-warning fs-4"></i>
               <span class="small fw-bold">獅王伯爵茶</span>
             </div>
           </div>
+          <!-- 飲品 4 -->
           <div class="col-md-3 col-6">
-            <div class="meal-option-card" onclick="selectDrink(this, '美式咖啡')">
+            <div class="meal-option-card" id="card_drink_coffee" onclick="selectDrink('美式咖啡')">
+              <input class="form-check-input" type="radio" name="drinkRadio" id="radio_coffee" value="美式咖啡" onchange="selectDrink('美式咖啡')">
               <i class="fa-solid fa-coffee text-dark fs-4"></i>
               <span class="small fw-bold">美式咖啡</span>
             </div>
           </div>
         </div>
-        <input type="hidden" id="selectedDrink" value="獨家單杯紅酒/白酒">
+        <input type="hidden" id="selectedDrink" value="獨家單杯紅白酒">
 
         <!-- 特殊飲食需求 -->
         <div class="mt-3">
@@ -389,6 +499,158 @@
         <i class="fa-solid fa-check-circle me-2"></i>確認送出線上報名與選餐
       </button>
     </form>
+  </div>
+
+  <!-- 🌟 Wilson Park 餐廳點餐統計與名單管理區塊 🌟 -->
+  <div class="custom-card hide-on-print" id="tallySection">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+      <h4 class="fw-bold text-dark mb-0">
+        <i class="fa-solid fa-chart-pie text-warning me-2"></i>Wilson Park 餐廳點餐統計與與會清單
+      </h4>
+      <div class="d-flex gap-2">
+        <button type="button" class="btn btn-sm btn-outline-success fw-bold" onclick="copyRestaurantSummary(this)">
+          <i class="fa-brands fa-line me-1"></i>複製點餐總數給餐廳
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-primary" onclick="injectSampleAttendees()">
+          <i class="fa-solid fa-vial me-1"></i>載入範例名單
+        </button>
+      </div>
+    </div>
+
+    <!-- 餐點統計卡片 -->
+    <div class="row g-2 text-center mb-3">
+      <div class="col-md-3 col-6">
+        <div class="p-3 bg-light border rounded-3">
+          <span class="text-secondary small fw-bold d-block">已報名總人數</span>
+          <span id="statTotalCount" class="fs-2 fw-black text-dark">0</span> 人
+        </div>
+      </div>
+      <div class="col-md-3 col-6">
+        <div class="p-3 bg-light border rounded-3">
+          <span class="text-secondary small fw-bold d-block">嫩煎菲力牛排</span>
+          <span id="statSteakCount" class="fs-2 fw-black text-danger">0</span> 份
+        </div>
+      </div>
+      <div class="col-md-3 col-6">
+        <div class="p-3 bg-light border rounded-3">
+          <span class="text-secondary small fw-bold d-block">蟹黃海鮮燉飯</span>
+          <span id="statRiceCount" class="fs-2 fw-black text-warning">0</span> 份
+        </div>
+      </div>
+      <div class="col-md-3 col-6">
+        <div class="p-3 bg-light border rounded-3">
+          <span class="text-secondary small fw-bold d-block">伊比利老饕豬</span>
+          <span id="statPorkCount" class="fs-2 fw-black text-primary">0</span> 份
+        </div>
+      </div>
+    </div>
+
+    <!-- 特殊飲食提醒清單 -->
+    <div id="statDietBox" class="p-2 bg-light rounded border small mb-3" style="display: none;">
+      <strong class="text-danger"><i class="fa-solid fa-bell me-1"></i>特殊飲食需求備忘：</strong>
+      <span id="statDietList" class="text-muted"></span>
+    </div>
+
+    <!-- 報名清單小表格 -->
+    <div class="table-responsive small">
+      <table class="table table-sm table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="width: 45px;">No.</th>
+            <th>姓名</th>
+            <th>職稱</th>
+            <th>服務醫院</th>
+            <th>科別</th>
+            <th>主餐</th>
+            <th>飲品</th>
+            <th>飲食備註</th>
+            <th class="text-end" style="width: 60px;">操作</th>
+          </tr>
+        </thead>
+        <tbody id="attendeeListSummaryBody">
+          <!-- 動態載入 -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ==================== 🌟 諾華公司 100% 制式會議簽到表 (A4 列印版面) 🌟 ==================== -->
+  <div class="signin-sheet-container mb-4" id="signinSheetSection">
+    
+    <!-- 頂端操作按鈕 (列印時自動隱藏) -->
+    <div class="d-flex justify-content-between align-items-center mb-3 no-print flex-wrap gap-2 pb-2 border-bottom">
+      <div>
+        <span class="badge bg-primary px-2 py-1 me-1">諾華制式 A4 簽到表</span>
+        <span class="small text-muted">姓名與職稱已自動帶入，現場直接親筆簽名</span>
+      </div>
+      <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="exportCsvSignInSheet()">
+          <i class="fa-solid fa-file-csv me-1"></i>下載 CSV 檔
+        </button>
+        <!-- 🌟 核心按鈕：一鍵列印簽到表 🌟 -->
+        <button type="button" class="btn btn-primary fw-bold px-3 py-2 shadow-sm" onclick="printSignInSheet()">
+          <i class="fa-solid fa-print me-1"></i>一鍵列印簽到表
+        </button>
+      </div>
+    </div>
+
+    <!-- 簽到表表頭 -->
+    <div class="row g-2 mb-2 pb-2 border-bottom">
+      <div class="col-12 text-center mb-1">
+        <h4 class="fw-bold mb-0" style="letter-spacing: 2px;">會議簽到表</h4>
+      </div>
+      <div class="col-12">
+        <strong>活動名稱：</strong><span>三總乳癌討論會 - From Shared Decision to Long-Term Confidence</span>
+      </div>
+      <div class="col-md-6 col-6">
+        <strong>日期：</strong><span>2026年11月24日（二）</span>
+      </div>
+      <div class="col-md-6 col-6">
+        <strong>時間：</strong><span>18:30 - 20:30</span>
+      </div>
+      <div class="col-12">
+        <strong>地點：</strong><span>Wilson Park 威爾森公園餐廳（台北市內湖區民權東路六段125之1號）</span>
+      </div>
+    </div>
+
+    <!-- 諾華制式個資告知聲明 (100% 與公司官方 CSV 條款逐字一致) -->
+    <div class="p-2 mb-3" style="font-size: 0.68rem; line-height: 1.4; color: #1e293b; background: #fafafa; border: 1px solid #cbd5e1;">
+      與會者於此簽到表簽名，即表示已閱讀並同意下列【個人資料告知事項】及【同意】條款；如本活動提供住宿/交通或其他出席贊助（如適用），亦同意並確認下列贊助相關事項。<br>
+      <strong>【個人資料告知事項】</strong><br>
+      (1) 蒐集者：台灣諾華股份有限公司（以下稱『諾華』）。<br>
+      (2) 蒐集目的：辦理本活動之出席管理、內外部法規遵循/稽核及相關行政作業（如有贊助/費用核銷等需求亦屬之）。<br>
+      (3) 個人資料類別：姓名、服務機構、科別/單位、職稱、（如有提供）聯絡方式、簽名及出席紀錄等。<br>
+      (4) 利用期間/地區/對象/方式：於活動期間及結束後5年，在中華民國境內，得以紙本或電子方式於前述目的範圍內利用，並得提供予諾華之關係企業及受託之第三方服務供應商；另得依法律或主管機關要求揭露。<br>
+      (5) 權利：本人得依法行使查詢或請求閱覽、請求製給複製本、請求補充或更正、請求停止蒐集/處理/利用、請求刪除等權利；如需聯繫，請洽：taiwan.dp@novartis.com。<br>
+      (6) 不提供之影響：本人得自由選擇是否提供個人資料；惟如不提供必要資料，可能影響本活動之參與或相關服務提供（例如出席證明/贊助核銷等）。<br>
+      <strong>【同意】</strong>本人已閱讀並了解上述告知事項，並同意諾華於前述目的範圍內蒐集、處理及利用本人個人資料。<br>
+      <strong>【若本活動提供住宿/交通或其他出席贊助（如適用）】</strong><br>
+      (a) 遵守所有相關法規命令，及所屬醫院、大學或機關之相關規章；<br>
+      (b) 若有接受住宿之贊助，其住宿係由台灣諾華統籌辦理；<br>
+      (c) 會提供相關單據、出席紀錄及個人資料予諾華及其指定之第三人以進行贊助查核付款作業；<br>
+      (d) 如因法規要求，諾華得公開揭露贊助醫師之項目內容；<br>
+      (e) 上述補助並非用以換取採購或處方諾華產品，亦非成為推薦、處方、採購或施用諾華產品之誘因。
+    </div>
+
+    <!-- 制式簽到表格 (100% 與公司 CSV 格式完全一致) -->
+    <div class="table-responsive">
+      <table class="table table-bordered signin-sheet-table mb-0">
+        <thead>
+          <tr>
+            <th style="width: 45px;">No.</th>
+            <th style="width: 105px;">單位所在縣市</th>
+            <th style="width: 175px;">服務醫院/機構</th>
+            <th style="width: 135px;">科別/單位</th>
+            <th style="width: 185px;">職稱</th>
+            <th style="width: 110px;">姓名</th>
+            <th style="width: 190px;">簽名</th>
+          </tr>
+        </thead>
+        <tbody id="signinSheetTableBody">
+          <!-- 動態填入與會者名單，並自動勾選對應之職稱框，留空行供現場簽名 -->
+        </tbody>
+      </table>
+    </div>
   </div>
 
 </div>
@@ -439,7 +701,13 @@
 
 <script>
 const STORAGE_KEY = 'novartis_rtd_attendees_20261124';
+let attendees = [];
 let lastSubmittedAttendee = null;
+
+// 初始化載入
+document.addEventListener('DOMContentLoaded', () => {
+  loadAttendees();
+});
 
 // 開啟圖片放大彈窗
 function openImageModal(imgSrc, title) {
@@ -449,18 +717,94 @@ function openImageModal(imgSrc, title) {
   modal.show();
 }
 
-// 選擇主餐
-function selectMainDish(el, dishName) {
-  document.querySelectorAll('.row.g-3 .meal-option-card').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
+// 🌟 嚴格防呆互斥機制：主餐三選一 (只能擇一，選了燉飯就自動取消牛排與老饕豬) 🌟
+function selectMainDish(dishName) {
+  // 1. 更新隱藏欄位值
   document.getElementById('selectedMainDish').value = dishName;
+
+  // 2. 更新對應 radio 狀態
+  const radioSteak = document.getElementById('radio_steak');
+  const radioRice = document.getElementById('radio_rice');
+  const radioPork = document.getElementById('radio_pork');
+
+  radioSteak.checked = (dishName === '嫩煎菲力牛排');
+  radioRice.checked = (dishName === '蟹黃海鮮燉飯');
+  radioPork.checked = (dishName === '西班牙伊比利老饕豬');
+
+  // 3. 嚴格更新三個卡片的樣式 (移除其他卡片的 selected，只保留目前點選者)
+  const cardSteak = document.getElementById('card_steak');
+  const cardRice = document.getElementById('card_rice');
+  const cardPork = document.getElementById('card_pork');
+
+  const tagSteak = document.getElementById('tag_steak');
+  const tagRice = document.getElementById('tag_rice');
+  const tagPork = document.getElementById('tag_pork');
+
+  if (dishName === '嫩煎菲力牛排') {
+    cardSteak.classList.add('selected');
+    cardRice.classList.remove('selected');
+    cardPork.classList.remove('selected');
+
+    tagSteak.className = 'badge bg-danger-subtle text-danger small dish-status-tag';
+    tagSteak.textContent = '已選取';
+    tagRice.className = 'badge bg-light text-secondary small dish-status-tag';
+    tagRice.textContent = '點擊選取';
+    tagPork.className = 'badge bg-light text-secondary small dish-status-tag';
+    tagPork.textContent = '點擊選取';
+  } else if (dishName === '蟹黃海鮮燉飯') {
+    cardSteak.classList.remove('selected');
+    cardRice.classList.add('selected');
+    cardPork.classList.remove('selected');
+
+    tagSteak.className = 'badge bg-light text-secondary small dish-status-tag';
+    tagSteak.textContent = '點擊選取';
+    tagRice.className = 'badge bg-warning-subtle text-warning-emphasis small dish-status-tag';
+    tagRice.textContent = '已選取';
+    tagPork.className = 'badge bg-light text-secondary small dish-status-tag';
+    tagPork.textContent = '點擊選取';
+  } else if (dishName === '西班牙伊比利老饕豬') {
+    cardSteak.classList.remove('selected');
+    cardRice.classList.remove('selected');
+    cardPork.classList.add('selected');
+
+    tagSteak.className = 'badge bg-light text-secondary small dish-status-tag';
+    tagSteak.textContent = '點擊選取';
+    tagRice.className = 'badge bg-light text-secondary small dish-status-tag';
+    tagRice.textContent = '點擊選取';
+    tagPork.className = 'badge bg-primary-subtle text-primary small dish-status-tag';
+    tagPork.textContent = '已選取';
+  }
+
+  // 4. 更新頂部提示標籤
+  document.getElementById('mainDishStatusPill').innerHTML = `<i class="fa-solid fa-check me-1"></i>已選：${dishName}`;
 }
 
-// 選擇飲品
-function selectDrink(el, drinkName) {
-  document.querySelectorAll('.row.g-2 .meal-option-card').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
+// 🌟 嚴格防呆互斥機制：佐餐飲品四選一 🌟
+function selectDrink(drinkName) {
   document.getElementById('selectedDrink').value = drinkName;
+
+  const drinks = [
+    { name: '獨家單杯紅白酒', cardId: 'card_drink_wine', radioId: 'radio_wine' },
+    { name: '無酒精氣泡飲', cardId: 'card_drink_soda', radioId: 'radio_soda' },
+    { name: '獅王伯爵茶', cardId: 'card_drink_tea', radioId: 'radio_tea' },
+    { name: '美式咖啡', cardId: 'card_drink_coffee', radioId: 'radio_coffee' }
+  ];
+
+  drinks.forEach(d => {
+    const isSelected = (d.name === drinkName);
+    const card = document.getElementById(d.cardId);
+    const radio = document.getElementById(d.radioId);
+    if (radio) radio.checked = isSelected;
+    if (card) {
+      if (isSelected) {
+        card.classList.add('selected');
+      } else {
+        card.classList.remove('selected');
+      }
+    }
+  });
+
+  document.getElementById('drinkStatusPill').innerHTML = `<i class="fa-solid fa-check me-1"></i>已選：${drinkName}`;
 }
 
 // 科別切換自填
@@ -474,6 +818,157 @@ function handleDeptChange(selectEl) {
     customInput.style.display = 'none';
     customInput.required = false;
   }
+}
+
+// 載入名單
+function loadAttendees() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) {
+    try {
+      attendees = JSON.parse(raw);
+    } catch (e) {
+      attendees = [];
+    }
+  } else {
+    // 預設示範第一位講師：廖國秀醫師
+    attendees = [
+      {
+        id: 1,
+        name: '廖國秀',
+        city: '台北市',
+        hospital: '三軍總醫院',
+        dept: '乳房外科',
+        title: '醫師',
+        mainDish: '嫩煎菲力牛排',
+        drink: '獨家單杯紅白酒',
+        dietNotes: ''
+      }
+    ];
+    saveAttendees();
+  }
+  renderAll();
+}
+
+// 儲存名單
+function saveAttendees() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(attendees));
+}
+
+// 渲染所有統計與簽到表
+function renderAll() {
+  document.getElementById('topAttendeeCount').textContent = attendees.length;
+  document.getElementById('statTotalCount').textContent = attendees.length;
+
+  let steak = 0, rice = 0, pork = 0;
+  const dietList = [];
+
+  attendees.forEach(a => {
+    if (a.mainDish === '嫩煎菲力牛排') steak++;
+    else if (a.mainDish === '蟹黃海鮮燉飯') rice++;
+    else if (a.mainDish === '西班牙伊比利老饕豬') pork++;
+
+    if (a.dietNotes && a.dietNotes.trim() !== '') {
+      dietList.push(`${a.name} (${a.dietNotes})`);
+    }
+  });
+
+  document.getElementById('statSteakCount').textContent = steak;
+  document.getElementById('statRiceCount').textContent = rice;
+  document.getElementById('statPorkCount').textContent = pork;
+
+  const dietBox = document.getElementById('statDietBox');
+  const dietSpan = document.getElementById('statDietList');
+  if (dietList.length > 0) {
+    dietBox.style.display = 'block';
+    dietSpan.textContent = dietList.join('； ');
+  } else {
+    dietBox.style.display = 'none';
+  }
+
+  // 渲染名單摘要清單小表格
+  const summaryTbody = document.getElementById('attendeeListSummaryBody');
+  if (attendees.length === 0) {
+    summaryTbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-3">尚無與會人員報名</td></tr>`;
+  } else {
+    summaryTbody.innerHTML = attendees.map((a, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td class="fw-bold">${a.name}</td>
+        <td><span class="badge bg-secondary">${a.title}</span></td>
+        <td>${a.hospital}</td>
+        <td>${a.dept}</td>
+        <td>${a.mainDish}</td>
+        <td>${a.drink}</td>
+        <td>${a.dietNotes || '<span class="text-muted">-</span>'}</td>
+        <td class="text-end">
+          <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="deleteAttendee(${a.id})" title="刪除">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  // 渲染 100% 諾華制式簽到表
+  renderSignInTable();
+}
+
+// 渲染 A4 制式簽到表格
+function renderSignInTable() {
+  const tbody = document.getElementById('signinSheetTableBody');
+  if (!tbody) return;
+
+  let html = '';
+
+  attendees.forEach((a, index) => {
+    const isDoc = a.title === '醫師';
+    const isNurse = a.title === '護理師';
+    const isPharm = a.title === '藥師';
+    const isOther = !isDoc && !isNurse && !isPharm;
+
+    html += `
+      <tr>
+        <td class="text-center fw-bold">${index + 1}</td>
+        <td class="text-center">${a.city || '台北市'}</td>
+        <td>${a.hospital || ''}</td>
+        <td>${a.dept || ''}</td>
+        <td style="font-size: 0.78rem; line-height: 1.4;">
+          ${isDoc ? '☑' : '□'} 醫師 &nbsp; ${isNurse ? '☑' : '□'} 護理師 &nbsp; ${isPharm ? '☑' : '□'} 藥師<br>
+          ${isOther ? '☑' : '□'} 其他HCP: ${isOther ? a.title : '____________'}
+        </td>
+        <td class="fw-bold text-center" style="font-size: 1rem;">${a.name}</td>
+        <td style="background: #ffffff; min-height: 38px;"></td>
+      </tr>
+    `;
+  });
+
+  // 自動補充至少 6 行空白簽到列，確保整體簽到表飽滿整齊供現場候補/補簽
+  const blankRows = Math.max(6, 14 - attendees.length);
+  for (let i = 0; i < blankRows; i++) {
+    const rowNo = attendees.length + i + 1;
+    html += `
+      <tr>
+        <td class="text-center text-muted">${rowNo}</td>
+        <td class="text-center"></td>
+        <td></td>
+        <td></td>
+        <td style="font-size: 0.78rem; line-height: 1.4;">
+          □ 醫師 &nbsp; □ 護理師 &nbsp; □ 藥師<br>
+          □ 其他HCP: ____________
+        </td>
+        <td></td>
+        <td style="background: #ffffff; min-height: 38px;"></td>
+      </tr>
+    `;
+  }
+
+  tbody.innerHTML = html;
+}
+
+// 🌟 一鍵列印簽到表 🌟
+function printSignInSheet() {
+  renderSignInTable();
+  window.print();
 }
 
 // 送出報名表單
@@ -507,20 +1002,15 @@ function handleRegistrationSubmit(e) {
     time: new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })
   };
 
-  // 存入本地儲存
-  let list = [];
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) list = JSON.parse(raw);
-  } catch (err) {}
-  list.push(lastSubmittedAttendee);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  attendees.push(lastSubmittedAttendee);
+  saveAttendees();
+  renderAll();
 
   // 更新彈窗摘要
   document.getElementById('successSummaryText').innerHTML = `
     <strong>${name} ${title}</strong> 您好，主辦單位已收到您的預約！<br>
     主餐：<strong>${mainDish}</strong> · 飲品：<strong>${drink}</strong><br>
-    活動當天現場親筆簽到即可享用主廚精緻特餐。
+    活動當天現場直接於簽到表簽名即可享用主廚精緻特餐。
   `;
 
   // 顯示成功視窗
@@ -530,6 +1020,102 @@ function handleRegistrationSubmit(e) {
   // 清空姓名與備註
   document.getElementById('regName').value = '';
   document.getElementById('regDietNotes').value = '';
+}
+
+// 刪除人員
+function deleteAttendee(id) {
+  if (!confirm('確定要移除此筆與會人員嗎？')) return;
+  attendees = attendees.filter(a => a.id !== id);
+  saveAttendees();
+  renderAll();
+}
+
+// 載入示範名單
+function injectSampleAttendees() {
+  attendees = [
+    { id: 1, name: '廖國秀', city: '台北市', hospital: '三軍總醫院', dept: '乳房外科', title: '醫師', mainDish: '嫩煎菲力牛排', drink: '獨家單杯紅白酒', dietNotes: '' },
+    { id: 2, name: '陳德全', city: '台北市', hospital: '三軍總醫院', dept: '乳房外科', title: '醫師', mainDish: '西班牙伊比利老饕豬', drink: '無酒精氣泡飲', dietNotes: '' },
+    { id: 3, name: '林芳如', city: '台北市', hospital: '三軍總醫院', dept: '護理部', title: '護理師', mainDish: '蟹黃海鮮燉飯', drink: '獅王伯爵茶', dietNotes: '不吃牛肉' },
+    { id: 4, name: '張凱鈞', city: '台北市', hospital: '三軍總醫院', dept: '藥劑部', title: '藥師', mainDish: '嫩煎菲力牛排', drink: '美式咖啡', dietNotes: '' },
+    { id: 5, name: '王敏慧', city: '台北市', hospital: '三軍總醫院', dept: '血液腫瘤科', title: '醫師', mainDish: '蟹黃海鮮燉飯', drink: '獨家單杯紅白酒', dietNotes: '' }
+  ];
+  saveAttendees();
+  renderAll();
+}
+
+// 複製餐點總數給 Wilson Park 餐廳經理
+function copyRestaurantSummary(btn) {
+  let steak = 0, rice = 0, pork = 0;
+  let wine = 0, soda = 0, tea = 0, coffee = 0;
+  const diets = [];
+
+  attendees.forEach(a => {
+    if (a.mainDish === '嫩煎菲力牛排') steak++;
+    else if (a.mainDish === '蟹黃海鮮燉飯') rice++;
+    else if (a.mainDish === '西班牙伊比利老饕豬') pork++;
+
+    if (a.drink.includes('酒')) wine++;
+    else if (a.drink.includes('氣泡')) soda++;
+    else if (a.drink.includes('茶')) tea++;
+    else if (a.drink.includes('咖啡')) coffee++;
+
+    if (a.dietNotes && a.dietNotes.trim() !== '') {
+      diets.push(`${a.name}: ${a.dietNotes}`);
+    }
+  });
+
+  const msg = 
+`【Wilson Park 威爾森公園餐廳 · 點餐明細通知】
+活動名稱：三總乳癌討論會 (台灣諾華)
+活動時間：2026/11/24 (二) 18:30-20:30
+與會總人數：${attendees.length} 位
+
+🥩 主餐統計 (共 ${attendees.length} 份)：
+- 嫩煎菲力牛排：${steak} 份
+- 蟹黃海鮮燉飯：${rice} 份
+- 西班牙伊比利老饕豬：${pork} 份
+
+🍷 佐餐飲品統計：
+- 單杯紅白酒：${wine} 杯
+- 無酒精氣泡飲：${soda} 杯
+- 獅王伯爵茶：${tea} 杯
+- 美式咖啡：${coffee} 杯
+
+${diets.length > 0 ? `⚠️ 特殊飲食備註：\n${diets.join('\n')}\n` : ''}
+麻煩餐廳經理協助備料，謝謝！`;
+
+  navigator.clipboard.writeText(msg).then(() => {
+    const orig = btn.innerHTML;
+    btn.innerHTML = `<i class="fa-solid fa-check text-success"></i> 已複製餐廳點餐明細！`;
+    setTimeout(() => btn.innerHTML = orig, 2500);
+  });
+}
+
+// 下載 CSV 簽到表
+function exportCsvSignInSheet() {
+  const header = "\uFEFF";
+  let csv = header;
+
+  csv += "會議簽到表\n";
+  csv += "活動名稱：三總乳癌討論會 - From Shared Decision to Long-Term Confidence\n";
+  csv += "日期：2026年11月24日（二）,時間：18:30 - 20:30,地點：Wilson Park 威爾森公園餐廳\n\n";
+
+  csv += '"與會者於此簽到表簽名，即表示已閱讀並同意台灣諾華個人資料告知事項及贊助相關事項。"\n\n';
+  csv += "No.,單位所在縣市,服務醫院/機構,科別/單位,職稱,姓名,簽名\n";
+
+  attendees.forEach((a, i) => {
+    csv += `${i + 1},"${a.city || '台北市'}","${a.hospital}","${a.dept}","${a.title}","${a.name}",\n`;
+  });
+
+  for (let i = 1; i <= 6; i++) {
+    csv += `${attendees.length + i},"","","","","",\n`;
+  }
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `台灣諾華_三總乳癌討論會_簽到表_${new Date().toISOString().slice(0,10)}.csv`;
+  link.click();
 }
 
 // 透過 LINE 回傳確認訊息給 Sandy
