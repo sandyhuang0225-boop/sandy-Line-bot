@@ -349,16 +349,16 @@
           </select>
         </div>
 
-        <!-- 服務醫院/機構 (含台灣諾華選項) -->
+        <!-- 服務醫院/機構 (Sandy 負責的五大醫院核心專屬名單) -->
         <div class="col-md-4 col-6">
           <label class="form-label fw-bold small text-secondary">服務醫院 / 機構 <span class="text-danger">*</span></label>
           <select id="regHospitalSelect" class="form-select form-select-lg fw-bold" onchange="handleHospitalChange(this)">
-            <option value="三軍總醫院" selected>三軍總醫院 (TSGH)</option>
+            <option value="三軍總醫院" selected>三軍總醫院 (內湖總院)</option>
+            <option value="三軍總醫院基隆分院">三軍總醫院基隆分院</option>
+            <option value="三軍總醫院松山分院">三軍總醫院松山分院</option>
+            <option value="基隆長庚紀念醫院">基隆長庚紀念醫院</option>
+            <option value="汐止國泰綜合醫院">汐止國泰綜合醫院</option>
             <option value="台灣諾華股份有限公司">台灣諾華股份有限公司 (Novartis)</option>
-            <option value="台北榮民總醫院">台北榮民總醫院</option>
-            <option value="國立臺灣大學醫學院附設醫院">台大醫院 (NTUH)</option>
-            <option value="馬偕紀念醫院">馬偕紀念醫院</option>
-            <option value="新光醫院">新光醫院</option>
             <option value="OTHER">自行輸入其他機構...</option>
           </select>
           <input type="text" id="regHospitalCustom" class="form-control form-control-lg fw-bold mt-2" placeholder="請輸入機構名稱" style="display: none;">
@@ -1896,10 +1896,19 @@ function handleHospitalChange(selectEl) {
     customInput.required = false;
   }
 
-  if (selectEl.value === '台灣諾華股份有限公司') {
-    document.getElementById('regCity').value = '台北市';
-    document.getElementById('regDeptSelect').value = '腫瘤醫學部';
-    document.getElementById('titleNovartis').checked = true;
+  const cityEl = document.getElementById('regCity');
+  if (selectEl.value === '三軍總醫院基隆分院' || selectEl.value === '基隆長庚紀念醫院') {
+    if (cityEl) cityEl.value = '基隆市';
+  } else if (selectEl.value === '汐止國泰綜合醫院') {
+    if (cityEl) cityEl.value = '新北市';
+  } else if (selectEl.value === '三軍總醫院' || selectEl.value === '三軍總醫院松山分院') {
+    if (cityEl) cityEl.value = '台北市';
+  } else if (selectEl.value === '台灣諾華股份有限公司') {
+    if (cityEl) cityEl.value = '台北市';
+    const deptEl = document.getElementById('regDeptSelect');
+    if (deptEl) deptEl.value = '腫瘤醫學部';
+    const titleNovartisEl = document.getElementById('titleNovartis');
+    if (titleNovartisEl) titleNovartisEl.checked = true;
   }
 }
 
