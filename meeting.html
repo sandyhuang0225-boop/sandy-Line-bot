@@ -334,10 +334,31 @@
         </div>
         <div class="col-md-4 col-12">
           <label class="form-label fw-bold mb-1">供餐型態：</label>
-          <select id="manualCfgMealMode" class="form-select form-select-sm">
+          <select id="manualCfgMealMode" class="form-select form-select-sm" onchange="handleManualMealModeChange(this.value)">
             <option value="TABLE">中式桌宴（合菜共享 · 報名免選主餐）</option>
             <option value="SET">西式/個人套餐（跳出選單三選一）</option>
           </select>
+        </div>
+        <!-- 西式套餐主餐微調區 (當選 SET 時展開) -->
+        <div class="col-12 mt-2" id="manualSetMainsRow" style="display: none;">
+          <div class="p-2 border rounded bg-white">
+            <span class="fw-bold text-primary small d-block mb-1"><i class="fa-solid fa-utensils me-1"></i>西式個人套餐主餐自訂（醫師線上單選）：</span>
+            <div class="row g-1">
+              <div class="col-md-4 col-12">
+                <input type="text" id="manualCfgMain1" class="form-control form-control-sm" placeholder="主餐一 (例如: 爐烤肋眼牛排)">
+              </div>
+              <div class="col-md-4 col-12">
+                <input type="text" id="manualCfgMain2" class="form-control form-control-sm" placeholder="主餐二 (例如: 嫩煎野生鱸魚)">
+              </div>
+              <div class="col-md-4 col-12">
+                <input type="text" id="manualCfgMain3" class="form-control form-control-sm" placeholder="主餐三 (例如: 松露野菇燉飯/素)">
+              </div>
+            </div>
+            <div class="mt-2">
+              <label class="form-label fw-bold mb-0 text-muted" style="font-size: 0.75rem;">佐餐飲品選項 (以斜線 / 分隔)：</label>
+              <input type="text" id="manualCfgDrinks" class="form-control form-control-sm" placeholder="紅酒 / 白酒 / 新鮮果汁 / 熱茶 / 研磨美式">
+            </div>
+          </div>
         </div>
         <div class="col-12 mt-2">
           <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="saveManualConfig()">
@@ -1168,19 +1189,26 @@ async function startMeetingAiAnalysis() {
       menuData = await compressAndUploadImage(menuFile);
     }
 
-    const promptText = `你是一位台灣諾華（Novartis）醫學會議規劃專家。請仔細分析這張會議議程（Agenda）與菜單照片。
-請精確辨識出此場會議的所有資訊，並組成條列式議程表。
+    const promptText = `你是一位台灣諾華（Novartis）醫學會議規劃專家。請仔細分析這張會議議程（Agenda）與餐廳菜單（Menu）照片/檔案。
+請精確辨識出此場會議的所有資訊，並組成條列式議程表與專屬餐點選項。
 
 【重要辨識規則】：
 1. 找出會議的主題全稱 (title)、會議短標籤 (badge，例如 "12月乳癌高峰論壇" 或 "RTD 醫學研討會")。
 2. 會議完整日期 (date，例如 "2026年12月04日（星期四）") 與時間區間 (time，例如 "18:30 - 20:30")。
 3. 會議地點/餐廳名稱與詳細地址 (venue，例如 "欣葉鐘菜（台北市中山區樂群二路199號）")。
-4. 供餐型態 (mealMode)：若為中式合菜桌宴請填 "TABLE"，若為個人西式排餐/套餐請填 "SET"。
-5. 完整條列出議程表每一行 (agendaLines)，每一筆包含：
+4. ★ 供餐型態 (mealMode) 精確判定：
+   - 若為「中式合菜、桌菜、宴會桌席（大家共吃一大盤一桌菜）」，mealMode 請設為 "TABLE"。
+   - 若為「西式排餐、法式/義式餐廳、個人專屬套餐（有牛排、魚排、雞排、燉飯、素食等主餐可挑選）」，mealMode 務必設為 "SET"！
+5. 議程表 (agendaLines)，每一筆包含：
    - time: 時段（例如 "18:30~19:00"）
    - topic: 主題或活動（例如 "Reception 接待與報到"、"演講題目"、"綜合座談" 等）
    - speaker: 主講人或座長主持人姓名（若有醫院職稱請一併帶入，例如 "陳醫師 (台大醫院)"，若為諾華同仁如 Sandy Huang 亦請帶入）
-6. 若有提供菜單或菜單照片，請條列出當日菜色清單 (menuItems)，若無則可給出預設招牌合菜或留空。
+6. ★ 菜單內容深度解析 (重要！請仔細讀懂菜單照片上的真實文字)：
+   - 若為西式個人套餐 (SET)：
+     * 請抓出菜單上的「主餐選項（Main Course / 主菜）」，放入 setMains 陣列（通常為 2~4 道可供挑選的獨立主菜，例如：["爐烤頂級肋眼牛排", "嫩煎野生海鱸魚", "松露野菇燉飯(素)"]）。
+     * 請抓出菜單上的「佐餐飲品選項（Beverage）」，放入 setDrinks 陣列（若菜單無明列可提供常用如 ["紅酒", "白酒", "無酒精果汁/氣泡飲", "熱茶/熱咖啡"]）。
+     * 將前菜、沙拉、湯品、甜點等固定副餐列入 menuItems 陣列。
+   - 若為中式合菜 (TABLE)：請將菜單上的所有菜色依序列入 menuItems 陣列。
 
 請嚴格輸出合法的 JSON 物件，格式如下：
 {
@@ -1189,12 +1217,14 @@ async function startMeetingAiAnalysis() {
   "date": "會議完整日期",
   "time": "會議時間",
   "venue": "會議餐廳/地點與地址",
-  "mealMode": "TABLE",
+  "mealMode": "TABLE 或 SET",
   "agendaLines": [
     { "time": "18:30~19:00", "topic": "Reception 接待與報到", "speaker": "ALL" },
     { "time": "19:00~19:40", "topic": "最新臨床治療指引", "speaker": "講師醫師 (服務醫院)" }
   ],
-  "menuItems": ["經典合菜一", "經典合菜二", "清蒸鮮魚", "甜點"]
+  "menuItems": ["精選前菜", "手工現烤麵包", "經典主廚濃湯", "法式精緻甜點"],
+  "setMains": ["主菜選項一", "主菜選項二", "主菜選項三"],
+  "setDrinks": ["紅酒", "白酒", "無酒精果汁", "現煮研磨咖啡"]
 }`;
 
     const parts = [{ text: promptText }];
@@ -1225,6 +1255,27 @@ async function startMeetingAiAnalysis() {
     const evId = currentEventId || '1204_table';
     const existing = eventsDb[evId] || {};
 
+    // 智能判斷是否為西式個人選餐模式
+    const isSetMode = (aiResult.mealMode === 'SET' || (aiResult.setMains && Array.isArray(aiResult.setMains) && aiResult.setMains.length > 0));
+    const detectedMealMode = isSetMode ? 'SET' : 'TABLE';
+
+    let finalSetOptions = null;
+    if (isSetMode) {
+      finalSetOptions = {
+        mains: (aiResult.setMains && aiResult.setMains.length > 0) 
+          ? aiResult.setMains 
+          : ['特選主廚牛排', '嫩煎海鮮主餐', '主廚特製蔬食'],
+        drinks: (aiResult.setDrinks && aiResult.setDrinks.length > 0)
+          ? aiResult.setDrinks
+          : ['獨家單杯紅白酒', '無酒精氣泡飲', '鮮榨果汁', '熱茶/研磨咖啡']
+      };
+    } else {
+      finalSetOptions = existing.setOptions || {
+        mains: ['特選主餐一', '特選主餐二', '蔬食套餐'],
+        drinks: ['無酒精氣泡飲', '熱茶']
+      };
+    }
+
     const updatedEvent = {
       id: evId,
       badge: aiResult.badge || aiResult.title || existing.badge || '醫學會議',
@@ -1232,15 +1283,12 @@ async function startMeetingAiAnalysis() {
       date: aiResult.date || existing.date || '2026年12月04日',
       time: aiResult.time || existing.time || '18:30 - 20:30',
       venue: aiResult.venue || existing.venue || '',
-      mealMode: aiResult.mealMode || existing.mealMode || 'TABLE',
+      mealMode: detectedMealMode,
       agendaImgUrl: (agendaData && agendaData.url) ? agendaData.url : (existing.agendaImgUrl || ''),
       agendaLines: (aiResult.agendaLines && aiResult.agendaLines.length > 0) ? aiResult.agendaLines : (existing.agendaLines || []),
       menuImgUrl: (menuData && menuData.url) ? menuData.url : (existing.menuImgUrl || ''),
       menuItems: (aiResult.menuItems && aiResult.menuItems.length > 0) ? aiResult.menuItems : (existing.menuItems || []),
-      setOptions: existing.setOptions || {
-        mains: ['嫩煎菲力牛排', '蟹黃海鮮燉飯', '西班牙伊比利老饕豬'],
-        drinks: ['獨家單杯紅白酒', '無酒精氣泡飲', '獅王伯爵茶', '美式咖啡']
-      },
+      setOptions: finalSetOptions,
       attendees: existing.attendees || []
     };
 
@@ -1301,9 +1349,24 @@ function toggleManualConfigBox() {
     document.getElementById('manualCfgTime').value = ev.time || '';
     document.getElementById('manualCfgVenue').value = ev.venue || '';
     document.getElementById('manualCfgMealMode').value = ev.mealMode || 'TABLE';
+    
+    const mains = (ev.setOptions && ev.setOptions.mains) ? ev.setOptions.mains : [];
+    document.getElementById('manualCfgMain1').value = mains[0] || '';
+    document.getElementById('manualCfgMain2').value = mains[1] || '';
+    document.getElementById('manualCfgMain3').value = mains[2] || '';
+    document.getElementById('manualCfgDrinks').value = (ev.setOptions && ev.setOptions.drinks) ? ev.setOptions.drinks.join(' / ') : '';
+    
+    handleManualMealModeChange(ev.mealMode || 'TABLE');
     box.style.display = 'block';
   } else {
     box.style.display = 'none';
+  }
+}
+
+function handleManualMealModeChange(mode) {
+  const row = document.getElementById('manualSetMainsRow');
+  if (row) {
+    row.style.display = (mode === 'SET') ? 'block' : 'none';
   }
 }
 
@@ -1316,6 +1379,18 @@ function saveManualConfig() {
   ev.time = document.getElementById('manualCfgTime').value.trim() || ev.time;
   ev.venue = document.getElementById('manualCfgVenue').value.trim() || ev.venue;
   ev.mealMode = document.getElementById('manualCfgMealMode').value;
+
+  if (ev.mealMode === 'SET') {
+    const m1 = document.getElementById('manualCfgMain1').value.trim();
+    const m2 = document.getElementById('manualCfgMain2').value.trim();
+    const m3 = document.getElementById('manualCfgMain3').value.trim();
+    const drinksRaw = document.getElementById('manualCfgDrinks').value.trim();
+
+    ev.setOptions = {
+      mains: [m1 || '特選主餐一', m2 || '特選主餐二', m3 || '精緻蔬食'],
+      drinks: drinksRaw ? drinksRaw.split('/').map(d => d.trim()).filter(Boolean) : ['獨家單杯紅白酒', '無酒精氣泡飲', '鮮榨果汁', '熱茶/咖啡']
+    };
+  }
 
   saveEventsDb();
   renderCurrentEvent();
