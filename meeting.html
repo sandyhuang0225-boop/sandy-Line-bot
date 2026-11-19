@@ -752,23 +752,46 @@
                 <small class="text-muted">中式合菜模式下，報名表不會顯示選菜表格，醫師將直接瀏覽菜色並直接簽名入席。</small>
               </div>
 
-              <!-- 西式套餐專用：自訂主餐清單 (支援 2~6 道彈性主餐自選，無數量限制) 與佐餐飲品 -->
+              <!-- 西式套餐專用：自訂主餐、甜點、前菜與佐餐飲品清單 (完整彈性模組化，數量完全不受限) -->
               <div id="cfgSetMenuBox" style="display: none;">
-                <label class="form-label small fw-bold text-primary">
-                  <i class="fa-solid fa-utensils text-primary me-1"></i>西式套餐主餐選項 (由 AI 自動讀出，每行一道主餐，支援 2~6 道彈性選項)
-                </label>
-                <textarea id="cfgSetMainsList" class="form-control form-control-sm fw-bold" rows="4" placeholder="每行輸入一道主餐（支援 2~6 道彈性選項，無數量限制），例如：&#10;嫩煎特級菲力牛排 6oz&#10;法式香煎櫻桃鴨胸佐櫻桃醬&#10;野生深海海鱸魚排佐白酒檸檬醬&#10;義大利黑松露牛肝菌野菇燉飯 (蛋奶素)"></textarea>
-                <small class="text-muted d-block mb-2">系統將依據上方每行主餐，在報名表自動生成單選卡片（三選一、四選一或五選一）供醫師挑選。</small>
+                <!-- 1. 精選主餐自選 -->
+                <div class="mb-3">
+                  <label class="form-label small fw-bold text-primary">
+                    <i class="fa-solid fa-utensils text-primary me-1"></i>① 精選主餐自選清單 (必填，每行一道主餐，支援 2~6 道)
+                  </label>
+                  <textarea id="cfgSetMainsList" class="form-control form-control-sm fw-bold" rows="3" placeholder="每行輸入一道主餐（例如: 五選一），範例：&#10;嫩煎特級菲力牛排 6oz&#10;法式香煎櫻桃鴨胸佐黑櫻桃醬&#10;野生深海海鱸魚排佐白酒檸檬醬&#10;義大利黑松露牛肝菌野菇燉飯 (蛋奶素)&#10;頂級法式嫩烤小羊肩排"></textarea>
+                  <small class="text-muted">由 AI 視覺解析自動帶入，系統將於報名表生成專屬單選防呆卡片。</small>
+                </div>
+
+                <!-- 2. 手工甜點自選 (Sandy 核心要求新增) -->
+                <div class="mb-3">
+                  <label class="form-label small fw-bold text-danger">
+                    <i class="fa-solid fa-cake-candles text-danger me-1"></i>② 主廚手工甜點自選清單 (選填，若菜單無甜點自選請留空)
+                  </label>
+                  <textarea id="cfgSetDessertsList" class="form-control form-control-sm fw-bold" rows="3" placeholder="若菜單提供甜點自選（例如: 五選一），每行輸入一道甜點（若無自選請留空）：&#10;法式香草焦糖烤布蕾&#10;比利時70%極濃熔岩熱巧克力蛋糕&#10;義大利頂級主廚經典提拉米蘇&#10;主廚手作經典檸檬生乳酪塔&#10;義式頂級手工冰淇淋雙球 (香草/野莓)"></textarea>
+                  <small class="text-muted">若填寫此欄，報名表將自動加開【步驟 2：請選擇手工甜點】供醫師挑選；若留空則不顯示甜點自選。</small>
+                </div>
+
+                <!-- 3. 前菜/湯品自選 -->
+                <div class="mb-3">
+                  <label class="form-label small fw-bold text-success">
+                    <i class="fa-solid fa-plate-wheat text-success me-1"></i>③ 特製前菜 / 湯品自選清單 (選填，若菜單無前菜自選請留空)
+                  </label>
+                  <textarea id="cfgSetAppetizersList" class="form-control form-control-sm fw-bold" rows="2" placeholder="若菜單提供前菜二選一或三選一，每行輸入一道（若無自選請留空）：&#10;義大利帕瑪生火腿鮮蔬沙拉&#10;香煎頂級日本鮮干貝佐魚子醬&#10;法式牛肝菌野菇松露濃湯"></textarea>
+                </div>
+
+                <!-- 4. 佐餐飲品 (嚴格尊重菜單，無飲品則留空) -->
+                <div class="mb-2">
+                  <label class="form-label small fw-bold text-secondary">
+                    <i class="fa-solid fa-wine-glass text-warning me-1"></i>④ 佐餐飲品選項 (以斜線 / 分隔；★若菜單未提供飲品選項請留空，絕不憑空捏造)
+                  </label>
+                  <input type="text" id="cfgSetDrinks" class="form-control form-control-sm fw-bold" placeholder="例如: 獨家單杯紅白酒 / 無酒精氣泡飲 / 獅王伯爵茶 / 美式咖啡 (若菜單無飲品請留空)">
+                </div>
 
                 <!-- 隱藏兼容輸入欄位，維持系統向後相容 -->
                 <input type="hidden" id="cfgSetMain1">
                 <input type="hidden" id="cfgSetMain2">
                 <input type="hidden" id="cfgSetMain3">
-
-                <label class="form-label small fw-bold text-secondary mt-2">
-                  <i class="fa-solid fa-wine-glass text-warning me-1"></i>佐餐飲品選項 (以斜線 / 分隔，支援任意數量)
-                </label>
-                <input type="text" id="cfgSetDrinks" class="form-control form-control-sm fw-bold" placeholder="獨家單杯紅白酒 / 無酒精氣泡飲 / 獅王伯爵茶 / 美式咖啡 / 鮮榨柳橙汁">
               </div>
             </div>
 
@@ -1183,10 +1206,13 @@ async function startMeetingAiAnalysis() {
        此時：
        - mealMode 設為 "TABLE"
        - menuItems 依序填入這張中式菜單上的所有真實菜色名稱陣列
-       - setMains 必須設為空陣列 []
-       - setDrinks 必須設為空陣列 []
-     * 只有當【檔案 2：餐廳菜單】明確寫著「個人套餐主餐 N 選 1 供賓客自選」（如：牛排、魚排、羊排、鴨胸、燉飯等二選一、三選一、四選一或五選一）時：
-       mealMode 才判定為 "SET"，並將菜單上的【所有可選主餐（無論有 3 道、4 道或 5 道，請完整全部列出，嚴禁遺漏或只擷取前三道）】完整填入 setMains 陣列，佐餐飲品完整填入 setDrinks 陣列。
+       - setMains / setDesserts / setAppetizers / setDrinks 皆設為空陣列 []
+     * 當【檔案 2：餐廳菜單】為西式個人套餐（即包含主菜自選、甜點自選等自選菜式）：
+       mealMode 判定為 "SET"，並請按照以下四大類別細分填入：
+       ① setMains（主餐自選）：菜單上所有的可選主餐選項（如牛排、魚排、羊排、鴨胸、燉飯等，無論有3道、4道、5道或更多，全部完整列出，絕不可遺漏或截斷！）。
+       ② setDesserts（甜點自選）：菜單上的手工甜點/甜品選項（如提拉米蘇、烤布蕾、熔岩蛋糕、檸檬塔、冰淇淋等，無論有幾道，全部完整列出；若菜單無甜點自選請回傳空陣列 []）。
+       ③ setAppetizers（前菜自選）：菜單上的開胃前菜/沙拉/湯品選項（若菜單有提供前菜N選1，請全部列出；若無前菜自選請回傳空陣列 []）。
+       ④ setDrinks（佐餐飲品）：菜單上的飲品選項（★特別注意：只有當菜單上真實印有可選飲品時才填入；若菜單上完全沒有寫飲品選項，必須回傳空陣列 []，嚴禁憑空瞎編或填入任何預設飲品！）。
      * 若未提供獨立菜單照片：
        mealMode 設為 "TABLE"，menuItems 與 setMains 皆為空陣列 []。
 
@@ -1201,9 +1227,11 @@ async function startMeetingAiAnalysis() {
   "agendaLines": [
     { "time": "時段", "topic": "講題全名", "speaker": "講者/座長姓名與醫院" }
   ],
-  "menuItems": ["真實菜色名稱"],
+  "menuItems": ["中式合菜菜色清單"],
   "setMains": ["菜單上的所有真實主餐選項，若有4道或5道請全部完整列出，不可截斷"],
-  "setDrinks": ["菜單上的所有真實飲品選項，若有4種或5種請全部完整列出"]
+  "setDesserts": ["菜單上的所有真實甜點選項，若有5道請全部完整列出；若無甜點選項請回傳空陣列 []"],
+  "setAppetizers": ["菜單上的所有真實前菜選項；若無前菜自選請回傳空陣列 []"],
+  "setDrinks": ["菜單上真實印有的飲品選項；★若菜單沒有寫飲品請務必回傳空陣列 []"]
 }`;
 
     const parts = [];
@@ -1255,14 +1283,12 @@ async function startMeetingAiAnalysis() {
 
     if (detectedMealMode === 'SET') {
       finalSetOptions = {
-        mains: (aiResult.setMains && Array.isArray(aiResult.setMains) && aiResult.setMains.length > 0) 
-          ? aiResult.setMains 
-          : [],
-        drinks: (aiResult.setDrinks && Array.isArray(aiResult.setDrinks) && aiResult.setDrinks.length > 0)
-          ? aiResult.setDrinks
-          : ['獨家單杯紅白酒', '無酒精氣泡飲', '美式咖啡']
+        mains: (aiResult.setMains && Array.isArray(aiResult.setMains)) ? aiResult.setMains.filter(Boolean) : [],
+        desserts: (aiResult.setDesserts && Array.isArray(aiResult.setDesserts)) ? aiResult.setDesserts.filter(Boolean) : [],
+        appetizers: (aiResult.setAppetizers && Array.isArray(aiResult.setAppetizers)) ? aiResult.setAppetizers.filter(Boolean) : [],
+        drinks: (aiResult.setDrinks && Array.isArray(aiResult.setDrinks)) ? aiResult.setDrinks.filter(Boolean) : []
       };
-      finalMenuItems = aiResult.menuItems || [];
+      finalMenuItems = aiResult.menuItems || ['精緻西式個人套餐'];
     } else if (detectedMealMode === 'TABLE') {
       finalMenuItems = (aiResult.menuItems && Array.isArray(aiResult.menuItems)) ? aiResult.menuItems : [];
       finalSetOptions = null;
@@ -1295,21 +1321,31 @@ async function startMeetingAiAnalysis() {
       document.getElementById('cfgMealMode').value = updatedEvent.mealMode;
       handleMealModeChange(updatedEvent.mealMode);
     }
-    if (updatedEvent.mealMode === 'SET' && updatedEvent.setOptions?.mains) {
+    if (updatedEvent.mealMode === 'SET' && updatedEvent.setOptions) {
       if (document.getElementById('cfgSetMainsList')) {
-        document.getElementById('cfgSetMainsList').value = updatedEvent.setOptions.mains.join('\n');
+        document.getElementById('cfgSetMainsList').value = (updatedEvent.setOptions.mains || []).join('\n');
       }
-      if (document.getElementById('cfgSetMain1')) document.getElementById('cfgSetMain1').value = updatedEvent.setOptions.mains[0] || '';
-      if (document.getElementById('cfgSetMain2')) document.getElementById('cfgSetMain2').value = updatedEvent.setOptions.mains[1] || '';
-      if (document.getElementById('cfgSetMain3')) document.getElementById('cfgSetMain3').value = updatedEvent.setOptions.mains[2] || '';
-      if (document.getElementById('cfgSetDrinks')) document.getElementById('cfgSetDrinks').value = (updatedEvent.setOptions.drinks || []).join(' / ');
+      if (document.getElementById('cfgSetDessertsList')) {
+        document.getElementById('cfgSetDessertsList').value = (updatedEvent.setOptions.desserts || []).join('\n');
+      }
+      if (document.getElementById('cfgSetAppetizersList')) {
+        document.getElementById('cfgSetAppetizersList').value = (updatedEvent.setOptions.appetizers || []).join('\n');
+      }
+      if (document.getElementById('cfgSetDrinks')) {
+        document.getElementById('cfgSetDrinks').value = (updatedEvent.setOptions.drinks || []).join(' / ');
+      }
+      if (document.getElementById('cfgSetMain1')) document.getElementById('cfgSetMain1').value = updatedEvent.setOptions.mains?.[0] || '';
+      if (document.getElementById('cfgSetMain2')) document.getElementById('cfgSetMain2').value = updatedEvent.setOptions.mains?.[1] || '';
+      if (document.getElementById('cfgSetMain3')) document.getElementById('cfgSetMain3').value = updatedEvent.setOptions.mains?.[2] || '';
     } else if (updatedEvent.mealMode === 'TABLE') {
       if (document.getElementById('cfgTableMenuItems')) document.getElementById('cfgTableMenuItems').value = (updatedEvent.menuItems || []).join('\n');
       if (document.getElementById('cfgSetMainsList')) document.getElementById('cfgSetMainsList').value = '';
+      if (document.getElementById('cfgSetDessertsList')) document.getElementById('cfgSetDessertsList').value = '';
+      if (document.getElementById('cfgSetAppetizersList')) document.getElementById('cfgSetAppetizersList').value = '';
+      if (document.getElementById('cfgSetDrinks')) document.getElementById('cfgSetDrinks').value = '';
       if (document.getElementById('cfgSetMain1')) document.getElementById('cfgSetMain1').value = '';
       if (document.getElementById('cfgSetMain2')) document.getElementById('cfgSetMain2').value = '';
       if (document.getElementById('cfgSetMain3')) document.getElementById('cfgSetMain3').value = '';
-      if (document.getElementById('cfgSetDrinks')) document.getElementById('cfgSetDrinks').value = '';
     }
     if (updatedEvent.agendaLines && updatedEvent.agendaLines.length > 0 && document.getElementById('cfgAgendaText')) {
       document.getElementById('cfgAgendaText').value = updatedEvent.agendaLines.map(l => `${l.time} | ${l.topic} | ${l.speaker}`).join('\n');
@@ -1790,26 +1826,68 @@ function renderCurrentEvent() {
       mains: (ev.setOptions && Array.isArray(ev.setOptions.mains) && ev.setOptions.mains.length > 0)
         ? ev.setOptions.mains
         : ['特選主廚主餐一', '特選主廚主餐二', '特選主廚主餐三'],
-      drinks: (ev.setOptions && Array.isArray(ev.setOptions.drinks) && ev.setOptions.drinks.length > 0)
-        ? ev.setOptions.drinks
-        : ['獨家單杯紅白酒', '無酒精氣泡飲', '美式咖啡']
+      desserts: (ev.setOptions && Array.isArray(ev.setOptions.desserts)) ? ev.setOptions.desserts : [],
+      appetizers: (ev.setOptions && Array.isArray(ev.setOptions.appetizers)) ? ev.setOptions.appetizers : [],
+      drinks: (ev.setOptions && Array.isArray(ev.setOptions.drinks)) ? ev.setOptions.drinks : []
     };
 
-    menuItemsContent.innerHTML = `
-      <div class="fw-bold text-dark mb-1">精選主餐：${setOpts.mains.join(' / ')}</div>
-      <div class="fw-bold text-dark mb-1">佐餐飲品：${setOpts.drinks.join(' / ')}</div>
-      <div class="text-muted small mt-1 border-top pt-1">附主廚特製前菜、經典沙拉、精燉濃湯與手工甜品</div>
-    `;
+    let menuPreviewHtml = `<div class="fw-bold text-dark mb-1"><i class="fa-solid fa-utensils text-primary me-1"></i>精選主餐 (${setOpts.mains.length}道)：${setOpts.mains.join(' / ')}</div>`;
+    if (setOpts.desserts.length > 0) {
+      menuPreviewHtml += `<div class="fw-bold text-dark mb-1"><i class="fa-solid fa-cake-candles text-danger me-1"></i>主廚甜點 (${setOpts.desserts.length}道)：${setOpts.desserts.join(' / ')}</div>`;
+    }
+    if (setOpts.appetizers.length > 0) {
+      menuPreviewHtml += `<div class="fw-bold text-dark mb-1"><i class="fa-solid fa-plate-wheat text-success me-1"></i>特製前菜 (${setOpts.appetizers.length}道)：${setOpts.appetizers.join(' / ')}</div>`;
+    }
+    if (setOpts.drinks.length > 0) {
+      menuPreviewHtml += `<div class="fw-bold text-dark mb-1"><i class="fa-solid fa-wine-glass text-warning me-1"></i>佐餐飲品 (${setOpts.drinks.length}種)：${setOpts.drinks.join(' / ')}</div>`;
+    }
+    menuPreviewHtml += `<div class="text-muted small mt-1 border-top pt-1">精緻西式個人套餐，現場專屬客製供餐</div>`;
+    menuItemsContent.innerHTML = menuPreviewHtml;
 
-    mealSec.innerHTML = `
-      <div class="mb-3">
+    let stepCounter = 1;
+    let mealCardsHtml = '';
+
+    // 前菜自選 (若有)
+    if (setOpts.appetizers.length > 0) {
+      mealCardsHtml += `
+        <div class="mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <label class="form-label fw-bold text-dark mb-0 fs-6">
+              <span class="badge bg-dark me-1">步驟 ${stepCounter++}</span> 請選擇前菜 / 湯品 (單選防呆)：
+            </label>
+            <span class="badge bg-success" id="appetizerStatusPill">已選：${setOpts.appetizers[0]}</span>
+          </div>
+          <div class="row g-2 mb-2">
+            ${setOpts.appetizers.map((a, idx) => {
+              const colClass = setOpts.appetizers.length === 4 ? 'col-md-3 col-6' : (setOpts.appetizers.length >= 5 ? 'col-md-4 col-6' : 'col-md-4 col-12');
+              const safeA = a.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+              return `
+              <div class="${colClass}">
+                <div class="meal-option-card ${idx === 0 ? 'selected' : ''}" id="card_appetizer_${idx}" onclick="selectSetAppetizer('${safeA}', ${idx})">
+                  <input class="form-check-input" type="radio" name="appetizerRadio" id="radio_appetizer_${idx}" value="${safeA}" ${idx === 0 ? 'checked' : ''}>
+                  <div class="flex-grow-1">
+                    <h6 class="fw-bold mb-0 text-dark">${a}</h6>
+                    <small class="text-muted status-tag">${idx === 0 ? '已選取' : '點擊選取'}</small>
+                  </div>
+                </div>
+              </div>
+            `;}).join('')}
+          </div>
+          <input type="hidden" id="selectedAppetizer" value="${setOpts.appetizers[0]}">
+        </div>
+      `;
+    }
+
+    // 主餐自選 (必有)
+    mealCardsHtml += `
+      <div class="mb-4">
         <div class="d-flex justify-content-between align-items-center mb-2">
           <label class="form-label fw-bold text-dark mb-0 fs-6">
-            <span class="badge bg-dark me-1">步驟 1</span> 請選擇一道專屬主餐 (單選防呆)：
+            <span class="badge bg-dark me-1">步驟 ${stepCounter++}</span> 請選擇專屬主餐 (單選防呆)：
           </label>
           <span class="badge bg-primary" id="mainDishStatusPill">已選：${setOpts.mains[0]}</span>
         </div>
-        <div class="row g-2 mb-3">
+        <div class="row g-2 mb-2">
           ${setOpts.mains.map((m, idx) => {
             const colClass = setOpts.mains.length === 4 ? 'col-md-3 col-6' : (setOpts.mains.length >= 5 ? 'col-md-4 col-6' : 'col-md-4 col-12');
             const safeM = m.replace(/'/g, "\\'").replace(/"/g, '&quot;');
@@ -1826,24 +1904,74 @@ function renderCurrentEvent() {
           `;}).join('')}
         </div>
         <input type="hidden" id="selectedMainDish" value="${setOpts.mains[0]}">
-
-        <label class="form-label fw-bold text-dark mb-2 fs-6">
-          <span class="badge bg-dark me-1">步驟 2</span> 請選擇佐餐飲品：
-        </label>
-        <div class="row g-2">
-          ${setOpts.drinks.map((d, idx) => `
-            <div class="col-md-3 col-6">
-              <div class="meal-option-card ${idx === 0 ? 'selected' : ''}" id="card_drink_${idx}" onclick="selectSetDrink('${d}', ${idx})">
-                <input class="form-check-input" type="radio" name="drinkRadio" id="radio_drink_${idx}" value="${d}" ${idx === 0 ? 'checked' : ''}>
-                <span class="small fw-bold">${d}</span>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-        <input type="hidden" id="selectedDrink" value="${setOpts.drinks[0]}">
       </div>
     `;
-    formSubTitle.textContent = '(含主餐與飲品點選)';
+
+    // 甜點自選 (若有，Sandy 核心要求)
+    if (setOpts.desserts.length > 0) {
+      mealCardsHtml += `
+        <div class="mb-4">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <label class="form-label fw-bold text-dark mb-0 fs-6">
+              <span class="badge bg-dark me-1">步驟 ${stepCounter++}</span> 請選擇手工甜點 (單選防呆)：
+            </label>
+            <span class="badge bg-danger" id="dessertStatusPill">已選：${setOpts.desserts[0]}</span>
+          </div>
+          <div class="row g-2 mb-2">
+            ${setOpts.desserts.map((d, idx) => {
+              const colClass = setOpts.desserts.length === 4 ? 'col-md-3 col-6' : (setOpts.desserts.length >= 5 ? 'col-md-4 col-6' : 'col-md-4 col-12');
+              const safeD = d.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+              return `
+              <div class="${colClass}">
+                <div class="meal-option-card ${idx === 0 ? 'selected' : ''}" id="card_dessert_${idx}" onclick="selectSetDessert('${safeD}', ${idx})">
+                  <input class="form-check-input" type="radio" name="dessertRadio" id="radio_dessert_${idx}" value="${safeD}" ${idx === 0 ? 'checked' : ''}>
+                  <div class="flex-grow-1">
+                    <h6 class="fw-bold mb-0 text-dark">${d}</h6>
+                    <small class="text-muted status-tag">${idx === 0 ? '已選取' : '點擊選取'}</small>
+                  </div>
+                </div>
+              </div>
+            `;}).join('')}
+          </div>
+          <input type="hidden" id="selectedDessert" value="${setOpts.desserts[0]}">
+        </div>
+      `;
+    }
+
+    // 飲品自選 (僅在菜單真實有飲品時才顯示，若無飲品則完全不顯示)
+    if (setOpts.drinks.length > 0) {
+      mealCardsHtml += `
+        <div class="mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <label class="form-label fw-bold text-dark mb-0 fs-6">
+              <span class="badge bg-dark me-1">步驟 ${stepCounter++}</span> 請選擇佐餐飲品：
+            </label>
+            <span class="badge bg-warning text-dark" id="drinkStatusPill">已選：${setOpts.drinks[0]}</span>
+          </div>
+          <div class="row g-2">
+            ${setOpts.drinks.map((d, idx) => {
+              const safeDr = d.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+              return `
+              <div class="col-md-3 col-6">
+                <div class="meal-option-card ${idx === 0 ? 'selected' : ''}" id="card_drink_${idx}" onclick="selectSetDrink('${safeDr}', ${idx})">
+                  <input class="form-check-input" type="radio" name="drinkRadio" id="radio_drink_${idx}" value="${safeDr}" ${idx === 0 ? 'checked' : ''}>
+                  <span class="small fw-bold">${d}</span>
+                </div>
+              </div>
+            `;}).join('')}
+          </div>
+          <input type="hidden" id="selectedDrink" value="${setOpts.drinks[0]}">
+        </div>
+      `;
+    }
+
+    mealSec.innerHTML = mealCardsHtml;
+
+    const partsLabel = ['主餐'];
+    if (setOpts.desserts.length > 0) partsLabel.push('甜點');
+    if (setOpts.appetizers.length > 0) partsLabel.push('前菜');
+    if (setOpts.drinks.length > 0) partsLabel.push('飲品');
+    formSubTitle.textContent = `(含${partsLabel.join('、')}自選)`;
 
   } else {
     menuCardCol.style.display = 'none';
@@ -1871,6 +1999,40 @@ function selectSetMain(name, idx) {
   }
   const statusPill = document.getElementById('mainDishStatusPill');
   if (statusPill) statusPill.textContent = `已選：${name}`;
+}
+
+function selectSetDessert(name, idx) {
+  const input = document.getElementById('selectedDessert');
+  if (input) input.value = name;
+  document.querySelectorAll('[id^="card_dessert_"]').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('[id^="card_dessert_"] .status-tag').forEach(s => s.textContent = '點擊選取');
+  const target = document.getElementById(`card_dessert_${idx}`);
+  if (target) {
+    target.classList.add('selected');
+    const tag = target.querySelector('.status-tag');
+    if (tag) tag.textContent = '已選取';
+    const radio = document.getElementById(`radio_dessert_${idx}`);
+    if (radio) radio.checked = true;
+  }
+  const pill = document.getElementById('dessertStatusPill');
+  if (pill) pill.textContent = `已選：${name}`;
+}
+
+function selectSetAppetizer(name, idx) {
+  const input = document.getElementById('selectedAppetizer');
+  if (input) input.value = name;
+  document.querySelectorAll('[id^="card_appetizer_"]').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('[id^="card_appetizer_"] .status-tag').forEach(s => s.textContent = '點擊選取');
+  const target = document.getElementById(`card_appetizer_${idx}`);
+  if (target) {
+    target.classList.add('selected');
+    const tag = target.querySelector('.status-tag');
+    if (tag) tag.textContent = '已選取';
+    const radio = document.getElementById(`radio_appetizer_${idx}`);
+    if (radio) radio.checked = true;
+  }
+  const pill = document.getElementById('appetizerStatusPill');
+  if (pill) pill.textContent = `已選：${name}`;
 }
 
 function selectSetDrink(name, idx) {
@@ -1980,12 +2142,20 @@ function renderAttendeesAndTally() {
       if (thMealEl) thMealEl.textContent = '用餐型態 / 備註';
     } else if (ev.mealMode === 'SET') {
       const counts = {};
+      const dessertCounts = {};
       list.forEach(a => {
-        const dish = (a && a.mealChoice ? String(a.mealChoice) : '').split(' (')[0] || '未指定';
+        const meal = (a && a.mealChoice ? String(a.mealChoice) : '');
+        const dish = meal.split(' (')[0] || '未指定';
         counts[dish] = (counts[dish] || 0) + 1;
+
+        const dMatch = meal.match(/甜點:\s*([^/)]+)/);
+        if (dMatch && dMatch[1]) {
+          const d = dMatch[1].trim();
+          dessertCounts[d] = (dessertCounts[d] || 0) + 1;
+        }
       });
 
-      tallyCardsRow.innerHTML = `
+      let tallyHtml = `
         <div class="col-md-3 col-6">
           <div class="p-3 bg-light border rounded-3">
             <span class="text-secondary small fw-bold d-block">出席總人數</span>
@@ -1995,13 +2165,26 @@ function renderAttendeesAndTally() {
         ${Object.entries(counts).map(([name, count]) => `
           <div class="col-md-3 col-6">
             <div class="p-3 bg-light border rounded-3">
-              <span class="text-secondary small fw-bold d-block text-truncate" title="${name}">${name}</span>
+              <span class="text-secondary small fw-bold d-block text-truncate" title="${name}">主餐: ${name}</span>
               <span class="fs-2 fw-black text-primary">${count}</span> 份
             </div>
           </div>
         `).join('')}
       `;
-      if (thMealEl) thMealEl.textContent = '主餐與飲品選擇';
+
+      if (Object.keys(dessertCounts).length > 0) {
+        tallyHtml += Object.entries(dessertCounts).map(([name, count]) => `
+          <div class="col-md-3 col-6">
+            <div class="p-3 bg-light border rounded-3 border-danger-subtle">
+              <span class="text-danger small fw-bold d-block text-truncate" title="${name}">甜點: ${name}</span>
+              <span class="fs-2 fw-black text-danger">${count}</span> 份
+            </div>
+          </div>
+        `).join('');
+      }
+
+      tallyCardsRow.innerHTML = tallyHtml;
+      if (thMealEl) thMealEl.textContent = '餐點自選明細';
     } else {
       tallyCardsRow.innerHTML = `
         <div class="col-12">
@@ -2204,12 +2387,26 @@ function handleRegistrationSubmit(e) {
     } else if (ev.mealMode === 'SET') {
       const mainEl = document.getElementById('selectedMainDish');
       const mainRadio = document.querySelector('input[name="mainDishRadio"]:checked');
+      const main = (mainEl && mainEl.value) ? mainEl.value : (mainRadio ? mainRadio.value : (ev.setOptions?.mains?.[0] || '特選主餐'));
+
+      const dessertEl = document.getElementById('selectedDessert');
+      const dessertRadio = document.querySelector('input[name="dessertRadio"]:checked');
+      const dessert = (dessertEl && dessertEl.value) ? dessertEl.value : (dessertRadio ? dessertRadio.value : '');
+
+      const appetizerEl = document.getElementById('selectedAppetizer');
+      const appetizerRadio = document.querySelector('input[name="appetizerRadio"]:checked');
+      const appetizer = (appetizerEl && appetizerEl.value) ? appetizerEl.value : (appetizerRadio ? appetizerRadio.value : '');
+
       const drinkEl = document.getElementById('selectedDrink');
       const drinkRadio = document.querySelector('input[name="drinkRadio"]:checked');
+      drink = (drinkEl && drinkEl.value) ? drinkEl.value : (drinkRadio ? drinkRadio.value : '');
 
-      const main = (mainEl && mainEl.value) ? mainEl.value : (mainRadio ? mainRadio.value : (ev.setOptions?.mains?.[0] || '特選主餐'));
-      drink = (drinkEl && drinkEl.value) ? drinkEl.value : (drinkRadio ? drinkRadio.value : (ev.setOptions?.drinks?.[0] || ''));
-      mealChoice = drink ? `${main} (${drink})` : main;
+      let parts = [main];
+      if (dessert) parts.push(`甜點: ${dessert}`);
+      if (appetizer) parts.push(`前菜: ${appetizer}`);
+      if (drink) parts.push(`飲品: ${drink}`);
+
+      mealChoice = parts.length > 1 ? `${parts[0]} (${parts.slice(1).join(' / ')})` : parts[0];
     }
 
     lastSubmitted = {
@@ -2351,12 +2548,33 @@ function copyRestaurantSummary(btn) {
 
 ${diets.length > 0 ? `⚠️ 特殊飲食/素食/忌口名單：\n${diets.join('\n')}\n\n` : ''}麻煩餐廳協助安排席位，謝謝！`;
   } else {
+    const mainCounts = {};
+    const dessertCounts = {};
+    list.forEach(a => {
+      const meal = (a && a.mealChoice) ? String(a.mealChoice) : '';
+      const main = meal.split(' (')[0] || '特選主餐';
+      mainCounts[main] = (mainCounts[main] || 0) + 1;
+      const dMatch = meal.match(/甜點:\s*([^/)]+)/);
+      if (dMatch && dMatch[1]) {
+        const d = dMatch[1].trim();
+        dessertCounts[d] = (dessertCounts[d] || 0) + 1;
+      }
+    });
+
+    let details = '🍽️ 主餐點單統計：\n' + Object.entries(mainCounts).map(([m, c]) => `  - ${m}: ${c} 份`).join('\n');
+    if (Object.keys(dessertCounts).length > 0) {
+      details += '\n\n🍰 甜點點單統計：\n' + Object.entries(dessertCounts).map(([d, c]) => `  - ${d}: ${c} 份`).join('\n');
+    }
+
     msg = 
 `【${ev.venue} · 點餐總數確認】
 活動名稱：${ev.title} (台灣諾華)
 活動時間：${ev.date} ${ev.time}
 與會總人數：${list.length} 位
-${diets.length > 0 ? `⚠️ 特殊飲食備註：\n${diets.join('\n')}\n` : ''}麻煩餐廳協助備餐，謝謝！`;
+
+${details}
+
+${diets.length > 0 ? `⚠️ 特殊飲食備註：\n${diets.join('\n')}\n\n` : ''}麻煩餐廳協助備餐，謝謝！`;
   }
 
   navigator.clipboard.writeText(msg).then(() => {
@@ -2552,19 +2770,25 @@ function openEventEditorModal() {
   // 西餐主餐預設 (僅在 SET 模式帶入，中式 TABLE 模式清空以防殘留)
   if (ev.mealMode === 'SET' && ev.setOptions) {
     const mains = Array.isArray(ev.setOptions.mains) ? ev.setOptions.mains : [];
-    if (document.getElementById('cfgSetMainsList')) {
-      document.getElementById('cfgSetMainsList').value = mains.join('\n');
-    }
+    const desserts = Array.isArray(ev.setOptions.desserts) ? ev.setOptions.desserts : [];
+    const appetizers = Array.isArray(ev.setOptions.appetizers) ? ev.setOptions.appetizers : [];
+    const drinks = Array.isArray(ev.setOptions.drinks) ? ev.setOptions.drinks : [];
+
+    if (document.getElementById('cfgSetMainsList')) document.getElementById('cfgSetMainsList').value = mains.join('\n');
+    if (document.getElementById('cfgSetDessertsList')) document.getElementById('cfgSetDessertsList').value = desserts.join('\n');
+    if (document.getElementById('cfgSetAppetizersList')) document.getElementById('cfgSetAppetizersList').value = appetizers.join('\n');
+    if (document.getElementById('cfgSetDrinks')) document.getElementById('cfgSetDrinks').value = drinks.join(' / ');
     if (document.getElementById('cfgSetMain1')) document.getElementById('cfgSetMain1').value = mains[0] || '';
     if (document.getElementById('cfgSetMain2')) document.getElementById('cfgSetMain2').value = mains[1] || '';
     if (document.getElementById('cfgSetMain3')) document.getElementById('cfgSetMain3').value = mains[2] || '';
-    document.getElementById('cfgSetDrinks').value = (ev.setOptions.drinks || []).join(' / ');
   } else {
     if (document.getElementById('cfgSetMainsList')) document.getElementById('cfgSetMainsList').value = '';
+    if (document.getElementById('cfgSetDessertsList')) document.getElementById('cfgSetDessertsList').value = '';
+    if (document.getElementById('cfgSetAppetizersList')) document.getElementById('cfgSetAppetizersList').value = '';
+    if (document.getElementById('cfgSetDrinks')) document.getElementById('cfgSetDrinks').value = '';
     if (document.getElementById('cfgSetMain1')) document.getElementById('cfgSetMain1').value = '';
     if (document.getElementById('cfgSetMain2')) document.getElementById('cfgSetMain2').value = '';
     if (document.getElementById('cfgSetMain3')) document.getElementById('cfgSetMain3').value = '';
-    document.getElementById('cfgSetDrinks').value = '獨家單杯紅白酒 / 無酒精氣泡飲 / 獅王伯爵茶 / 美式咖啡';
   }
 
   handleMealModeChange(ev.mealMode || 'TABLE');
@@ -2634,19 +2858,34 @@ function saveEventConfig(e) {
     setOptions = null;
   } else if (mealMode === 'SET') {
     const mainsListEl = document.getElementById('cfgSetMainsList');
-    let mainsList = [];
-    if (mainsListEl && mainsListEl.value.trim()) {
-      mainsList = mainsListEl.value.split('\n').map(m => m.trim()).filter(Boolean);
-    } else {
+    let mainsList = (mainsListEl && mainsListEl.value.trim())
+      ? mainsListEl.value.split('\n').map(m => m.trim()).filter(Boolean)
+      : [];
+    if (mainsList.length === 0) {
       const m1 = document.getElementById('cfgSetMain1') ? document.getElementById('cfgSetMain1').value.trim() : '';
       const m2 = document.getElementById('cfgSetMain2') ? document.getElementById('cfgSetMain2').value.trim() : '';
       const m3 = document.getElementById('cfgSetMain3') ? document.getElementById('cfgSetMain3').value.trim() : '';
       mainsList = [m1, m2, m3].filter(Boolean);
     }
+
+    const dessertsEl = document.getElementById('cfgSetDessertsList');
+    const dessertsList = (dessertsEl && dessertsEl.value.trim())
+      ? dessertsEl.value.split('\n').map(d => d.trim()).filter(Boolean)
+      : [];
+
+    const appetizersEl = document.getElementById('cfgSetAppetizersList');
+    const appetizersList = (appetizersEl && appetizersEl.value.trim())
+      ? appetizersEl.value.split('\n').map(a => a.trim()).filter(Boolean)
+      : [];
+
     const drinksRaw = document.getElementById('cfgSetDrinks') ? document.getElementById('cfgSetDrinks').value.trim() : '';
+    const drinksList = drinksRaw ? drinksRaw.split('/').map(d => d.trim()).filter(Boolean) : [];
+
     setOptions = {
-      mains: mainsList.length > 0 ? mainsList : ['特選主餐一', '特選主餐二', '特選主餐三'],
-      drinks: drinksRaw ? drinksRaw.split('/').map(d => d.trim()).filter(Boolean) : ['獨家單杯紅白酒', '無酒精氣泡飲', '美式咖啡']
+      mains: mainsList.length > 0 ? mainsList : ['特選主廚主餐一', '特選主廚主餐二', '特選主廚主餐三'],
+      desserts: dessertsList,
+      appetizers: appetizersList,
+      drinks: drinksList
     };
     menuItems = ['附主廚特製前菜、經典沙拉、精燉濃湯與手工甜品'];
   }
