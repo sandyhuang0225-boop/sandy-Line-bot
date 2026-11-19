@@ -116,36 +116,50 @@
       font-weight: 700;
     }
 
-    /* 列印控制 (完全專注於 A4 簽到表，自動隱藏所有網頁介面) */
+    /* 列印控制 (完全專注於 A4 簽到表，自動隱藏所有網頁介面，預設免調整大小) */
     @media print {
-      body {
+      html, body {
+        width: 100% !important;
+        height: auto !important;
         background: #ffffff !important;
         padding: 0 !important;
         margin: 0 !important;
         color: #000000 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
       }
       .no-print, header, nav, .top-header-banner, .hide-on-print {
         display: none !important;
       }
       .signin-sheet-container {
+        display: block !important;
         border: none !important;
         box-shadow: none !important;
         padding: 0 !important;
         margin: 0 !important;
         width: 100% !important;
+        max-width: 100% !important;
+      }
+      .signin-sheet-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
       }
       .signin-sheet-table th, .signin-sheet-table td {
         border: 1px solid #000000 !important;
         color: #000000 !important;
+        padding: 4px 6px !important;
+      }
+      .signin-sheet-table tr {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
       }
       .signin-sheet-table th {
         background-color: #f1f5f9 !important;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
+        font-weight: bold !important;
       }
       @page {
         size: A4 portrait;
-        margin: 10mm 10mm 10mm 10mm;
+        margin: 8mm 8mm 8mm 8mm;
       }
     }
   </style>
