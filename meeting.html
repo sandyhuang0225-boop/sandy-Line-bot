@@ -171,7 +171,7 @@
       </div>
     </div>
 
-    <!-- 右側功能按鈕 (依權限動態展示) -->
+    <!-- 右側功能按鈕 (主辦人管理入口與報名頁合一) -->
     <div class="d-flex align-items-center gap-2 flex-wrap">
       <!-- 場次切換下拉選單 (主辦人或多場次時可見) -->
       <div class="input-group input-group-sm" id="eventSelectorGroup" style="max-width: 230px;">
@@ -179,20 +179,22 @@
         <select id="eventSelector" class="form-select form-select-sm fw-bold border-0" onchange="switchEvent(this.value)"></select>
       </div>
 
-      <!-- 🔒 Sandy 專屬主辦人控制按鈕 (只有主辦人能見) -->
-      <div id="adminControlsGroup" style="display: none;" class="d-flex gap-2">
-        <button type="button" class="btn btn-outline-light btn-sm fw-bold" onclick="openEventEditorModal()">
-          <i class="fa-solid fa-gear me-1 text-warning"></i>活動設定
-        </button>
-        <button type="button" class="btn btn-info btn-sm text-dark fw-bold" onclick="copyEventShareLink(this)">
-          <i class="fa-solid fa-share-nodes me-1"></i>複製醫師報名網址
+      <!-- 🌟 主辦人管理入口按鈕 (需要密碼 sandy00001) 🌟 -->
+      <div id="adminPortalContainer">
+        <button type="button" id="btnAdminPortal" class="btn btn-outline-light btn-sm fw-bold shadow-sm" onclick="handleAdminPortalClick()">
+          <i class="fa-solid fa-user-gear me-1 text-warning"></i>主辦人管理入口
         </button>
       </div>
 
-      <!-- 訪客/醫師看到的鎖頭按鈕 (點擊可輸入密碼解鎖主辦人功能) -->
-      <button type="button" id="btnAdminUnlock" class="btn btn-outline-light btn-sm" onclick="promptAdminLogin()" title="主辦人專區">
-        <i class="fa-solid fa-lock"></i>
-      </button>
+      <!-- 🌟 Sandy 登入後展開的管理控制列 🌟 -->
+      <div id="adminControlsGroup" style="display: none;" class="d-flex gap-2 align-items-center">
+        <button type="button" class="btn btn-info btn-sm text-dark fw-bold" onclick="copyEventShareLink(this)">
+          <i class="fa-solid fa-share-nodes me-1"></i>複製醫師報名網址
+        </button>
+        <button type="button" class="btn btn-outline-danger btn-sm" onclick="logoutAdmin()" title="登出主辦人">
+          <i class="fa-solid fa-right-from-bracket me-1"></i>登出
+        </button>
+      </div>
 
       <!-- 🌟 一鍵列印簽到表 🌟 -->
       <button type="button" class="btn btn-warning text-dark fw-black shadow-sm" onclick="printSignInSheet()">
@@ -527,15 +529,73 @@
 
 </div>
 
+<!-- 🌟 主辦人管理入口密碼驗證彈窗 (密碼: sandy00001) 🌟 -->
+<div class="modal fade" id="adminLoginModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-dark text-white py-3">
+        <h6 class="modal-title fw-bold mb-0">
+          <i class="fa-solid fa-user-shield me-2 text-warning"></i>主辦人管理入口 (Sandy 專區)
+        </h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <p class="text-secondary small mb-3">此功能專供主辦人 Sandy 建立新場次、編輯議程菜單與統計訂席。請輸入專屬管理密碼：</p>
+        <form id="adminLoginForm" onsubmit="submitAdminPassword(event)">
+          <div class="mb-3">
+            <input type="password" id="inputAdminPassword" class="form-control form-control-lg text-center fw-bold" placeholder="請輸入管理密碼" autocomplete="current-password" required autofocus>
+            <div id="adminLoginError" class="text-danger small mt-2 fw-bold" style="display: none;">
+              <i class="fa-solid fa-circle-exclamation me-1"></i>密碼不正確，請重新輸入！
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">
+            <i class="fa-solid fa-key me-1"></i>驗證解鎖管理中心
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- 🌟 Sandy 專屬活動建立與編輯彈窗 🌟 -->
 <div class="modal fade" id="eventEditorModal" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content border-0 shadow">
-      <div class="modal-header bg-dark text-white">
-        <h5 class="modal-title fw-bold"><i class="fa-solid fa-calendar-plus me-2 text-warning"></i>醫學會議活動設定中心 (Sandy 主辦人)</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      <div class="modal-header bg-dark text-white d-flex justify-content-between align-items-center">
+        <h5 class="modal-title fw-bold mb-0"><i class="fa-solid fa-calendar-plus me-2 text-warning"></i>醫學會議活動設定中心 (Sandy 主辦人)</h5>
+        <div class="d-flex align-items-center gap-2">
+          <button type="button" class="btn btn-warning btn-sm text-dark fw-bold" onclick="createNewEventTemplate()">
+            <i class="fa-solid fa-plus me-1"></i>開新場次
+          </button>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
       </div>
       <div class="modal-body p-4">
+        <!-- 主辦人操作指引說明 -->
+        <div class="alert alert-primary d-flex align-items-start gap-2 py-2 px-3 mb-3 small border-primary">
+          <i class="fa-solid fa-circle-info fs-5 mt-1 text-primary"></i>
+          <div>
+            <strong>【自主更動說明】</strong>：您可以在此<strong>隨時修改活動主題、日期、時間、地點與菜單</strong>，並<strong>點選相簿上傳議程或菜單圖片</strong>。<br>
+            儲存後，醫師線上報名表與 <strong>100% 諾華 A4 簽到表</strong> 將全自動即時同步，完全不需工程人員介入！
+          </div>
+        </div>
+
+        <!-- 快速文字智慧解析工具 -->
+        <div class="mb-3">
+          <button type="button" class="btn btn-outline-primary btn-sm fw-bold w-100 py-1" data-bs-toggle="collapse" data-bs-target="#quickPasteBox">
+            <i class="fa-solid fa-wand-magic-sparkles me-1"></i>快速貼上文字智慧解析（從 LINE 或 Email 複製文字，一鍵自動拆解填入）
+          </button>
+          <div class="collapse mt-2" id="quickPasteBox">
+            <div class="card card-body bg-light border p-3">
+              <label class="form-label small fw-bold text-dark mb-1">貼上會議資訊或餐廳菜單文字：</label>
+              <textarea id="quickPasteInput" class="form-control form-control-sm mb-2" rows="3" placeholder="例如貼上：&#10;三總乳癌高峰會&#10;日期：2026/12/04 18:30-20:30&#10;地點：欣葉鐘菜（台北市樂群二路199號）&#10;菜色：砂鍋雞湯、現流海鮮、紅蟳米糕..."></textarea>
+              <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="smartParsePastedText()">
+                <i class="fa-solid fa-bolt me-1"></i>一鍵自動解析並填入下方各欄位
+              </button>
+            </div>
+          </div>
+        </div>
+
         <form id="eventConfigForm" onsubmit="saveEventConfig(event)">
           <div class="row g-3">
             <div class="col-md-6 col-12">
@@ -779,49 +839,165 @@ document.addEventListener('DOMContentLoaded', () => {
 // 檢查是否為主辦人 Sandy 權限
 function checkAdminAuth() {
   const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('admin') === 'sandy' || localStorage.getItem(STORAGE_ADMIN_AUTH_KEY) === 'true') {
+  const adminParam = urlParams.get('admin');
+  if (adminParam === 'sandy00001' || adminParam === 'sandy' || localStorage.getItem(STORAGE_ADMIN_AUTH_KEY) === 'true') {
     isAdmin = true;
     localStorage.setItem(STORAGE_ADMIN_AUTH_KEY, 'true');
   }
 
+  const adminPortalContainer = document.getElementById('adminPortalContainer');
   const adminGroup = document.getElementById('adminControlsGroup');
-  const btnUnlock = document.getElementById('btnAdminUnlock');
   const adminBtns = document.querySelectorAll('.admin-only-btn');
   const adminCols = document.querySelectorAll('.admin-col');
 
   if (isAdmin) {
-    adminGroup.style.display = 'flex';
-    btnUnlock.innerHTML = '<i class="fa-solid fa-unlock text-warning"></i> 主辦人';
-    btnUnlock.className = 'btn btn-outline-warning btn-sm fw-bold';
+    if (adminPortalContainer) {
+      adminPortalContainer.innerHTML = `
+        <button type="button" class="btn btn-warning text-dark fw-bold btn-sm shadow-sm" onclick="openEventEditorModal()">
+          <i class="fa-solid fa-gear me-1"></i>活動設定
+        </button>
+      `;
+    }
+    if (adminGroup) adminGroup.style.display = 'flex';
     adminBtns.forEach(b => b.style.display = 'inline-block');
     adminCols.forEach(c => c.style.display = '');
   } else {
-    adminGroup.style.display = 'none';
-    btnUnlock.innerHTML = '<i class="fa-solid fa-lock"></i>';
+    if (adminPortalContainer) {
+      adminPortalContainer.innerHTML = `
+        <button type="button" id="btnAdminPortal" class="btn btn-outline-light btn-sm fw-bold shadow-sm" onclick="handleAdminPortalClick()">
+          <i class="fa-solid fa-user-gear me-1 text-warning"></i>主辦人管理入口
+        </button>
+      `;
+    }
+    if (adminGroup) adminGroup.style.display = 'none';
     adminBtns.forEach(b => b.style.display = 'none');
     adminCols.forEach(c => c.style.display = 'none');
   }
 }
 
-// 主辦人密碼解鎖登入
-function promptAdminLogin() {
+// 點選主辦人管理入口按鈕
+function handleAdminPortalClick() {
   if (isAdmin) {
-    if (confirm('目前已是主辦人模式。要登出主辦人權限切換為純與會者檢視嗎？')) {
-      isAdmin = false;
-      localStorage.removeItem(STORAGE_ADMIN_AUTH_KEY);
-      checkAdminAuth();
-    }
-    return;
+    openEventEditorModal();
+  } else {
+    const pwdInput = document.getElementById('inputAdminPassword');
+    if (pwdInput) pwdInput.value = '';
+    const errEl = document.getElementById('adminLoginError');
+    if (errEl) errEl.style.display = 'none';
+    new bootstrap.Modal(document.getElementById('adminLoginModal')).show();
   }
-  const pwd = prompt('請輸入主辦人 Sandy 專屬通關密碼：');
-  if (pwd && (pwd.toLowerCase() === 'sandy' || pwd === 'novartis' || pwd === '8888')) {
+}
+
+// 主辦人密碼驗證 (密碼: sandy00001)
+function submitAdminPassword(e) {
+  e.preventDefault();
+  const pwd = (document.getElementById('inputAdminPassword').value || '').trim();
+  if (pwd === 'sandy00001' || pwd.toLowerCase() === 'sandy00001' || pwd.toLowerCase() === 'sandy') {
     isAdmin = true;
     localStorage.setItem(STORAGE_ADMIN_AUTH_KEY, 'true');
+    const modalEl = document.getElementById('adminLoginModal');
+    const modalInst = bootstrap.Modal.getInstance(modalEl);
+    if (modalInst) modalInst.hide();
     checkAdminAuth();
-    alert('歡迎 Sandy！已成功解鎖主辦人活動設定權限。');
-  } else if (pwd !== null) {
-    alert('密碼錯誤！');
+    openEventEditorModal();
+  } else {
+    document.getElementById('adminLoginError').style.display = 'block';
   }
+}
+
+// 主辦人登出
+function logoutAdmin() {
+  isAdmin = false;
+  localStorage.removeItem(STORAGE_ADMIN_AUTH_KEY);
+  checkAdminAuth();
+  alert('已成功登出主辦人管理模式！');
+}
+
+// 建立全新場次範本 (清空文字與圖片)
+function createNewEventTemplate() {
+  const newId = 'event_' + new Date().toISOString().slice(2,10).replace(/-/g, '') + '_' + Math.floor(Math.random()*1000);
+  document.getElementById('cfgEventId').value = newId;
+  document.getElementById('cfgEventBadge').value = '新醫學研討會';
+  document.getElementById('cfgEventTitle').value = '';
+  document.getElementById('cfgEventDate').value = '';
+  document.getElementById('cfgEventTime').value = '18:30 - 20:30';
+  document.getElementById('cfgEventVenue').value = '';
+  document.getElementById('cfgMealMode').value = 'TABLE';
+  
+  clearImagePreview('cfgAgendaImgPreview', 'cfgAgendaImgData');
+  clearImagePreview('cfgMenuImgPreview', 'cfgMenuImgData');
+  document.getElementById('cfgAgendaText').value = '';
+  document.getElementById('cfgTableMenuItems').value = '';
+  
+  handleMealModeChange('TABLE');
+  alert('已開立全新空白場次！請填寫會議主題、日期、地點，並上傳圖片後按儲存。');
+}
+
+// 智慧文字快速貼上解析功能
+function smartParsePastedText() {
+  const text = (document.getElementById('quickPasteInput').value || '').trim();
+  if (!text) {
+    alert('請先在輸入框貼上會議或菜單文字！');
+    return;
+  }
+  
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  
+  // 1. 辨識日期
+  const dateMatch = text.match(/(\d{4}[年\/-]\d{1,2}[月\/-]\d{1,2}(?:日)?(?:\s*\(?[一二三四五六日星期]+\)?)?|\d{1,2}月\d{1,2}日(?:\s*\(?[一二三四五六日星期]+\)?)?)/);
+  if (dateMatch) {
+    document.getElementById('cfgEventDate').value = dateMatch[0].trim();
+  }
+
+  // 2. 辨識時間
+  const timeMatch = text.match(/(\d{1,2}:\d{2}\s*[-~～至]\s*\d{1,2}:\d{2})/);
+  if (timeMatch) {
+    document.getElementById('cfgEventTime').value = timeMatch[0].trim();
+  }
+
+  // 3. 辨識地點/餐廳
+  const venueLine = lines.find(l => /地點|餐廳|地址|venue|location/i.test(l));
+  if (venueLine) {
+    const v = venueLine.replace(/^.*?[：:]\s*/, '').trim();
+    if (v) document.getElementById('cfgEventVenue').value = v;
+  }
+
+  // 4. 辨識名稱/主題
+  const titleLine = lines.find(l => /活動|會議|主題|title|topic/i.test(l));
+  if (titleLine) {
+    const t = titleLine.replace(/^.*?[：:]\s*/, '').trim();
+    if (t) {
+      document.getElementById('cfgEventTitle').value = t;
+      document.getElementById('cfgEventBadge').value = t.slice(0, 15);
+    }
+  } else if (lines.length > 0 && !dateMatch && !timeMatch) {
+    document.getElementById('cfgEventTitle').value = lines[0];
+    document.getElementById('cfgEventBadge').value = lines[0].slice(0, 15);
+  }
+
+  // 5. 辨識菜單菜色
+  const menuLines = [];
+  let isMenuSection = false;
+  lines.forEach(l => {
+    if (/菜單|菜色|menu/i.test(l)) {
+      isMenuSection = true;
+      const inline = l.replace(/^.*?[：:]\s*/, '').trim();
+      if (inline) menuLines.push(inline);
+    } else if (isMenuSection) {
+      if (/備註|注意事項|聯絡|報名/i.test(l)) {
+        isMenuSection = false;
+      } else {
+        const clean = l.replace(/^[0-9一二三四五六七八九十、.\s]+/, '').trim();
+        if (clean) menuLines.push(clean);
+      }
+    }
+  });
+
+  if (menuLines.length > 0) {
+    document.getElementById('cfgTableMenuItems').value = menuLines.join('\n');
+  }
+
+  alert('✨ 智慧辨識完成！已自動填入相應欄位，請檢查並可直接手動補充細節。');
 }
 
 function loadEventsDb() {
