@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>台灣諾華 醫學會議 (RTD) 通用線上報名與制式簽到表系統</title>
+
+  <!-- Bootstrap 5 & FontAwesome -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary: #0284c7;
+      --primary-dark: #0369a1;
+      --novartis-blue: #002d62;
+      --card-border: #e2e8f0;
+    }
+    body {
+      font-family: 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      padding-bottom: 80px;
+    }
+
+    /* 頂部導覽列 */
+    .top-header-banner {
+      background: linear-gradient(135deg, var(--novartis-blue) 0%, #1e3a8a 100%);
+      color: white;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+      padding: 12px 20px;
+      position: sticky;
+      top: 0;
+      z-index: 1020;
+    }
+
+    /* 區塊卡片 */
+    .custom-card {
+      background: white;
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    /* 餐點單選防呆卡片 */
+    .meal-option-card {
+      border: 2px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 14px 16px;
+      cursor: pointer !important;
+      transition: all 0.2s ease-in-out;
+      background: #ffffff;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .meal-option-card:hover {
+      border-color: #38bdf8;
+      background: #f0f9ff;
+    }
+    .meal-option-card.selected {
+      border-color: #0284c7 !important;
+      background: #e0f2fe !important;
+      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.3) !important;
+    }
+
+    /* 圖片預覽盒 */
+    .preview-img-box {
+      border: 1.5px solid #cbd5e1;
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      background: white;
+    }
+    .preview-img-box:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+    }
+
+    /* 簽到表列印專用樣式 */
+    .signin-sheet-container {
+      background: white;
+      border: 2px solid #334155;
+      padding: 24px;
+      border-radius: 6px;
+      font-family: 'Noto Sans TC', sans-serif;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    .signin-sheet-table th, .signin-sheet-table td {
+      border: 1px solid #334155 !important;
+      padding: 6px 8px !important;
+      vertical-align: middle;
+      font-size: 0.88rem;
+    }
+    .signin-sheet-table th {
+      background-color: #f1f5f9 !important;
+      color: #0f172a;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    /* A4 直向列印規範 (自動隱藏網頁元素) */
+    @media print {
+      html, body {
+        width: 100% !important;
+        height: auto !important;
+        background: #ffffff !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        color: #000000 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .no-print, header, nav, .top-header-banner, .hide-on-print {
+        display: none !important;
+      }
+      .signin-sheet-container {
+        display: block !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+      .signin-sheet-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+      }
+      .signin-sheet-table th, .signin-sheet-table td {
+        border: 1px solid #000000 !important;
+        color: #000000 !important;
+        padding: 4px 6px !important;
+      }
+      .signin-sheet-table tr {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+      }
+      .signin-sheet-table th {
+        background-color: #f1f5f9 !important;
+        font-weight: bold !important;
+      }
+      @page {
+        size: A4 portrait;
+        margin: 8mm 8mm 8mm 8mm;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 頂部導覽列 (支援多場次切換與主辦管理) -->
+<header class="top-header-banner mb-4 no-print">
+  <div class="container d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-3">
+      <!-- 諾華官方 Logo -->
+      <img src="assets/novartis_logo.png" alt="Novartis Logo" style="height: 28px; background: white; padding: 3px 8px; border-radius: 4px;">
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-warning text-dark px-2 py-1 fw-bold fs-6">RTD 通用版</span>
+        <h5 class="mb-0 fw-bold d-none d-md-inline">醫學會議線上報名與簽到系統</h5>
+      </div>
+    </div>
+
+    <!-- 右側功能按鈕 -->
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <!-- 場次切換下拉選單 -->
+      <div class="input-group input-group-sm" style="max-width: 240px;">
+        <span class="input-group-text bg-dark text-white border-0"><i class="fa-solid fa-calendar-check"></i></span>
+        <select id="eventSelector" class="form-select form-select-sm fw-bold border-0" onchange="switchEvent(this.value)">
+          <!-- 動態載入場次清單 -->
+        </select>
+      </div>
+
+      <!-- 建立/編輯場次按鈕 (Sandy 專用) -->
+      <button type="button" class="btn btn-outline-light btn-sm fw-bold" onclick="openEventEditorModal()">
+        <i class="fa-solid fa-gear me-1"></i>活動設定
+      </button>
+
+      <!-- 複製專屬報名網址 -->
+      <button type="button" class="btn btn-info btn-sm text-dark fw-bold" onclick="copyEventShareLink(this)">
+        <i class="fa-solid fa-link me-1"></i>複製報名連結
+      </button>
+
+      <!-- 🌟 一鍵列印簽到表 🌟 -->
+      <button type="button" class="btn btn-warning text-dark fw-black shadow-sm" onclick="printSignInSheet()">
+        <i class="fa-solid fa-print me-1"></i>一鍵列印簽到表
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="container" style="max-width: 960px;">
+
+  <!-- 活動資訊橫幅卡片 -->
+  <div class="custom-card border-primary border-2 hide-on-print" style="background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2 pb-2 border-bottom">
+      <span class="badge bg-primary px-3 py-2 fs-6" id="dispEventBadge">
+        <i class="fa-solid fa-ribbon me-1"></i>醫學研討會
+      </span>
+      <span class="text-secondary small fw-bold">
+        主辦單位：台灣諾華股份有限公司 (Novartis Taiwan)
+      </span>
+    </div>
+    <h3 class="fw-bold text-dark mb-2" id="dispEventTitle">會議名稱載入中...</h3>
+    <div class="row g-2 small text-dark mt-1">
+      <div class="col-md-4 col-12">
+        <strong><i class="fa-regular fa-calendar-days text-primary me-1"></i>會議日期：</strong><span id="dispEventDate">-</span>
+      </div>
+      <div class="col-md-3 col-12">
+        <strong><i class="fa-regular fa-clock text-primary me-1"></i>會議時間：</strong><span id="dispEventTime">-</span>
+      </div>
+      <div class="col-md-5 col-12">
+        <strong><i class="fa-solid fa-location-dot text-danger me-1"></i>會議地點：</strong><span id="dispEventVenue">-</span>
+      </div>
+    </div>
+    <div class="alert alert-warning py-2 px-3 mb-0 mt-3 small fw-bold d-flex align-items-center">
+      <i class="fa-solid fa-triangle-exclamation text-warning me-2 fs-5"></i>
+      <span>提醒您：未受邀之醫護人員同行者不得參加會議。諾華公司亦不會為同行者安排行程、支付或補貼任何費用及支出。</span>
+    </div>
+  </div>
+
+  <!-- 🌟 議程 (Agenda) 與 菜單 (Menu) 彈性展示區塊 🌟 -->
+  <div class="row g-3 mb-4 hide-on-print" id="mediaShowcaseRow">
+    
+    <!-- 議程卡片 -->
+    <div class="col-md-6 col-12" id="agendaCardCol">
+      <div class="custom-card h-100 p-3">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <h5 class="fw-bold text-dark mb-0">
+            <i class="fa-solid fa-clipboard-list text-primary me-2"></i>會議正式議程 (Agenda)
+          </h5>
+          <span class="badge bg-primary-subtle text-primary border border-primary small" id="agendaZoomTag" style="display: none;">點圖可放大</span>
+        </div>
+        
+        <!-- 圖片型議程 -->
+        <div class="preview-img-box text-center p-2 mb-2" id="agendaImgBox" style="display: none;" onclick="openImageModal(document.getElementById('agendaImg').src, '會議議程')">
+          <img id="agendaImg" src="" alt="會議議程" class="img-fluid rounded" style="max-height: 250px; object-fit: contain;">
+        </div>
+
+        <!-- 條列型文字議程 -->
+        <div class="table-responsive small" id="agendaTextBox">
+          <table class="table table-sm table-striped mb-0">
+            <tbody id="agendaTableBody">
+              <!-- 動態載入文字議程 -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 菜單卡片 (依供餐模式自動切換) -->
+    <div class="col-md-6 col-12" id="menuCardCol">
+      <div class="custom-card h-100 p-3">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <h5 class="fw-bold text-dark mb-0" id="menuHeaderTitle">
+            <i class="fa-solid fa-utensils text-success me-2"></i>餐廳特製菜單 (Menu)
+          </h5>
+          <span class="badge bg-success-subtle text-success border border-success small" id="menuModeBadge">
+            中式桌菜 · 免選主餐
+          </span>
+        </div>
+
+        <!-- 圖片型菜單 (如有) -->
+        <div class="preview-img-box text-center p-2 mb-2" id="menuImgBox" style="display: none;" onclick="openImageModal(document.getElementById('menuImg').src, '活動特製菜單')">
+          <img id="menuImg" src="" alt="特製菜單" class="img-fluid rounded" style="max-height: 250px; object-fit: contain;">
+        </div>
+
+        <!-- 菜色說明清單 -->
+        <div class="p-3 bg-light rounded border small" id="menuItemsBox">
+          <div id="menuItemsContent">
+            <!-- 動態載入菜色品項 -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 與會者報名表單卡片 -->
+  <div class="custom-card hide-on-print">
+    <h4 class="fw-bold text-primary mb-3">
+      <i class="fa-solid fa-id-card-clip me-2"></i>與會者資料填寫
+      <span class="fs-6 text-muted fw-normal" id="formSubTitle"></span>
+    </h4>
+
+    <form id="attendeeForm" onsubmit="handleRegistrationSubmit(event)">
+      <div class="row g-3 mb-4">
+        <!-- 姓名 -->
+        <div class="col-md-4 col-12">
+          <label class="form-label fw-bold small text-secondary">與會者姓名 <span class="text-danger">*</span></label>
+          <input type="text" id="regName" class="form-control form-control-lg fw-bold" placeholder="請輸入姓名 (例如: 廖國秀 或 Sandy)" required>
+        </div>
+
+        <!-- 所在縣市 -->
+        <div class="col-md-4 col-6">
+          <label class="form-label fw-bold small text-secondary">單位所在縣市 <span class="text-danger">*</span></label>
+          <select id="regCity" class="form-select form-select-lg fw-bold" required>
+            <option value="台北市" selected>台北市</option>
+            <option value="新北市">新北市</option>
+            <option value="基隆市">基隆市</option>
+            <option value="桃園市">桃園市</option>
+            <option value="新竹市">新竹市</option>
+            <option value="台中市">台中市</option>
+            <option value="台南市">台南市</option>
+            <option value="高雄市">高雄市</option>
+            <option value="其他">其他縣市</option>
+          </select>
+        </div>
+
+        <!-- 服務醫院/機構 (含台灣諾華選項) -->
+        <div class="col-md-4 col-6">
+          <label class="form-label fw-bold small text-secondary">服務醫院 / 機構 <span class="text-danger">*</span></label>
+          <select id="regHospitalSelect" class="form-select form-select-lg fw-bold" onchange="handleHospitalChange(this)">
+            <option value="三軍總醫院" selected>三軍總醫院 (TSGH)</option>
+            <option value="台灣諾華股份有限公司">台灣諾華股份有限公司 (Novartis)</option>
+            <option value="台北榮民總醫院">台北榮民總醫院</option>
+            <option value="國立臺灣大學醫學院附設醫院">台大醫院 (NTUH)</option>
+            <option value="馬偕紀念醫院">馬偕紀念醫院</option>
+            <option value="新光醫院">新光醫院</option>
+            <option value="OTHER">自行輸入其他機構...</option>
+          </select>
+          <input type="text" id="regHospitalCustom" class="form-control form-control-lg fw-bold mt-2" placeholder="請輸入機構名稱" style="display: none;">
+        </div>
+
+        <!-- 科別/單位 (含腫瘤醫學部) -->
+        <div class="col-md-6 col-12">
+          <label class="form-label fw-bold small text-secondary">科別 / 單位 <span class="text-danger">*</span></label>
+          <div class="input-group">
+            <select id="regDeptSelect" class="form-select form-select-lg fw-bold" onchange="handleDeptChange(this)">
+              <option value="乳房外科" selected>乳房外科 (Breast Surgery)</option>
+              <option value="腫瘤醫學部">腫瘤醫學部 (Oncology / 諾華同仁)</option>
+              <option value="血液腫瘤科">血液腫瘤科 (Hematoncology)</option>
+              <option value="一般外科">一般外科 (Surgery)</option>
+              <option value="婦產部">婦產部 (Gynecology)</option>
+              <option value="整型外科">整型外科</option>
+              <option value="病理部">病理部 (Pathology)</option>
+              <option value="放射部">放射部 (Radiology)</option>
+              <option value="護理部">護理部 (Nursing)</option>
+              <option value="藥劑部">藥劑部 (Pharmacy)</option>
+              <option value="OTHER">自行輸入其他科別...</option>
+            </select>
+            <input type="text" id="regDeptCustom" class="form-control form-control-lg" placeholder="請自填科別" style="display: none;">
+          </div>
+        </div>
+
+        <!-- 職稱 (含諾華同仁 / 其他HCP) -->
+        <div class="col-md-6 col-12">
+          <label class="form-label fw-bold small text-secondary">職稱類別 <span class="text-danger">*</span></label>
+          <div class="d-flex gap-2 flex-wrap">
+            <div class="form-check form-check-inline p-2 border rounded-3 bg-light flex-grow-1 text-center">
+              <input class="form-check-input" type="radio" name="regTitle" id="titleDoc" value="醫師" checked>
+              <label class="form-check-label fw-bold" for="titleDoc">🩺 醫師</label>
+            </div>
+            <div class="form-check form-check-inline p-2 border rounded-3 bg-light flex-grow-1 text-center">
+              <input class="form-check-input" type="radio" name="regTitle" id="titleNurse" value="護理師">
+              <label class="form-check-label fw-bold" for="titleNurse">💉 護理師</label>
+            </div>
+            <div class="form-check form-check-inline p-2 border rounded-3 bg-light flex-grow-1 text-center">
+              <input class="form-check-input" type="radio" name="regTitle" id="titlePharm" value="藥師">
+              <label class="form-check-label fw-bold" for="titlePharm">💊 藥師</label>
+            </div>
+            <div class="form-check form-check-inline p-2 border rounded-3 bg-light flex-grow-1 text-center">
+              <input class="form-check-input" type="radio" name="regTitle" id="titleNovartis" value="台灣諾華">
+              <label class="form-check-label fw-bold" for="titleNovartis">💼 諾華人員 / 其他HCP</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 🌟 彈性餐點選擇區塊 (由場次供餐模式動態切換) 🌟 -->
+      <div id="mealSelectionSection" class="mb-4"></div>
+
+      <!-- 特殊飲食備註 -->
+      <div class="mb-4" id="dietNotesBox">
+        <label class="form-label fw-bold small text-secondary">特殊飲食需求或禁忌備註 (例如: 全素、奶蛋素、不吃牛、海鮮過敏等)</label>
+        <input type="text" id="regDietNotes" class="form-control" placeholder="無特殊需求請留空，若有特殊飲食或過敏請填寫於此">
+      </div>
+
+      <hr class="my-4">
+
+      <!-- 諾華個資條款同意 -->
+      <div class="p-3 bg-light border rounded-3 mb-4">
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="checkPrivacy" checked required>
+          <label class="form-check-label small text-dark fw-bold" for="checkPrivacy">
+            本人已詳閱並同意台灣諾華【個人資料告知事項】與會議規範聲明，同意諾華於本活動之出席管理及法規稽核目的範圍內蒐集、處理及利用本人資料。
+          </label>
+        </div>
+      </div>
+
+      <!-- 送出按鈕 -->
+      <button type="submit" class="btn btn-primary btn-lg w-100 py-3 fw-bold fs-5 shadow">
+        <i class="fa-solid fa-check-circle me-2"></i>確認送出線上報名
+      </button>
+    </form>
+  </div>
+
+  <!-- 🌟 餐廳統計與名單管理區塊 🌟 -->
+  <div class="custom-card hide-on-print" id="tallySection">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+      <h4 class="fw-bold text-dark mb-0">
+        <i class="fa-solid fa-chart-pie text-warning me-2"></i><span id="tallyHeaderTitle">餐廳訂席與與會清單統計</span>
+      </h4>
+      <div class="d-flex gap-2">
+        <button type="button" class="btn btn-sm btn-outline-success fw-bold" onclick="copyRestaurantSummary(this)">
+          <i class="fa-brands fa-line me-1"></i>複製點餐總數給餐廳
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-primary" onclick="injectCurrentEventSample()">
+          <i class="fa-solid fa-vial me-1"></i>載入示範名單
+        </button>
+      </div>
+    </div>
+
+    <!-- 統計小卡區塊 -->
+    <div class="row g-2 text-center mb-3" id="tallyCardsRow"></div>
+
+    <!-- 特殊飲食提醒清單 -->
+    <div id="statDietBox" class="p-2 bg-light rounded border small mb-3" style="display: none;">
+      <strong class="text-danger"><i class="fa-solid fa-bell me-1"></i>特殊飲食與忌口備忘：</strong>
+      <span id="statDietList" class="text-muted"></span>
+    </div>
+
+    <!-- 報名清單小表格 -->
+    <div class="table-responsive small">
+      <table class="table table-sm table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="width: 45px;">No.</th>
+            <th>姓名</th>
+            <th>職稱</th>
+            <th>服務醫院/機構</th>
+            <th>科別</th>
+            <th id="thMealCol">餐點/備註</th>
+            <th class="text-end" style="width: 60px;">操作</th>
+          </tr>
+        </thead>
+        <tbody id="attendeeListSummaryBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ==================== 🌟 諾華公司 100% 制式會議簽到表 (A4 列印版面) 🌟 ==================== -->
+  <div class="signin-sheet-container mb-4" id="signinSheetSection">
+    
+    <!-- 頂端操作按鈕 -->
+    <div class="d-flex justify-content-between align-items-center mb-3 no-print flex-wrap gap-2 pb-2 border-bottom">
+      <div>
+        <span class="badge bg-primary px-2 py-1 me-1">諾華制式 A4 簽到表</span>
+        <span class="small text-muted">姓名與職稱已自動帶入，現場直接親筆簽名</span>
+      </div>
+      <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="exportCsvSignInSheet()">
+          <i class="fa-solid fa-file-csv me-1"></i>下載 CSV 檔
+        </button>
+        <!-- 🌟 一鍵列印簽到表 🌟 -->
+        <button type="button" class="btn btn-primary fw-bold px-3 py-2 shadow-sm" onclick="printSignInSheet()">
+          <i class="fa-solid fa-print me-1"></i>一鍵列印簽到表
+        </button>
+      </div>
+    </div>
+
+    <!-- 簽到表表頭 (含諾華 Logo) -->
+    <div class="row g-2 mb-2 pb-2 border-bottom align-items-center">
+      <div class="col-6">
+        <img src="assets/novartis_logo.png" alt="Novartis" style="max-height: 38px; object-fit: contain;">
+      </div>
+      <div class="col-6 text-end">
+        <h4 class="fw-bold mb-0 text-dark" style="letter-spacing: 2px;">會議簽到表</h4>
+      </div>
+      <div class="col-12 mt-2">
+        <strong>活動名稱：</strong><span id="sheetEventTitle">-</span>
+      </div>
+      <div class="col-md-6 col-6">
+        <strong>日期：</strong><span id="sheetEventDate">-</span>
+      </div>
+      <div class="col-md-6 col-6">
+        <strong>時間：</strong><span id="sheetEventTime">-</span>
+      </div>
+      <div class="col-12">
+        <strong>地點：</strong><span id="sheetEventVenue">-</span>
+      </div>
+    </div>
+
+    <!-- 諾華制式個資告知聲明 (100% 與公司官方 CSV 條款一致) -->
+    <div class="p-2 mb-3" style="font-size: 0.68rem; line-height: 1.4; color: #1e293b; background: #fafafa; border: 1px solid #cbd5e1;">
+      與會者於此簽到表簽名，即表示已閱讀並同意下列【個人資料告知事項】及【同意】條款；如本活動提供住宿/交通或其他出席贊助（如適用），亦同意並確認下列贊助相關事項。<br>
+      <strong>【個人資料告知事項】</strong><br>
+      (1) 蒐集者：台灣諾華股份有限公司（以下稱『諾華』）。<br>
+      (2) 蒐集目的：辦理本活動之出席管理、內外部法規遵循/稽核及相關行政作業（如有贊助/費用核銷等需求亦屬之）。<br>
+      (3) 個人資料類別：姓名、服務機構、科別/單位、職稱、（如有提供）聯絡方式、簽名及出席紀錄等。<br>
+      (4) 利用期間/地區/對象/方式：於活動期間及結束後5年，在中華民國境內，得以紙本或電子方式於前述目的範圍內利用，並得提供予諾華之關係企業及受託之第三方服務供應商；另得依法律或主管機關要求揭露。<br>
+      (5) 權利：本人得依法行使查詢或請求閱覽、請求製給複製本、請求補充或更正、請求停止蒐集/處理/利用、請求刪除等權利；如需聯繫，請洽：taiwan.dp@novartis.com。<br>
+      (6) 不提供之影響：本人得自由選擇是否提供個人資料；惟如不提供必要資料，可能影響本活動之參與或相關服務提供（例如出席證明/贊助核銷等）。<br>
+      <strong>【同意】</strong>本人已閱讀並了解上述告知事項，並同意諾華於前述目的範圍內蒐集、處理及利用本人個人資料。<br>
+      <strong>【若本活動提供住宿/交通或其他出席贊助（如適用）】</strong><br>
+      (a) 遵守所有相關法規命令，及所屬醫院、大學或機關之相關規章；<br>
+      (b) 若有接受住宿之贊助，其住宿係由台灣諾華統籌辦理；<br>
+      (c) 會提供相關單據、出席紀錄及個人資料予諾華及其指定之第三人以進行贊助查核付款作業；<br>
+      (d) 如因法規要求，諾華得公開揭露贊助醫師之項目內容；<br>
+      (e) 上述補助並非用以換取採購或處方諾華產品，亦非成為推薦、處方、採購或施用諾華產品之誘因。
+    </div>
+
+    <!-- 制式簽到表格 (100% 與公司 CSV 格式完全一致) -->
+    <div class="table-responsive">
+      <table class="table table-bordered signin-sheet-table mb-0">
+        <thead>
+          <tr>
+            <th style="width: 45px;">No.</th>
+            <th style="width: 105px;">單位所在縣市</th>
+            <th style="width: 180px;">服務醫院/機構</th>
+            <th style="width: 135px;">科別/單位</th>
+            <th style="width: 185px;">職稱</th>
+            <th style="width: 110px;">姓名</th>
+            <th style="width: 180px;">簽名</th>
+          </tr>
+        </thead>
+        <tbody id="signinSheetTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- 🌟 活動建立與編輯彈窗 🌟 -->
+<div class="modal fade" id="eventEditorModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title fw-bold"><i class="fa-solid fa-calendar-plus me-2 text-warning"></i>醫學會議活動設定中心</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form id="eventConfigForm" onsubmit="saveEventConfig(event)">
+          <div class="row g-3">
+            <div class="col-md-6 col-12">
+              <label class="form-label fw-bold small">活動識別 ID (英文數字)</label>
+              <input type="text" id="cfgEventId" class="form-control fw-bold" required placeholder="例如: 1204_table">
+            </div>
+            <div class="col-md-6 col-12">
+              <label class="form-label fw-bold small">活動簡稱標籤 (Badge)</label>
+              <input type="text" id="cfgEventBadge" class="form-control" placeholder="例如: 12/4 中式桌菜論壇">
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-bold small">活動正式完整名稱 (出現在簽到表)</label>
+              <input type="text" id="cfgEventTitle" class="form-control fw-bold" required placeholder="例如: 12月乳癌高峰論壇 - From Evidence to Practice">
+            </div>
+
+            <div class="col-md-4 col-12">
+              <label class="form-label fw-bold small">會議日期</label>
+              <input type="text" id="cfgEventDate" class="form-control" required placeholder="例如: 2026年12月04日（星期四）">
+            </div>
+            <div class="col-md-4 col-12">
+              <label class="form-label fw-bold small">會議時間</label>
+              <input type="text" id="cfgEventTime" class="form-control" required placeholder="例如: 18:30 - 20:30">
+            </div>
+            <div class="col-md-4 col-12">
+              <label class="form-label fw-bold small">供餐型態 (重要！)</label>
+              <select id="cfgMealMode" class="form-select fw-bold border-primary" onchange="handleMealModeChange(this.value)">
+                <option value="TABLE">🍲 中式桌菜 / 合菜（純瀏覽，免選主餐）</option>
+                <option value="SET">🥩 西式套餐（三選一選餐 + 飲品）</option>
+                <option value="NONE">☕ 純會議 / 無供餐</option>
+              </select>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-bold small">會議地點與餐廳地址</label>
+              <input type="text" id="cfgEventVenue" class="form-control" required placeholder="例如: 欣葉鐘菜（台北市中山區樂群二路199號）">
+            </div>
+
+            <!-- 議程設定 -->
+            <div class="col-12">
+              <label class="form-label fw-bold small">會議議程內容 (可多行輸入，每行: 時間 | 主題 | 講者)</label>
+              <textarea id="cfgAgendaText" class="form-control" rows="4" placeholder="18:30~19:00 | Reception 接待報到 | ALL&#10;19:00~19:40 | 最新臨床實證分享 | 專家醫師&#10;19:40~20:20 | 綜合討論交流 | ALL"></textarea>
+              <div class="mt-2">
+                <label class="form-label fw-bold small text-muted">或輸入 Agenda 圖片網址 (選填，留空則以文字表格顯示)</label>
+                <input type="text" id="cfgAgendaImgUrl" class="form-control form-control-sm" placeholder="assets/rtt_agenda.jpg 或 網路圖片網址">
+              </div>
+            </div>
+
+            <!-- 菜色說明設定 (桌菜菜單或自訂套餐) -->
+            <div class="col-12" id="cfgMenuBox">
+              <label class="form-label fw-bold small" id="cfgMenuTitle">菜色品項清單 (每行一道菜色或備註)</label>
+              <textarea id="cfgMenuItems" class="form-control" rows="4" placeholder="經典砂鍋土雞湯&#10;清蒸現流海上鮮&#10;紅蟳米糕&#10;富貴脆皮雞&#10;時令精緻鮮果盤"></textarea>
+              <div class="mt-2">
+                <label class="form-label fw-bold small text-muted">菜單圖片網址 (選填)</label>
+                <input type="text" id="cfgMenuImgUrl" class="form-control form-control-sm" placeholder="assets/rtt_menu.jpg 或 網路圖片網址">
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+            <button type="button" class="btn btn-outline-danger" onclick="deleteCurrentEvent()">
+              <i class="fa-solid fa-trash-can me-1"></i>刪除此場次
+            </button>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+              <button type="submit" class="btn btn-primary fw-bold px-4">儲存活動設定</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 圖片放大預覽彈窗 -->
+<div class="modal fade" id="imagePreviewModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header py-2 px-3 bg-dark text-white">
+        <h6 class="modal-title fw-bold" id="imageModalTitle">檢視圖片</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center p-2 bg-light">
+        <img id="imageModalImg" src="" class="img-fluid rounded" alt="預覽">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 報名成功彈窗 -->
+<div class="modal fade" id="successModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-body text-center p-4">
+        <div class="text-success fs-1 mb-2">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <h4 class="fw-bold mb-2">線上報名成功！</h4>
+        <p class="text-muted small mb-4" id="successSummaryText">
+          感謝您的蒞臨！主辦單位已收到您的出席資料。<br>
+          活動當天現場直接簽名報到即可。
+        </p>
+        <div class="d-flex flex-column gap-2">
+          <button type="button" id="btnLineNotify" class="btn btn-success fw-bold py-2 shadow-sm" onclick="sendLineConfirmation()">
+            <i class="fa-brands fa-line me-1 fs-5"></i> 點此透過 LINE 回傳通知主辦人 Sandy
+          </button>
+          <button type="button" class="btn btn-outline-secondary fw-bold py-2" data-bs-dismiss="modal">
+            完成關閉
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+// ==================== 多場次資料結構與預設設定 ====================
+const STORAGE_EVENTS_KEY = 'novartis_events_store_v1';
+const STORAGE_CURRENT_EVENT_KEY = 'novartis_current_event_id';
+
+const DEFAULT_EVENTS = {
+  '1204_table': {
+    id: '1204_table',
+    badge: '12/4 中式桌菜論壇',
+    title: '12月乳癌高峰論壇 - From Evidence to Practice',
+    date: '2026年12月04日（星期四）',
+    time: '18:30 - 20:30',
+    venue: '欣葉鐘菜（台北市中山區樂群二路199號）',
+    mealMode: 'TABLE',
+    agendaImgUrl: '',
+    agendaLines: [
+      { time: '18:30~19:00', topic: 'Reception 接待與報到', speaker: 'ALL' },
+      { time: '19:00~19:40', topic: '最新臨床治療指引與實踐經驗探討', speaker: '專家醫師' },
+      { time: '19:40~20:20', topic: '乳癌病友全方位照護歷程與支持方案', speaker: 'Sandy Huang (諾華公司)' },
+      { time: '20:20~20:30', topic: '綜合座談與交流討論', speaker: '全體與會貴賓' }
+    ],
+    menuImgUrl: '',
+    menuItems: [
+      '經典砂鍋排翅土雞湯',
+      '古早味香煎豬肝',
+      '清蒸現流野生海上鮮',
+      '手作海鮮紫菜捲',
+      '特製紅蟳蒸米糕',
+      '季節精選炒時蔬',
+      '欣葉招牌杏仁豆腐與時令鮮果盤'
+    ],
+    attendees: [
+      { id: 1, name: '廖國秀', city: '台北市', hospital: '三軍總醫院', dept: '乳房外科', title: '醫師', mealChoice: '桌菜出席', dietNotes: '' },
+      { id: 2, name: 'Sandy Huang', city: '台北市', hospital: '台灣諾華股份有限公司', dept: '腫瘤醫學部', title: '台灣諾華', mealChoice: '桌菜出席', dietNotes: '' }
+    ]
+  },
+  '1124_wilson': {
+    id: '1124_wilson',
+    badge: '11/24 三總乳癌討論會',
+    title: '三總乳癌討論會 - From Shared Decision to Long-Term Confidence',
+    date: '2026年11月24日（星期二）',
+    time: '18:30 - 20:30',
+    venue: 'Wilson Park 威爾森公園餐廳（台北市內湖區民權東路六段125之1號）',
+    mealMode: 'SET',
+    agendaImgUrl: 'assets/rtt_agenda.jpg',
+    agendaLines: [],
+    menuImgUrl: 'assets/rtt_menu.jpg',
+    setOptions: {
+      mains: ['嫩煎菲力牛排', '蟹黃海鮮燉飯', '西班牙伊比利老饕豬'],
+      drinks: ['獨家單杯紅白酒', '無酒精氣泡飲', '獅王伯爵茶', '美式咖啡'],
+      desc: '含軟法麵包/松露奶油、淡菜濃湯、煙燻鴨胸沙拉、威士忌海膽布丁、主廚熔岩巧克力蛋糕'
+    },
+    attendees: [
+      { id: 1, name: '廖國秀', city: '台北市', hospital: '三軍總醫院', dept: '乳房外科', title: '醫師', mealChoice: '嫩煎菲力牛排 (紅白酒)', dietNotes: '' },
+      { id: 2, name: 'Sandy Huang', city: '台北市', hospital: '台灣諾華股份有限公司', dept: '腫瘤醫學部', title: '台灣諾華', mealChoice: '蟹黃海鮮燉飯 (氣泡飲)', dietNotes: '' }
+    ]
+  }
+};
+
+let eventsDb = {};
+let currentEventId = '1204_table';
+let lastSubmitted = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadEventsDb();
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const eventParam = urlParams.get('e');
+  if (eventParam && eventsDb[eventParam]) {
+    currentEventId = eventParam;
+  }
+
+  renderEventSelector();
+  renderCurrentEvent();
+});
+
+function loadEventsDb() {
+  const raw = localStorage.getItem(STORAGE_EVENTS_KEY);
+  if (raw) {
+    try {
+      eventsDb = JSON.parse(raw);
+    } catch (e) {
+      eventsDb = JSON.parse(JSON.stringify(DEFAULT_EVENTS));
+    }
+  } else {
+    eventsDb = JSON.parse(JSON.stringify(DEFAULT_EVENTS));
+    saveEventsDb();
+  }
+
+  const savedCur = localStorage.getItem(STORAGE_CURRENT_EVENT_KEY);
+  if (savedCur && eventsDb[savedCur]) {
+    currentEventId = savedCur;
+  } else {
+    currentEventId = Object.keys(eventsDb)[0] || '1204_table';
+  }
+}
+
+function saveEventsDb() {
+  localStorage.setItem(STORAGE_EVENTS_KEY, JSON.stringify(eventsDb));
+}
+
+function switchEvent(eventId) {
+  if (eventsDb[eventId]) {
+    currentEventId = eventId;
+    localStorage.setItem(STORAGE_CURRENT_EVENT_KEY, eventId);
+    renderCurrentEvent();
+  }
+}
+
+function renderEventSelector() {
+  const sel = document.getElementById('eventSelector');
+  sel.innerHTML = Object.values(eventsDb).map(ev => `
+    <option value="${ev.id}" ${ev.id === currentEventId ? 'selected' : ''}>
+      ${ev.badge || ev.title}
+    </option>
+  `).join('');
+}
+
+function renderCurrentEvent() {
+  const ev = eventsDb[currentEventId];
+  if (!ev) return;
+
+  document.getElementById('dispEventBadge').innerHTML = `<i class="fa-solid fa-ribbon me-1"></i>${ev.badge || '醫學會議'}`;
+  document.getElementById('dispEventTitle').textContent = ev.title;
+  document.getElementById('dispEventDate').textContent = ev.date;
+  document.getElementById('dispEventTime').textContent = ev.time;
+  document.getElementById('dispEventVenue').textContent = ev.venue;
+
+  document.getElementById('sheetEventTitle').textContent = ev.title;
+  document.getElementById('sheetEventDate').textContent = ev.date;
+  document.getElementById('sheetEventTime').textContent = ev.time;
+  document.getElementById('sheetEventVenue').textContent = ev.venue;
+
+  if (ev.agendaImgUrl && ev.agendaImgUrl.trim() !== '') {
+    document.getElementById('agendaImgBox').style.display = 'block';
+    document.getElementById('agendaImg').src = ev.agendaImgUrl;
+    document.getElementById('agendaZoomTag').style.display = 'inline-block';
+    document.getElementById('agendaTextBox').style.display = 'none';
+  } else {
+    document.getElementById('agendaImgBox').style.display = 'none';
+    document.getElementById('agendaZoomTag').style.display = 'none';
+    document.getElementById('agendaTextBox').style.display = 'block';
+    const tbody = document.getElementById('agendaTableBody');
+    if (ev.agendaLines && ev.agendaLines.length > 0) {
+      tbody.innerHTML = ev.agendaLines.map(line => `
+        <tr>
+          <td style="width: 100px;"><strong>${line.time}</strong></td>
+          <td><strong>${line.topic}</strong></td>
+          <td class="text-end text-muted">${line.speaker}</td>
+        </tr>
+      `).join('');
+    } else {
+      tbody.innerHTML = `<tr><td colspan="3" class="text-muted">議程籌備中</td></tr>`;
+    }
+  }
+
+  const mealSec = document.getElementById('mealSelectionSection');
+  const menuCardCol = document.getElementById('menuCardCol');
+  const menuModeBadge = document.getElementById('menuModeBadge');
+  const menuItemsContent = document.getElementById('menuItemsContent');
+  const formSubTitle = document.getElementById('formSubTitle');
+
+  if (ev.mealMode === 'TABLE') {
+    menuCardCol.style.display = 'block';
+    menuModeBadge.textContent = '中式桌宴 · 免選主餐';
+    menuModeBadge.className = 'badge bg-success-subtle text-success border border-success small';
+
+    if (ev.menuImgUrl && ev.menuImgUrl.trim() !== '') {
+      document.getElementById('menuImgBox').style.display = 'block';
+      document.getElementById('menuImg').src = ev.menuImgUrl;
+    } else {
+      document.getElementById('menuImgBox').style.display = 'none';
+    }
+
+    const items = ev.menuItems || [];
+    menuItemsContent.innerHTML = `
+      <div class="fw-bold text-dark mb-2"><i class="fa-solid fa-utensils text-success me-1"></i>當日主廚精緻合菜菜單：</div>
+      <ol class="mb-0 ps-3">
+        ${items.map(it => `<li class="py-1 text-secondary fw-semibold">${it}</li>`).join('')}
+      </ol>
+      <div class="mt-2 pt-2 border-top text-muted small">
+        <i class="fa-solid fa-circle-info text-info me-1"></i>本場次為桌席合菜，現場直接入席享用，無需提前挑選主餐。若有全素或特殊忌口請於下方填寫。
+      </div>
+    `;
+
+    mealSec.innerHTML = `
+      <div class="p-3 bg-success-subtle text-success-emphasis border border-success rounded-3 mb-3 d-flex align-items-center">
+        <i class="fa-solid fa-bowl-rice fs-4 me-3 text-success"></i>
+        <div>
+          <strong class="d-block">本場次為精緻中式桌宴（合菜共享）</strong>
+          <small>您無需在線上挑選主餐，現場將依序上菜。若您有「全素」、「奶蛋素」、「不吃牛」或「海鮮過敏」等特殊需求，請直接於下方備註欄註明即可！</small>
+        </div>
+      </div>
+      <input type="hidden" id="selectedMealChoice" value="桌菜出席">
+    `;
+    formSubTitle.textContent = '(中式桌菜免挑選主餐)';
+
+  } else if (ev.mealMode === 'SET') {
+    menuCardCol.style.display = 'block';
+    menuModeBadge.textContent = '精緻套餐 · 專屬選餐';
+    menuModeBadge.className = 'badge bg-primary-subtle text-primary border border-primary small';
+
+    if (ev.menuImgUrl && ev.menuImgUrl.trim() !== '') {
+      document.getElementById('menuImgBox').style.display = 'block';
+      document.getElementById('menuImg').src = ev.menuImgUrl;
+    } else {
+      document.getElementById('menuImgBox').style.display = 'none';
+    }
+
+    const setOpts = ev.setOptions || {
+      mains: ['嫩煎菲力牛排', '蟹黃海鮮燉飯', '西班牙伊比利老饕豬'],
+      drinks: ['獨家單杯紅白酒', '無酒精氣泡飲', '獅王伯爵茶', '美式咖啡'],
+      desc: '含精緻前菜、沙拉、濃湯與手工甜點'
+    };
+
+    menuItemsContent.innerHTML = `
+      <div class="fw-bold text-dark mb-1">主餐三選一：${setOpts.mains.join(' / ')}</div>
+      <div class="fw-bold text-dark mb-1">佐餐飲品：${setOpts.drinks.join(' / ')}</div>
+      <div class="text-muted small mt-1 border-top pt-1">${setOpts.desc || ''}</div>
+    `;
+
+    mealSec.innerHTML = `
+      <div class="mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <label class="form-label fw-bold text-dark mb-0 fs-6">
+            <span class="badge bg-dark me-1">步驟 1</span> 請選擇一道專屬主餐 (單選防呆)：
+          </label>
+          <span class="badge bg-primary" id="mainDishStatusPill">已選：${setOpts.mains[0]}</span>
+        </div>
+        <div class="row g-2 mb-3">
+          ${setOpts.mains.map((m, idx) => `
+            <div class="col-md-4 col-12">
+              <div class="meal-option-card ${idx === 0 ? 'selected' : ''}" id="card_main_${idx}" onclick="selectSetMain('${m}', ${idx})">
+                <input class="form-check-input" type="radio" name="mainDishRadio" id="radio_main_${idx}" value="${m}" ${idx === 0 ? 'checked' : ''}>
+                <div class="flex-grow-1">
+                  <h6 class="fw-bold mb-0 text-dark">${m}</h6>
+                  <small class="text-muted status-tag">${idx === 0 ? '已選取' : '點擊選取'}</small>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <input type="hidden" id="selectedMainDish" value="${setOpts.mains[0]}">
+
+        <label class="form-label fw-bold text-dark mb-2 fs-6">
+          <span class="badge bg-dark me-1">步驟 2</span> 請選擇佐餐飲品：
+        </label>
+        <div class="row g-2">
+          ${setOpts.drinks.map((d, idx) => `
+            <div class="col-md-3 col-6">
+              <div class="meal-option-card ${idx === 0 ? 'selected' : ''}" id="card_drink_${idx}" onclick="selectSetDrink('${d}', ${idx})">
+                <input class="form-check-input" type="radio" name="drinkRadio" id="radio_drink_${idx}" value="${d}" ${idx === 0 ? 'checked' : ''}>
+                <span class="small fw-bold">${d}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <input type="hidden" id="selectedDrink" value="${setOpts.drinks[0]}">
+      </div>
+    `;
+    formSubTitle.textContent = '(含主餐與飲品點選)';
+
+  } else {
+    menuCardCol.style.display = 'none';
+    mealSec.innerHTML = '';
+    formSubTitle.textContent = '(純會議)';
+  }
+
+  renderAttendeesAndTally();
+}
+
+function selectSetMain(name, idx) {
+  document.getElementById('selectedMainDish').value = name;
+  document.querySelectorAll('[id^="card_main_"]').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('[id^="card_main_"] .status-tag').forEach(s => s.textContent = '點擊選取');
+  
+  const targetCard = document.getElementById(`card_main_${idx}`);
+  if (targetCard) {
+    targetCard.classList.add('selected');
+    targetCard.querySelector('.status-tag').textContent = '已選取';
+    const radio = document.getElementById(`radio_main_${idx}`);
+    if (radio) radio.checked = true;
+  }
+  document.getElementById('mainDishStatusPill').textContent = `已選：${name}`;
+}
+
+function selectSetDrink(name, idx) {
+  document.getElementById('selectedDrink').value = name;
+  document.querySelectorAll('[id^="card_drink_"]').forEach(c => c.classList.remove('selected'));
+  const targetCard = document.getElementById(`card_drink_${idx}`);
+  if (targetCard) {
+    targetCard.classList.add('selected');
+    const radio = document.getElementById(`radio_drink_${idx}`);
+    if (radio) radio.checked = true;
+  }
+}
+
+function handleHospitalChange(selectEl) {
+  const customInput = document.getElementById('regHospitalCustom');
+  if (selectEl.value === 'OTHER') {
+    customInput.style.display = 'block';
+    customInput.required = true;
+    customInput.focus();
+  } else {
+    customInput.style.display = 'none';
+    customInput.required = false;
+  }
+
+  if (selectEl.value === '台灣諾華股份有限公司') {
+    document.getElementById('regCity').value = '台北市';
+    document.getElementById('regDeptSelect').value = '腫瘤醫學部';
+    document.getElementById('titleNovartis').checked = true;
+  }
+}
+
+function handleDeptChange(selectEl) {
+  const customInput = document.getElementById('regDeptCustom');
+  if (selectEl.value === 'OTHER') {
+    customInput.style.display = 'block';
+    customInput.required = true;
+    customInput.focus();
+  } else {
+    customInput.style.display = 'none';
+    customInput.required = false;
+  }
+}
+
+function renderAttendeesAndTally() {
+  const ev = eventsDb[currentEventId];
+  if (!ev) return;
+  const list = ev.attendees || [];
+
+  document.getElementById('topAttendeeCount').textContent = list.length;
+
+  const tallyCardsRow = document.getElementById('tallyCardsRow');
+  const dietBox = document.getElementById('statDietBox');
+  const dietSpan = document.getElementById('statDietList');
+  const dietList = [];
+
+  list.forEach(a => {
+    if (a.dietNotes && a.dietNotes.trim() !== '') {
+      dietList.push(`${a.name}: ${a.dietNotes}`);
+    }
+  });
+
+  if (dietList.length > 0) {
+    dietBox.style.display = 'block';
+    dietSpan.textContent = dietList.join('； ');
+  } else {
+    dietBox.style.display = 'none';
+  }
+
+  if (ev.mealMode === 'TABLE') {
+    const tables = Math.ceil(list.length / 10) || 1;
+    tallyCardsRow.innerHTML = `
+      <div class="col-md-4 col-6">
+        <div class="p-3 bg-light border rounded-3">
+          <span class="text-secondary small fw-bold d-block">確認出席人數</span>
+          <span class="fs-2 fw-black text-dark">${list.length}</span> 位
+        </div>
+      </div>
+      <div class="col-md-4 col-6">
+        <div class="p-3 bg-light border rounded-3">
+          <span class="text-secondary small fw-bold d-block">預計訂席桌數 (10人/桌)</span>
+          <span class="fs-2 fw-black text-primary">${tables}</span> 桌
+        </div>
+      </div>
+      <div class="col-md-4 col-12">
+        <div class="p-3 bg-light border rounded-3">
+          <span class="text-secondary small fw-bold d-block">特殊飲食/素食備忘</span>
+          <span class="fs-2 fw-black text-danger">${dietList.length}</span> 位
+        </div>
+      </div>
+    `;
+    document.getElementById('thMealCol').textContent = '用餐型態 / 備註';
+  } else if (ev.mealMode === 'SET') {
+    const counts = {};
+    list.forEach(a => {
+      const dish = (a.mealChoice || '').split(' (')[0] || '未指定';
+      counts[dish] = (counts[dish] || 0) + 1;
+    });
+
+    tallyCardsRow.innerHTML = `
+      <div class="col-md-3 col-6">
+        <div class="p-3 bg-light border rounded-3">
+          <span class="text-secondary small fw-bold d-block">出席總人數</span>
+          <span class="fs-2 fw-black text-dark">${list.length}</span> 人
+        </div>
+      </div>
+      ${Object.entries(counts).map(([name, count]) => `
+        <div class="col-md-3 col-6">
+          <div class="p-3 bg-light border rounded-3">
+            <span class="text-secondary small fw-bold d-block text-truncate" title="${name}">${name}</span>
+            <span class="fs-2 fw-black text-primary">${count}</span> 份
+          </div>
+        </div>
+      `).join('')}
+    `;
+    document.getElementById('thMealCol').textContent = '主餐與飲品選擇';
+  } else {
+    tallyCardsRow.innerHTML = `
+      <div class="col-12">
+        <div class="p-3 bg-light border rounded-3">
+          <span class="text-secondary small fw-bold d-block">出席總人數</span>
+          <span class="fs-2 fw-black text-dark">${list.length}</span> 位
+        </div>
+      </div>
+    `;
+    document.getElementById('thMealCol').textContent = '備註';
+  }
+
+  const summaryTbody = document.getElementById('attendeeListSummaryBody');
+  if (list.length === 0) {
+    summaryTbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-3">尚無與會人員報名</td></tr>`;
+  } else {
+    summaryTbody.innerHTML = list.map((a, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td class="fw-bold">${a.name}</td>
+        <td><span class="badge ${a.title === '醫師' ? 'bg-primary' : (a.title === '台灣諾華' ? 'bg-success' : 'bg-secondary')}">${a.title}</span></td>
+        <td>${a.hospital}</td>
+        <td>${a.dept}</td>
+        <td>${a.mealChoice || '出席'} ${a.dietNotes ? `<small class="text-danger">(${a.dietNotes})</small>` : ''}</td>
+        <td class="text-end">
+          <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="deleteAttendee(${a.id})" title="刪除">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  renderSignInTable();
+}
+
+function renderSignInTable() {
+  const ev = eventsDb[currentEventId];
+  if (!ev) return;
+  const tbody = document.getElementById('signinSheetTableBody');
+  if (!tbody) return;
+
+  const list = ev.attendees || [];
+  let html = '';
+
+  list.forEach((a, index) => {
+    const isDoc = a.title === '醫師';
+    const isNurse = a.title === '護理師';
+    const isPharm = a.title === '藥師';
+    const isNovartis = a.title === '台灣諾華' || a.hospital.includes('諾華');
+    const isOther = !isDoc && !isNurse && !isPharm;
+    const otherText = isNovartis ? '台灣諾華' : (isOther ? a.title : '____________');
+
+    html += `
+      <tr>
+        <td class="text-center fw-bold">${index + 1}</td>
+        <td class="text-center">${a.city || '台北市'}</td>
+        <td>${a.hospital || ''}</td>
+        <td>${a.dept || ''}</td>
+        <td style="font-size: 0.78rem; line-height: 1.4;">
+          ${isDoc ? '☑' : '□'} 醫師 &nbsp; ${isNurse ? '☑' : '□'} 護理師 &nbsp; ${isPharm ? '☑' : '□'} 藥師<br>
+          ${isOther ? '☑' : '□'} 其他HCP: ${otherText}
+        </td>
+        <td class="fw-bold text-center" style="font-size: 1rem;">${a.name}</td>
+        <td style="background: #ffffff; min-height: 38px;"></td>
+      </tr>
+    `;
+  });
+
+  const blankRows = Math.max(6, 14 - list.length);
+  for (let i = 0; i < blankRows; i++) {
+    const rowNo = list.length + i + 1;
+    html += `
+      <tr>
+        <td class="text-center text-muted">${rowNo}</td>
+        <td class="text-center"></td>
+        <td></td>
+        <td></td>
+        <td style="font-size: 0.78rem; line-height: 1.4;">
+          □ 醫師 &nbsp; □ 護理師 &nbsp; □ 藥師<br>
+          □ 其他HCP: ____________
+        </td>
+        <td></td>
+        <td style="background: #ffffff; min-height: 38px;"></td>
+      </tr>
+    `;
+  }
+
+  tbody.innerHTML = html;
+}
+
+function printSignInSheet() {
+  renderSignInTable();
+  window.print();
+}
+
+function handleRegistrationSubmit(e) {
+  e.preventDefault();
+
+  const ev = eventsDb[currentEventId];
+  if (!ev) return;
+
+  const name = document.getElementById('regName').value.trim();
+  const city = document.getElementById('regCity').value;
+  
+  const hospitalSelect = document.getElementById('regHospitalSelect').value;
+  const hospital = (hospitalSelect === 'OTHER') ? document.getElementById('regHospitalCustom').value.trim() : hospitalSelect;
+  
+  const deptSelect = document.getElementById('regDeptSelect').value;
+  const dept = (deptSelect === 'OTHER') ? document.getElementById('regDeptCustom').value.trim() : deptSelect;
+
+  const titleRadio = document.querySelector('input[name="regTitle"]:checked');
+  const title = titleRadio ? titleRadio.value : '醫師';
+  const dietNotes = document.getElementById('regDietNotes').value.trim();
+
+  let mealChoice = '出席';
+  if (ev.mealMode === 'TABLE') {
+    mealChoice = '桌菜出席';
+  } else if (ev.mealMode === 'SET') {
+    const main = document.getElementById('selectedMainDish').value;
+    const drink = document.getElementById('selectedDrink').value;
+    mealChoice = `${main} (${drink})`;
+  }
+
+  lastSubmitted = {
+    id: Date.now(),
+    name: name,
+    city: city,
+    hospital: hospital,
+    dept: dept,
+    title: title,
+    mealChoice: mealChoice,
+    dietNotes: dietNotes,
+    time: new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })
+  };
+
+  if (!ev.attendees) ev.attendees = [];
+  ev.attendees.push(lastSubmitted);
+  saveEventsDb();
+  renderAttendeesAndTally();
+
+  document.getElementById('successSummaryText').innerHTML = `
+    <strong>${name} (${hospital})</strong> 您好，主辦單位已收到您的預約！<br>
+    活動名稱：<strong>${ev.title}</strong><br>
+    ${ev.mealMode === 'TABLE' ? '本場次為中式桌宴，現場直接入席享用。' : (ev.mealMode === 'SET' ? `您選擇的特餐：<strong>${mealChoice}</strong>` : '')}<br>
+    活動當天現場直接簽名即可。
+  `;
+  new bootstrap.Modal(document.getElementById('successModal')).show();
+
+  document.getElementById('regName').value = '';
+  document.getElementById('regDietNotes').value = '';
+}
+
+function deleteAttendee(id) {
+  if (!confirm('確定要移除此筆與會人員嗎？')) return;
+  const ev = eventsDb[currentEventId];
+  if (!ev) return;
+  ev.attendees = (ev.attendees || []).filter(a => a.id !== id);
+  saveEventsDb();
+  renderAttendeesAndTally();
+}
+
+function injectCurrentEventSample() {
+  const ev = eventsDb[currentEventId];
+  if (!ev) return;
+
+  if (ev.mealMode === 'TABLE') {
+    ev.attendees = [
+      { id: 1, name: '廖國秀', city: '台北市', hospital: '三軍總醫院', dept: '乳房外科', title: '醫師', mealChoice: '桌菜出席', dietNotes: '' },
+      { id: 2, name: '陳德全', city: '台北市', hospital: '三軍總醫院', dept: '乳房外科', title: '醫師', mealChoice: '桌菜出席', dietNotes: '' },
+      { id: 3, name: '林芳如', city: '台北市', hospital: '三軍總醫院', dept: '護理部', title: '護理師', mealChoice: '桌菜出席', dietNotes: '全素 / 素食' },
+      { id: 4, name: '張凱鈞', city: '台北市', hospital: '三軍總醫院', dept: '藥劑部', title: '藥師', mealChoice: '桌菜出席', dietNotes: '不吃牛肉' },
+      { id: 5, name: 'Sandy Huang', city: '台北市', hospital: '台灣諾華股份有限公司', dept: '腫瘤醫學部', title: '台灣諾華', mealChoice: '桌菜出席', dietNotes: '' }
+    ];
+  } else {
+    ev.attendees = [
+      { id: 1, name: '廖國秀', city: '台北市', hospital: '三軍總醫院', dept: '乳房外科', title: '醫師', mealChoice: '嫩煎菲力牛排 (紅白酒)', dietNotes: '' },
+      { id: 2, name: 'Sandy Huang', city: '台北市', hospital: '台灣諾華股份有限公司', dept: '腫瘤醫學部', title: '台灣諾華', mealChoice: '蟹黃海鮮燉飯 (氣泡飲)', dietNotes: '' }
+    ];
+  }
+  saveEventsDb();
+  renderAttendeesAndTally();
+}
+
+function copyRestaurantSummary(btn) {
+  const ev = eventsDb[currentEventId];
+  if (!ev) return;
+  const list = ev.attendees || [];
+  const diets = list.filter(a => a.dietNotes && a.dietNotes.trim() !== '').map(a => `${a.name}: ${a.dietNotes}`);
+
+  let msg = '';
+  if (ev.mealMode === 'TABLE') {
+    const tables = Math.ceil(list.length / 10) || 1;
+    msg = 
+`【${ev.venue} · 訂席與用餐人數確認】
+活動名稱：${ev.title} (台灣諾華)
+活動時間：${ev.date} ${ev.time}
+目前確認出席人數：${list.length} 位
+建議準備桌數：${tables} 桌 (每桌約 10 位)
+
+${diets.length > 0 ? `⚠️ 特殊飲食/素食/忌口名單：\n${diets.join('\n')}\n\n` : ''}麻煩餐廳協助安排席位，謝謝！`;
+  } else {
+    msg = 
+`【${ev.venue} · 點餐總數確認】
+活動名稱：${ev.title} (台灣諾華)
+活動時間：${ev.date} ${ev.time}
+與會總人數：${list.length} 位
+${diets.length > 0 ? `⚠️ 特殊飲食備註：\n${diets.join('\n')}\n` : ''}麻煩餐廳協助備餐，謝謝！`;
+  }
+
+  navigator.clipboard.writeText(msg).then(() => {
+    const orig = btn.innerHTML;
+    btn.innerHTML = `<i class="fa-solid fa-check text-success"></i> 已複製餐廳明細！`;
+    setTimeout(() => btn.innerHTML = orig, 2500);
+  });
+}
+
+function copyEventShareLink(btn) {
+  const shareUrl = `${window.location.origin}${window.location.pathname}?e=${currentEventId}`;
+  navigator.clipboard.writeText(shareUrl).then(() => {
+    const orig = btn.innerHTML;
+    btn.innerHTML = `<i class="fa-solid fa-check text-success"></i> 已複製報名網址！`;
+    setTimeout(() => btn.innerHTML = orig, 2500);
+  });
+}
+
+function exportCsvSignInSheet() {
+  const ev = eventsDb[currentEventId];
+  if (!ev) return;
+  const list = ev.attendees || [];
+
+  const header = "\uFEFF";
+  let csv = header;
+
+  csv += "會議簽到表\n";
+  csv += `活動名稱：${ev.title}\n`;
+  csv += `日期：${ev.date},時間：${ev.time},地點：${ev.venue}\n\n`;
+
+  csv += '"與會者於此簽到表簽名，即表示已閱讀並同意台灣諾華個人資料告知事項及贊助相關事項。"\n\n';
+  csv += "No.,單位所在縣市,服務醫院/機構,科別/單位,職稱,姓名,簽名\n";
+
+  list.forEach((a, i) => {
+    const titleCol = (a.title === '台灣諾華' || a.hospital.includes('諾華')) ? '其他HCP: 台灣諾華' : a.title;
+    csv += `${i + 1},"${a.city || '台北市'}","${a.hospital}","${a.dept}","${titleCol}","${a.name}",\n`;
+  });
+
+  for (let i = 1; i <= 6; i++) {
+    csv += `${list.length + i},"","","","","",\n`;
+  }
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `諾華會議簽到表_${ev.id}_${new Date().toISOString().slice(0,10)}.csv`;
+  link.click();
+}
+
+function sendLineConfirmation() {
+  if (!lastSubmitted) return;
+  const a = lastSubmitted;
+  const ev = eventsDb[currentEventId];
+  const text = `您好 Sandy，我是 ${a.hospital} ${a.name}，我已完成 ${ev.date}【${ev.badge || ev.title}】之線上報名！\n\n用餐型態：【${a.mealChoice}】\n${a.dietNotes ? `特殊飲食：${a.dietNotes}\n` : ''}當天見！`;
+  
+  const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
+  window.open(lineUrl, '_blank');
+}
+
+function openEventEditorModal() {
+  const ev = eventsDb[currentEventId] || {};
+  document.getElementById('cfgEventId').value = ev.id || '';
+  document.getElementById('cfgEventBadge').value = ev.badge || '';
+  document.getElementById('cfgEventTitle').value = ev.title || '';
+  document.getElementById('cfgEventDate').value = ev.date || '';
+  document.getElementById('cfgEventTime').value = ev.time || '';
+  document.getElementById('cfgEventVenue').value = ev.venue || '';
+  document.getElementById('cfgMealMode').value = ev.mealMode || 'TABLE';
+  document.getElementById('cfgAgendaImgUrl').value = ev.agendaImgUrl || '';
+
+  if (ev.agendaLines && ev.agendaLines.length > 0) {
+    document.getElementById('cfgAgendaText').value = ev.agendaLines.map(l => `${l.time} | ${l.topic} | ${l.speaker}`).join('\n');
+  } else {
+    document.getElementById('cfgAgendaText').value = '';
+  }
+
+  if (ev.menuItems && ev.menuItems.length > 0) {
+    document.getElementById('cfgMenuItems').value = ev.menuItems.join('\n');
+  } else {
+    document.getElementById('cfgMenuItems').value = '';
+  }
+  document.getElementById('cfgMenuImgUrl').value = ev.menuImgUrl || '';
+
+  handleMealModeChange(ev.mealMode || 'TABLE');
+  new bootstrap.Modal(document.getElementById('eventEditorModal')).show();
+}
+
+function handleMealModeChange(mode) {
+  const box = document.getElementById('cfgMenuBox');
+  const title = document.getElementById('cfgMenuTitle');
+  if (mode === 'TABLE') {
+    box.style.display = 'block';
+    title.textContent = '中式桌菜菜單品項 (每行一道菜色)';
+  } else if (mode === 'SET') {
+    box.style.display = 'block';
+    title.textContent = '套餐各項菜色與說明 (每行一項)';
+  } else {
+    box.style.display = 'none';
+  }
+}
+
+function saveEventConfig(e) {
+  e.preventDefault();
+
+  const id = document.getElementById('cfgEventId').value.trim();
+  const badge = document.getElementById('cfgEventBadge').value.trim();
+  const title = document.getElementById('cfgEventTitle').value.trim();
+  const date = document.getElementById('cfgEventDate').value.trim();
+  const time = document.getElementById('cfgEventTime').value.trim();
+  const venue = document.getElementById('cfgEventVenue').value.trim();
+  const mealMode = document.getElementById('cfgMealMode').value;
+  const agendaImgUrl = document.getElementById('cfgAgendaImgUrl').value.trim();
+  const menuImgUrl = document.getElementById('cfgMenuImgUrl').value.trim();
+
+  const agendaRaw = document.getElementById('cfgAgendaText').value.trim();
+  const agendaLines = agendaRaw ? agendaRaw.split('\n').filter(l => l.trim()).map(line => {
+    const parts = line.split('|').map(p => p.trim());
+    return {
+      time: parts[0] || '',
+      topic: parts[1] || parts[0] || '',
+      speaker: parts[2] || 'ALL'
+    };
+  }) : [];
+
+  const menuRaw = document.getElementById('cfgMenuItems').value.trim();
+  const menuItems = menuRaw ? menuRaw.split('\n').filter(l => l.trim()) : [];
+
+  const existingAttendees = eventsDb[id] ? eventsDb[id].attendees : [];
+
+  eventsDb[id] = {
+    id: id,
+    badge: badge || title,
+    title: title,
+    date: date,
+    time: time,
+    venue: venue,
+    mealMode: mealMode,
+    agendaImgUrl: agendaImgUrl,
+    agendaLines: agendaLines,
+    menuImgUrl: menuImgUrl,
+    menuItems: menuItems,
+    attendees: existingAttendees
+  };
+
+  currentEventId = id;
+  saveEventsDb();
+  renderEventSelector();
+  renderCurrentEvent();
+
+  bootstrap.Modal.getInstance(document.getElementById('eventEditorModal')).hide();
+  alert('活動設定已成功儲存！');
+}
+
+function deleteCurrentEvent() {
+  if (Object.keys(eventsDb).length <= 1) {
+    alert('至少需要保留一個場次！');
+    return;
+  }
+  if (!confirm(`確定要刪除「${eventsDb[currentEventId].title}」場次嗎？相關報名名單也將一併移除。`)) return;
+
+  delete eventsDb[currentEventId];
+  currentEventId = Object.keys(eventsDb)[0];
+  saveEventsDb();
+  renderEventSelector();
+  renderCurrentEvent();
+
+  bootstrap.Modal.getInstance(document.getElementById('eventEditorModal')).hide();
+}
+
+function openImageModal(src, title) {
+  document.getElementById('imageModalImg').src = src;
+  document.getElementById('imageModalTitle').textContent = title;
+  new bootstrap.Modal(document.getElementById('imagePreviewModal')).show();
+}
+</script>
+
+</body>
+</html>
