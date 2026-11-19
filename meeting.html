@@ -1379,22 +1379,26 @@ async function startMeetingAiAnalysis() {
     }
 
     // 🌟 同步推播存入 Google 試算表 (RTD_通用會議活動設定) 🌟
-    fetch(`${API_BASE}/save_event`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updatedEvent)
-    })
-    .then(res => res.json())
-    .then(resData => {
-      console.log('✅ Google 試算表活動設定已同步更新:', resData);
-    })
-    .catch(err => console.log('雲端活動同步備援:', err));
+    let syncSuccess = false;
+    try {
+      const res = await fetch(`${API_BASE}/save_event`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedEvent)
+      });
+      const resData = await res.json();
+      if (resData && resData.status === 'ok') {
+        syncSuccess = true;
+      }
+    } catch (err) {
+      console.log('雲端活動同步備援:', err);
+    }
 
     if (successBanner) {
       document.getElementById('aiMeetingSuccessText').innerHTML = `
         <strong>Gemini 視覺 AI 辨識成功！</strong><br>
         已自動將【<strong>${updatedEvent.title}</strong>】的日期、時間、地點、議程及菜單更新並連動至下方報名系統！<br>
-        <small class="text-success fw-bold">同步存入 Google 試算表完成，醫師與客戶開啟即可直接瀏覽與報名。</small>
+        ${syncSuccess ? '<small class="text-success fw-bold"><i class="fa-solid fa-cloud-arrow-up me-1"></i>已成功即時寫入 Google 試算表雲端資料庫！</small>' : '<small class="text-warning fw-bold">已暫存於瀏覽器，點擊下方「儲存並套用活動」將再次推送到雲端。</small>'}
       `;
       successBanner.style.display = 'block';
     }

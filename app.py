@@ -2387,6 +2387,37 @@ def api_meeting_save_event():
         now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
         # 存入 Google Sheet 'RTD_通用會議活動設定'
+        # 關鍵防護：將龐大的 base64 圖片轉存為伺服器實體圖檔，避免塞爆 Google Sheet 單一儲存格 50,000 字元上限
+        ev_for_sheet = dict(ev)
+        import base64
+        import uuid
+        upload_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'static', 'uploads')
+        os.makedirs(upload_dir, exist_ok=True)
+
+        for img_key in ['agendaImgUrl', 'menuImgUrl']:
+            val = ev_for_sheet.get(img_key, '')
+            if isinstance(val, str) and val.startswith('data:image'):
+                try:
+                    header, b64_str = val.split(',', 1)
+                    img_bytes = base64.b64decode(b64_str)
+                    ext = 'png' if 'png' in header else 'jpg'
+                    fname = f"{img_key}_{uuid.uuid4().hex[:8]}.{ext}"
+                    fpath = os.path.join(upload_dir, fname)
+                    with open(fpath, 'wb') as f_out:
+                        f_out.write(img_bytes)
+                    public_img_url = f"https://sandy-line-bot.onrender.com/static/uploads/{fname}"
+                    ev_for_sheet[img_key] = public_img_url
+                    ev[img_key] = public_img_url
+                except Exception as img_err:
+                    print(f"Image save error for {img_key}:", img_err)
+                    ev_for_sheet[img_key] = ''
+
+        json_payload = json.dumps(ev_for_sheet, ensure_ascii=False)
+        if len(json_payload) > 45000:
+            ev_for_sheet['agendaImgUrl'] = ''
+            ev_for_sheet['menuImgUrl'] = ''
+            json_payload = json.dumps(ev_for_sheet, ensure_ascii=False)
+
         sh = get_spreadsheet()
         if sh:
             try:
@@ -2395,7 +2426,7 @@ def api_meeting_save_event():
                 ws_cfg = sh.add_worksheet(title='RTD_通用會議活動設定', rows=50, cols=10)
                 ws_cfg.append_row(['場次ID', '活動標籤', '活動名稱', '會議日期', '會議時間', '會議地點', '供餐型態', '更新時間', '活動設定JSON'])
 
-            row_data = [event_id, badge, title, date, time_str, venue, meal_mode, now_str, json.dumps(ev, ensure_ascii=False)]
+            row_data = [event_id, badge, title, date, time_str, venue, meal_mode, now_str, json_payload]
             rows = ws_cfg.get_all_values()
             matched_idx = None
             for idx, r in enumerate(rows):
