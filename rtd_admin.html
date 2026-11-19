@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>台灣諾華 RTD 會議主辦人後台 & 制式簽到表列印</title>
+
+  <!-- Bootstrap 5 & FontAwesome -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary: #0284c7;
+      --novartis-blue: #002d62;
+      --card-border: #e2e8f0;
+    }
+    body {
+      font-family: 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+      background: #f1f5f9;
+      color: #0f172a;
+      padding-bottom: 60px;
+    }
+
+    .top-navbar {
+      background: linear-gradient(135deg, var(--novartis-blue) 0%, #1e3a8a 100%);
+      color: white;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    }
+
+    .custom-card {
+      background: white;
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    /* 簽到表列印預覽專用樣式 */
+    .signin-sheet-container {
+      background: white;
+      border: 1px solid #94a3b8;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      border-radius: 8px;
+      padding: 28px 32px;
+      font-size: 0.88rem;
+      color: #000;
+    }
+    .signin-sheet-table th, .signin-sheet-table td {
+      border: 1px solid #000000 !important;
+      padding: 6px 8px;
+      vertical-align: middle;
+      font-size: 0.82rem;
+    }
+    .signin-sheet-table th {
+      background-color: #f8fafc !important;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    /* 列印隱藏控制 (完全專注於 A4 簽到表) */
+    @media print {
+      body {
+        background: white !important;
+        padding: 0 !important;
+        color: black !important;
+      }
+      .no-print, .top-navbar, footer {
+        display: none !important;
+      }
+      .signin-sheet-container {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+      }
+      @page {
+        size: A4 portrait;
+        margin: 8mm 10mm 8mm 10mm;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 頂部導航列 (Sandy 主辦人專用) -->
+<header class="top-navbar py-3 px-3 px-md-4 mb-4 no-print">
+  <div class="container d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge bg-warning text-dark px-2 py-1 fw-bold fs-6">RTD 主辦人後台</span>
+      <h5 class="mb-0 fw-bold">三總乳癌討論會 · 點餐統計與制式簽到表列印系統</h5>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <button type="button" class="btn btn-outline-light btn-sm fw-bold" onclick="copyDoctorRegistrationLink(this)">
+        <i class="fa-solid fa-share-nodes me-1"></i>複製醫師報名專屬網址
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- 頂端操作列 (列印與匯出按鈕) -->
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3 no-print">
+    <div>
+      <h4 class="fw-bold mb-0 text-dark">
+        <i class="fa-solid fa-file-signature text-primary me-2"></i>制式會議簽到表與點餐統計
+      </h4>
+      <small class="text-muted">自動彙整與會者名單，格式 100% 與諾華內部合規稽核簽到表完全一致</small>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <button type="button" class="btn btn-outline-success fw-bold" onclick="copyRestaurantSummary(this)">
+        <i class="fa-solid fa-utensils me-1"></i>📋 複製餐廳點餐統計 (傳給餐廳經理)
+      </button>
+      <button type="button" class="btn btn-success fw-bold" onclick="exportCsvSignInSheet()">
+        <i class="fa-solid fa-file-excel me-1"></i>📥 匯出 Excel (CSV 格式)
+      </button>
+      <button type="button" class="btn btn-primary fw-bold" onclick="window.print()">
+        <i class="fa-solid fa-print me-1"></i>🖨️ 一鍵列印簽到表 (A4 格式)
+      </button>
+    </div>
+  </div>
+
+  <!-- 餐廳備餐統計卡片 (Wilson Park 專用) -->
+  <div class="custom-card border-success no-print mb-4" style="background: #f0fdf4;">
+    <h5 class="fw-bold text-success mb-3">
+      <i class="fa-solid fa-kitchen-set me-2"></i>Wilson Park 餐廳主廚備餐統計 (即時統整)
+    </h5>
+    <div class="row g-3 text-center">
+      <div class="col-md-3 col-6">
+        <div class="p-3 bg-white border rounded-3 shadow-sm">
+          <span class="text-secondary small fw-bold d-block">總報名出席</span>
+          <span id="statTotalCount" class="fs-2 fw-black text-dark">0</span> 人
+        </div>
+      </div>
+      <div class="col-md-3 col-6">
+        <div class="p-3 bg-white border rounded-3 shadow-sm">
+          <span class="text-secondary small fw-bold d-block">嫩煎菲力牛排</span>
+          <span id="statBeefCount" class="fs-2 fw-black text-danger">0</span> 份
+        </div>
+      </div>
+      <div class="col-md-3 col-6">
+        <div class="p-3 bg-white border rounded-3 shadow-sm">
+          <span class="text-secondary small fw-bold d-block">蟹黃海鮮燉飯</span>
+          <span id="statRiceCount" class="fs-2 fw-black text-warning">0</span> 份
+        </div>
+      </div>
+      <div class="col-md-3 col-6">
+        <div class="p-3 bg-white border rounded-3 shadow-sm">
+          <span class="text-secondary small fw-bold d-block">伊比利老饕豬</span>
+          <span id="statPorkCount" class="fs-2 fw-black text-primary">0</span> 份
+        </div>
+      </div>
+    </div>
+
+    <!-- 特殊飲食提醒清單 -->
+    <div id="statDietBox" class="mt-3 p-2 bg-white rounded border small" style="display: none;">
+      <strong class="text-danger"><i class="fa-solid fa-bell me-1"></i>特殊飲食需求備忘：</strong>
+      <span id="statDietList" class="text-muted"></span>
+    </div>
+  </div>
+
+  <!-- 快捷功能工具列 (加範例名單 / 清空 / 手動加人) -->
+  <div class="d-flex justify-content-between align-items-center mb-3 no-print flex-wrap gap-2">
+    <div class="d-flex gap-2 flex-wrap">
+      <button type="button" class="btn btn-sm btn-outline-primary fw-bold" onclick="openAddModal()">
+        <i class="fa-solid fa-user-plus me-1"></i>手動新增與會人員
+      </button>
+      <button type="button" class="btn btn-sm btn-outline-secondary" onclick="injectSampleAttendees()">
+        <i class="fa-solid fa-vial me-1"></i>注入 6 位三總醫師測試名單
+      </button>
+      <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearAllAttendees()">
+        <i class="fa-solid fa-trash me-1"></i>清空名單
+      </button>
+    </div>
+    <span class="badge bg-secondary px-2 py-1">資料自動暫存於本機</span>
+  </div>
+
+  <!-- ==================== 諾華公司 100% 制式會議簽到表 (A4 列印版面) ==================== -->
+  <div class="signin-sheet-container mb-4">
+    <!-- 表頭 -->
+    <div class="row g-2 mb-2 pb-2 border-bottom">
+      <div class="col-12 text-center mb-1">
+        <h4 class="fw-bold mb-0" style="letter-spacing: 1px;">會議簽到表</h4>
+      </div>
+      <div class="col-12">
+        <strong>活動名稱：</strong><span id="sheetEventTitle">三總乳癌討論會 - From Shared Decision to Long-Term Confidence</span>
+      </div>
+      <div class="col-md-6 col-6">
+        <strong>日期：</strong><span id="sheetEventDate">2026年11月24日（二）</span>
+      </div>
+      <div class="col-md-6 col-6">
+        <strong>時間：</strong><span id="sheetEventTime">18:30 - 20:30</span>
+      </div>
+      <div class="col-12">
+        <strong>地點：</strong><span id="sheetEventVenue">Wilson Park 威爾森公園餐廳（台北市內湖區民權東路六段125之1號）</span>
+      </div>
+    </div>
+
+    <!-- 諾華制式個資告知聲明 (100% 與公司官方 CSV 條款逐字一致) -->
+    <div class="p-2 mb-3" style="font-size: 0.68rem; line-height: 1.4; color: #1e293b; background: #fafafa; border: 1px solid #cbd5e1;">
+      與會者於此簽到表簽名，即表示已閱讀並同意下列【個人資料告知事項】及【同意】條款；如本活動提供住宿/交通或其他出席贊助（如適用），亦同意並確認下列贊助相關事項。<br>
+      <strong>【個人資料告知事項】</strong><br>
+      (1) 蒐集者：台灣諾華股份有限公司（以下稱『諾華』）。<br>
+      (2) 蒐集目的：辦理本活動之出席管理、內外部法規遵循/稽核及相關行政作業（如有贊助/費用核銷等需求亦屬之）。<br>
+      (3) 個人資料類別：姓名、服務機構、科別/單位、職稱、（如有提供）聯絡方式、簽名及出席紀錄等。<br>
+      (4) 利用期間/地區/對象/方式：於活動期間及結束後5年，在中華民國境內，得以紙本或電子方式於前述目的範圍內利用，並得提供予諾華之關係企業及受託之第三方服務供應商；另得依法律或主管機關要求揭露。<br>
+      (5) 權利：本人得依法行使查詢或請求閱覽、請求製給複製本、請求補充或更正、請求停止蒐集/處理/利用、請求刪除等權利；如需聯繫，請洽：taiwan.dp@novartis.com。<br>
+      (6) 不提供之影響：本人得自由選擇是否提供個人資料；惟如不提供必要資料，可能影響本活動之參與或相關服務提供（例如出席證明/贊助核銷等）。<br>
+      <strong>【同意】</strong>本人已閱讀並了解上述告知事項，並同意諾華於前述目的範圍內蒐集、處理及利用本人個人資料。<br>
+      <strong>【若本活動提供住宿/交通或其他出席贊助（如適用）】</strong><br>
+      (a) 遵守所有相關法規命令，及所屬醫院、大學或機關之相關規章；<br>
+      (b) 若有接受住宿之贊助，其住宿係由台灣諾華統籌辦理；<br>
+      (c) 會提供相關單據、出席紀錄及個人資料予諾華及其指定之第三人以進行贊助查核付款作業；<br>
+      (d) 如因法規要求，諾華得公開揭露贊助醫師之項目內容；<br>
+      (e) 上述補助並非用以換取採購或處方諾華產品，亦非成為推薦、處方、採購或施用諾華產品之誘因。
+    </div>
+
+    <!-- 制式簽到表格 (100% 與公司 CSV 格式完全一致) -->
+    <div class="table-responsive">
+      <table class="table table-bordered signin-sheet-table mb-0">
+        <thead>
+          <tr>
+            <th style="width: 45px;">No.</th>
+            <th style="width: 105px;">單位所在縣市</th>
+            <th style="width: 175px;">服務醫院/機構</th>
+            <th style="width: 135px;">科別/單位</th>
+            <th style="width: 185px;">職稱</th>
+            <th style="width: 110px;">姓名</th>
+            <th style="width: 190px;">簽名</th>
+          </tr>
+        </thead>
+        <tbody id="signinSheetTableBody">
+          <!-- 動態填入與會者名單，並自動勾選對應之職稱框，留空行供現場簽名 -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- 手動新增與會人員彈窗 -->
+<div class="modal fade no-print" id="addAttendeeModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header py-2 px-3 bg-primary text-white">
+        <h6 class="modal-title fw-bold">手動新增與會者</h6>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-3">
+        <form id="manualAddForm" onsubmit="handleManualAdd(event)">
+          <div class="mb-2">
+            <label class="form-label small fw-bold">姓名</label>
+            <input type="text" id="manName" class="form-control" required placeholder="例如: 廖國秀">
+          </div>
+          <div class="row g-2 mb-2">
+            <div class="col-6">
+              <label class="form-label small fw-bold">縣市</label>
+              <input type="text" id="manCity" class="form-control" value="台北市">
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-bold">服務醫院</label>
+              <input type="text" id="manHospital" class="form-control" value="三軍總醫院">
+            </div>
+          </div>
+          <div class="row g-2 mb-2">
+            <div class="col-6">
+              <label class="form-label small fw-bold">科別</label>
+              <input type="text" id="manDept" class="form-control" value="乳房外科">
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-bold">職稱</label>
+              <select id="manTitle" class="form-select">
+                <option value="醫師" selected>醫師</option>
+                <option value="護理師">護理師</option>
+                <option value="藥師">藥師</option>
+                <option value="其他HCP">其他HCP</option>
+              </select>
+            </div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small fw-bold">主餐選擇</label>
+            <select id="manMainDish" class="form-select">
+              <option value="嫩煎菲力牛排" selected>嫩煎菲力牛排</option>
+              <option value="蟹黃海鮮燉飯">蟹黃海鮮燉飯</option>
+              <option value="西班牙伊比利老饕豬">西班牙伊比利老饕豬</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-bold">特殊飲食備註</label>
+            <input type="text" id="manDiet" class="form-control" placeholder="如素食、不吃牛等">
+          </div>
+          <button type="submit" class="btn btn-primary fw-bold w-100">
+            確認加入名單
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+const STORAGE_KEY = 'novartis_rtd_attendees_20261124';
+let attendees = [];
+
+document.addEventListener("DOMContentLoaded", () => {
+  loadAttendees();
+  renderAll();
+});
+
+function loadAttendees() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      attendees = JSON.parse(raw);
+    } else {
+      attendees = [
+        { id: 1, name: "廖國秀", city: "台北市", hospital: "三軍總醫院", dept: "乳房外科", title: "醫師", mainDish: "嫩煎菲力牛排", drink: "獨家單杯紅酒/白酒", dietNotes: "", time: "18:00" }
+      ];
+    }
+  } catch (e) {
+    attendees = [];
+  }
+}
+
+function saveAttendees() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(attendees));
+}
+
+function renderAll() {
+  document.getElementById('statTotalCount').textContent = attendees.length;
+
+  let beef = 0, rice = 0, pork = 0;
+  const dietList = [];
+
+  attendees.forEach(a => {
+    if (a.mainDish.includes('牛排')) beef++;
+    else if (a.mainDish.includes('燉飯')) rice++;
+    else if (a.mainDish.includes('老饕豬')) pork++;
+
+    if (a.dietNotes) dietList.push(`${a.name}（${a.dietNotes}）`);
+  });
+
+  document.getElementById('statBeefCount').textContent = beef;
+  document.getElementById('statRiceCount').textContent = rice;
+  document.getElementById('statPorkCount').textContent = pork;
+
+  const dietBox = document.getElementById('statDietBox');
+  const dietSpan = document.getElementById('statDietList');
+  if (dietList.length > 0) {
+    dietBox.style.display = 'block';
+    dietSpan.textContent = dietList.join('；');
+  } else {
+    dietBox.style.display = 'none';
+  }
+
+  renderSignInTable();
+}
+
+function renderSignInTable() {
+  const tbody = document.getElementById('signinSheetTableBody');
+  if (!tbody) return;
+
+  let html = '';
+
+  attendees.forEach((a, index) => {
+    const isDoc = a.title === '醫師';
+    const isNurse = a.title === '護理師';
+    const isPharm = a.title === '藥師';
+    const isOther = !isDoc && !isNurse && !isPharm;
+
+    html += `
+      <tr>
+        <td class="text-center fw-bold">${index + 1}</td>
+        <td class="text-center">${a.city || '台北市'}</td>
+        <td>${a.hospital || ''}</td>
+        <td>${a.dept || ''}</td>
+        <td style="font-size: 0.78rem; line-height: 1.4;">
+          ${isDoc ? '☑' : '□'} 醫師 &nbsp; ${isNurse ? '☑' : '□'} 護理師 &nbsp; ${isPharm ? '☑' : '□'} 藥師<br>
+          ${isOther ? '☑' : '□'} 其他HCP: ${isOther ? a.title : '____________'}
+        </td>
+        <td class="fw-bold">${a.name}</td>
+        <td style="background: #ffffff; min-height: 38px;"></td>
+      </tr>
+    `;
+  });
+
+  const blankRows = Math.max(5, 15 - attendees.length);
+  for (let i = 0; i < blankRows; i++) {
+    const rowNo = attendees.length + i + 1;
+    html += `
+      <tr>
+        <td class="text-center text-muted">${rowNo}</td>
+        <td class="text-center"></td>
+        <td></td>
+        <td></td>
+        <td style="font-size: 0.78rem; line-height: 1.4;">
+          □ 醫師 &nbsp; □ 護理師 &nbsp; □ 藥師<br>
+          □ 其他HCP: ____________
+        </td>
+        <td></td>
+        <td style="background: #ffffff;"></td>
+      </tr>
+    `;
+  }
+
+  tbody.innerHTML = html;
+}
+
+function copyDoctorRegistrationLink(btn) {
+  const regUrl = window.location.origin + window.location.pathname.replace('rtd_admin.html', 'rtd.html');
+  navigator.clipboard.writeText(regUrl).then(() => {
+    const orig = btn.innerHTML;
+    btn.innerHTML = `<i class="fa-solid fa-check text-success"></i> 已複製報名網址！`;
+    setTimeout(() => { btn.innerHTML = orig; }, 3000);
+  }).catch(e => {
+    prompt("請複製醫師專用報名網址：", regUrl);
+  });
+}
+
+function copyRestaurantSummary(btn) {
+  const total = attendees.length;
+  let beef = 0, rice = 0, pork = 0;
+  let redWine = 0, sparkling = 0, tea = 0, coffee = 0;
+  const dietList = [];
+
+  attendees.forEach(a => {
+    if (a.mainDish.includes('牛排')) beef++;
+    else if (a.mainDish.includes('燉飯')) rice++;
+    else if (a.mainDish.includes('老饕豬')) pork++;
+
+    if ((a.drink || '').includes('酒')) redWine++;
+    else if ((a.drink || '').includes('氣泡')) sparkling++;
+    else if ((a.drink || '').includes('伯爵')) tea++;
+    else if ((a.drink || '').includes('咖啡')) coffee++;
+
+    if (a.dietNotes) dietList.push(`${a.name}（${a.dietNotes}）`);
+  });
+
+  const msg = `【Wilson Park 威爾森公園餐廳 備餐統計】
+活動：三總乳癌討論會 (台灣諾華)
+時間：2026/11/24 (二) 18:30-20:30
+總出席人數：共 ${total} 位貴賓
+
+🍽️ 主餐統整：
+1. 嫩煎菲力牛排：${beef} 份
+2. 蟹黃海鮮燉飯：${rice} 份
+3. 西班牙伊比利老饕豬：${pork} 份
+
+🍷 飲品統整：
+- 單杯紅酒/白酒：${redWine} 杯
+- 無酒精氣泡飲：${sparkling} 杯
+- 獅王伯爵茶：${tea} 杯
+- 美式咖啡：${coffee} 杯
+
+⚠️ 特殊飲食備註：
+${dietList.length > 0 ? dietList.join('\\n') : '無特殊忌口需求'}
+
+感謝餐廳團隊的用心準備！`;
+
+  navigator.clipboard.writeText(msg).then(() => {
+    const orig = btn.innerHTML;
+    btn.innerHTML = `<i class="fa-solid fa-check"></i> ✅ 已複製備餐清單！`;
+    btn.classList.add("btn-success");
+    btn.classList.remove("btn-outline-success");
+    setTimeout(() => {
+      btn.innerHTML = orig;
+      btn.classList.remove("btn-success");
+      btn.classList.add("btn-outline-success");
+    }, 2500);
+  }).catch(e => {
+    prompt("請按 Ctrl+C 複製備餐清單：", msg);
+  });
+}
+
+function exportCsvSignInSheet() {
+  let csv = "\uFEFF";
+  csv += ",,,,,,\\n";
+  csv += "活動名稱,,三總乳癌討論會 - From Shared Decision to Long-Term Confidence,,,,\\n";
+  csv += "日期,,2026年11月24日（二）,,時間,,18:30-20:30\\n";
+  csv += "地點,,Wilson Park 威爾森公園餐廳（台北市內湖區民權東路六段125之1號）,,,,\\n";
+  csv += `"與會者於此簽到表簽名，即表示已閱讀並同意下列【個人資料告知事項】及【同意】條款；如本活動提供住宿/交通或其他出席贊助（如適用），亦同意並確認下列贊助相關事項。\\n【個人資料告知事項】\\n(1) 蒐集者：台灣諾華股份有限公司（以下稱『諾華』）。\\n(2) 蒐集目的：辦理本活動之出席管理、內外部法規遵循/稽核及相關行政作業（如有贊助/費用核銷等需求亦屬之）。\\n(3) 個人資料類別：姓名、服務機構、科別/單位、職稱、（如有提供）聯絡方式、簽名及出席紀錄等。\\n(4) 利用期間/地區/對象/方式：於活動期間及結束後5年，在中華民國境內，得以紙本或電子方式於前述目的範圍內利用，並得提供予諾華之關係企業及受託之第三方服務供應商；另得依法律或主管機關要求揭露。\\n(5) 權利：本人得依法行使查詢或請求閱覽、請求製給複製本、請求補充或更正、請求停止蒐集/處理/利用、請求刪除等權利；如需聯繫，請洽：taiwan.dp@novartis.com。\\n(6) 不提供之影響：本人得自由選擇是否提供個人資料；惟如不提供必要資料，可能影響本活動之參與或相關服務提供（例如出席證明/贊助核銷等）。\\n【同意】本人已閱讀並了解上述告知事項，並同意諾華於前述目的範圍內蒐集、處理及利用本人個人資料。\\n【若本活動提供住宿/交通或其他出席贊助（如適用）】\\n(a) 遵守所有相關法規命令，及所屬醫院、大學或機關之相關規章；\\n(b) 若有接受住宿之贊助，其住宿係由台灣諾華統籌辦理；\\n(c) 會提供相關單據、出席紀錄及個人資料予諾華及其指定之第三人以進行贊助查核付款作業；\\n(d) 如因法規要求，諾華得公開揭露贊助醫師之項目內容；\\n(e) 上述補助並非用以換取採購或處方諾華產品，亦非成為推薦、處方、採購或施用諾華產品之誘因。",,,,,,\\n`;
+  csv += ",,,,,,\\n";
+  csv += "No.,單位所在縣市,服務醫院/機構,科別/單位,職稱,姓名,簽名\\n";
+
+  attendees.forEach((a, idx) => {
+    const isDoc = a.title === '醫師';
+    const isNurse = a.title === '護理師';
+    const isPharm = a.title === '藥師';
+    const isOther = !isDoc && !isNurse && !isPharm;
+    const titleBox = `"${isDoc ? '☑' : '□'} 醫師  ${isNurse ? '☑' : '□'} 護理師  ${isPharm ? '☑' : '□'} 藥師\\n\\n${isOther ? '☑' : '□'} 其他HCP: ${isOther ? a.title : '____________'}"`;
+    csv += `${idx + 1},${a.city},"${a.hospital}","${a.dept}",${titleBox},"${a.name}",\\n`;
+  });
+
+  for (let i = attendees.length + 1; i <= Math.max(attendees.length + 5, 20); i++) {
+    csv += `${i},,,," □ 醫師  □ 護理師  □ 藥師\\n\\n □ 其他HCP: ____________",,\\n`;
+  }
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `諾華會議簽到表_三總乳癌討論會_20261124.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function openAddModal() {
+  const modal = new bootstrap.Modal(document.getElementById('addAttendeeModal'));
+  modal.show();
+}
+
+function handleManualAdd(e) {
+  e.preventDefault();
+  const name = document.getElementById('manName').value.trim();
+  const city = document.getElementById('manCity').value.trim();
+  const hospital = document.getElementById('manHospital').value.trim();
+  const dept = document.getElementById('manDept').value.trim();
+  const title = document.getElementById('manTitle').value;
+  const mainDish = document.getElementById('manMainDish').value;
+  const diet = document.getElementById('manDiet').value.trim();
+
+  attendees.push({
+    id: Date.now(),
+    name: name,
+    city: city,
+    hospital: hospital,
+    dept: dept,
+    title: title,
+    mainDish: mainDish,
+    drink: "無酒精氣泡飲",
+    dietNotes: diet,
+    time: "手動新增"
+  });
+
+  saveAttendees();
+  renderAll();
+
+  bootstrap.Modal.getInstance(document.getElementById('addAttendeeModal')).hide();
+  document.getElementById('manName').value = '';
+  document.getElementById('manDiet').value = '';
+}
+
+function injectSampleAttendees() {
+  attendees = [
+    { id: 1, name: "廖國秀", city: "台北市", hospital: "三軍總醫院", dept: "乳房外科", title: "醫師", mainDish: "嫩煎菲力牛排", drink: "獨家單杯紅酒/白酒", dietNotes: "", time: "18:00" },
+    { id: 2, name: "陳建國", city: "台北市", hospital: "三軍總醫院", dept: "一般外科", title: "醫師", mainDish: "西班牙伊比利老饕豬", drink: "無酒精氣泡飲", dietNotes: "不吃牛", time: "18:05" },
+    { id: 3, name: "張麗芬", city: "台北市", hospital: "三軍總醫院", dept: "血液腫瘤科", title: "醫師", mainDish: "蟹黃海鮮燉飯", drink: "獅王伯爵茶", dietNotes: "", time: "18:10" },
+    { id: 4, name: "李雅惠", city: "台北市", hospital: "三軍總醫院", dept: "乳房外科", title: "護理師", mainDish: "嫩煎菲力牛排", drink: "美式咖啡", dietNotes: "", time: "18:12" },
+    { id: 5, name: "王柏豪", city: "台北市", hospital: "三軍總醫院", dept: "藥劑部", title: "藥師", mainDish: "蟹黃海鮮燉飯", drink: "無酒精氣泡飲", dietNotes: "海鮮少油", time: "18:15" },
+    { id: 6, name: "黃雅文", city: "台北市", hospital: "三軍總醫院", dept: "腫瘤醫學部", title: "醫師", mainDish: "嫩煎菲力牛排", drink: "獨家單杯紅酒/白酒", dietNotes: "", time: "18:18" }
+  ];
+  saveAttendees();
+  renderAll();
+  alert("已成功注入 6 位三總乳癌團隊與會名單！");
+}
+
+function clearAllAttendees() {
+  if (confirm("確定要清空所有名單嗎？")) {
+    attendees = [];
+    saveAttendees();
+    renderAll();
+  }
+}
+</script>
+
+</body>
+</html>
