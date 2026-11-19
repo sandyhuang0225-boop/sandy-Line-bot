@@ -240,135 +240,6 @@
     </div>
   </div>
 
-  <!-- 🌟 主辦人後台：上傳 Agenda & 菜單 智慧帶入會議與報名系統 🌟 -->
-  <div class="upload-hero-card hide-on-print">
-    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
-      <div>
-        <h5 class="mb-0 fw-bold text-primary">
-          <i class="fa-solid fa-wand-magic-sparkles text-danger me-2"></i>【主辦人快速設定】上傳 Agenda & 菜單 智慧帶入系統
-        </h5>
-        <small class="text-muted">由 Google Gemini 視覺 AI 自動讀懂 Agenda（更新主題、時間、地點、演講題目、講師/座長）與菜單，並自動同步至下方報名系統與 Google 試算表！</small>
-      </div>
-      <div class="d-flex align-items-center gap-2">
-        <span class="badge bg-success-subtle text-success border border-success px-2 py-1">
-          <i class="fa-solid fa-sparkles me-1"></i>Gemini 視覺 AI 已連線
-        </span>
-        <button type="button" class="btn btn-sm btn-outline-primary fw-bold" onclick="toggleManualConfigBox()">
-          <i class="fa-solid fa-sliders me-1"></i>手動微調設定
-        </button>
-      </div>
-    </div>
-
-    <!-- 上傳選取區：Agenda (左) + 菜單 (右) -->
-    <div class="row g-3 mb-3">
-      <!-- 1. Agenda 上傳 -->
-      <div class="col-md-6 col-12">
-        <div class="card p-3 border-2 border-primary bg-white shadow-sm h-100">
-          <label for="aiAgendaInput" class="form-label fw-bold text-primary fs-5 mb-1 d-block">
-            <i class="fa-solid fa-clipboard-list me-2"></i>【步驟 1：選取或拍攝 Agenda】
-          </label>
-          <div class="text-secondary small mb-2">
-            支援手機拍照、相簿圖片或 PDF 議程表：
-          </div>
-          <input type="file" id="aiAgendaInput" accept="image/*,.pdf,application/pdf" class="form-control form-control-lg border-2 border-primary py-2" style="font-size: 1rem; cursor: pointer;" onchange="handleAiFileChosen(this, 'agenda')">
-          <div id="aiAgendaChosenNotice" class="text-success fw-bold small mt-2" style="display: none;"></div>
-        </div>
-      </div>
-
-      <!-- 2. 菜單 上傳 -->
-      <div class="col-md-6 col-12">
-        <div class="card p-3 border-2 border-success bg-white shadow-sm h-100">
-          <label for="aiMenuInput" class="form-label fw-bold text-success fs-5 mb-1 d-block">
-            <i class="fa-solid fa-utensils me-2"></i>【步驟 1B：選取或拍攝 菜單】<small class="text-muted fs-6 fw-normal">(選填)</small>
-          </label>
-          <div class="text-secondary small mb-2">
-            上傳餐廳菜單照片，系統將自動展示並更新供餐選項：
-          </div>
-          <input type="file" id="aiMenuInput" accept="image/*" class="form-control form-control-lg border-2 border-success py-2" style="font-size: 1rem; cursor: pointer;" onchange="handleAiFileChosen(this, 'menu')">
-          <div id="aiMenuChosenNotice" class="text-success fw-bold small mt-2" style="display: none;"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 步驟 2：啟動視覺 AI 辨識按鈕 -->
-    <div class="mb-2">
-      <button type="button" id="btnStartMeetingAI" class="btn btn-warning w-100 py-3 fw-bold fs-5 shadow-sm text-dark d-flex align-items-center justify-content-center" onclick="startMeetingAiAnalysis()">
-        <i class="fa-solid fa-bolt me-2 fs-4 text-danger"></i>
-        <span>【步驟 2：啟動視覺 AI 智慧解析帶入會議與報名系統】</span>
-      </button>
-    </div>
-
-    <!-- 正在解析中動畫提示 -->
-    <div id="aiMeetingAnalyzingBox" class="alert alert-info py-2 px-3 mt-2 shadow-sm" style="display: none;">
-      <div class="d-flex align-items-center">
-        <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
-        <div id="aiMeetingStatusDetail" class="small fw-bold">Gemini 視覺 AI 正在深度解析 Agenda 與菜單中，請稍候 3~5 秒...</div>
-      </div>
-    </div>
-
-    <!-- 辨識成功提示條 -->
-    <div id="aiMeetingSuccessBanner" class="alert alert-success py-2 px-3 mt-2 shadow-sm" style="display: none;">
-      <i class="fa-solid fa-circle-check text-success me-2"></i>
-      <span id="aiMeetingSuccessText"></span>
-    </div>
-
-    <!-- 摺疊區：手動微調設定面板 -->
-    <div id="manualConfigBox" class="mt-3 p-3 bg-light border rounded-3" style="display: none;">
-      <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-pen-to-square text-primary me-1"></i>手動微調活動內容（隨時可直接編輯更新）</h6>
-      <div class="row g-2 small">
-        <div class="col-md-6 col-12">
-          <label class="form-label fw-bold mb-1">會議主題：</label>
-          <input type="text" id="manualCfgTitle" class="form-control form-control-sm" placeholder="會議完整名稱">
-        </div>
-        <div class="col-md-3 col-6">
-          <label class="form-label fw-bold mb-1">會議日期：</label>
-          <input type="text" id="manualCfgDate" class="form-control form-control-sm" placeholder="2026年12月04日">
-        </div>
-        <div class="col-md-3 col-6">
-          <label class="form-label fw-bold mb-1">會議時間：</label>
-          <input type="text" id="manualCfgTime" class="form-control form-control-sm" placeholder="18:30 - 20:30">
-        </div>
-        <div class="col-md-8 col-12">
-          <label class="form-label fw-bold mb-1">會議地點 / 餐廳名稱及地址：</label>
-          <input type="text" id="manualCfgVenue" class="form-control form-control-sm" placeholder="餐廳名稱與地址">
-        </div>
-        <div class="col-md-4 col-12">
-          <label class="form-label fw-bold mb-1">供餐型態：</label>
-          <select id="manualCfgMealMode" class="form-select form-select-sm" onchange="handleManualMealModeChange(this.value)">
-            <option value="TABLE">中式桌宴（合菜共享 · 報名免選主餐）</option>
-            <option value="SET">西式/個人套餐（跳出選單三選一）</option>
-          </select>
-        </div>
-        <!-- 西式套餐主餐微調區 (當選 SET 時展開) -->
-        <div class="col-12 mt-2" id="manualSetMainsRow" style="display: none;">
-          <div class="p-2 border rounded bg-white">
-            <span class="fw-bold text-primary small d-block mb-1"><i class="fa-solid fa-utensils me-1"></i>西式個人套餐主餐自訂（醫師線上單選）：</span>
-            <div class="row g-1">
-              <div class="col-md-4 col-12">
-                <input type="text" id="manualCfgMain1" class="form-control form-control-sm" placeholder="主餐一 (例如: 爐烤肋眼牛排)">
-              </div>
-              <div class="col-md-4 col-12">
-                <input type="text" id="manualCfgMain2" class="form-control form-control-sm" placeholder="主餐二 (例如: 嫩煎野生鱸魚)">
-              </div>
-              <div class="col-md-4 col-12">
-                <input type="text" id="manualCfgMain3" class="form-control form-control-sm" placeholder="主餐三 (例如: 松露野菇燉飯/素)">
-              </div>
-            </div>
-            <div class="mt-2">
-              <label class="form-label fw-bold mb-0 text-muted" style="font-size: 0.75rem;">佐餐飲品選項 (以斜線 / 分隔)：</label>
-              <input type="text" id="manualCfgDrinks" class="form-control form-control-sm" placeholder="紅酒 / 白酒 / 新鮮果汁 / 熱茶 / 研磨美式">
-            </div>
-          </div>
-        </div>
-        <div class="col-12 mt-2">
-          <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="saveManualConfig()">
-            <i class="fa-solid fa-floppy-disk me-1"></i>儲存並同步至 Google 試算表
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- 活動資訊橫幅卡片 -->
   <div class="custom-card border-primary border-2 hide-on-print" style="background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);">
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2 pb-2 border-bottom">
@@ -743,19 +614,61 @@
           </div>
         </div>
 
-        <!-- 快速文字智慧解析工具 -->
-        <div class="mb-3">
-          <button type="button" class="btn btn-outline-primary btn-sm fw-bold w-100 py-1" data-bs-toggle="collapse" data-bs-target="#quickPasteBox">
-            <i class="fa-solid fa-wand-magic-sparkles me-1"></i>快速貼上文字智慧解析（從 LINE 或 Email 複製文字，一鍵自動拆解填入）
-          </button>
-          <div class="collapse mt-2" id="quickPasteBox">
-            <div class="card card-body bg-light border p-3">
-              <label class="form-label small fw-bold text-dark mb-1">貼上會議資訊或餐廳菜單文字：</label>
-              <textarea id="quickPasteInput" class="form-control form-control-sm mb-2" rows="3" placeholder="例如貼上：&#10;三總乳癌高峰會&#10;日期：2026/12/04 18:30-20:30&#10;地點：欣葉鐘菜（台北市樂群二路199號）&#10;菜色：砂鍋雞湯、現流海鮮、紅蟳米糕..."></textarea>
-              <button type="button" class="btn btn-primary btn-sm fw-bold" onclick="smartParsePastedText()">
-                <i class="fa-solid fa-bolt me-1"></i>一鍵自動解析並填入下方各欄位
-              </button>
+        <!-- 🌟 主辦人核心：上傳 Agenda & 菜單 視覺 AI 智慧解析帶入 🌟 -->
+        <div class="card p-3 border-2 border-primary bg-light mb-3 shadow-sm rounded-3">
+          <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
+            <h6 class="mb-0 fw-bold text-primary">
+              <i class="fa-solid fa-wand-magic-sparkles text-danger me-2"></i>上傳 Agenda & 菜單 照片（Gemini 視覺 AI 智慧解析帶入）
+            </h6>
+            <span class="badge bg-success-subtle text-success border border-success px-2 py-1 small">
+              <i class="fa-solid fa-sparkles me-1"></i>視覺 AI 已就緒
+            </span>
+          </div>
+          <p class="text-muted small mb-2">
+            由 Gemini 視覺 AI 自動讀懂 Agenda（更新主題、時間、地點、演講題目、講師/座長）與菜單（自動判定合菜或個人套餐主餐），一鍵帶入下方設定並同步報名表！
+          </p>
+
+          <div class="row g-2 mb-2">
+            <!-- 1. Agenda 上傳 -->
+            <div class="col-md-6 col-12">
+              <div class="bg-white p-2 border rounded">
+                <label for="aiAgendaInput" class="form-label fw-bold text-primary small mb-1 d-block">
+                  <i class="fa-solid fa-clipboard-list me-1"></i>【步驟 1：選取或拍攝 Agenda 照片/PDF】
+                </label>
+                <input type="file" id="aiAgendaInput" accept="image/*,.pdf,application/pdf" class="form-control form-control-sm border-primary" onchange="handleAiFileChosen(this, 'agenda')">
+                <div id="aiAgendaChosenNotice" class="text-success fw-bold small mt-1" style="display: none; font-size: 0.78rem;"></div>
+              </div>
             </div>
+
+            <!-- 2. 菜單 上傳 -->
+            <div class="col-md-6 col-12">
+              <div class="bg-white p-2 border rounded">
+                <label for="aiMenuInput" class="form-label fw-bold text-success small mb-1 d-block">
+                  <i class="fa-solid fa-utensils me-1"></i>【步驟 1B：選取或拍攝 菜單 照片】<small class="text-muted">(選填)</small>
+                </label>
+                <input type="file" id="aiMenuInput" accept="image/*" class="form-control form-control-sm border-success" onchange="handleAiFileChosen(this, 'menu')">
+                <div id="aiMenuChosenNotice" class="text-success fw-bold small mt-1" style="display: none; font-size: 0.78rem;"></div>
+              </div>
+            </div>
+          </div>
+
+          <button type="button" id="btnStartMeetingAI" class="btn btn-warning w-100 py-2 fw-bold text-dark shadow-sm d-flex align-items-center justify-content-center" onclick="startMeetingAiAnalysis()">
+            <i class="fa-solid fa-bolt me-2 text-danger fs-5"></i>
+            <span>【步驟 2：啟動視覺 AI 智慧解析帶入下方各欄位】</span>
+          </button>
+
+          <!-- 正在解析中動畫提示 -->
+          <div id="aiMeetingAnalyzingBox" class="alert alert-info py-2 px-3 mt-2 mb-0 shadow-sm small" style="display: none;">
+            <div class="d-flex align-items-center">
+              <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+              <div id="aiMeetingStatusDetail" class="fw-bold">Gemini 視覺 AI 正在深度解析 Agenda 與菜單中，請稍候 3~5 秒...</div>
+            </div>
+          </div>
+
+          <!-- 辨識成功提示條 -->
+          <div id="aiMeetingSuccessBanner" class="alert alert-success py-2 px-3 mt-2 mb-0 shadow-sm small" style="display: none;">
+            <i class="fa-solid fa-circle-check text-success me-2"></i>
+            <span id="aiMeetingSuccessText"></span>
           </div>
         </div>
 
@@ -983,7 +896,7 @@ const DEFAULT_EVENTS = {
 
 let eventsDb = {};
 let currentEventId = '1204_table';
-let isAdmin = true;
+let isAdmin = false;
 let lastSubmitted = null;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1001,26 +914,45 @@ document.addEventListener('DOMContentLoaded', () => {
   syncLiveAttendeesFromServer();
 });
 
-// 檢查是否為主辦人 Sandy 權限 (預設啟用主辦人管理功能)
+// 檢查是否為主辦人 Sandy 權限 (需密碼 sandy00001 驗證，一般訪客僅能檢視報名)
 function checkAdminAuth() {
-  isAdmin = true;
-  localStorage.setItem(STORAGE_ADMIN_AUTH_KEY, 'true');
+  const urlParams = new URLSearchParams(window.location.search);
+  const adminParam = urlParams.get('admin');
+  if (adminParam === 'sandy00001' || adminParam === 'sandy' || localStorage.getItem(STORAGE_ADMIN_AUTH_KEY) === 'true') {
+    isAdmin = true;
+    localStorage.setItem(STORAGE_ADMIN_AUTH_KEY, 'true');
+  } else {
+    isAdmin = false;
+  }
 
   const adminPortalContainer = document.getElementById('adminPortalContainer');
   const adminGroup = document.getElementById('adminControlsGroup');
   const adminBtns = document.querySelectorAll('.admin-only-btn');
   const adminCols = document.querySelectorAll('.admin-col');
 
-  if (adminPortalContainer) {
-    adminPortalContainer.innerHTML = `
-      <button type="button" class="btn btn-warning text-dark fw-bold btn-sm shadow-sm" onclick="openEventEditorModal()">
-        <i class="fa-solid fa-gear me-1"></i>活動設定
-      </button>
-    `;
+  if (isAdmin) {
+    if (adminPortalContainer) {
+      adminPortalContainer.innerHTML = `
+        <button type="button" class="btn btn-warning text-dark fw-bold btn-sm shadow-sm" onclick="openEventEditorModal()">
+          <i class="fa-solid fa-gear me-1"></i>活動設定中心 (Sandy)
+        </button>
+      `;
+    }
+    if (adminGroup) adminGroup.style.display = 'flex';
+    adminBtns.forEach(b => b.style.display = 'inline-block');
+    adminCols.forEach(c => c.style.display = '');
+  } else {
+    if (adminPortalContainer) {
+      adminPortalContainer.innerHTML = `
+        <button type="button" id="btnAdminPortal" class="btn btn-outline-light btn-sm fw-bold shadow-sm" onclick="handleAdminPortalClick()">
+          <i class="fa-solid fa-lock text-warning me-1"></i>主辦人管理設定
+        </button>
+      `;
+    }
+    if (adminGroup) adminGroup.style.display = 'none';
+    adminBtns.forEach(b => b.style.display = 'none');
+    adminCols.forEach(c => c.style.display = 'none');
   }
-  if (adminGroup) adminGroup.style.display = 'flex';
-  adminBtns.forEach(b => b.style.display = 'inline-block');
-  adminCols.forEach(c => c.style.display = '');
 }
 
 // ==================== Gemini 視覺 AI 辨識引擎 ====================
@@ -1296,6 +1228,45 @@ async function startMeetingAiAnalysis() {
     saveEventsDb();
     renderEventSelector();
     renderCurrentEvent();
+
+    // 🌟 核心：自動將辨識內容即時填入彈窗下方的表單各欄位 🌟
+    if (document.getElementById('cfgEventTitle')) document.getElementById('cfgEventTitle').value = updatedEvent.title;
+    if (document.getElementById('cfgEventDate')) document.getElementById('cfgEventDate').value = updatedEvent.date;
+    if (document.getElementById('cfgEventTime')) document.getElementById('cfgEventTime').value = updatedEvent.time;
+    if (document.getElementById('cfgEventVenue')) document.getElementById('cfgEventVenue').value = updatedEvent.venue;
+    if (document.getElementById('cfgMealMode')) {
+      document.getElementById('cfgMealMode').value = updatedEvent.mealMode;
+      handleMealModeChange(updatedEvent.mealMode);
+    }
+    if (updatedEvent.mealMode === 'SET' && updatedEvent.setOptions?.mains) {
+      if (document.getElementById('cfgSetMain1')) document.getElementById('cfgSetMain1').value = updatedEvent.setOptions.mains[0] || '';
+      if (document.getElementById('cfgSetMain2')) document.getElementById('cfgSetMain2').value = updatedEvent.setOptions.mains[1] || '';
+      if (document.getElementById('cfgSetMain3')) document.getElementById('cfgSetMain3').value = updatedEvent.setOptions.mains[2] || '';
+      if (document.getElementById('cfgSetDrinks')) document.getElementById('cfgSetDrinks').value = (updatedEvent.setOptions.drinks || []).join(' / ');
+    } else if (updatedEvent.mealMode === 'TABLE' && updatedEvent.menuItems) {
+      if (document.getElementById('cfgTableMenuItems')) document.getElementById('cfgTableMenuItems').value = updatedEvent.menuItems.join('\n');
+    }
+    if (updatedEvent.agendaLines && updatedEvent.agendaLines.length > 0 && document.getElementById('cfgAgendaText')) {
+      document.getElementById('cfgAgendaText').value = updatedEvent.agendaLines.map(l => `${l.time} | ${l.topic} | ${l.speaker}`).join('\n');
+    }
+    if (updatedEvent.agendaImgUrl && document.getElementById('cfgAgendaImgData')) {
+      document.getElementById('cfgAgendaImgData').value = updatedEvent.agendaImgUrl;
+      const prevBox = document.getElementById('cfgAgendaImgPreviewBox');
+      const prevImg = document.getElementById('cfgAgendaImgPreview');
+      if (prevBox && prevImg) {
+        prevImg.src = updatedEvent.agendaImgUrl;
+        prevBox.style.display = 'block';
+      }
+    }
+    if (updatedEvent.menuImgUrl && document.getElementById('cfgMenuImgData')) {
+      document.getElementById('cfgMenuImgData').value = updatedEvent.menuImgUrl;
+      const prevBox = document.getElementById('cfgMenuImgPreviewBox');
+      const prevImg = document.getElementById('cfgMenuImgPreview');
+      if (prevBox && prevImg) {
+        prevImg.src = updatedEvent.menuImgUrl;
+        prevBox.style.display = 'block';
+      }
+    }
 
     // 🌟 同步推播存入 Google 試算表 (RTD_通用會議活動設定) 🌟
     fetch(`${API_BASE}/save_event`, {
@@ -1704,9 +1675,13 @@ function renderCurrentEvent() {
       document.getElementById('menuImgBox').style.display = 'none';
     }
 
-    const setOpts = ev.setOptions || {
-      mains: ['嫩煎菲力牛排', '蟹黃海鮮燉飯', '西班牙伊比利老饕豬'],
-      drinks: ['獨家單杯紅白酒', '無酒精氣泡飲', '獅王伯爵茶', '美式咖啡']
+    const setOpts = {
+      mains: (ev.setOptions && Array.isArray(ev.setOptions.mains) && ev.setOptions.mains.length > 0)
+        ? ev.setOptions.mains
+        : ['嫩煎菲力牛排', '蟹黃海鮮燉飯', '西班牙伊比利老饕豬'],
+      drinks: (ev.setOptions && Array.isArray(ev.setOptions.drinks) && ev.setOptions.drinks.length > 0)
+        ? ev.setOptions.drinks
+        : ['獨家單杯紅白酒', '無酒精氣泡飲', '獅王伯爵茶', '美式咖啡']
     };
 
     menuItemsContent.innerHTML = `
@@ -1767,26 +1742,34 @@ function renderCurrentEvent() {
 }
 
 function selectSetMain(name, idx) {
-  document.getElementById('selectedMainDish').value = name;
+  const mainInput = document.getElementById('selectedMainDish');
+  if (mainInput) mainInput.value = name;
   document.querySelectorAll('[id^="card_main_"]').forEach(c => c.classList.remove('selected'));
   document.querySelectorAll('[id^="card_main_"] .status-tag').forEach(s => s.textContent = '點擊選取');
   
   const targetCard = document.getElementById(`card_main_${idx}`);
   if (targetCard) {
     targetCard.classList.add('selected');
-    targetCard.querySelector('.status-tag').textContent = '已選取';
+    const tag = targetCard.querySelector('.status-tag');
+    if (tag) tag.textContent = '已選取';
     const radio = document.getElementById(`radio_main_${idx}`);
     if (radio) radio.checked = true;
   }
-  document.getElementById('mainDishStatusPill').textContent = `已選：${name}`;
+  const statusPill = document.getElementById('mainDishStatusPill');
+  if (statusPill) statusPill.textContent = `已選：${name}`;
 }
 
 function selectSetDrink(name, idx) {
-  document.getElementById('selectedDrink').value = name;
+  const drinkInput = document.getElementById('selectedDrink');
+  if (drinkInput) drinkInput.value = name;
   document.querySelectorAll('[id^="card_drink_"]').forEach(c => c.classList.remove('selected'));
   const targetCard = document.getElementById(`card_drink_${idx}`);
   if (targetCard) {
     targetCard.classList.add('selected');
+    const radio = document.getElementById(`radio_drink_${idx}`);
+    if (radio) radio.checked = true;
+  }
+}
     const radio = document.getElementById(`radio_drink_${idx}`);
     if (radio) radio.checked = true;
   }
@@ -2028,85 +2011,132 @@ function handleRegistrationSubmit(e) {
   if (!ev) return;
 
   const submitBtn = e.target.querySelector('button[type="submit"]');
-  const origBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+  const origBtnHtml = submitBtn ? submitBtn.innerHTML : '<i class="fa-solid fa-paper-plane me-2"></i>確認送出報名';
   if (submitBtn) {
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>傳送中，同步至 Google 試算表...';
   }
 
-  const name = document.getElementById('regName').value.trim();
-  const city = document.getElementById('regCity').value;
-  
-  const hospitalSelect = document.getElementById('regHospitalSelect').value;
-  const hospital = (hospitalSelect === 'OTHER') ? document.getElementById('regHospitalCustom').value.trim() : hospitalSelect;
-  
-  const deptSelect = document.getElementById('regDeptSelect').value;
-  const dept = (deptSelect === 'OTHER') ? document.getElementById('regDeptCustom').value.trim() : deptSelect;
+  try {
+    const nameEl = document.getElementById('regName');
+    const name = nameEl ? nameEl.value.trim() : '';
+    if (!name) {
+      alert('請填寫與會者姓名');
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = origBtnHtml;
+      }
+      return;
+    }
 
-  const titleRadio = document.querySelector('input[name="regTitle"]:checked');
-  const title = titleRadio ? titleRadio.value : '醫師';
-  const dietNotes = document.getElementById('regDietNotes').value.trim();
+    const cityEl = document.getElementById('regCity');
+    const city = cityEl ? cityEl.value : '台北市';
 
-  let mealChoice = '出席';
-  let drink = '';
-  if (ev.mealMode === 'TABLE') {
-    mealChoice = '桌菜出席';
-  } else if (ev.mealMode === 'SET') {
-    const main = document.getElementById('selectedMainDish').value;
-    drink = document.getElementById('selectedDrink').value;
-    mealChoice = `${main} (${drink})`;
-  }
+    const hospSelectEl = document.getElementById('regHospitalSelect');
+    const hospVal = hospSelectEl ? hospSelectEl.value : '';
+    const customHospEl = document.getElementById('regHospitalCustom');
+    const hospital = (hospVal === 'OTHER' && customHospEl) ? (customHospEl.value.trim() || '其他機構') : (hospVal || '醫院/機構');
 
-  lastSubmitted = {
-    id: Date.now(),
-    eventId: currentEventId,
-    eventTitle: ev.title,
-    name: name,
-    city: city,
-    hospital: hospital,
-    dept: dept,
-    title: title,
-    mealChoice: mealChoice,
-    drink: drink,
-    dietNotes: dietNotes,
-    time: new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })
-  };
+    const deptSelectEl = document.getElementById('regDeptSelect');
+    const deptVal = deptSelectEl ? deptSelectEl.value : '';
+    const customDeptEl = document.getElementById('regDeptCustom');
+    const dept = (deptVal === 'OTHER' && customDeptEl) ? (customDeptEl.value.trim() || '其他專科') : (deptVal || '專科');
 
-  if (!ev.attendees) ev.attendees = [];
-  ev.attendees.push(lastSubmitted);
-  saveEventsDb();
-  renderAttendeesAndTally();
+    const titleRadio = document.querySelector('input[name="regTitle"]:checked');
+    const title = titleRadio ? titleRadio.value : '醫師';
 
-  // 跨裝置同步至 Google 試算表 (RTD_通用會議報名名冊) 與 LINE 推播
-  fetch(`${API_BASE}/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(lastSubmitted)
-  })
-  .then(res => res.json())
-  .then(resData => {
-    console.log('✅ Google 試算表同步成功:', resData);
-    syncLiveAttendeesFromServer();
-  })
-  .catch(err => console.log('雲端連線失敗，保留本機快照:', err))
-  .finally(() => {
+    const dietNotesEl = document.getElementById('regDietNotes');
+    const dietNotes = dietNotesEl ? dietNotesEl.value.trim() : '';
+
+    let mealChoice = '出席';
+    let drink = '';
+    if (ev.mealMode === 'TABLE') {
+      mealChoice = '桌菜出席';
+    } else if (ev.mealMode === 'SET') {
+      const mainEl = document.getElementById('selectedMainDish');
+      const mainRadio = document.querySelector('input[name="mainDishRadio"]:checked');
+      const drinkEl = document.getElementById('selectedDrink');
+      const drinkRadio = document.querySelector('input[name="drinkRadio"]:checked');
+
+      const main = (mainEl && mainEl.value) ? mainEl.value : (mainRadio ? mainRadio.value : (ev.setOptions?.mains?.[0] || '特選主餐'));
+      drink = (drinkEl && drinkEl.value) ? drinkEl.value : (drinkRadio ? drinkRadio.value : (ev.setOptions?.drinks?.[0] || ''));
+      mealChoice = drink ? `${main} (${drink})` : main;
+    }
+
+    lastSubmitted = {
+      id: Date.now(),
+      eventId: currentEventId,
+      eventTitle: ev.title,
+      name: name,
+      city: city,
+      hospital: hospital,
+      dept: dept,
+      title: title,
+      mealChoice: mealChoice,
+      drink: drink,
+      dietNotes: dietNotes,
+      time: new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })
+    };
+
+    if (!ev.attendees) ev.attendees = [];
+    ev.attendees.push(lastSubmitted);
+    saveEventsDb();
+    renderAttendeesAndTally();
+
+    // 跨裝置同步至 Google 試算表 (RTD_通用會議報名名冊) 與 LINE 推播 (設置 12 秒逾時控制器，防呆卡住)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+    fetch(`${API_BASE}/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(lastSubmitted),
+      signal: controller.signal
+    })
+    .then(res => res.json())
+    .then(resData => {
+      clearTimeout(timeoutId);
+      console.log('✅ Google 試算表同步成功:', resData);
+      syncLiveAttendeesFromServer();
+    })
+    .catch(err => {
+      clearTimeout(timeoutId);
+      console.log('⚠️ 雲端連線或逾時，已保留本機快照:', err);
+    })
+    .finally(() => {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = origBtnHtml;
+      }
+
+      const summaryEl = document.getElementById('successSummaryText');
+      if (summaryEl) {
+        summaryEl.innerHTML = `
+          <strong>${name} (${hospital})</strong> 您好，主辦單位已收到您的出席資料！<br>
+          活動名稱：<strong>${ev.title}</strong><br>
+          ${ev.mealMode === 'TABLE' ? '本場次為中式桌宴，現場直接入席享用。' : (ev.mealMode === 'SET' ? `您選擇的特餐：<strong>${mealChoice}</strong>` : '')}<br>
+          資料已成功同步至<strong>諾華會議專用 Google 試算表</strong>。<br>
+          活動當天現場直接簽名即可。
+        `;
+      }
+      const successModalEl = document.getElementById('successModal');
+      if (successModalEl) {
+        const modal = bootstrap.Modal.getInstance(successModalEl) || new bootstrap.Modal(successModalEl);
+        modal.show();
+      }
+
+      if (nameEl) nameEl.value = '';
+      if (dietNotesEl) dietNotesEl.value = '';
+    });
+
+  } catch (err) {
+    console.error('❌ 報名表單處理發生錯誤:', err);
     if (submitBtn) {
       submitBtn.disabled = false;
       submitBtn.innerHTML = origBtnHtml;
     }
-
-    document.getElementById('successSummaryText').innerHTML = `
-      <strong>${name} (${hospital})</strong> 您好，主辦單位已收到您的出席資料！<br>
-      活動名稱：<strong>${ev.title}</strong><br>
-      ${ev.mealMode === 'TABLE' ? '本場次為中式桌宴，現場直接入席享用。' : (ev.mealMode === 'SET' ? `您選擇的特餐：<strong>${mealChoice}</strong>` : '')}<br>
-      資料已成功同步至<strong>諾華會議專用 Google 試算表</strong>。<br>
-      活動當天現場直接簽名即可。
-    `;
-    new bootstrap.Modal(document.getElementById('successModal')).show();
-
-    document.getElementById('regName').value = '';
-    document.getElementById('regDietNotes').value = '';
-  });
+    alert('報名處理發生異常，請重試或聯繫 Sandy 管理員。');
+  }
 }
 
 function deleteAttendee(id) {
