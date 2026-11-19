@@ -2275,6 +2275,40 @@ def api_rtd_attendees():
         resp.headers['Access-Control-Allow-Origin'] = '*'
         return resp, 500
 
+@app.route("/api/rtd/delete", methods=['POST', 'OPTIONS'])
+def api_rtd_delete():
+    if request.method == 'OPTIONS':
+        resp = jsonify({'status': 'ok'})
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        resp.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+        resp.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        return resp
+    try:
+        data = request.get_json(force=True) or {}
+        row_id = str(data.get('id', '')).strip()
+        name = str(data.get('name', '')).strip()
+        sh = get_spreadsheet()
+        if sh:
+            ws = sh.worksheet('RTD_1124_報名簽到名冊')
+            rows = ws.get_all_values()
+            for idx, r in enumerate(rows):
+                if idx > 0:
+                    matched = False
+                    if row_id and r[0].strip() == row_id:
+                        matched = True
+                    elif name and len(r) > 6 and r[6].strip() == name:
+                        matched = True
+                    if matched:
+                        ws.delete_rows(idx + 1)
+                        break
+        resp = jsonify({'status': 'ok', 'message': '已自 Google 試算表移除'})
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        return resp
+    except Exception as e:
+        resp = jsonify({'status': 'error', 'message': str(e)})
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        return resp, 500
+
 
 # ==================== 👑 Sandy 總裁財務與資產決策月報 ====================
 

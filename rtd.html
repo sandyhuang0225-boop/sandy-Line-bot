@@ -925,14 +925,7 @@ function loadAttendees() {
       attendees = [];
     }
   } else {
-    // 預設名冊：三總 4 位醫師團隊 + 台灣諾華 Sandy Huang
-    attendees = [
-      { id: 1, name: '廖國秀', city: '台北市', hospital: '三軍總醫院', dept: '乳房外科', title: '醫師', mainDish: '嫩煎菲力牛排', drink: '獨家單杯紅白酒', dietNotes: '' },
-      { id: 2, name: '陳德全', city: '台北市', hospital: '三軍總醫院', dept: '乳房外科', title: '醫師', mainDish: '西班牙伊比利老饕豬', drink: '無酒精氣泡飲', dietNotes: '' },
-      { id: 3, name: '王敏慧', city: '台北市', hospital: '三軍總醫院', dept: '血液腫瘤科', title: '醫師', mainDish: '蟹黃海鮮燉飯', drink: '獨家單杯紅白酒', dietNotes: '' },
-      { id: 4, name: '張凱鈞', city: '台北市', hospital: '三軍總醫院', dept: '乳房外科', title: '醫師', mainDish: '嫩煎菲力牛排', drink: '美式咖啡', dietNotes: '' },
-      { id: 5, name: 'Sandy Huang', city: '台北市', hospital: '台灣諾華股份有限公司', dept: '腫瘤醫學部', title: '其他HCP: 台灣諾華', mainDish: '蟹黃海鮮燉飯', drink: '無酒精氣泡飲', dietNotes: '' }
-    ];
+    attendees = [];
     saveAttendees();
   }
   renderAll();
@@ -949,12 +942,12 @@ function syncLiveAttendeesFromServer(btnEl) {
   fetch(`${API_BASE}/attendees?t=${Date.now()}`)
     .then(res => res.json())
     .then(data => {
-      if (data && data.status === 'ok' && Array.isArray(data.attendees) && data.attendees.length > 0) {
+      if (data && data.status === 'ok' && Array.isArray(data.attendees)) {
         attendees = data.attendees;
         saveAttendees();
         renderAll();
         if (btnEl) {
-          btnEl.innerHTML = '<i class="fa-solid fa-check text-success me-1"></i>已同步最新名冊！';
+          btnEl.innerHTML = '<i class="fa-solid fa-check text-success me-1"></i>已同步 Google 試算表！';
           setTimeout(() => btnEl.innerHTML = '<i class="fa-solid fa-arrows-rotate me-1 text-warning"></i>同步 Google 試算表', 2500);
         }
       } else if (btnEl) {
@@ -1179,12 +1172,20 @@ function handleRegistrationSubmit(e) {
   });
 }
 
-// 刪除人員
+// 刪除人員 (同步從本機與 Google 試算表移除)
 function deleteAttendee(id) {
   if (!confirm('確定要移除此筆與會人員嗎？')) return;
-  attendees = attendees.filter(a => a.id !== id);
+  const target = attendees.find(a => a.id == id);
+  attendees = attendees.filter(a => a.id != id);
   saveAttendees();
   renderAll();
+
+  fetch(`${API_BASE}/delete`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: id, name: target ? target.name : '' })
+  }).then(() => syncLiveAttendeesFromServer())
+  .catch(e => console.log('刪除請求:', e));
 }
 
 // 載入示範名單 (包含三總醫師團隊與台灣諾華同仁)
