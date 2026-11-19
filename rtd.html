@@ -177,9 +177,19 @@
         <h5 class="mb-0 fw-bold">醫學研討會線上報名與選餐系統</h5>
       </div>
     </div>
-    <div class="d-flex align-items-center gap-2">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <!-- 📋 一鍵複製網址傳給醫師 (解決加入主畫面找不到網址問題) -->
+      <button type="button" class="btn btn-success btn-sm fw-bold shadow-sm" onclick="copyDoctorRegistrationLink(this)">
+        <i class="fa-solid fa-share-nodes me-1"></i>複製報名網址傳給醫師
+      </button>
+      <button type="button" class="btn btn-outline-light btn-sm fw-bold shadow-sm" onclick="shareToLineDirect()">
+        <i class="fa-brands fa-line me-1 text-success fs-6"></i>LINE 一鍵分享
+      </button>
+      <button type="button" id="btnSyncSheet" class="btn btn-outline-light btn-sm fw-bold shadow-sm" onclick="syncLiveAttendeesFromServer(this)">
+        <i class="fa-solid fa-arrows-rotate me-1 text-warning"></i>同步 Google 試算表
+      </button>
       <a href="#signinSheetSection" class="btn btn-outline-light btn-sm fw-bold">
-        <i class="fa-solid fa-list-check me-1"></i>簽到名冊 (<span id="topAttendeeCount">0</span>人)
+        <i class="fa-solid fa-list-check me-1"></i>簽到名冊 (<span id="topAttendeeCount">5</span>人)
       </a>
       <!-- 🌟 Sandy 的一鍵列印簽到表按鈕 🌟 -->
       <button type="button" class="btn btn-warning text-dark fw-black shadow-sm" onclick="printSignInSheet()">
@@ -190,6 +200,17 @@
 </header>
 
 <div class="container" style="max-width: 960px;">
+
+  <!-- 提示橫幅：Google 雲端試算表連線狀態與複製捷徑 -->
+  <div class="alert alert-success d-flex align-items-center justify-content-between flex-wrap gap-2 py-2 px-3 mb-3 shadow-sm rounded-3 hide-on-print border-success">
+    <div class="small fw-bold text-success-emphasis d-flex align-items-center">
+      <i class="fa-solid fa-cloud-check fs-5 me-2 text-success"></i>
+      <span>Google 雲端試算表已連線！醫師線上報名將即時同步，簽到表自動更新。</span>
+    </div>
+    <button type="button" class="btn btn-sm btn-success fw-bold text-nowrap" onclick="copyDoctorRegistrationLink(this)">
+      <i class="fa-solid fa-copy me-1"></i>點此複製網址傳給醫師
+    </button>
+  </div>
 
   <!-- 活動與會議簡介卡片 -->
   <div class="custom-card border-primary border-2 hide-on-print" style="background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);">
@@ -866,7 +887,35 @@ function handleDeptChange(selectEl) {
   }
 }
 
-// 載入名單
+// ==================== 雲端 Google 試算表連線 API ====================
+const API_BASE = 'https://sandy-line-bot.onrender.com/api/rtd';
+
+// 複製醫師專屬報名網址 (解決加入主畫面後找不到網址問題)
+function copyDoctorRegistrationLink(btn) {
+  const url = 'https://sandyhuang0225-boop.github.io/sandy-Line-bot/rtd.html';
+  navigator.clipboard.writeText(url).then(() => {
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-check text-white me-1"></i>已複製報名網址！';
+    btn.classList.add('btn-primary');
+    alert('✅ 報名網址已成功複製！\n\n網址：\n' + url + '\n\n您可以直接切換到 LINE 貼上傳給醫師囉！');
+    setTimeout(() => {
+      btn.innerHTML = orig;
+      btn.classList.remove('btn-primary');
+    }, 3500);
+  }).catch(() => {
+    prompt('請複製以下報名網址傳給醫師：', url);
+  });
+}
+
+// 直接開啟 LINE 分享邀請
+function shareToLineDirect() {
+  const url = 'https://sandyhuang0225-boop.github.io/sandy-Line-bot/rtd.html';
+  const text = `您好！誠摯邀請您出席【11/24 (二) 三總乳癌討論會：From Shared Decision to Long-Term Confidence】。\n\n敬請點擊以下專屬連結確認出席並點選主廚特餐（菲力牛排/海鮮燉飯/伊比利老饕豬）：\n👉 ${url}\n\n期待您的蒞臨！`;
+  const lineShareUrl = `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
+  window.open(lineShareUrl, '_blank');
+}
+
+// 載入名單 (自動向 Google Sheet 雲端同步最新資料)
 function loadAttendees() {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (raw) {
@@ -876,34 +925,50 @@ function loadAttendees() {
       attendees = [];
     }
   } else {
-    // 預設示範名單：包含廖國秀醫師與台灣諾華 Sandy Huang
+    // 預設名冊：三總 4 位醫師團隊 + 台灣諾華 Sandy Huang
     attendees = [
-      {
-        id: 1,
-        name: '廖國秀',
-        city: '台北市',
-        hospital: '三軍總醫院',
-        dept: '乳房外科',
-        title: '醫師',
-        mainDish: '嫩煎菲力牛排',
-        drink: '獨家單杯紅白酒',
-        dietNotes: ''
-      },
-      {
-        id: 2,
-        name: 'Sandy Huang',
-        city: '台北市',
-        hospital: '台灣諾華股份有限公司',
-        dept: '腫瘤醫學部',
-        title: '台灣諾華',
-        mainDish: '蟹黃海鮮燉飯',
-        drink: '無酒精氣泡飲',
-        dietNotes: ''
-      }
+      { id: 1, name: '廖國秀', city: '台北市', hospital: '三軍總醫院', dept: '乳房外科', title: '醫師', mainDish: '嫩煎菲力牛排', drink: '獨家單杯紅白酒', dietNotes: '' },
+      { id: 2, name: '陳德全', city: '台北市', hospital: '三軍總醫院', dept: '乳房外科', title: '醫師', mainDish: '西班牙伊比利老饕豬', drink: '無酒精氣泡飲', dietNotes: '' },
+      { id: 3, name: '王敏慧', city: '台北市', hospital: '三軍總醫院', dept: '血液腫瘤科', title: '醫師', mainDish: '蟹黃海鮮燉飯', drink: '獨家單杯紅白酒', dietNotes: '' },
+      { id: 4, name: '張凱鈞', city: '台北市', hospital: '三軍總醫院', dept: '乳房外科', title: '醫師', mainDish: '嫩煎菲力牛排', drink: '美式咖啡', dietNotes: '' },
+      { id: 5, name: 'Sandy Huang', city: '台北市', hospital: '台灣諾華股份有限公司', dept: '腫瘤醫學部', title: '其他HCP: 台灣諾華', mainDish: '蟹黃海鮮燉飯', drink: '無酒精氣泡飲', dietNotes: '' }
     ];
     saveAttendees();
   }
   renderAll();
+
+  // 自動向雲端 Google 試算表拉取跨裝置名單
+  syncLiveAttendeesFromServer();
+}
+
+// 向 Google 試算表同步即時名單
+function syncLiveAttendeesFromServer(btnEl) {
+  if (btnEl) {
+    btnEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>同步中...';
+  }
+  fetch(`${API_BASE}/attendees?t=${Date.now()}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data && data.status === 'ok' && Array.isArray(data.attendees) && data.attendees.length > 0) {
+        attendees = data.attendees;
+        saveAttendees();
+        renderAll();
+        if (btnEl) {
+          btnEl.innerHTML = '<i class="fa-solid fa-check text-success me-1"></i>已同步最新名冊！';
+          setTimeout(() => btnEl.innerHTML = '<i class="fa-solid fa-arrows-rotate me-1 text-warning"></i>同步 Google 試算表', 2500);
+        }
+      } else if (btnEl) {
+        btnEl.innerHTML = '<i class="fa-solid fa-check text-success me-1"></i>名冊已是最新';
+        setTimeout(() => btnEl.innerHTML = '<i class="fa-solid fa-arrows-rotate me-1 text-warning"></i>同步 Google 試算表', 2500);
+      }
+    })
+    .catch(err => {
+      console.log('雲端讀取暫使用本機快照:', err);
+      if (btnEl) {
+        btnEl.innerHTML = '<i class="fa-solid fa-arrows-rotate me-1 text-warning"></i>已為最新';
+        setTimeout(() => btnEl.innerHTML = '<i class="fa-solid fa-arrows-rotate me-1 text-warning"></i>同步 Google 試算表', 2000);
+      }
+    });
 }
 
 // 儲存名單
@@ -1031,9 +1096,16 @@ function printSignInSheet() {
   window.print();
 }
 
-// 送出報名表單
+// 送出報名表單 (自動同步至 Google 試算表與 Sandy LINE)
 function handleRegistrationSubmit(e) {
   e.preventDefault();
+
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  const originalHtml = submitBtn ? submitBtn.innerHTML : '';
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>傳送中，同步至 Google 試算表...';
+  }
 
   const name = document.getElementById('regName').value.trim();
   const city = document.getElementById('regCity').value;
@@ -1064,24 +1136,47 @@ function handleRegistrationSubmit(e) {
     time: new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })
   };
 
+  // 1. 本地立即儲存備份
   attendees.push(lastSubmittedAttendee);
   saveAttendees();
   renderAll();
 
-  // 更新彈窗摘要
-  document.getElementById('successSummaryText').innerHTML = `
-    <strong>${name} (${hospital})</strong> 您好，主辦單位已收到您的預約！<br>
-    主餐：<strong>${mainDish}</strong> · 飲品：<strong>${drink}</strong><br>
-    活動當天現場直接於簽到表簽名即可享用主廚精緻特餐。
-  `;
+  // 2. 跨裝置即時同步至 Google 試算表
+  fetch(`${API_BASE}/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(lastSubmittedAttendee)
+  })
+  .then(res => res.json())
+  .then(resData => {
+    console.log('✅ Google 試算表同步結果:', resData);
+    syncLiveAttendeesFromServer();
+  })
+  .catch(err => {
+    console.log('⚠️ 雲端連線失敗，已留存本機備份:', err);
+  })
+  .finally(() => {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalHtml;
+    }
 
-  // 顯示成功視窗
-  const modal = new bootstrap.Modal(document.getElementById('successModal'));
-  modal.show();
+    // 更新彈窗摘要
+    document.getElementById('successSummaryText').innerHTML = `
+      <strong>${name} (${hospital})</strong> 您好，主辦單位已收到您的預約！<br>
+      主餐：<strong>${mainDish}</strong> · 飲品：<strong>${drink}</strong><br>
+      資料已成功同步至<strong>諾華會議專用 Google 試算表</strong>。<br>
+      活動當天現場直接於簽到表簽名即可享用主廚精緻特餐。
+    `;
 
-  // 清空姓名與備註
-  document.getElementById('regName').value = '';
-  document.getElementById('regDietNotes').value = '';
+    // 顯示成功視窗
+    const modal = new bootstrap.Modal(document.getElementById('successModal'));
+    modal.show();
+
+    // 清空姓名與備註
+    document.getElementById('regName').value = '';
+    document.getElementById('regDietNotes').value = '';
+  });
 }
 
 // 刪除人員

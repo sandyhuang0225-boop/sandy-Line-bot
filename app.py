@@ -79,6 +79,8 @@ def get_spreadsheet():
                 _gc = gspread.authorize(credentials)
             elif os.path.exists("credentials.json"):
                 _gc = gspread.service_account(filename="credentials.json")
+            elif os.path.exists(os.path.join(os.path.abspath(os.path.dirname(__file__)), "credentials.json")):
+                _gc = gspread.service_account(filename=os.path.join(os.path.abspath(os.path.dirname(__file__)), "credentials.json"))
             else:
                 print("⚠️ 找不到 credentials.json 且未設定 GOOGLE_APPLICATION_CREDENTIALS_JSON")
                 return None
@@ -2145,6 +2147,133 @@ def api_save_utility_sheet():
         return jsonify({'status': 'ok', 'message': f'✅ 已成功同步存入 Google 試算表（電費第 {target_row_e} 列、水費第 {target_row_w} 列）！'})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+# ==================== 諾華 RTD 會議報名雲端同步 API (Google Sheet 連動) ====================
+@app.route("/api/rtd/register", methods=['POST', 'OPTIONS'])
+def api_rtd_register():
+    if request.method == 'OPTIONS':
+        resp = jsonify({'status': 'ok'})
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        resp.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+        resp.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        return resp
+    try:
+        data = request.get_json(force=True) or {}
+        name = str(data.get('name', '')).strip()
+        if not name:
+            resp = jsonify({'status': 'error', 'message': '姓名為必填'})
+            resp.headers['Access-Control-Allow-Origin'] = '*'
+            return resp, 400
+
+        city = str(data.get('city', '台北市')).strip()
+        hospital = str(data.get('hospital', '')).strip()
+        dept = str(data.get('dept', '')).strip()
+        title = str(data.get('title', '醫師')).strip()
+        main_dish = str(data.get('mainDish', '')).strip()
+        drink = str(data.get('drink', '')).strip()
+        diet_notes = str(data.get('dietNotes', '')).strip()
+        now_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        # 寫入 Google Sheet
+        ws = None
+        sh = get_spreadsheet()
+        if sh:
+            try:
+                ws = sh.worksheet('RTD_1124_報名簽到名冊')
+            except Exception:
+                try:
+                    ws = sh.add_worksheet(title='RTD_1124_報名簽到名冊', rows=100, cols=10)
+                    ws.append_row(['No', '填表時間', '縣市', '服務醫院/機構', '科別/單位', '職稱', '姓名', '主餐選擇', '飲品選擇', '特殊飲食備註'])
+                except Exception as ws_err:
+                    print(f"⚠️ 建立工作表失敗: {ws_err}")
+
+        next_no = 1
+        if ws:
+            try:
+                rows = ws.get_all_values()
+                next_no = len(rows)
+                new_row = [next_no, now_str, city, hospital, dept, title, name, main_dish, drink, diet_notes]
+                ws.append_row(new_row)
+            except Exception as append_err:
+                print(f"⚠️ 寫入工作表失敗: {append_err}")
+
+        # LINE 即時推播通知 Sandy
+        try:
+            line_msg = (
+                f"🎉 【三總 RTD 新醫師報名】\n"
+                f"━━━━━━━━━━━━━━━\n"
+                f"👤 醫師姓名：{name} ({title})\n"
+                f"🏥 服務機構：{hospital}\n"
+                f"🩺 科別單位：{dept}\n"
+                f"🥩 精選主餐：{main_dish}\n"
+                f"🍷 佐餐飲品：{drink}\n"
+                f"{('⚠️ 飲食備註：' + diet_notes + chr(10)) if diet_notes else ''}"
+                f"⏰ 登記時間：{now_str}\n"
+                f"━━━━━━━━━━━━━━━\n"
+                f"📊 Google 試算表第 {next_no} 位已成功登錄！"
+            )
+            line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(text=line_msg))
+        except Exception as err:
+            print(f"⚠️ LINE 通知推送失敗: {err}")
+
+        resp = jsonify({'status': 'ok', 'message': '報名成功且已同步 Google 試算表！', 'id': next_no})
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        return resp
+    except Exception as e:
+        resp = jsonify({'status': 'error', 'message': str(e)})
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        return resp, 500
+
+@app.route("/api/rtd/attendees", methods=['GET', 'OPTIONS'])
+def api_rtd_attendees():
+    if request.method == 'OPTIONS':
+        resp = jsonify({'status': 'ok'})
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        resp.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+        resp.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        return resp
+    try:
+        sh = get_spreadsheet()
+        if not sh:
+            resp = jsonify({'status': 'ok', 'attendees': []})
+            resp.headers['Access-Control-Allow-Origin'] = '*'
+            return resp
+
+        try:
+            ws = sh.worksheet('RTD_1124_報名簽到名冊')
+            rows = ws.get_all_values()
+        except Exception:
+            rows = []
+
+        attendees = []
+        if len(rows) > 1:
+            for idx, r in enumerate(rows[1:]):
+                if len(r) >= 7 and r[6].strip():
+                    meal_text = r[7] if len(r) > 7 and r[7].strip() else '出席'
+                    if len(r) > 8 and r[8].strip():
+                        meal_text += f" ({r[8].strip()})"
+                    attendees.append({
+                        'id': r[0] if (len(r) > 0 and r[0].strip()) else (idx + 1),
+                        'time': r[1] if len(r) > 1 else '',
+                        'city': r[2] if (len(r) > 2 and r[2].strip()) else '台北市',
+                        'hospital': r[3] if len(r) > 3 else '',
+                        'dept': r[4] if len(r) > 4 else '',
+                        'title': r[5] if len(r) > 5 else '醫師',
+                        'name': r[6] if len(r) > 6 else '',
+                        'mainDish': r[7] if len(r) > 7 else '',
+                        'drink': r[8] if len(r) > 8 else '',
+                        'mealChoice': meal_text,
+                        'dietNotes': r[9] if len(r) > 9 else ''
+                    })
+
+        resp = jsonify({'status': 'ok', 'attendees': attendees})
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        return resp
+    except Exception as e:
+        resp = jsonify({'status': 'error', 'message': str(e), 'attendees': []})
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        return resp, 500
 
 
 # ==================== 👑 Sandy 總裁財務與資產決策月報 ====================
