@@ -34,7 +34,7 @@
       background: linear-gradient(135deg, var(--novartis-blue) 0%, #1e3a8a 100%);
       color: white;
       box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-      padding: 14px 20px;
+      padding: 12px 20px;
       position: sticky;
       top: 0;
       z-index: 1020;
@@ -145,7 +145,7 @@
       }
       @page {
         size: A4 portrait;
-        margin: 12mm 10mm 12mm 10mm;
+        margin: 10mm 10mm 10mm 10mm;
       }
     }
   </style>
@@ -155,13 +155,17 @@
 <!-- 頂部品牌與 Sandy 專屬捷徑列 -->
 <header class="top-header-banner mb-4 no-print">
   <div class="container d-flex align-items-center justify-content-between flex-wrap gap-2">
-    <div class="d-flex align-items-center gap-2">
-      <span class="badge bg-warning text-dark px-2 py-1 fw-bold fs-6">RTD</span>
-      <h5 class="mb-0 fw-bold">台灣諾華 醫學研討會線上報名與選餐系統</h5>
+    <div class="d-flex align-items-center gap-3">
+      <!-- 諾華官方 Logo -->
+      <img src="assets/novartis_logo.png" alt="Novartis Logo" style="height: 28px; background: white; padding: 3px 8px; border-radius: 4px;">
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-warning text-dark px-2 py-1 fw-bold fs-6">RTD</span>
+        <h5 class="mb-0 fw-bold">醫學研討會線上報名與選餐系統</h5>
+      </div>
     </div>
     <div class="d-flex align-items-center gap-2">
       <a href="#signinSheetSection" class="btn btn-outline-light btn-sm fw-bold">
-        <i class="fa-solid fa-list-check me-1"></i>檢視簽到名單 (<span id="topAttendeeCount">0</span>人)
+        <i class="fa-solid fa-list-check me-1"></i>簽到名冊 (<span id="topAttendeeCount">0</span>人)
       </a>
       <!-- 🌟 Sandy 的一鍵列印簽到表按鈕 🌟 -->
       <button type="button" class="btn btn-warning text-dark fw-black shadow-sm" onclick="printSignInSheet()">
@@ -290,7 +294,7 @@
         <!-- 姓名 -->
         <div class="col-md-4 col-12">
           <label class="form-label fw-bold small text-secondary">與會者姓名 <span class="text-danger">*</span></label>
-          <input type="text" id="regName" class="form-control form-control-lg fw-bold" placeholder="請輸入姓名 (例如: 廖國秀)" required>
+          <input type="text" id="regName" class="form-control form-control-lg fw-bold" placeholder="請輸入姓名 (例如: 廖國秀 或 Sandy)" required>
         </div>
 
         <!-- 所在縣市 -->
@@ -309,21 +313,30 @@
           </select>
         </div>
 
-        <!-- 服務醫院/機構 -->
+        <!-- 服務醫院/機構 (🌟 加入台灣諾華股份有限公司選項 🌟) -->
         <div class="col-md-4 col-6">
           <label class="form-label fw-bold small text-secondary">服務醫院 / 機構 <span class="text-danger">*</span></label>
-          <input type="text" id="regHospital" class="form-control form-control-lg fw-bold" placeholder="例如: 三軍總醫院" value="三軍總醫院" required>
+          <select id="regHospitalSelect" class="form-select form-select-lg fw-bold" onchange="handleHospitalChange(this)">
+            <option value="三軍總醫院" selected>三軍總醫院 (TSGH)</option>
+            <option value="台灣諾華股份有限公司">台灣諾華股份有限公司 (Novartis)</option>
+            <option value="台北榮民總醫院">台北榮民總醫院</option>
+            <option value="國立臺灣大學醫學院附設醫院">台大醫院 (NTUH)</option>
+            <option value="馬偕紀念醫院">馬偕紀念醫院</option>
+            <option value="新光醫院">新光醫院</option>
+            <option value="OTHER">自行輸入其他機構...</option>
+          </select>
+          <input type="text" id="regHospitalCustom" class="form-control form-control-lg fw-bold mt-2" placeholder="請輸入機構名稱" style="display: none;">
         </div>
 
-        <!-- 科別/單位 -->
+        <!-- 科別/單位 (🌟 加入腫瘤醫學部選項 🌟) -->
         <div class="col-md-6 col-12">
           <label class="form-label fw-bold small text-secondary">科別 / 單位 <span class="text-danger">*</span></label>
           <div class="input-group">
             <select id="regDeptSelect" class="form-select form-select-lg fw-bold" onchange="handleDeptChange(this)">
               <option value="乳房外科" selected>乳房外科 (Breast Surgery)</option>
-              <option value="一般外科">一般外科 (Surgery)</option>
+              <option value="腫瘤醫學部">腫瘤醫學部 (Oncology / 諾華同仁)</option>
               <option value="血液腫瘤科">血液腫瘤科 (Hematoncology)</option>
-              <option value="腫瘤醫學部">腫瘤醫學部 (Oncology)</option>
+              <option value="一般外科">一般外科 (Surgery)</option>
               <option value="婦產部">婦產部 (Gynecology)</option>
               <option value="整型外科">整型外科</option>
               <option value="病理部">病理部 (Pathology)</option>
@@ -336,7 +349,7 @@
           </div>
         </div>
 
-        <!-- 職稱 (單選按鈕) -->
+        <!-- 職稱 (單選按鈕，含諾華同仁 / 其他HCP) -->
         <div class="col-md-6 col-12">
           <label class="form-label fw-bold small text-secondary">職稱類別 <span class="text-danger">*</span></label>
           <div class="d-flex gap-2 flex-wrap">
@@ -353,8 +366,8 @@
               <label class="form-check-label fw-bold" for="titlePharm">💊 藥師</label>
             </div>
             <div class="form-check form-check-inline p-2 border rounded-3 bg-light flex-grow-1 text-center">
-              <input class="form-check-input" type="radio" name="regTitle" id="titleOther" value="其他HCP">
-              <label class="form-check-label fw-bold" for="titleOther">其他 HCP</label>
+              <input class="form-check-input" type="radio" name="regTitle" id="titleNovartis" value="台灣諾華">
+              <label class="form-check-label fw-bold" for="titleNovartis">💼 諾華人員 / 其他HCP</label>
             </div>
           </div>
         </div>
@@ -512,7 +525,7 @@
           <i class="fa-brands fa-line me-1"></i>複製點餐總數給餐廳
         </button>
         <button type="button" class="btn btn-sm btn-outline-primary" onclick="injectSampleAttendees()">
-          <i class="fa-solid fa-vial me-1"></i>載入範例名單
+          <i class="fa-solid fa-vial me-1"></i>載入示範名單 (含諾華同仁)
         </button>
       </div>
     </div>
@@ -559,7 +572,7 @@
             <th style="width: 45px;">No.</th>
             <th>姓名</th>
             <th>職稱</th>
-            <th>服務醫院</th>
+            <th>服務醫院/機構</th>
             <th>科別</th>
             <th>主餐</th>
             <th>飲品</th>
@@ -574,7 +587,7 @@
     </div>
   </div>
 
-  <!-- ==================== 🌟 諾華公司 100% 制式會議簽到表 (A4 列印版面) 🌟 ==================== -->
+  <!-- ==================== 🌟 諾華公司 100% 制式會議簽到表 (A4 列印版面，含諾華官方 Logo) 🌟 ==================== -->
   <div class="signin-sheet-container mb-4" id="signinSheetSection">
     
     <!-- 頂端操作按鈕 (列印時自動隱藏) -->
@@ -594,12 +607,15 @@
       </div>
     </div>
 
-    <!-- 簽到表表頭 -->
-    <div class="row g-2 mb-2 pb-2 border-bottom">
-      <div class="col-12 text-center mb-1">
-        <h4 class="fw-bold mb-0" style="letter-spacing: 2px;">會議簽到表</h4>
+    <!-- 簽到表表頭 (含 Excel 原生官方諾華 Logo) -->
+    <div class="row g-2 mb-2 pb-2 border-bottom align-items-center">
+      <div class="col-6">
+        <img src="assets/novartis_logo.png" alt="Novartis" style="max-height: 38px; object-fit: contain;">
       </div>
-      <div class="col-12">
+      <div class="col-6 text-end">
+        <h4 class="fw-bold mb-0 text-dark" style="letter-spacing: 2px;">會議簽到表</h4>
+      </div>
+      <div class="col-12 mt-2">
         <strong>活動名稱：</strong><span>三總乳癌討論會 - From Shared Decision to Long-Term Confidence</span>
       </div>
       <div class="col-md-6 col-6">
@@ -639,11 +655,11 @@
           <tr>
             <th style="width: 45px;">No.</th>
             <th style="width: 105px;">單位所在縣市</th>
-            <th style="width: 175px;">服務醫院/機構</th>
+            <th style="width: 180px;">服務醫院/機構</th>
             <th style="width: 135px;">科別/單位</th>
             <th style="width: 185px;">職稱</th>
             <th style="width: 110px;">姓名</th>
-            <th style="width: 190px;">簽名</th>
+            <th style="width: 180px;">簽名</th>
           </tr>
         </thead>
         <tbody id="signinSheetTableBody">
@@ -717,12 +733,30 @@ function openImageModal(imgSrc, title) {
   modal.show();
 }
 
+// 服務醫院/機構切換聯動
+function handleHospitalChange(selectEl) {
+  const customInput = document.getElementById('regHospitalCustom');
+  if (selectEl.value === 'OTHER') {
+    customInput.style.display = 'block';
+    customInput.required = true;
+    customInput.focus();
+  } else {
+    customInput.style.display = 'none';
+    customInput.required = false;
+  }
+
+  // 🌟 智慧聯動：如果選擇「台灣諾華股份有限公司」，科別自動建議切換為「腫瘤醫學部」，職稱自動切換為諾華人員
+  if (selectEl.value === '台灣諾華股份有限公司') {
+    document.getElementById('regCity').value = '台北市';
+    document.getElementById('regDeptSelect').value = '腫瘤醫學部';
+    document.getElementById('titleNovartis').checked = true;
+  }
+}
+
 // 🌟 嚴格防呆互斥機制：主餐三選一 (只能擇一，選了燉飯就自動取消牛排與老饕豬) 🌟
 function selectMainDish(dishName) {
-  // 1. 更新隱藏欄位值
   document.getElementById('selectedMainDish').value = dishName;
 
-  // 2. 更新對應 radio 狀態
   const radioSteak = document.getElementById('radio_steak');
   const radioRice = document.getElementById('radio_rice');
   const radioPork = document.getElementById('radio_pork');
@@ -731,7 +765,6 @@ function selectMainDish(dishName) {
   radioRice.checked = (dishName === '蟹黃海鮮燉飯');
   radioPork.checked = (dishName === '西班牙伊比利老饕豬');
 
-  // 3. 嚴格更新三個卡片的樣式 (移除其他卡片的 selected，只保留目前點選者)
   const cardSteak = document.getElementById('card_steak');
   const cardRice = document.getElementById('card_rice');
   const cardPork = document.getElementById('card_pork');
@@ -775,7 +808,6 @@ function selectMainDish(dishName) {
     tagPork.textContent = '已選取';
   }
 
-  // 4. 更新頂部提示標籤
   document.getElementById('mainDishStatusPill').innerHTML = `<i class="fa-solid fa-check me-1"></i>已選：${dishName}`;
 }
 
@@ -830,7 +862,7 @@ function loadAttendees() {
       attendees = [];
     }
   } else {
-    // 預設示範第一位講師：廖國秀醫師
+    // 預設示範名單：包含廖國秀醫師與台灣諾華 Sandy Huang
     attendees = [
       {
         id: 1,
@@ -841,6 +873,17 @@ function loadAttendees() {
         title: '醫師',
         mainDish: '嫩煎菲力牛排',
         drink: '獨家單杯紅白酒',
+        dietNotes: ''
+      },
+      {
+        id: 2,
+        name: 'Sandy Huang',
+        city: '台北市',
+        hospital: '台灣諾華股份有限公司',
+        dept: '腫瘤醫學部',
+        title: '台灣諾華',
+        mainDish: '蟹黃海鮮燉飯',
+        drink: '無酒精氣泡飲',
         dietNotes: ''
       }
     ];
@@ -894,7 +937,7 @@ function renderAll() {
       <tr>
         <td>${i + 1}</td>
         <td class="fw-bold">${a.name}</td>
-        <td><span class="badge bg-secondary">${a.title}</span></td>
+        <td><span class="badge ${a.title === '醫師' ? 'bg-primary' : (a.title === '台灣諾華' ? 'bg-success' : 'bg-secondary')}">${a.title}</span></td>
         <td>${a.hospital}</td>
         <td>${a.dept}</td>
         <td>${a.mainDish}</td>
@@ -924,7 +967,10 @@ function renderSignInTable() {
     const isDoc = a.title === '醫師';
     const isNurse = a.title === '護理師';
     const isPharm = a.title === '藥師';
+    const isNovartis = a.title === '台灣諾華' || a.hospital.includes('諾華');
     const isOther = !isDoc && !isNurse && !isPharm;
+
+    const otherText = isNovartis ? '台灣諾華' : (isOther ? a.title : '____________');
 
     html += `
       <tr>
@@ -934,7 +980,7 @@ function renderSignInTable() {
         <td>${a.dept || ''}</td>
         <td style="font-size: 0.78rem; line-height: 1.4;">
           ${isDoc ? '☑' : '□'} 醫師 &nbsp; ${isNurse ? '☑' : '□'} 護理師 &nbsp; ${isPharm ? '☑' : '□'} 藥師<br>
-          ${isOther ? '☑' : '□'} 其他HCP: ${isOther ? a.title : '____________'}
+          ${isOther ? '☑' : '□'} 其他HCP: ${otherText}
         </td>
         <td class="fw-bold text-center" style="font-size: 1rem;">${a.name}</td>
         <td style="background: #ffffff; min-height: 38px;"></td>
@@ -977,7 +1023,9 @@ function handleRegistrationSubmit(e) {
 
   const name = document.getElementById('regName').value.trim();
   const city = document.getElementById('regCity').value;
-  const hospital = document.getElementById('regHospital').value.trim();
+  
+  const hospitalSelect = document.getElementById('regHospitalSelect').value;
+  const hospital = (hospitalSelect === 'OTHER') ? document.getElementById('regHospitalCustom').value.trim() : hospitalSelect;
   
   const deptSelect = document.getElementById('regDeptSelect').value;
   const dept = (deptSelect === 'OTHER') ? document.getElementById('regDeptCustom').value.trim() : deptSelect;
@@ -1008,7 +1056,7 @@ function handleRegistrationSubmit(e) {
 
   // 更新彈窗摘要
   document.getElementById('successSummaryText').innerHTML = `
-    <strong>${name} ${title}</strong> 您好，主辦單位已收到您的預約！<br>
+    <strong>${name} (${hospital})</strong> 您好，主辦單位已收到您的預約！<br>
     主餐：<strong>${mainDish}</strong> · 飲品：<strong>${drink}</strong><br>
     活動當天現場直接於簽到表簽名即可享用主廚精緻特餐。
   `;
@@ -1030,14 +1078,15 @@ function deleteAttendee(id) {
   renderAll();
 }
 
-// 載入示範名單
+// 載入示範名單 (包含三總醫師團隊與台灣諾華同仁)
 function injectSampleAttendees() {
   attendees = [
     { id: 1, name: '廖國秀', city: '台北市', hospital: '三軍總醫院', dept: '乳房外科', title: '醫師', mainDish: '嫩煎菲力牛排', drink: '獨家單杯紅白酒', dietNotes: '' },
     { id: 2, name: '陳德全', city: '台北市', hospital: '三軍總醫院', dept: '乳房外科', title: '醫師', mainDish: '西班牙伊比利老饕豬', drink: '無酒精氣泡飲', dietNotes: '' },
     { id: 3, name: '林芳如', city: '台北市', hospital: '三軍總醫院', dept: '護理部', title: '護理師', mainDish: '蟹黃海鮮燉飯', drink: '獅王伯爵茶', dietNotes: '不吃牛肉' },
     { id: 4, name: '張凱鈞', city: '台北市', hospital: '三軍總醫院', dept: '藥劑部', title: '藥師', mainDish: '嫩煎菲力牛排', drink: '美式咖啡', dietNotes: '' },
-    { id: 5, name: '王敏慧', city: '台北市', hospital: '三軍總醫院', dept: '血液腫瘤科', title: '醫師', mainDish: '蟹黃海鮮燉飯', drink: '獨家單杯紅白酒', dietNotes: '' }
+    { id: 5, name: '王敏慧', city: '台北市', hospital: '三軍總醫院', dept: '血液腫瘤科', title: '醫師', mainDish: '蟹黃海鮮燉飯', drink: '獨家單杯紅白酒', dietNotes: '' },
+    { id: 6, name: 'Sandy Huang', city: '台北市', hospital: '台灣諾華股份有限公司', dept: '腫瘤醫學部', title: '台灣諾華', mainDish: '蟹黃海鮮燉飯', drink: '無酒精氣泡飲', dietNotes: '' }
   ];
   saveAttendees();
   renderAll();
@@ -1104,7 +1153,8 @@ function exportCsvSignInSheet() {
   csv += "No.,單位所在縣市,服務醫院/機構,科別/單位,職稱,姓名,簽名\n";
 
   attendees.forEach((a, i) => {
-    csv += `${i + 1},"${a.city || '台北市'}","${a.hospital}","${a.dept}","${a.title}","${a.name}",\n`;
+    const titleCol = (a.title === '台灣諾華' || a.hospital.includes('諾華')) ? '其他HCP: 台灣諾華' : a.title;
+    csv += `${i + 1},"${a.city || '台北市'}","${a.hospital}","${a.dept}","${titleCol}","${a.name}",\n`;
   });
 
   for (let i = 1; i <= 6; i++) {
@@ -1122,7 +1172,7 @@ function exportCsvSignInSheet() {
 function sendLineConfirmation() {
   if (!lastSubmittedAttendee) return;
   const a = lastSubmittedAttendee;
-  const text = `您好 Sandy，我是 ${a.hospital} ${a.name} ${a.title}，我已完成 11/24 (二) 三總乳癌討論會之線上報名！\n\n主餐選擇：【${a.mainDish}】\n飲品選擇：【${a.drink}】\n${a.dietNotes ? `特殊飲食：${a.dietNotes}\n` : ''}當天見！`;
+  const text = `您好 Sandy，我是 ${a.hospital} ${a.name}，我已完成 11/24 (二) 三總乳癌討論會之線上報名！\n\n主餐選擇：【${a.mainDish}】\n飲品選擇：【${a.drink}】\n${a.dietNotes ? `特殊飲食：${a.dietNotes}\n` : ''}當天見！`;
   
   const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
   window.open(lineUrl, '_blank');
