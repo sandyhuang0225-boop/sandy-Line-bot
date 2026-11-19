@@ -2362,6 +2362,34 @@ def api_meeting_upload_image():
         return resp, 500
 
 
+def get_event_sheet_name(event_id, title, date=''):
+    d_match = re.findall(r'\d+', date or '')
+    d_num = ''
+    if d_match:
+        for m in d_match:
+            if len(m) == 4 and (m.startswith('11') or m.startswith('12') or m.startswith('0') or m.startswith('1')):
+                d_num = m
+                break
+        if not d_num:
+            d_num = ''.join(d_match)[-4:]
+    if not d_num:
+        ev_m = re.findall(r'\d+', event_id or '')
+        d_num = ev_m[0] if ev_m else '活動'
+
+    hospitals = ['基隆長庚', '汐止國泰', '三總松山', '三總基隆', '三軍總醫院', '三總', '台北榮總', '台大醫院', '馬偕醫院']
+    h_tag = ''
+    for h in hospitals:
+        if h in (title or '') or h in (event_id or ''):
+            h_tag = h
+            break
+    if not h_tag:
+        clean_title = re.sub(r'[^\w\u4e00-\u9fff]', '', title or '')
+        h_tag = clean_title[:6] if clean_title else '研討會'
+
+    sheet_name = f"RTD_{d_num}_{h_tag}_簽到名冊"
+    return sheet_name[:30]
+
+
 @app.route("/api/meeting/save_event", methods=['POST', 'OPTIONS'])
 def api_meeting_save_event():
     if request.method == 'OPTIONS':
@@ -2419,6 +2447,7 @@ def api_meeting_save_event():
             json_payload = json.dumps(ev_for_sheet, ensure_ascii=False)
 
         sh = get_spreadsheet()
+        dedicated_tab_name = ''
         if sh:
             try:
                 ws_cfg = sh.worksheet('RTD_通用會議活動設定')
@@ -2439,7 +2468,19 @@ def api_meeting_save_event():
             else:
                 ws_cfg.append_row(row_data)
 
-        resp = jsonify({'status': 'ok', 'message': '活動設定已成功同步存入 Google 試算表！'})
+            # 🌟 每場活動自動在 Google 試算表建立該場專屬獨立 Sheet (例如 RTD_1204_基隆長庚_簽到名冊) 🌟
+            dedicated_tab_name = get_event_sheet_name(event_id, title, date)
+            if dedicated_tab_name:
+                try:
+                    sh.worksheet(dedicated_tab_name)
+                except Exception:
+                    try:
+                        ws_dedicated = sh.add_worksheet(title=dedicated_tab_name, rows=50, cols=10)
+                        ws_dedicated.append_row(['No', '填表時間', '縣市', '服務醫院/機構', '科別/單位', '職稱', '姓名', '主餐選擇', '飲品選擇', '特殊飲食備註'])
+                    except Exception as ws_err:
+                        print(f"建立專屬分頁失敗 ({dedicated_tab_name}):", ws_err)
+
+        resp = jsonify({'status': 'ok', 'message': '活動設定已成功同步存入 Google 試算表！', 'sheet_tab': dedicated_tab_name})
         resp.headers['Access-Control-Allow-Origin'] = '*'
         return resp
     except Exception as e:
@@ -2511,6 +2552,7 @@ def api_meeting_register():
 
         sh = get_spreadsheet()
         next_no = 1
+        dedicated_tab_name = ''
         if sh:
             try:
                 ws_att = sh.worksheet('RTD_通用會議報名名冊')
@@ -2522,6 +2564,23 @@ def api_meeting_register():
             next_no = len(rows)
             row_data = [event_id, event_title, next_no, now_str, city, hospital, dept, title, name, meal_choice, drink, diet_notes]
             ws_att.append_row(row_data)
+
+            # 🌟 同步寫入該場次專屬 Google Sheet 獨立頁籤 (如 RTD_1204_基隆長庚_簽到名冊) 🌟
+            dedicated_tab_name = get_event_sheet_name(event_id, event_title, '')
+            if dedicated_tab_name:
+                try:
+                    try:
+                        ws_ded = sh.worksheet(dedicated_tab_name)
+                    except Exception:
+                        ws_ded = sh.add_worksheet(title=dedicated_tab_name, rows=50, cols=10)
+                        ws_ded.append_row(['No', '填表時間', '縣市', '服務醫院/機構', '科別/單位', '職稱', '姓名', '主餐選擇', '飲品選擇', '特殊飲食備註'])
+                    
+                    ded_rows = ws_ded.get_all_values()
+                    ded_no = len(ded_rows)
+                    ded_row_data = [str(ded_no), now_str, city, hospital, dept, title, name, meal_choice, drink, diet_notes]
+                    ws_ded.append_row(ded_row_data)
+                except Exception as e_ded:
+                    print(f"寫入專屬分頁失敗 ({dedicated_tab_name}):", e_ded)
 
         # LINE 推播通知 Sandy
         try:
@@ -2536,7 +2595,7 @@ def api_meeting_register():
                 f"{('⚠️ 飲食備註：' + diet_notes + chr(10)) if diet_notes else ''}"
                 f"⏰ 登記時間：{now_str}\n"
                 f"━━━━━━━━━━━━━━━\n"
-                f"📊 Google 試算表（通用報名總表）已即時同步存入！"
+                f"📊 專屬分頁【{dedicated_tab_name}】已同步存入！"
             )
             line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(text=line_msg))
         except Exception as err:
