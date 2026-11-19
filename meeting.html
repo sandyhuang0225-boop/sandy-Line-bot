@@ -1003,7 +1003,7 @@ function handleAiFileChosen(input, type) {
   }
 }
 
-// 圖片壓縮並上傳取得雲端 URL
+// 圖片壓縮為輕量 Base64 (0 延遲，絕不阻塞 Gemini 視覺解析)
 function compressAndUploadImage(file) {
   return new Promise((resolve) => {
     if (!file) return resolve(null);
@@ -1011,35 +1011,23 @@ function compressAndUploadImage(file) {
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let w = img.width, h = img.height;
-        const maxDim = 1200;
-        if (w > maxDim || h > maxDim) {
-          if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
-          else { w = Math.round((w * maxDim) / h); h = maxDim; }
-        }
-        canvas.width = w; canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-
-        // 上傳至雲端伺服器取得永久靜態 URL
-        fetch(`${API_BASE}/upload_image`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image: compressedBase64, filename: file.name })
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.status === 'ok' && data.url) {
-            resolve({ url: data.url, base64: compressedBase64.split(',')[1], mimeType: 'image/jpeg' });
-          } else {
-            resolve({ url: compressedBase64, base64: compressedBase64.split(',')[1], mimeType: 'image/jpeg' });
+        try {
+          const canvas = document.createElement('canvas');
+          let w = img.width, h = img.height;
+          const maxDim = 1200;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) { h = Math.round((h * maxDim) / w); w = maxDim; }
+            else { w = Math.round((w * maxDim) / h); h = maxDim; }
           }
-        })
-        .catch(() => {
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.75);
           resolve({ url: compressedBase64, base64: compressedBase64.split(',')[1], mimeType: 'image/jpeg' });
-        });
+        } catch (err) {
+          const b64 = e.target.result.split(',')[1];
+          resolve({ url: e.target.result, base64: b64, mimeType: file.type || 'image/jpeg' });
+        }
       };
       img.onerror = () => {
         const b64 = e.target.result.split(',')[1];
@@ -1050,6 +1038,22 @@ function compressAndUploadImage(file) {
     reader.onerror = () => resolve(null);
     reader.readAsDataURL(file);
   });
+}
+
+function safeParseJson(rawText) {
+  if (!rawText) throw new Error("無有效辨識回傳");
+  let cleaned = rawText.trim();
+  if (cleaned.startsWith('```json')) {
+    cleaned = cleaned.replace(/^```json\s*/i, '').replace(/\s*```$/, '');
+  } else if (cleaned.startsWith('```')) {
+    cleaned = cleaned.replace(/^```\s*/, '').replace(/\s*```$/, '');
+  }
+  const firstBrace = cleaned.indexOf('{');
+  const lastBrace = cleaned.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace !== -1) {
+    cleaned = cleaned.slice(firstBrace, lastBrace + 1);
+  }
+  return JSON.parse(cleaned);
 }
 
 function readPdfAsBase64(file) {
@@ -1104,7 +1108,7 @@ async function callGeminiVisionApi(promptText, parts) {
         const resData = await resp.json();
         const rawText = resData.candidates?.[0]?.content?.parts?.[0]?.text;
         if (!rawText) throw new Error("無有效辨識回傳");
-        return JSON.parse(rawText);
+        return safeParseJson(rawText);
       } catch (e) {
         console.warn(`Model ${model} attempt ${attempt} failed:`, e);
         lastError = e;
@@ -1283,13 +1287,7 @@ async function startMeetingAiAnalysis() {
       attendees: existing.attendees || []
     };
 
-    eventsDb[evId] = updatedEvent;
-    currentEventId = evId;
-    saveEventsDb();
-    renderEventSelector();
-    renderCurrentEvent();
-
-    // 🌟 核心：自動將辨識內容即時填入彈窗下方的表單各欄位 🌟
+    // 🌟 核心：第一時間自動將辨識內容填入彈窗下方的表單各欄位 🌟
     if (document.getElementById('cfgEventId')) document.getElementById('cfgEventId').value = updatedEvent.id;
     if (document.getElementById('cfgEventBadge')) document.getElementById('cfgEventBadge').value = updatedEvent.badge;
     if (document.getElementById('cfgEventTitle')) document.getElementById('cfgEventTitle').value = updatedEvent.title;
@@ -1305,8 +1303,8 @@ async function startMeetingAiAnalysis() {
       if (document.getElementById('cfgSetMain2')) document.getElementById('cfgSetMain2').value = updatedEvent.setOptions.mains[1] || '';
       if (document.getElementById('cfgSetMain3')) document.getElementById('cfgSetMain3').value = updatedEvent.setOptions.mains[2] || '';
       if (document.getElementById('cfgSetDrinks')) document.getElementById('cfgSetDrinks').value = (updatedEvent.setOptions.drinks || []).join(' / ');
-    } else if (updatedEvent.mealMode === 'TABLE' && updatedEvent.menuItems) {
-      if (document.getElementById('cfgTableMenuItems')) document.getElementById('cfgTableMenuItems').value = updatedEvent.menuItems.join('\n');
+    } else if (updatedEvent.mealMode === 'TABLE') {
+      if (document.getElementById('cfgTableMenuItems')) document.getElementById('cfgTableMenuItems').value = (updatedEvent.menuItems || []).join('\n');
       if (document.getElementById('cfgSetMain1')) document.getElementById('cfgSetMain1').value = '';
       if (document.getElementById('cfgSetMain2')) document.getElementById('cfgSetMain2').value = '';
       if (document.getElementById('cfgSetMain3')) document.getElementById('cfgSetMain3').value = '';
@@ -1332,6 +1330,16 @@ async function startMeetingAiAnalysis() {
         prevImg.src = updatedEvent.menuImgUrl;
         prevBox.style.display = 'block';
       }
+    }
+
+    try {
+      eventsDb[evId] = updatedEvent;
+      currentEventId = evId;
+      saveEventsDb();
+      renderEventSelector();
+      renderCurrentEvent();
+    } catch(renderErr) {
+      console.warn("渲染背景頁面非致命錯誤:", renderErr);
     }
 
     if (successBanner) {
