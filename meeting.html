@@ -752,22 +752,23 @@
                 <small class="text-muted">中式合菜模式下，報名表不會顯示選菜表格，醫師將直接瀏覽菜色並直接簽名入席。</small>
               </div>
 
-              <!-- 西式套餐專用：自訂三道主餐與飲品，直接連動報名選項 -->
+              <!-- 西式套餐專用：自訂主餐清單 (支援 2~6 道彈性主餐自選，無數量限制) 與佐餐飲品 -->
               <div id="cfgSetMenuBox" style="display: none;">
-                <label class="form-label small fw-bold text-primary">西式套餐主餐選項 (由 AI 自動讀出，自動連動醫師報名單選防呆選項)</label>
-                <div class="row g-2 mb-2">
-                  <div class="col-md-4 col-12">
-                    <input type="text" id="cfgSetMain1" class="form-control form-control-sm fw-bold" placeholder="主餐選項一 (例如: 嫩煎菲力牛排)">
-                  </div>
-                  <div class="col-md-4 col-12">
-                    <input type="text" id="cfgSetMain2" class="form-control form-control-sm fw-bold" placeholder="主餐選項二 (例如: 野生海鱸魚排)">
-                  </div>
-                  <div class="col-md-4 col-12">
-                    <input type="text" id="cfgSetMain3" class="form-control form-control-sm fw-bold" placeholder="主餐選項三 (例如: 松露野菇燉飯)">
-                  </div>
-                </div>
-                <label class="form-label small fw-bold text-secondary">佐餐飲品選項 (以斜線分隔)</label>
-                <input type="text" id="cfgSetDrinks" class="form-control form-control-sm" placeholder="獨家單杯紅白酒 / 無酒精氣泡飲 / 獅王伯爵茶 / 美式咖啡">
+                <label class="form-label small fw-bold text-primary">
+                  <i class="fa-solid fa-utensils text-primary me-1"></i>西式套餐主餐選項 (由 AI 自動讀出，每行一道主餐，支援 2~6 道彈性選項)
+                </label>
+                <textarea id="cfgSetMainsList" class="form-control form-control-sm fw-bold" rows="4" placeholder="每行輸入一道主餐（支援 2~6 道彈性選項，無數量限制），例如：&#10;嫩煎特級菲力牛排 6oz&#10;法式香煎櫻桃鴨胸佐櫻桃醬&#10;野生深海海鱸魚排佐白酒檸檬醬&#10;義大利黑松露牛肝菌野菇燉飯 (蛋奶素)"></textarea>
+                <small class="text-muted d-block mb-2">系統將依據上方每行主餐，在報名表自動生成單選卡片（三選一、四選一或五選一）供醫師挑選。</small>
+
+                <!-- 隱藏兼容輸入欄位，維持系統向後相容 -->
+                <input type="hidden" id="cfgSetMain1">
+                <input type="hidden" id="cfgSetMain2">
+                <input type="hidden" id="cfgSetMain3">
+
+                <label class="form-label small fw-bold text-secondary mt-2">
+                  <i class="fa-solid fa-wine-glass text-warning me-1"></i>佐餐飲品選項 (以斜線 / 分隔，支援任意數量)
+                </label>
+                <input type="text" id="cfgSetDrinks" class="form-control form-control-sm fw-bold" placeholder="獨家單杯紅白酒 / 無酒精氣泡飲 / 獅王伯爵茶 / 美式咖啡 / 鮮榨柳橙汁">
               </div>
             </div>
 
@@ -1184,8 +1185,8 @@ async function startMeetingAiAnalysis() {
        - menuItems 依序填入這張中式菜單上的所有真實菜色名稱陣列
        - setMains 必須設為空陣列 []
        - setDrinks 必須設為空陣列 []
-     * 只有當【檔案 2：餐廳菜單】明確寫著「個人套餐主餐 N 選 1 供賓客自選」（如：牛排、魚排、羊排、燉飯二選一或三選一）時：
-       mealMode 才判定為 "SET"，並將那幾道可選的主餐填入 setMains 陣列，佐餐飲品填入 setDrinks。
+     * 只有當【檔案 2：餐廳菜單】明確寫著「個人套餐主餐 N 選 1 供賓客自選」（如：牛排、魚排、羊排、鴨胸、燉飯等二選一、三選一、四選一或五選一）時：
+       mealMode 才判定為 "SET"，並將菜單上的【所有可選主餐（無論有 3 道、4 道或 5 道，請完整全部列出，嚴禁遺漏或只擷取前三道）】完整填入 setMains 陣列，佐餐飲品完整填入 setDrinks 陣列。
      * 若未提供獨立菜單照片：
        mealMode 設為 "TABLE"，menuItems 與 setMains 皆為空陣列 []。
 
@@ -1201,8 +1202,8 @@ async function startMeetingAiAnalysis() {
     { "time": "時段", "topic": "講題全名", "speaker": "講者/座長姓名與醫院" }
   ],
   "menuItems": ["真實菜色名稱"],
-  "setMains": ["真實主餐選項"],
-  "setDrinks": ["真實飲品選項"]
+  "setMains": ["菜單上的所有真實主餐選項，若有4道或5道請全部完整列出，不可截斷"],
+  "setDrinks": ["菜單上的所有真實飲品選項，若有4種或5種請全部完整列出"]
 }`;
 
     const parts = [];
@@ -1295,12 +1296,16 @@ async function startMeetingAiAnalysis() {
       handleMealModeChange(updatedEvent.mealMode);
     }
     if (updatedEvent.mealMode === 'SET' && updatedEvent.setOptions?.mains) {
+      if (document.getElementById('cfgSetMainsList')) {
+        document.getElementById('cfgSetMainsList').value = updatedEvent.setOptions.mains.join('\n');
+      }
       if (document.getElementById('cfgSetMain1')) document.getElementById('cfgSetMain1').value = updatedEvent.setOptions.mains[0] || '';
       if (document.getElementById('cfgSetMain2')) document.getElementById('cfgSetMain2').value = updatedEvent.setOptions.mains[1] || '';
       if (document.getElementById('cfgSetMain3')) document.getElementById('cfgSetMain3').value = updatedEvent.setOptions.mains[2] || '';
       if (document.getElementById('cfgSetDrinks')) document.getElementById('cfgSetDrinks').value = (updatedEvent.setOptions.drinks || []).join(' / ');
     } else if (updatedEvent.mealMode === 'TABLE') {
       if (document.getElementById('cfgTableMenuItems')) document.getElementById('cfgTableMenuItems').value = (updatedEvent.menuItems || []).join('\n');
+      if (document.getElementById('cfgSetMainsList')) document.getElementById('cfgSetMainsList').value = '';
       if (document.getElementById('cfgSetMain1')) document.getElementById('cfgSetMain1').value = '';
       if (document.getElementById('cfgSetMain2')) document.getElementById('cfgSetMain2').value = '';
       if (document.getElementById('cfgSetMain3')) document.getElementById('cfgSetMain3').value = '';
@@ -1805,17 +1810,20 @@ function renderCurrentEvent() {
           <span class="badge bg-primary" id="mainDishStatusPill">已選：${setOpts.mains[0]}</span>
         </div>
         <div class="row g-2 mb-3">
-          ${setOpts.mains.map((m, idx) => `
-            <div class="col-md-4 col-12">
-              <div class="meal-option-card ${idx === 0 ? 'selected' : ''}" id="card_main_${idx}" onclick="selectSetMain('${m}', ${idx})">
-                <input class="form-check-input" type="radio" name="mainDishRadio" id="radio_main_${idx}" value="${m}" ${idx === 0 ? 'checked' : ''}>
+          ${setOpts.mains.map((m, idx) => {
+            const colClass = setOpts.mains.length === 4 ? 'col-md-3 col-6' : (setOpts.mains.length >= 5 ? 'col-md-4 col-6' : 'col-md-4 col-12');
+            const safeM = m.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+            return `
+            <div class="${colClass}">
+              <div class="meal-option-card ${idx === 0 ? 'selected' : ''}" id="card_main_${idx}" onclick="selectSetMain('${safeM}', ${idx})">
+                <input class="form-check-input" type="radio" name="mainDishRadio" id="radio_main_${idx}" value="${safeM}" ${idx === 0 ? 'checked' : ''}>
                 <div class="flex-grow-1">
                   <h6 class="fw-bold mb-0 text-dark">${m}</h6>
                   <small class="text-muted status-tag">${idx === 0 ? '已選取' : '點擊選取'}</small>
                 </div>
               </div>
             </div>
-          `).join('')}
+          `;}).join('')}
         </div>
         <input type="hidden" id="selectedMainDish" value="${setOpts.mains[0]}">
 
@@ -2534,14 +2542,19 @@ function openEventEditorModal() {
 
   // 西餐主餐預設 (僅在 SET 模式帶入，中式 TABLE 模式清空以防殘留)
   if (ev.mealMode === 'SET' && ev.setOptions) {
-    document.getElementById('cfgSetMain1').value = ev.setOptions.mains?.[0] || '';
-    document.getElementById('cfgSetMain2').value = ev.setOptions.mains?.[1] || '';
-    document.getElementById('cfgSetMain3').value = ev.setOptions.mains?.[2] || '';
+    const mains = Array.isArray(ev.setOptions.mains) ? ev.setOptions.mains : [];
+    if (document.getElementById('cfgSetMainsList')) {
+      document.getElementById('cfgSetMainsList').value = mains.join('\n');
+    }
+    if (document.getElementById('cfgSetMain1')) document.getElementById('cfgSetMain1').value = mains[0] || '';
+    if (document.getElementById('cfgSetMain2')) document.getElementById('cfgSetMain2').value = mains[1] || '';
+    if (document.getElementById('cfgSetMain3')) document.getElementById('cfgSetMain3').value = mains[2] || '';
     document.getElementById('cfgSetDrinks').value = (ev.setOptions.drinks || []).join(' / ');
   } else {
-    document.getElementById('cfgSetMain1').value = '';
-    document.getElementById('cfgSetMain2').value = '';
-    document.getElementById('cfgSetMain3').value = '';
+    if (document.getElementById('cfgSetMainsList')) document.getElementById('cfgSetMainsList').value = '';
+    if (document.getElementById('cfgSetMain1')) document.getElementById('cfgSetMain1').value = '';
+    if (document.getElementById('cfgSetMain2')) document.getElementById('cfgSetMain2').value = '';
+    if (document.getElementById('cfgSetMain3')) document.getElementById('cfgSetMain3').value = '';
     document.getElementById('cfgSetDrinks').value = '獨家單杯紅白酒 / 無酒精氣泡飲 / 獅王伯爵茶 / 美式咖啡';
   }
 
@@ -2611,12 +2624,19 @@ function saveEventConfig(e) {
     menuItems = menuRaw ? menuRaw.split('\n').filter(l => l.trim()) : [];
     setOptions = null;
   } else if (mealMode === 'SET') {
-    const m1 = document.getElementById('cfgSetMain1').value.trim();
-    const m2 = document.getElementById('cfgSetMain2').value.trim();
-    const m3 = document.getElementById('cfgSetMain3').value.trim();
-    const drinksRaw = document.getElementById('cfgSetDrinks').value.trim();
+    const mainsListEl = document.getElementById('cfgSetMainsList');
+    let mainsList = [];
+    if (mainsListEl && mainsListEl.value.trim()) {
+      mainsList = mainsListEl.value.split('\n').map(m => m.trim()).filter(Boolean);
+    } else {
+      const m1 = document.getElementById('cfgSetMain1') ? document.getElementById('cfgSetMain1').value.trim() : '';
+      const m2 = document.getElementById('cfgSetMain2') ? document.getElementById('cfgSetMain2').value.trim() : '';
+      const m3 = document.getElementById('cfgSetMain3') ? document.getElementById('cfgSetMain3').value.trim() : '';
+      mainsList = [m1, m2, m3].filter(Boolean);
+    }
+    const drinksRaw = document.getElementById('cfgSetDrinks') ? document.getElementById('cfgSetDrinks').value.trim() : '';
     setOptions = {
-      mains: [m1, m2, m3].filter(Boolean),
+      mains: mainsList.length > 0 ? mainsList : ['特選主餐一', '特選主餐二', '特選主餐三'],
       drinks: drinksRaw ? drinksRaw.split('/').map(d => d.trim()).filter(Boolean) : ['獨家單杯紅白酒', '無酒精氣泡飲', '美式咖啡']
     };
     menuItems = ['附主廚特製前菜、經典沙拉、精燉濃湯與手工甜品'];
