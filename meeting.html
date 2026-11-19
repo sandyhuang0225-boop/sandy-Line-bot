@@ -6,6 +6,9 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="諾華會議報名">
   <title>台灣諾華 醫學會議 (RTD) 通用線上報名與制式簽到表系統</title>
 
   <!-- Bootstrap 5 & FontAwesome -->
@@ -864,37 +867,44 @@ const STORAGE_ADMIN_AUTH_KEY = 'novartis_admin_authed_v2';
 const API_BASE = 'https://sandy-line-bot.onrender.com/api/meeting';
 
 const DEFAULT_EVENTS = {
-  '1204_cgmh': {
-    id: '1204_cgmh',
-    badge: '12/4 基隆長庚研討會',
-    title: '基隆長庚乳癌醫學研討會',
-    date: '2026年12月04日（星期四）',
-    time: '18:30 - 20:30',
-    venue: '欣葉鐘菜（台北市中山區樂群二路199號）',
-    mealMode: 'SET',
-    agendaImgUrl: '',
+  'event_1204_1317': {
+    id: 'event_1204_1317',
+    badge: '12月乳癌研討會',
+    title: '基隆長庚乳癌研討會 From Shared Decision to Long-Term Confidence',
+    date: '2026年12月4日（五）',
+    time: '18:30-20:30',
+    venue: '青樓中式餐酒館（台北市松山區八德路四段512-1號）',
+    mealMode: 'TABLE',
+    agendaImgUrl: 'https://sandy-line-bot.onrender.com/static/uploads/agendaImgUrl_34c01983.jpg',
     agendaLines: [
       { time: '18:30~19:00', topic: 'Reception 接待與報到', speaker: 'ALL' },
-      { time: '19:00~19:40', topic: '最新臨床治療指引與實踐經驗探討', speaker: '專家醫師' },
-      { time: '19:40~20:20', topic: '乳癌病友全方位照護歷程與支持方案', speaker: 'Sandy Huang (諾華公司)' },
-      { time: '20:20~20:30', topic: '綜合座談與交流討論', speaker: '全體與會貴賓' }
+      { time: '19:00~19:40', topic: 'KISQALI Does it Again: A Moment for OS in NATALEE', speaker: '主講人：李春輝醫師（基隆長庚）/ 座長：簡志穎醫師（基隆長庚）' },
+      { time: '19:40~20:20', topic: 'Empowering the Treatment Journey: AE Management and QOL in KISQALI Treatment', speaker: '主講人：張悅詩醫師（基隆長庚）/ 座長：黃彥閔醫師（基隆長庚）' },
+      { time: '20:20~20:30', topic: 'Discussion 綜合座談與討論', speaker: '全體與會貴賓' }
     ],
-    menuImgUrl: '',
-    menuItems: ['精緻個人西式套餐'],
-    setOptions: {
-      mains: ['特選主餐一', '特選主餐二', '特選主餐三'],
-      desserts: ['精選甜點一', '精選甜點二'],
-      appetizers: [],
-      drinks: ['無酒精氣泡飲', '特調咖啡', '精選茗茶']
-    },
+    menuImgUrl: 'https://sandy-line-bot.onrender.com/static/uploads/menuImgUrl_d7ec8670.jpg',
+    menuItems: [
+      '荷風海皇五拼盤（龍蝦、烏魚子、中卷、九孔、蟹肉棒）',
+      'XO醬炒雙鮮',
+      '蒜香脆皮雞',
+      '樹子海上鮮（龍虎斑）',
+      '荷葉蒸大蝦',
+      '北菇海參扒蹄筋',
+      '椒鹽牛小排拼海鮮捲',
+      '蒲燒鰻蒸米糕',
+      '巴西菇馬告燉牛腩',
+      '彩虹蔬',
+      '青樓美點（奶皇包、馬蹄條）'
+    ],
+    setOptions: null,
     attendees: [
-      { id: 1, name: 'Sandy Huang', city: '基隆市', hospital: '基隆長庚', dept: '腫瘤醫學部', title: '台灣諾華', mealChoice: '特選主餐一', dietNotes: '' }
+      { id: 1, name: 'Sandy huang', city: '台北市', hospital: '台灣諾華股份有限公司', dept: '腫瘤醫學部', title: '台灣諾華', mealChoice: '桌菜出席', dietNotes: '' }
     ]
   }
 };
 
 let eventsDb = {};
-let currentEventId = '1204_cgmh';
+let currentEventId = 'event_1204_1317';
 let isAdmin = false;
 let lastSubmitted = null;
 
@@ -913,9 +923,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const eventParam = urlParams.get('e');
   if (eventParam && eventsDb[eventParam]) {
     currentEventId = eventParam;
-  } else if (eventParam && (eventParam === '1124' || eventParam === '1124_wilson')) {
-    // 兼容處理：若先前透過 LINE 分享送出帶有 1124 舊代碼之連結，自動平滑導向當前最新 12/4 長庚場次
-    currentEventId = Object.keys(eventsDb)[0] || '1204_cgmh';
+  } else if (eventParam && (eventParam === '1124' || eventParam === '1124_wilson' || eventParam === '1204_cgmh')) {
+    currentEventId = Object.keys(eventsDb)[0] || 'event_1204_1317';
   }
 
   renderEventSelector();
@@ -1754,6 +1763,14 @@ function renderEventSelector() {
 function renderCurrentEvent() {
   const ev = eventsDb[currentEventId];
   if (!ev) return;
+
+  // 保持網址與當前活動完全同步，避免存入主畫面時遺失場次代碼
+  if (window.history && window.history.replaceState && currentEventId) {
+    if (!window.location.search.includes(currentEventId)) {
+      const newUrl = `${window.location.origin}${window.location.pathname}?e=${currentEventId}`;
+      window.history.replaceState(null, '', newUrl);
+    }
+  }
 
   document.getElementById('dispEventBadge').innerHTML = `<i class="fa-solid fa-ribbon me-1"></i>${ev.badge || '醫學會議'}`;
   document.getElementById('dispEventTitle').textContent = ev.title;
