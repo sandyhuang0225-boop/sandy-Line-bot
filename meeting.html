@@ -1172,13 +1172,22 @@ async function startMeetingAiAnalysis() {
    - time: 時段（例如「18:30~19:00」）
    - topic: 主題或活動全名（如報到接待、演講主題、PSP討論、綜合座談等）
    - speaker: 主講人或座長主持人姓名職稱（含醫師姓名與所屬醫院；若為諾華同仁如 Sandy Huang 請保留全名與台灣諾華）
-7. mealMode 與菜單判定：
-   - 判斷餐廳供餐型態是中式桌席/合菜共享（TABLE）還是西式個人套餐（SET）：
-     * 若為中餐廳、海鮮台菜、大圓桌合菜、宴席料理：
-       mealMode 設為 "TABLE"，將所有菜色名稱依序填入 menuItems 陣列；setMains 與 setDrinks 設為空陣列 []。
-     * 若為西式排餐、法義餐廳、每位賓客需挑選一道個人主餐（如牛排、魚排、豬排、海鮮燉飯等）：
-       mealMode 設為 "SET"，將主餐選項填入 setMains 陣列（例如 2~4 道主菜），佐餐飲品填入 setDrinks 陣列，附餐（沙拉/湯品/甜點等）填入 menuItems 陣列。
-     * 若無提供菜單或無用餐安排，mealMode 設為 "TABLE"，menuItems 與 setMains 為空陣列 []。
+7. mealMode 與菜單判定（★極為關鍵，必須以【檔案 2：餐廳菜單】照片內容為最高第一準則）：
+   - 請特別注意：主辦人可能會在任何餐廳舉辦中式合菜（例如在義法餐酒館包場吃合菜，或在飯店宴會廳吃桌菜）。
+   - 因此：
+     * 只要有上傳【檔案 2：餐廳菜單】照片：
+       【絕對以菜單上的真實菜色來判定，絕不能看議程上的餐廳名字或店名！】
+       若【檔案 2：餐廳菜單】上是一道接一道的「中式合菜 / 桌菜」（如雞湯、清蒸魚、肉類、拼盤、海鮮、米糕/油飯、炒時蔬、佛跳牆、點心水果等整桌共享菜色）：
+       【不管議程表上的餐廳叫什麼名字（即使寫著 Wilson Park 或任何西餐廳、餐酒館）】，mealMode 必須【絕對嚴格判定為 "TABLE"】！
+       此時：
+       - mealMode 設為 "TABLE"
+       - menuItems 依序填入這張中式菜單上的所有真實菜色名稱陣列
+       - setMains 必須設為空陣列 []
+       - setDrinks 必須設為空陣列 []
+     * 只有當【檔案 2：餐廳菜單】明確寫著「個人套餐主餐 N 選 1 供賓客自選」（如：牛排、魚排、羊排、燉飯二選一或三選一）時：
+       mealMode 才判定為 "SET"，並將那幾道可選的主餐填入 setMains 陣列，佐餐飲品填入 setDrinks。
+     * 若未提供獨立菜單照片：
+       mealMode 設為 "TABLE"，menuItems 與 setMains 皆為空陣列 []。
 
 請輸出嚴格合法的 JSON，格式如下（注意：鍵值請填寫圖片中真實讀到的內容）：
 {
@@ -1771,10 +1780,10 @@ function renderCurrentEvent() {
     const setOpts = {
       mains: (ev.setOptions && Array.isArray(ev.setOptions.mains) && ev.setOptions.mains.length > 0)
         ? ev.setOptions.mains
-        : ['嫩煎菲力牛排', '蟹黃海鮮燉飯', '西班牙伊比利老饕豬'],
+        : ['特選主廚主餐一', '特選主廚主餐二', '特選主廚主餐三'],
       drinks: (ev.setOptions && Array.isArray(ev.setOptions.drinks) && ev.setOptions.drinks.length > 0)
         ? ev.setOptions.drinks
-        : ['獨家單杯紅白酒', '無酒精氣泡飲', '獅王伯爵茶', '美式咖啡']
+        : ['獨家單杯紅白酒', '無酒精氣泡飲', '美式咖啡']
     };
 
     menuItemsContent.innerHTML = `
