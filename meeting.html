@@ -50,7 +50,7 @@
       margin-bottom: 24px;
     }
 
-    /* 餐點單選防呆卡片 */
+    /* 餐點單選互斥防呆卡片 */
     .meal-option-card {
       border: 2px solid #cbd5e1;
       border-radius: 12px;
@@ -109,7 +109,7 @@
       font-weight: 700;
     }
 
-    /* A4 直向列印規範 (自動隱藏網頁元素) */
+    /* A4 直向列印規範 (完全專注於簽到表) */
     @media print {
       html, body {
         width: 100% !important;
@@ -159,7 +159,7 @@
 </head>
 <body>
 
-<!-- 頂部導覽列 (支援多場次切換與主辦管理) -->
+<!-- 頂部導覽列 -->
 <header class="top-header-banner mb-4 no-print">
   <div class="container d-flex align-items-center justify-content-between flex-wrap gap-2">
     <div class="d-flex align-items-center gap-3">
@@ -171,24 +171,27 @@
       </div>
     </div>
 
-    <!-- 右側功能按鈕 -->
+    <!-- 右側功能按鈕 (依權限動態展示) -->
     <div class="d-flex align-items-center gap-2 flex-wrap">
-      <!-- 場次切換下拉選單 -->
-      <div class="input-group input-group-sm" style="max-width: 240px;">
+      <!-- 場次切換下拉選單 (主辦人或多場次時可見) -->
+      <div class="input-group input-group-sm" id="eventSelectorGroup" style="max-width: 230px;">
         <span class="input-group-text bg-dark text-white border-0"><i class="fa-solid fa-calendar-check"></i></span>
-        <select id="eventSelector" class="form-select form-select-sm fw-bold border-0" onchange="switchEvent(this.value)">
-          <!-- 動態載入場次清單 -->
-        </select>
+        <select id="eventSelector" class="form-select form-select-sm fw-bold border-0" onchange="switchEvent(this.value)"></select>
       </div>
 
-      <!-- 建立/編輯場次按鈕 (Sandy 專用) -->
-      <button type="button" class="btn btn-outline-light btn-sm fw-bold" onclick="openEventEditorModal()">
-        <i class="fa-solid fa-gear me-1"></i>活動設定
-      </button>
+      <!-- 🔒 Sandy 專屬主辦人控制按鈕 (只有主辦人能見) -->
+      <div id="adminControlsGroup" style="display: none;" class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-light btn-sm fw-bold" onclick="openEventEditorModal()">
+          <i class="fa-solid fa-gear me-1 text-warning"></i>活動設定
+        </button>
+        <button type="button" class="btn btn-info btn-sm text-dark fw-bold" onclick="copyEventShareLink(this)">
+          <i class="fa-solid fa-share-nodes me-1"></i>複製醫師報名網址
+        </button>
+      </div>
 
-      <!-- 複製專屬報名網址 -->
-      <button type="button" class="btn btn-info btn-sm text-dark fw-bold" onclick="copyEventShareLink(this)">
-        <i class="fa-solid fa-link me-1"></i>複製報名連結
+      <!-- 訪客/醫師看到的鎖頭按鈕 (點擊可輸入密碼解鎖主辦人功能) -->
+      <button type="button" id="btnAdminUnlock" class="btn btn-outline-light btn-sm" onclick="promptAdminLogin()" title="主辦人專區">
+        <i class="fa-solid fa-lock"></i>
       </button>
 
       <!-- 🌟 一鍵列印簽到表 🌟 -->
@@ -239,7 +242,7 @@
           <h5 class="fw-bold text-dark mb-0">
             <i class="fa-solid fa-clipboard-list text-primary me-2"></i>會議正式議程 (Agenda)
           </h5>
-          <span class="badge bg-primary-subtle text-primary border border-primary small" id="agendaZoomTag" style="display: none;">點圖可放大</span>
+          <span class="badge bg-primary-subtle text-primary border border-primary small" id="agendaZoomTag" style="display: none;">點圖放大</span>
         </div>
         
         <!-- 圖片型議程 -->
@@ -250,9 +253,7 @@
         <!-- 條列型文字議程 -->
         <div class="table-responsive small" id="agendaTextBox">
           <table class="table table-sm table-striped mb-0">
-            <tbody id="agendaTableBody">
-              <!-- 動態載入文字議程 -->
-            </tbody>
+            <tbody id="agendaTableBody"></tbody>
           </table>
         </div>
       </div>
@@ -263,23 +264,19 @@
       <div class="custom-card h-100 p-3">
         <div class="d-flex align-items-center justify-content-between mb-2">
           <h5 class="fw-bold text-dark mb-0" id="menuHeaderTitle">
-            <i class="fa-solid fa-utensils text-success me-2"></i>餐廳特製菜單 (Menu)
+            <i class="fa-solid fa-utensils text-success me-2"></i>餐廳菜單 (Menu)
           </h5>
-          <span class="badge bg-success-subtle text-success border border-success small" id="menuModeBadge">
-            中式桌菜 · 免選主餐
-          </span>
+          <span class="badge small" id="menuModeBadge">中式桌宴 · 免選主餐</span>
         </div>
 
-        <!-- 圖片型菜單 (如有) -->
+        <!-- 圖片型菜單 -->
         <div class="preview-img-box text-center p-2 mb-2" id="menuImgBox" style="display: none;" onclick="openImageModal(document.getElementById('menuImg').src, '活動特製菜單')">
           <img id="menuImg" src="" alt="特製菜單" class="img-fluid rounded" style="max-height: 250px; object-fit: contain;">
         </div>
 
         <!-- 菜色說明清單 -->
         <div class="p-3 bg-light rounded border small" id="menuItemsBox">
-          <div id="menuItemsContent">
-            <!-- 動態載入菜色品項 -->
-          </div>
+          <div id="menuItemsContent"></div>
         </div>
       </div>
     </div>
@@ -414,7 +411,7 @@
         <button type="button" class="btn btn-sm btn-outline-success fw-bold" onclick="copyRestaurantSummary(this)">
           <i class="fa-brands fa-line me-1"></i>複製點餐總數給餐廳
         </button>
-        <button type="button" class="btn btn-sm btn-outline-primary" onclick="injectCurrentEventSample()">
+        <button type="button" class="btn btn-sm btn-outline-primary admin-only-btn" onclick="injectCurrentEventSample()" style="display: none;">
           <i class="fa-solid fa-vial me-1"></i>載入示範名單
         </button>
       </div>
@@ -440,7 +437,7 @@
             <th>服務醫院/機構</th>
             <th>科別</th>
             <th id="thMealCol">餐點/備註</th>
-            <th class="text-end" style="width: 60px;">操作</th>
+            <th class="text-end admin-col" style="width: 60px;">操作</th>
           </tr>
         </thead>
         <tbody id="attendeeListSummaryBody"></tbody>
@@ -530,28 +527,28 @@
 
 </div>
 
-<!-- 🌟 活動建立與編輯彈窗 🌟 -->
+<!-- 🌟 Sandy 專屬活動建立與編輯彈窗 🌟 -->
 <div class="modal fade" id="eventEditorModal" tabindex="-1">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content border-0 shadow">
       <div class="modal-header bg-dark text-white">
-        <h5 class="modal-title fw-bold"><i class="fa-solid fa-calendar-plus me-2 text-warning"></i>醫學會議活動設定中心</h5>
+        <h5 class="modal-title fw-bold"><i class="fa-solid fa-calendar-plus me-2 text-warning"></i>醫學會議活動設定中心 (Sandy 主辦人)</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body p-4">
         <form id="eventConfigForm" onsubmit="saveEventConfig(event)">
           <div class="row g-3">
             <div class="col-md-6 col-12">
-              <label class="form-label fw-bold small">活動識別 ID (英文數字)</label>
+              <label class="form-label fw-bold small">活動識別代碼 (ID，英文數字)</label>
               <input type="text" id="cfgEventId" class="form-control fw-bold" required placeholder="例如: 1204_table">
             </div>
             <div class="col-md-6 col-12">
-              <label class="form-label fw-bold small">活動簡稱標籤 (Badge)</label>
+              <label class="form-label fw-bold small">活動標籤 (Badge)</label>
               <input type="text" id="cfgEventBadge" class="form-control" placeholder="例如: 12/4 中式桌菜論壇">
             </div>
 
             <div class="col-12">
-              <label class="form-label fw-bold small">活動正式完整名稱 (出現在簽到表)</label>
+              <label class="form-label fw-bold small">活動正式名稱 (自動帶入簽到表)</label>
               <input type="text" id="cfgEventTitle" class="form-control fw-bold" required placeholder="例如: 12月乳癌高峰論壇 - From Evidence to Practice">
             </div>
 
@@ -564,7 +561,7 @@
               <input type="text" id="cfgEventTime" class="form-control" required placeholder="例如: 18:30 - 20:30">
             </div>
             <div class="col-md-4 col-12">
-              <label class="form-label fw-bold small">供餐型態 (重要！)</label>
+              <label class="form-label fw-bold small text-primary">供餐型態 (重要！)</label>
               <select id="cfgMealMode" class="form-select fw-bold border-primary" onchange="handleMealModeChange(this.value)">
                 <option value="TABLE">🍲 中式桌菜 / 合菜（純瀏覽，免選主餐）</option>
                 <option value="SET">🥩 西式套餐（三選一選餐 + 飲品）</option>
@@ -577,34 +574,78 @@
               <input type="text" id="cfgEventVenue" class="form-control" required placeholder="例如: 欣葉鐘菜（台北市中山區樂群二路199號）">
             </div>
 
-            <!-- 議程設定 -->
+            <hr class="my-2">
+
+            <!-- 🌟 議程 (Agenda) 設定：支援直接手機/電腦點選上傳圖片 🌟 -->
             <div class="col-12">
-              <label class="form-label fw-bold small">會議議程內容 (可多行輸入，每行: 時間 | 主題 | 講者)</label>
-              <textarea id="cfgAgendaText" class="form-control" rows="4" placeholder="18:30~19:00 | Reception 接待報到 | ALL&#10;19:00~19:40 | 最新臨床實證分享 | 專家醫師&#10;19:40~20:20 | 綜合討論交流 | ALL"></textarea>
+              <label class="form-label fw-bold text-dark mb-1">
+                <i class="fa-solid fa-image text-primary me-1"></i>會議議程圖片 (可直接點選相簿上傳)
+              </label>
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <input type="file" id="cfgAgendaFileInput" class="form-control" accept="image/*" onchange="handleImageFilePick(this, 'cfgAgendaImgPreview', 'cfgAgendaImgData')">
+                <button type="button" class="btn btn-outline-secondary btn-sm text-nowrap" onclick="clearImagePreview('cfgAgendaImgPreview', 'cfgAgendaImgData')">清除圖片</button>
+              </div>
+              <input type="hidden" id="cfgAgendaImgData" value="">
+              <div id="cfgAgendaImgPreviewBox" class="text-center p-2 border rounded bg-light" style="display: none;">
+                <img id="cfgAgendaImgPreview" src="" style="max-height: 160px; object-fit: contain;" class="rounded">
+              </div>
+              
               <div class="mt-2">
-                <label class="form-label fw-bold small text-muted">或輸入 Agenda 圖片網址 (選填，留空則以文字表格顯示)</label>
-                <input type="text" id="cfgAgendaImgUrl" class="form-control form-control-sm" placeholder="assets/rtt_agenda.jpg 或 網路圖片網址">
+                <label class="form-label small text-muted">或文字條列議程 (如無圖片可填此，每行: 時間 | 主題 | 講者)</label>
+                <textarea id="cfgAgendaText" class="form-control form-control-sm" rows="3" placeholder="18:30~19:00 | Reception 接待報到 | ALL&#10;19:00~19:40 | 最新臨床實證分享 | 專家醫師&#10;19:40~20:20 | 綜合座談交流 | ALL"></textarea>
               </div>
             </div>
 
-            <!-- 菜色說明設定 (桌菜菜單或自訂套餐) -->
-            <div class="col-12" id="cfgMenuBox">
-              <label class="form-label fw-bold small" id="cfgMenuTitle">菜色品項清單 (每行一道菜色或備註)</label>
-              <textarea id="cfgMenuItems" class="form-control" rows="4" placeholder="經典砂鍋土雞湯&#10;清蒸現流海上鮮&#10;紅蟳米糕&#10;富貴脆皮雞&#10;時令精緻鮮果盤"></textarea>
-              <div class="mt-2">
-                <label class="form-label fw-bold small text-muted">菜單圖片網址 (選填)</label>
-                <input type="text" id="cfgMenuImgUrl" class="form-control form-control-sm" placeholder="assets/rtt_menu.jpg 或 網路圖片網址">
+            <hr class="my-2">
+
+            <!-- 🌟 菜單 (Menu) 設定：依模式切換西餐三選一或中式桌菜 🌟 -->
+            <div class="col-12" id="cfgMenuSection">
+              <label class="form-label fw-bold text-dark mb-1" id="cfgMenuLabel">
+                <i class="fa-solid fa-utensils text-success me-1"></i>菜單圖片 (可直接點選相簿上傳)
+              </label>
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <input type="file" id="cfgMenuFileInput" class="form-control" accept="image/*" onchange="handleImageFilePick(this, 'cfgMenuImgPreview', 'cfgMenuImgData')">
+                <button type="button" class="btn btn-outline-secondary btn-sm text-nowrap" onclick="clearImagePreview('cfgMenuImgPreview', 'cfgMenuImgData')">清除圖片</button>
+              </div>
+              <input type="hidden" id="cfgMenuImgData" value="">
+              <div id="cfgMenuImgPreviewBox" class="text-center p-2 border rounded bg-light mb-2" style="display: none;">
+                <img id="cfgMenuImgPreview" src="" style="max-height: 160px; object-fit: contain;" class="rounded">
+              </div>
+
+              <!-- 中式桌菜專用：菜色文字清單 -->
+              <div id="cfgTableMenuBox">
+                <label class="form-label small fw-bold text-secondary">中式合菜菜色清單 (每行一道菜)</label>
+                <textarea id="cfgTableMenuItems" class="form-control form-control-sm" rows="4" placeholder="經典砂鍋土雞湯&#10;清蒸現流海上鮮&#10;特製紅蟳米糕&#10;手作紫菜捲&#10;季節炒時蔬&#10;精緻甜品鮮果盤"></textarea>
+              </div>
+
+              <!-- 西式套餐專用：自訂三道主餐與飲品，直接連動報名選項 -->
+              <div id="cfgSetMenuBox" style="display: none;">
+                <label class="form-label small fw-bold text-primary">西式套餐主餐選項 (自動連動醫師報名三選一防呆選項)</label>
+                <div class="row g-2 mb-2">
+                  <div class="col-md-4 col-12">
+                    <input type="text" id="cfgSetMain1" class="form-control form-control-sm fw-bold" placeholder="主餐一: 嫩煎菲力牛排" value="嫩煎菲力牛排">
+                  </div>
+                  <div class="col-md-4 col-12">
+                    <input type="text" id="cfgSetMain2" class="form-control form-control-sm fw-bold" placeholder="主餐二: 蟹黃海鮮燉飯" value="蟹黃海鮮燉飯">
+                  </div>
+                  <div class="col-md-4 col-12">
+                    <input type="text" id="cfgSetMain3" class="form-control form-control-sm fw-bold" placeholder="主餐三: 西班牙伊比利老饕豬" value="西班牙伊比利老饕豬">
+                  </div>
+                </div>
+                <label class="form-label small fw-bold text-secondary">飲品選項 (以斜線分隔)</label>
+                <input type="text" id="cfgSetDrinks" class="form-control form-control-sm" value="獨家單杯紅白酒 / 無酒精氣泡飲 / 獅王伯爵茶 / 美式咖啡">
               </div>
             </div>
+
           </div>
 
           <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
-            <button type="button" class="btn btn-outline-danger" onclick="deleteCurrentEvent()">
+            <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteCurrentEvent()">
               <i class="fa-solid fa-trash-can me-1"></i>刪除此場次
             </button>
             <div class="d-flex gap-2">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-              <button type="submit" class="btn btn-primary fw-bold px-4">儲存活動設定</button>
+              <button type="submit" class="btn btn-primary fw-bold px-4">儲存並套用活動</button>
             </div>
           </div>
         </form>
@@ -659,8 +700,9 @@
 
 <script>
 // ==================== 多場次資料結構與預設設定 ====================
-const STORAGE_EVENTS_KEY = 'novartis_events_store_v1';
-const STORAGE_CURRENT_EVENT_KEY = 'novartis_current_event_id';
+const STORAGE_EVENTS_KEY = 'novartis_events_store_v2';
+const STORAGE_CURRENT_EVENT_KEY = 'novartis_current_event_id_v2';
+const STORAGE_ADMIN_AUTH_KEY = 'novartis_admin_authed_v2';
 
 const DEFAULT_EVENTS = {
   '1204_table': {
@@ -706,8 +748,7 @@ const DEFAULT_EVENTS = {
     menuImgUrl: 'assets/rtt_menu.jpg',
     setOptions: {
       mains: ['嫩煎菲力牛排', '蟹黃海鮮燉飯', '西班牙伊比利老饕豬'],
-      drinks: ['獨家單杯紅白酒', '無酒精氣泡飲', '獅王伯爵茶', '美式咖啡'],
-      desc: '含軟法麵包/松露奶油、淡菜濃湯、煙燻鴨胸沙拉、威士忌海膽布丁、主廚熔岩巧克力蛋糕'
+      drinks: ['獨家單杯紅白酒', '無酒精氣泡飲', '獅王伯爵茶', '美式咖啡']
     },
     attendees: [
       { id: 1, name: '廖國秀', city: '台北市', hospital: '三軍總醫院', dept: '乳房外科', title: '醫師', mealChoice: '嫩煎菲力牛排 (紅白酒)', dietNotes: '' },
@@ -718,9 +759,11 @@ const DEFAULT_EVENTS = {
 
 let eventsDb = {};
 let currentEventId = '1204_table';
+let isAdmin = false;
 let lastSubmitted = null;
 
 document.addEventListener('DOMContentLoaded', () => {
+  checkAdminAuth();
   loadEventsDb();
 
   const urlParams = new URLSearchParams(window.location.search);
@@ -732,6 +775,54 @@ document.addEventListener('DOMContentLoaded', () => {
   renderEventSelector();
   renderCurrentEvent();
 });
+
+// 檢查是否為主辦人 Sandy 權限
+function checkAdminAuth() {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('admin') === 'sandy' || localStorage.getItem(STORAGE_ADMIN_AUTH_KEY) === 'true') {
+    isAdmin = true;
+    localStorage.setItem(STORAGE_ADMIN_AUTH_KEY, 'true');
+  }
+
+  const adminGroup = document.getElementById('adminControlsGroup');
+  const btnUnlock = document.getElementById('btnAdminUnlock');
+  const adminBtns = document.querySelectorAll('.admin-only-btn');
+  const adminCols = document.querySelectorAll('.admin-col');
+
+  if (isAdmin) {
+    adminGroup.style.display = 'flex';
+    btnUnlock.innerHTML = '<i class="fa-solid fa-unlock text-warning"></i> 主辦人';
+    btnUnlock.className = 'btn btn-outline-warning btn-sm fw-bold';
+    adminBtns.forEach(b => b.style.display = 'inline-block');
+    adminCols.forEach(c => c.style.display = '');
+  } else {
+    adminGroup.style.display = 'none';
+    btnUnlock.innerHTML = '<i class="fa-solid fa-lock"></i>';
+    adminBtns.forEach(b => b.style.display = 'none');
+    adminCols.forEach(c => c.style.display = 'none');
+  }
+}
+
+// 主辦人密碼解鎖登入
+function promptAdminLogin() {
+  if (isAdmin) {
+    if (confirm('目前已是主辦人模式。要登出主辦人權限切換為純與會者檢視嗎？')) {
+      isAdmin = false;
+      localStorage.removeItem(STORAGE_ADMIN_AUTH_KEY);
+      checkAdminAuth();
+    }
+    return;
+  }
+  const pwd = prompt('請輸入主辦人 Sandy 專屬通關密碼：');
+  if (pwd && (pwd.toLowerCase() === 'sandy' || pwd === 'novartis' || pwd === '8888')) {
+    isAdmin = true;
+    localStorage.setItem(STORAGE_ADMIN_AUTH_KEY, 'true');
+    checkAdminAuth();
+    alert('歡迎 Sandy！已成功解鎖主辦人活動設定權限。');
+  } else if (pwd !== null) {
+    alert('密碼錯誤！');
+  }
+}
 
 function loadEventsDb() {
   const raw = localStorage.getItem(STORAGE_EVENTS_KEY);
@@ -790,6 +881,7 @@ function renderCurrentEvent() {
   document.getElementById('sheetEventTime').textContent = ev.time;
   document.getElementById('sheetEventVenue').textContent = ev.venue;
 
+  // 1. 議程展示 (圖或條列)
   if (ev.agendaImgUrl && ev.agendaImgUrl.trim() !== '') {
     document.getElementById('agendaImgBox').style.display = 'block';
     document.getElementById('agendaImg').src = ev.agendaImgUrl;
@@ -813,6 +905,7 @@ function renderCurrentEvent() {
     }
   }
 
+  // 2. 菜單展示與表單選餐區塊 (根據供餐模式動態切換)
   const mealSec = document.getElementById('mealSelectionSection');
   const menuCardCol = document.getElementById('menuCardCol');
   const menuModeBadge = document.getElementById('menuModeBadge');
@@ -820,6 +913,7 @@ function renderCurrentEvent() {
   const formSubTitle = document.getElementById('formSubTitle');
 
   if (ev.mealMode === 'TABLE') {
+    // 中式桌菜模式
     menuCardCol.style.display = 'block';
     menuModeBadge.textContent = '中式桌宴 · 免選主餐';
     menuModeBadge.className = 'badge bg-success-subtle text-success border border-success small';
@@ -833,7 +927,7 @@ function renderCurrentEvent() {
 
     const items = ev.menuItems || [];
     menuItemsContent.innerHTML = `
-      <div class="fw-bold text-dark mb-2"><i class="fa-solid fa-utensils text-success me-1"></i>當日主廚精緻合菜菜單：</div>
+      <div class="fw-bold text-dark mb-2"><i class="fa-solid fa-utensils text-success me-1"></i>當日精選合菜菜色：</div>
       <ol class="mb-0 ps-3">
         ${items.map(it => `<li class="py-1 text-secondary fw-semibold">${it}</li>`).join('')}
       </ol>
@@ -855,6 +949,7 @@ function renderCurrentEvent() {
     formSubTitle.textContent = '(中式桌菜免挑選主餐)';
 
   } else if (ev.mealMode === 'SET') {
+    // 西式套餐模式 (直接連動 Sandy 設定的 3 道主餐)
     menuCardCol.style.display = 'block';
     menuModeBadge.textContent = '精緻套餐 · 專屬選餐';
     menuModeBadge.className = 'badge bg-primary-subtle text-primary border border-primary small';
@@ -868,14 +963,13 @@ function renderCurrentEvent() {
 
     const setOpts = ev.setOptions || {
       mains: ['嫩煎菲力牛排', '蟹黃海鮮燉飯', '西班牙伊比利老饕豬'],
-      drinks: ['獨家單杯紅白酒', '無酒精氣泡飲', '獅王伯爵茶', '美式咖啡'],
-      desc: '含精緻前菜、沙拉、濃湯與手工甜點'
+      drinks: ['獨家單杯紅白酒', '無酒精氣泡飲', '獅王伯爵茶', '美式咖啡']
     };
 
     menuItemsContent.innerHTML = `
-      <div class="fw-bold text-dark mb-1">主餐三選一：${setOpts.mains.join(' / ')}</div>
+      <div class="fw-bold text-dark mb-1">精選主餐：${setOpts.mains.join(' / ')}</div>
       <div class="fw-bold text-dark mb-1">佐餐飲品：${setOpts.drinks.join(' / ')}</div>
-      <div class="text-muted small mt-1 border-top pt-1">${setOpts.desc || ''}</div>
+      <div class="text-muted small mt-1 border-top pt-1">附主廚特製前菜、經典沙拉、精燉濃湯與手工甜品</div>
     `;
 
     mealSec.innerHTML = `
@@ -1080,10 +1174,12 @@ function renderAttendeesAndTally() {
         <td>${a.hospital}</td>
         <td>${a.dept}</td>
         <td>${a.mealChoice || '出席'} ${a.dietNotes ? `<small class="text-danger">(${a.dietNotes})</small>` : ''}</td>
-        <td class="text-end">
-          <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="deleteAttendee(${a.id})" title="刪除">
-            <i class="fa-solid fa-trash-can"></i>
-          </button>
+        <td class="text-end admin-col">
+          ${isAdmin ? `
+            <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="deleteAttendee(${a.id})" title="刪除">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          ` : '-'}
         </td>
       </tr>
     `).join('');
@@ -1198,7 +1294,7 @@ function handleRegistrationSubmit(e) {
   renderAttendeesAndTally();
 
   document.getElementById('successSummaryText').innerHTML = `
-    <strong>${name} (${hospital})</strong> 您好，主辦單位已收到您的預約！<br>
+    <strong>${name} (${hospital})</strong> 您好，主辦單位已收到您的出席資料！<br>
     活動名稱：<strong>${ev.title}</strong><br>
     ${ev.mealMode === 'TABLE' ? '本場次為中式桌宴，現場直接入席享用。' : (ev.mealMode === 'SET' ? `您選擇的特餐：<strong>${mealChoice}</strong>` : '')}<br>
     活動當天現場直接簽名即可。
@@ -1323,6 +1419,52 @@ function sendLineConfirmation() {
   window.open(lineUrl, '_blank');
 }
 
+// 🌟 手機/相簿圖片點選即時壓縮轉換為 Base64 🌟
+function handleImageFilePick(inputEl, previewImgId, hiddenDataId) {
+  const file = inputEl.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      // 進行適度壓縮縮圖以利本地儲存
+      const canvas = document.createElement('canvas');
+      let w = img.width;
+      let h = img.height;
+      const maxDim = 1200;
+      if (w > maxDim || h > maxDim) {
+        if (w > h) {
+          h = Math.round((h * maxDim) / w);
+          w = maxDim;
+        } else {
+          w = Math.round((w * maxDim) / h);
+          h = maxDim;
+        }
+      }
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      const compressedData = canvas.toDataURL('image/jpeg', 0.85);
+
+      document.getElementById(hiddenDataId).value = compressedData;
+      const previewImg = document.getElementById(previewImgId);
+      previewImg.src = compressedData;
+      previewImg.parentElement.style.display = 'block';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearImagePreview(previewImgId, hiddenDataId) {
+  document.getElementById(hiddenDataId).value = '';
+  const previewImg = document.getElementById(previewImgId);
+  previewImg.src = '';
+  previewImg.parentElement.style.display = 'none';
+}
+
 function openEventEditorModal() {
   const ev = eventsDb[currentEventId] || {};
   document.getElementById('cfgEventId').value = ev.id || '';
@@ -1332,7 +1474,15 @@ function openEventEditorModal() {
   document.getElementById('cfgEventTime').value = ev.time || '';
   document.getElementById('cfgEventVenue').value = ev.venue || '';
   document.getElementById('cfgMealMode').value = ev.mealMode || 'TABLE';
-  document.getElementById('cfgAgendaImgUrl').value = ev.agendaImgUrl || '';
+
+  // 議程圖片預覽
+  document.getElementById('cfgAgendaImgData').value = ev.agendaImgUrl || '';
+  if (ev.agendaImgUrl && ev.agendaImgUrl.trim() !== '') {
+    document.getElementById('cfgAgendaImgPreview').src = ev.agendaImgUrl;
+    document.getElementById('cfgAgendaImgPreviewBox').style.display = 'block';
+  } else {
+    document.getElementById('cfgAgendaImgPreviewBox').style.display = 'none';
+  }
 
   if (ev.agendaLines && ev.agendaLines.length > 0) {
     document.getElementById('cfgAgendaText').value = ev.agendaLines.map(l => `${l.time} | ${l.topic} | ${l.speaker}`).join('\n');
@@ -1340,28 +1490,51 @@ function openEventEditorModal() {
     document.getElementById('cfgAgendaText').value = '';
   }
 
-  if (ev.menuItems && ev.menuItems.length > 0) {
-    document.getElementById('cfgMenuItems').value = ev.menuItems.join('\n');
+  // 菜單圖片預覽
+  document.getElementById('cfgMenuImgData').value = ev.menuImgUrl || '';
+  if (ev.menuImgUrl && ev.menuImgUrl.trim() !== '') {
+    document.getElementById('cfgMenuImgPreview').src = ev.menuImgUrl;
+    document.getElementById('cfgMenuImgPreviewBox').style.display = 'block';
   } else {
-    document.getElementById('cfgMenuItems').value = '';
+    document.getElementById('cfgMenuImgPreviewBox').style.display = 'none';
   }
-  document.getElementById('cfgMenuImgUrl').value = ev.menuImgUrl || '';
+
+  if (ev.menuItems && ev.menuItems.length > 0) {
+    document.getElementById('cfgTableMenuItems').value = ev.menuItems.join('\n');
+  } else {
+    document.getElementById('cfgTableMenuItems').value = '';
+  }
+
+  // 西餐主餐預設
+  if (ev.setOptions) {
+    document.getElementById('cfgSetMain1').value = ev.setOptions.mains[0] || '';
+    document.getElementById('cfgSetMain2').value = ev.setOptions.mains[1] || '';
+    document.getElementById('cfgSetMain3').value = ev.setOptions.mains[2] || '';
+    document.getElementById('cfgSetDrinks').value = ev.setOptions.drinks.join(' / ');
+  }
 
   handleMealModeChange(ev.mealMode || 'TABLE');
   new bootstrap.Modal(document.getElementById('eventEditorModal')).show();
 }
 
 function handleMealModeChange(mode) {
-  const box = document.getElementById('cfgMenuBox');
-  const title = document.getElementById('cfgMenuTitle');
+  const tableBox = document.getElementById('cfgTableMenuBox');
+  const setBox = document.getElementById('cfgSetMenuBox');
+  const menuSec = document.getElementById('cfgMenuSection');
+  const label = document.getElementById('cfgMenuLabel');
+
   if (mode === 'TABLE') {
-    box.style.display = 'block';
-    title.textContent = '中式桌菜菜單品項 (每行一道菜色)';
+    menuSec.style.display = 'block';
+    tableBox.style.display = 'block';
+    setBox.style.display = 'none';
+    label.innerHTML = '<i class="fa-solid fa-utensils text-success me-1"></i>中式合菜菜單圖片 (點選上傳)';
   } else if (mode === 'SET') {
-    box.style.display = 'block';
-    title.textContent = '套餐各項菜色與說明 (每行一項)';
+    menuSec.style.display = 'block';
+    tableBox.style.display = 'none';
+    setBox.style.display = 'block';
+    label.innerHTML = '<i class="fa-solid fa-utensils text-primary me-1"></i>西式套餐菜單圖片 (點選上傳)';
   } else {
-    box.style.display = 'none';
+    menuSec.style.display = 'none';
   }
 }
 
@@ -1375,8 +1548,8 @@ function saveEventConfig(e) {
   const time = document.getElementById('cfgEventTime').value.trim();
   const venue = document.getElementById('cfgEventVenue').value.trim();
   const mealMode = document.getElementById('cfgMealMode').value;
-  const agendaImgUrl = document.getElementById('cfgAgendaImgUrl').value.trim();
-  const menuImgUrl = document.getElementById('cfgMenuImgUrl').value.trim();
+  const agendaImgUrl = document.getElementById('cfgAgendaImgData').value;
+  const menuImgUrl = document.getElementById('cfgMenuImgData').value;
 
   const agendaRaw = document.getElementById('cfgAgendaText').value.trim();
   const agendaLines = agendaRaw ? agendaRaw.split('\n').filter(l => l.trim()).map(line => {
@@ -1388,8 +1561,17 @@ function saveEventConfig(e) {
     };
   }) : [];
 
-  const menuRaw = document.getElementById('cfgMenuItems').value.trim();
+  const menuRaw = document.getElementById('cfgTableMenuItems').value.trim();
   const menuItems = menuRaw ? menuRaw.split('\n').filter(l => l.trim()) : [];
+
+  const setOptions = {
+    mains: [
+      document.getElementById('cfgSetMain1').value.trim() || '主餐一',
+      document.getElementById('cfgSetMain2').value.trim() || '主餐二',
+      document.getElementById('cfgSetMain3').value.trim() || '主餐三'
+    ],
+    drinks: document.getElementById('cfgSetDrinks').value.split('/').map(d => d.trim()).filter(Boolean)
+  };
 
   const existingAttendees = eventsDb[id] ? eventsDb[id].attendees : [];
 
@@ -1405,6 +1587,7 @@ function saveEventConfig(e) {
     agendaLines: agendaLines,
     menuImgUrl: menuImgUrl,
     menuItems: menuItems,
+    setOptions: setOptions,
     attendees: existingAttendees
   };
 
