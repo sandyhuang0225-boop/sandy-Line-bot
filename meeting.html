@@ -441,7 +441,7 @@
   <div class="custom-card hide-on-print" id="tallySection">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
       <h4 class="fw-bold text-dark mb-0">
-        <i class="fa-solid fa-chart-pie text-warning me-2"></i><span id="tallyHeaderTitle">餐廳訂席與與會清單統計</span>
+        <i class="fa-solid fa-chart-pie text-warning me-2"></i><span id="tallyHeaderTitle">餐廳訂席與與會清單統計</span> <span class="badge bg-primary ms-1" id="topAttendeeCount">0</span>人出席
       </h4>
       <div class="d-flex gap-2">
         <button type="button" class="btn btn-sm btn-outline-success fw-bold" onclick="copyRestaurantSummary(this)">
@@ -694,15 +694,11 @@
         </div>
 
         <form id="eventConfigForm" onsubmit="saveEventConfig(event)">
+          <!-- 系統底層識別代碼與標籤：由系統自動產生，不再干擾 Sandy 主辦人視線 -->
+          <input type="hidden" id="cfgEventId">
+          <input type="hidden" id="cfgEventBadge">
+
           <div class="row g-3">
-            <div class="col-md-6 col-12">
-              <label class="form-label fw-bold small">活動識別代碼 (ID，英文數字)</label>
-              <input type="text" id="cfgEventId" class="form-control fw-bold" required placeholder="例如: 1204_table">
-            </div>
-            <div class="col-md-6 col-12">
-              <label class="form-label fw-bold small">活動標籤 (Badge)</label>
-              <input type="text" id="cfgEventBadge" class="form-control" placeholder="例如: 12/4 中式桌菜論壇">
-            </div>
 
             <div class="col-12">
               <label class="form-label fw-bold small">活動正式名稱 (自動帶入簽到表)</label>
@@ -1916,7 +1912,8 @@ function renderAttendeesAndTally() {
   if (!ev) return;
   const list = ev.attendees || [];
 
-  document.getElementById('topAttendeeCount').textContent = list.length;
+  const topCountEl = document.getElementById('topAttendeeCount');
+  if (topCountEl) topCountEl.textContent = list.length;
 
   const tallyCardsRow = document.getElementById('tallyCardsRow');
   const dietBox = document.getElementById('statDietBox');
@@ -1924,101 +1921,124 @@ function renderAttendeesAndTally() {
   const dietList = [];
 
   list.forEach(a => {
-    if (a.dietNotes && a.dietNotes.trim() !== '') {
-      dietList.push(`${a.name}: ${a.dietNotes}`);
+    if (a && a.dietNotes && String(a.dietNotes).trim() !== '') {
+      dietList.push(`${a.name || '與會貴賓'}: ${a.dietNotes}`);
     }
   });
 
-  if (dietList.length > 0) {
-    dietBox.style.display = 'block';
-    dietSpan.textContent = dietList.join('； ');
-  } else {
-    dietBox.style.display = 'none';
+  if (dietBox && dietSpan) {
+    if (dietList.length > 0) {
+      dietBox.style.display = 'block';
+      dietSpan.textContent = dietList.join('； ');
+    } else {
+      dietBox.style.display = 'none';
+    }
   }
 
-  if (ev.mealMode === 'TABLE') {
-    const tables = Math.ceil(list.length / 10) || 1;
-    tallyCardsRow.innerHTML = `
-      <div class="col-md-4 col-6">
-        <div class="p-3 bg-light border rounded-3">
-          <span class="text-secondary small fw-bold d-block">確認出席人數</span>
-          <span class="fs-2 fw-black text-dark">${list.length}</span> 位
-        </div>
-      </div>
-      <div class="col-md-4 col-6">
-        <div class="p-3 bg-light border rounded-3">
-          <span class="text-secondary small fw-bold d-block">預計訂席桌數 (10人/桌)</span>
-          <span class="fs-2 fw-black text-primary">${tables}</span> 桌
-        </div>
-      </div>
-      <div class="col-md-4 col-12">
-        <div class="p-3 bg-light border rounded-3">
-          <span class="text-secondary small fw-bold d-block">特殊飲食/素食備忘</span>
-          <span class="fs-2 fw-black text-danger">${dietList.length}</span> 位
-        </div>
-      </div>
-    `;
-    document.getElementById('thMealCol').textContent = '用餐型態 / 備註';
-  } else if (ev.mealMode === 'SET') {
-    const counts = {};
-    list.forEach(a => {
-      const dish = (a.mealChoice || '').split(' (')[0] || '未指定';
-      counts[dish] = (counts[dish] || 0) + 1;
-    });
+  const thMealEl = document.getElementById('thMealCol');
 
-    tallyCardsRow.innerHTML = `
-      <div class="col-md-3 col-6">
-        <div class="p-3 bg-light border rounded-3">
-          <span class="text-secondary small fw-bold d-block">出席總人數</span>
-          <span class="fs-2 fw-black text-dark">${list.length}</span> 人
-        </div>
-      </div>
-      ${Object.entries(counts).map(([name, count]) => `
-        <div class="col-md-3 col-6">
+  if (tallyCardsRow) {
+    if (ev.mealMode === 'TABLE') {
+      const tables = Math.ceil(list.length / 10) || 1;
+      tallyCardsRow.innerHTML = `
+        <div class="col-md-4 col-6">
           <div class="p-3 bg-light border rounded-3">
-            <span class="text-secondary small fw-bold d-block text-truncate" title="${name}">${name}</span>
-            <span class="fs-2 fw-black text-primary">${count}</span> 份
+            <span class="text-secondary small fw-bold d-block">確認出席人數</span>
+            <span class="fs-2 fw-black text-dark">${list.length}</span> 位
           </div>
         </div>
-      `).join('')}
-    `;
-    document.getElementById('thMealCol').textContent = '主餐與飲品選擇';
-  } else {
-    tallyCardsRow.innerHTML = `
-      <div class="col-12">
-        <div class="p-3 bg-light border rounded-3">
-          <span class="text-secondary small fw-bold d-block">出席總人數</span>
-          <span class="fs-2 fw-black text-dark">${list.length}</span> 位
+        <div class="col-md-4 col-6">
+          <div class="p-3 bg-light border rounded-3">
+            <span class="text-secondary small fw-bold d-block">預計訂席桌數 (10人/桌)</span>
+            <span class="fs-2 fw-black text-primary">${tables}</span> 桌
+          </div>
         </div>
-      </div>
-    `;
-    document.getElementById('thMealCol').textContent = '備註';
+        <div class="col-md-4 col-12">
+          <div class="p-3 bg-light border rounded-3">
+            <span class="text-secondary small fw-bold d-block">特殊飲食/素食備忘</span>
+            <span class="fs-2 fw-black text-danger">${dietList.length}</span> 位
+          </div>
+        </div>
+      `;
+      if (thMealEl) thMealEl.textContent = '用餐型態 / 備註';
+    } else if (ev.mealMode === 'SET') {
+      const counts = {};
+      list.forEach(a => {
+        const dish = (a && a.mealChoice ? String(a.mealChoice) : '').split(' (')[0] || '未指定';
+        counts[dish] = (counts[dish] || 0) + 1;
+      });
+
+      tallyCardsRow.innerHTML = `
+        <div class="col-md-3 col-6">
+          <div class="p-3 bg-light border rounded-3">
+            <span class="text-secondary small fw-bold d-block">出席總人數</span>
+            <span class="fs-2 fw-black text-dark">${list.length}</span> 人
+          </div>
+        </div>
+        ${Object.entries(counts).map(([name, count]) => `
+          <div class="col-md-3 col-6">
+            <div class="p-3 bg-light border rounded-3">
+              <span class="text-secondary small fw-bold d-block text-truncate" title="${name}">${name}</span>
+              <span class="fs-2 fw-black text-primary">${count}</span> 份
+            </div>
+          </div>
+        `).join('')}
+      `;
+      if (thMealEl) thMealEl.textContent = '主餐與飲品選擇';
+    } else {
+      tallyCardsRow.innerHTML = `
+        <div class="col-12">
+          <div class="p-3 bg-light border rounded-3">
+            <span class="text-secondary small fw-bold d-block">出席總人數</span>
+            <span class="fs-2 fw-black text-dark">${list.length}</span> 位
+          </div>
+        </div>
+      `;
+      if (thMealEl) thMealEl.textContent = '備註';
+    }
   }
 
   const summaryTbody = document.getElementById('attendeeListSummaryBody');
-  if (list.length === 0) {
-    summaryTbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-3">尚無與會人員報名</td></tr>`;
-  } else {
-    summaryTbody.innerHTML = list.map((a, i) => `
-      <tr>
-        <td>${i + 1}</td>
-        <td class="fw-bold">${a.name}</td>
-        <td><span class="badge ${a.title === '醫師' ? 'bg-primary' : (a.title === '台灣諾華' ? 'bg-success' : 'bg-secondary')}">${a.title}</span></td>
-        <td>${a.hospital}</td>
-        <td>${a.dept}</td>
-        <td>${a.mealChoice || '出席'} ${a.dietNotes ? `<small class="text-danger">(${a.dietNotes})</small>` : ''}</td>
-        <td class="text-end admin-col">
-          ${isAdmin ? `
-            <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="deleteAttendee(${a.id})" title="刪除">
-              <i class="fa-solid fa-trash-can"></i>
-            </button>
-          ` : '-'}
-        </td>
-      </tr>
-    `).join('');
+  if (summaryTbody) {
+    if (list.length === 0) {
+      summaryTbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-3">尚無與會人員報名</td></tr>`;
+    } else {
+      summaryTbody.innerHTML = list.map((a, i) => {
+        const titleStr = a && a.title ? String(a.title) : '貴賓';
+        const hospStr = a && a.hospital ? String(a.hospital) : '';
+        const deptStr = a && a.dept ? String(a.dept) : '';
+        const nameStr = a && a.name ? String(a.name) : '與會貴賓';
+        const mealStr = a && a.mealChoice ? String(a.mealChoice) : '出席';
+        const dietStr = a && a.dietNotes ? String(a.dietNotes) : '';
+        const isNovartis = titleStr === '台灣諾華' || hospStr.includes('諾華');
+        const badgeClass = isNovartis ? 'bg-success' : (titleStr === '醫師' ? 'bg-primary' : 'bg-secondary');
+
+        return `
+          <tr>
+            <td>${i + 1}</td>
+            <td class="fw-bold">${nameStr}</td>
+            <td><span class="badge ${badgeClass}">${titleStr}</span></td>
+            <td>${hospStr}</td>
+            <td>${deptStr}</td>
+            <td>${mealStr} ${dietStr ? `<small class="text-danger">(${dietStr})</small>` : ''}</td>
+            <td class="text-end admin-col">
+              ${isAdmin ? `
+                <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="deleteAttendee(${a ? a.id : 0})" title="刪除">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              ` : '-'}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
   }
 
-  renderSignInTable();
+  try {
+    renderSignInTable();
+  } catch (err) {
+    console.warn('簽到表渲染次要異常:', err);
+  }
 }
 
 function renderSignInTable() {
@@ -2031,24 +2051,30 @@ function renderSignInTable() {
   let html = '';
 
   list.forEach((a, index) => {
-    const isDoc = a.title === '醫師';
-    const isNurse = a.title === '護理師';
-    const isPharm = a.title === '藥師';
-    const isNovartis = a.title === '台灣諾華' || a.hospital.includes('諾華');
+    const titleStr = a && a.title ? String(a.title) : '';
+    const hospStr = a && a.hospital ? String(a.hospital) : '';
+    const deptStr = a && a.dept ? String(a.dept) : '';
+    const nameStr = a && a.name ? String(a.name) : '';
+    const cityStr = a && a.city ? String(a.city) : '台北市';
+
+    const isDoc = titleStr === '醫師';
+    const isNurse = titleStr === '護理師';
+    const isPharm = titleStr === '藥師';
+    const isNovartis = titleStr === '台灣諾華' || hospStr.includes('諾華');
     const isOther = !isDoc && !isNurse && !isPharm;
-    const otherText = isNovartis ? '台灣諾華' : (isOther ? a.title : '____________');
+    const otherText = isNovartis ? '台灣諾華' : (isOther ? (titleStr || '其他') : '____________');
 
     html += `
       <tr>
         <td class="text-center fw-bold">${index + 1}</td>
-        <td class="text-center">${a.city || '台北市'}</td>
-        <td>${a.hospital || ''}</td>
-        <td>${a.dept || ''}</td>
+        <td class="text-center">${cityStr}</td>
+        <td>${hospStr}</td>
+        <td>${deptStr}</td>
         <td style="font-size: 0.78rem; line-height: 1.4;">
           ${isDoc ? '☑' : '□'} 醫師 &nbsp; ${isNurse ? '☑' : '□'} 護理師 &nbsp; ${isPharm ? '☑' : '□'} 藥師<br>
           ${isOther ? '☑' : '□'} 其他HCP: ${otherText}
         </td>
-        <td class="fw-bold text-center" style="font-size: 1rem;">${a.name}</td>
+        <td class="fw-bold text-center" style="font-size: 1rem;">${nameStr}</td>
         <td style="background: #ffffff; min-height: 38px;"></td>
       </tr>
     `;
@@ -2187,7 +2213,12 @@ function handleRegistrationSubmit(e) {
     if (!ev.attendees) ev.attendees = [];
     ev.attendees.push(lastSubmitted);
     saveEventsDb();
-    renderAttendeesAndTally();
+
+    try {
+      renderAttendeesAndTally();
+    } catch (renderErr) {
+      console.warn('⚠️ 渲染即時名冊時出現警告，但不影響報名提交:', renderErr);
+    }
 
     // 跨裝置同步至 Google 試算表 (RTD_通用會議報名名冊) 與 LINE 推播 (設置 12 秒逾時控制器，防呆卡住)
     const controller = new AbortController();
@@ -2241,7 +2272,7 @@ function handleRegistrationSubmit(e) {
       submitBtn.disabled = false;
       submitBtn.innerHTML = origBtnHtml;
     }
-    alert('報名處理發生異常，請重試或聯繫 Sandy 管理員。');
+    alert('報名處理發生異常，請重試或聯繫 Sandy 管理員。\n(錯誤詳情: ' + (err.message || err) + ')');
   }
 }
 
@@ -2372,8 +2403,10 @@ function exportCsvSignInSheet() {
   csv += "No.,單位所在縣市,服務醫院/機構,科別/單位,職稱,姓名,簽名\n";
 
   list.forEach((a, i) => {
-    const titleCol = (a.title === '台灣諾華' || a.hospital.includes('諾華')) ? '其他HCP: 台灣諾華' : a.title;
-    csv += `${i + 1},"${a.city || '台北市'}","${a.hospital}","${a.dept}","${titleCol}","${a.name}",\n`;
+    const hospStr = a && a.hospital ? String(a.hospital) : '';
+    const titleStr = a && a.title ? String(a.title) : '';
+    const titleCol = (titleStr === '台灣諾華' || hospStr.includes('諾華')) ? '其他HCP: 台灣諾華' : (titleStr || '醫師');
+    csv += `${i + 1},"${(a && a.city) || '台北市'}","${hospStr}","${(a && a.dept) || ''}","${titleCol}","${(a && a.name) || ''}",\n`;
   });
 
   for (let i = 1; i <= 6; i++) {
@@ -2540,8 +2573,8 @@ function handleMealModeChange(mode) {
 function saveEventConfig(e) {
   e.preventDefault();
 
-  const id = document.getElementById('cfgEventId').value.trim();
-  const badge = document.getElementById('cfgEventBadge').value.trim();
+  let id = document.getElementById('cfgEventId') ? document.getElementById('cfgEventId').value.trim() : '';
+  let badge = document.getElementById('cfgEventBadge') ? document.getElementById('cfgEventBadge').value.trim() : '';
   const title = document.getElementById('cfgEventTitle').value.trim();
   const date = document.getElementById('cfgEventDate').value.trim();
   const time = document.getElementById('cfgEventTime').value.trim();
@@ -2549,6 +2582,16 @@ function saveEventConfig(e) {
   const mealMode = document.getElementById('cfgMealMode').value;
   const agendaImgUrl = document.getElementById('cfgAgendaImgData').value;
   const menuImgUrl = document.getElementById('cfgMenuImgData').value;
+
+  if (!id) {
+    const dateNum = (date || '').replace(/[^0-9]/g, '');
+    id = dateNum.length >= 4 ? `event_${dateNum.slice(-4)}` : `event_${Date.now()}`;
+    if (document.getElementById('cfgEventId')) document.getElementById('cfgEventId').value = id;
+  }
+  if (!badge) {
+    badge = title ? (title.length > 15 ? title.slice(0, 15) + '...' : title) : '醫學會議';
+    if (document.getElementById('cfgEventBadge')) document.getElementById('cfgEventBadge').value = badge;
+  }
 
   const agendaRaw = document.getElementById('cfgAgendaText').value.trim();
   const agendaLines = agendaRaw ? agendaRaw.split('\n').filter(l => l.trim()).map(line => {
