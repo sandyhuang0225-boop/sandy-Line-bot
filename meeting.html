@@ -864,14 +864,14 @@ const STORAGE_ADMIN_AUTH_KEY = 'novartis_admin_authed_v2';
 const API_BASE = 'https://sandy-line-bot.onrender.com/api/meeting';
 
 const DEFAULT_EVENTS = {
-  '1204_table': {
-    id: '1204_table',
-    badge: '12/4 中式桌菜論壇',
-    title: '12月乳癌高峰論壇 - From Evidence to Practice',
+  '1204_cgmh': {
+    id: '1204_cgmh',
+    badge: '12/4 基隆長庚研討會',
+    title: '基隆長庚乳癌醫學研討會',
     date: '2026年12月04日（星期四）',
     time: '18:30 - 20:30',
     venue: '欣葉鐘菜（台北市中山區樂群二路199號）',
-    mealMode: 'TABLE',
+    mealMode: 'SET',
     agendaImgUrl: '',
     agendaLines: [
       { time: '18:30~19:00', topic: 'Reception 接待與報到', speaker: 'ALL' },
@@ -880,44 +880,21 @@ const DEFAULT_EVENTS = {
       { time: '20:20~20:30', topic: '綜合座談與交流討論', speaker: '全體與會貴賓' }
     ],
     menuImgUrl: '',
-    menuItems: [
-      '經典砂鍋排翅土雞湯',
-      '古早味香煎豬肝',
-      '清蒸現流野生海上鮮',
-      '手作海鮮紫菜捲',
-      '特製紅蟳蒸米糕',
-      '季節精選炒時蔬',
-      '欣葉招牌杏仁豆腐與時令鮮果盤'
-    ],
-    attendees: [
-      { id: 1, name: '廖國秀', city: '台北市', hospital: '三軍總醫院', dept: '乳房外科', title: '醫師', mealChoice: '桌菜出席', dietNotes: '' },
-      { id: 2, name: 'Sandy Huang', city: '台北市', hospital: '台灣諾華股份有限公司', dept: '腫瘤醫學部', title: '台灣諾華', mealChoice: '桌菜出席', dietNotes: '' }
-    ]
-  },
-  '1124_wilson': {
-    id: '1124_wilson',
-    badge: '11/24 三總乳癌討論會',
-    title: '三總乳癌討論會 - From Shared Decision to Long-Term Confidence',
-    date: '2026年11月24日（星期二）',
-    time: '18:30 - 20:30',
-    venue: 'Wilson Park 威爾森公園餐廳（台北市內湖區民權東路六段125之1號）',
-    mealMode: 'SET',
-    agendaImgUrl: 'assets/rtt_agenda.jpg',
-    agendaLines: [],
-    menuImgUrl: 'assets/rtt_menu.jpg',
+    menuItems: ['精緻個人西式套餐'],
     setOptions: {
-      mains: ['嫩煎菲力牛排', '蟹黃海鮮燉飯', '西班牙伊比利老饕豬'],
-      drinks: ['獨家單杯紅白酒', '無酒精氣泡飲', '獅王伯爵茶', '美式咖啡']
+      mains: ['特選主餐一', '特選主餐二', '特選主餐三'],
+      desserts: ['精選甜點一', '精選甜點二'],
+      appetizers: [],
+      drinks: ['無酒精氣泡飲', '特調咖啡', '精選茗茶']
     },
     attendees: [
-      { id: 1, name: '廖國秀', city: '台北市', hospital: '三軍總醫院', dept: '乳房外科', title: '醫師', mealChoice: '嫩煎菲力牛排 (紅白酒)', dietNotes: '' },
-      { id: 2, name: 'Sandy Huang', city: '台北市', hospital: '台灣諾華股份有限公司', dept: '腫瘤醫學部', title: '台灣諾華', mealChoice: '蟹黃海鮮燉飯 (氣泡飲)', dietNotes: '' }
+      { id: 1, name: 'Sandy Huang', city: '基隆市', hospital: '基隆長庚', dept: '腫瘤醫學部', title: '台灣諾華', mealChoice: '特選主餐一', dietNotes: '' }
     ]
   }
 };
 
 let eventsDb = {};
-let currentEventId = '1204_table';
+let currentEventId = '1204_cgmh';
 let isAdmin = false;
 let lastSubmitted = null;
 
@@ -936,6 +913,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const eventParam = urlParams.get('e');
   if (eventParam && eventsDb[eventParam]) {
     currentEventId = eventParam;
+  } else if (eventParam && (eventParam === '1124' || eventParam === '1124_wilson')) {
+    // 兼容處理：若先前透過 LINE 分享送出帶有 1124 舊代碼之連結，自動平滑導向當前最新 12/4 長庚場次
+    currentEventId = Object.keys(eventsDb)[0] || '1204_cgmh';
   }
 
   renderEventSelector();
@@ -1265,7 +1245,14 @@ async function startMeetingAiAnalysis() {
 
     // 整合至活動代碼中
     const cfgIdInput = document.getElementById('cfgEventId');
-    const evId = (cfgIdInput && cfgIdInput.value.trim()) ? cfgIdInput.value.trim() : (currentEventId || '1204_table');
+    let evId = (cfgIdInput && cfgIdInput.value.trim()) ? cfgIdInput.value.trim() : (currentEventId || '1204_cgmh');
+
+    // 智能識別 ID 日期防呆：若辨識出來的日期（如 12/04）與目前 evId 內含之舊日期（如 1124）不相符，自動重新生成相應之新場次代碼
+    const recognizedDateNum = (aiResult.date || '').replace(/[^0-9]/g, '');
+    const recognizedDatePart = recognizedDateNum.length >= 4 ? recognizedDateNum.slice(-4) : '';
+    if (recognizedDatePart && evId && evId.includes('_') && !evId.includes(recognizedDatePart)) {
+      evId = `event_${recognizedDatePart}_${Date.now().toString().slice(-4)}`;
+    }
     const existing = eventsDb[evId] || {};
 
     // 智能精確判定供餐模式
@@ -1668,11 +1655,32 @@ function loadEventsDb() {
     saveEventsDb();
   }
 
+  // 自動清理/遷移舊 localStorage 殘留的 1124 舊代碼，避免與 rtd.html 衝突
+  if (eventsDb['1124_wilson']) {
+    const old1124 = eventsDb['1124_wilson'];
+    if ((old1124.date && old1124.date.includes('12')) || (old1124.title && old1124.title.includes('基隆'))) {
+      old1124.id = '1204_cgmh';
+      eventsDb['1204_cgmh'] = old1124;
+      delete eventsDb['1124_wilson'];
+      saveEventsDb();
+    } else {
+      delete eventsDb['1124_wilson'];
+      saveEventsDb();
+    }
+  }
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const eventParam = urlParams.get('e');
   const savedCur = localStorage.getItem(STORAGE_CURRENT_EVENT_KEY);
-  if (savedCur && eventsDb[savedCur]) {
+
+  if (eventParam && eventsDb[eventParam]) {
+    currentEventId = eventParam;
+  } else if (eventParam && (eventParam === '1124' || eventParam === '1124_wilson')) {
+    currentEventId = Object.keys(eventsDb)[0] || '1204_cgmh';
+  } else if (savedCur && eventsDb[savedCur]) {
     currentEventId = savedCur;
   } else {
-    currentEventId = Object.keys(eventsDb)[0] || '1204_table';
+    currentEventId = Object.keys(eventsDb)[0] || '1204_cgmh';
   }
 
   // 自動向 Google Sheet 雲端資料庫拉取最新活動設定 (保證跨裝置與醫師端即時更新)
@@ -1682,6 +1690,12 @@ function loadEventsDb() {
       if (data && data.status === 'ok' && data.events && Object.keys(data.events).length > 0) {
         Object.assign(eventsDb, data.events);
         saveEventsDb();
+        const curP = new URLSearchParams(window.location.search).get('e');
+        if (curP && eventsDb[curP]) {
+          currentEventId = curP;
+        } else if (curP && (curP === '1124' || curP === '1124_wilson')) {
+          currentEventId = Object.keys(eventsDb)[0] || '1204_cgmh';
+        }
         renderEventSelector();
         renderCurrentEvent();
         syncLiveAttendeesFromServer();
@@ -2816,7 +2830,7 @@ function handleMealModeChange(mode) {
   }
 }
 
-function saveEventConfig(e) {
+async function saveEventConfig(e) {
   e.preventDefault();
 
   let id = document.getElementById('cfgEventId') ? document.getElementById('cfgEventId').value.trim() : '';
@@ -2829,9 +2843,11 @@ function saveEventConfig(e) {
   const agendaImgUrl = document.getElementById('cfgAgendaImgData').value;
   const menuImgUrl = document.getElementById('cfgMenuImgData').value;
 
-  if (!id) {
-    const dateNum = (date || '').replace(/[^0-9]/g, '');
-    id = dateNum.length >= 4 ? `event_${dateNum.slice(-4)}` : `event_${Date.now()}`;
+  // 智能防呆：若原 ID 含有不相符的舊日期 (如含有 1124 但活動為 12/04)，自動替換為相符的新活動代碼
+  const dateNum = (date || '').replace(/[^0-9]/g, '');
+  const datePart = dateNum.length >= 4 ? dateNum.slice(-4) : '';
+  if (!id || (datePart && id.includes('_') && !id.includes(datePart))) {
+    id = datePart ? `event_${datePart}_${Date.now().toString().slice(-4)}` : `event_${Date.now()}`;
     if (document.getElementById('cfgEventId')) document.getElementById('cfgEventId').value = id;
   }
   if (!badge) {
@@ -2915,19 +2931,30 @@ function saveEventConfig(e) {
   renderCurrentEvent();
 
   // 🌟 即刻同步活動設定至 Google 試算表 (RTD_通用會議活動設定) 🌟
-  fetch(`${API_BASE}/save_event`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(newEventData)
-  })
-  .then(res => res.json())
-  .then(resData => console.log('✅ 活動設定已成功同步至 Google 試算表:', resData))
-  .catch(err => console.log('活動設定上傳失敗:', err));
+  let cloudSuccess = false;
+  try {
+    const res = await fetch(`${API_BASE}/save_event`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newEventData)
+    });
+    const resData = await res.json();
+    if (resData && resData.status === 'ok') {
+      cloudSuccess = true;
+    }
+  } catch (err) {
+    console.error('活動設定上傳失敗:', err);
+  }
 
   const modalEl = document.getElementById('eventEditorModal');
   const modalInst = bootstrap.Modal.getInstance(modalEl);
   if (modalInst) modalInst.hide();
-  alert('🎉 活動設定已成功儲存並同步至 Google 試算表！\n醫師點開網址將立即看到全新議程與菜單！');
+
+  if (cloudSuccess) {
+    alert(`🎉 活動【${newEventData.badge || newEventData.title}】已成功儲存並同步至 Google 雲端！\n\n專屬報名代碼：${id}\n現在您透過「LINE 分享」傳給醫師的專屬網址，任何裝置點開都能即時正確顯示！`);
+  } else {
+    alert(`🎉 活動【${newEventData.badge || newEventData.title}】已儲存於本機！\n（若雲端連線稍有延遲，系統稍後將自動背景同步）`);
+  }
 }
 
 function deleteCurrentEvent() {
