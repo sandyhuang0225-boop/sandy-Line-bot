@@ -1248,8 +1248,7 @@ async function startMeetingAiAnalysis() {
     let evId = (cfgIdInput && cfgIdInput.value.trim()) ? cfgIdInput.value.trim() : (currentEventId || '1204_cgmh');
 
     // 智能識別 ID 日期防呆：若辨識出來的日期（如 12/04）與目前 evId 內含之舊日期（如 1124）不相符，自動重新生成相應之新場次代碼
-    const recognizedDateNum = (aiResult.date || '').replace(/[^0-9]/g, '');
-    const recognizedDatePart = recognizedDateNum.length >= 4 ? recognizedDateNum.slice(-4) : '';
+    const recognizedDatePart = extractDateCode(aiResult.date);
     if (recognizedDatePart && evId && evId.includes('_') && !evId.includes(recognizedDatePart)) {
       evId = `event_${recognizedDatePart}_${Date.now().toString().slice(-4)}`;
     }
@@ -1646,6 +1645,20 @@ function smartParsePastedText() {
   alert('✨ 智慧辨識完成！已自動填入相應欄位，請檢查並可直接手動補充細節。');
 }
 
+function extractDateCode(dateStr) {
+  if (!dateStr) return '';
+  const m = dateStr.match(/(\d{1,2})[月/\-](\d{1,2})/);
+  if (m) {
+    const mon = parseInt(m[1], 10);
+    const day = parseInt(m[2], 10);
+    if (mon >= 1 && mon <= 12 && day >= 1 && day <= 31) {
+      return (mon < 10 ? '0' + mon : '' + mon) + (day < 10 ? '0' + day : '' + day);
+    }
+  }
+  const digits = dateStr.replace(/[^0-9]/g, '');
+  return digits.length >= 4 ? digits.slice(-4) : digits;
+}
+
 function loadEventsDb() {
   const raw = localStorage.getItem(STORAGE_EVENTS_KEY);
   if (raw) {
@@ -1699,6 +1712,11 @@ function loadEventsDb() {
           currentEventId = curP;
         } else if (curP && (curP === '1124' || curP === '1124_wilson')) {
           currentEventId = Object.keys(eventsDb)[0] || '1204_cgmh';
+        } else if (!curP) {
+          const cloudIds = Object.keys(data.events);
+          if (cloudIds.length > 0) {
+            currentEventId = cloudIds[cloudIds.length - 1];
+          }
         }
         renderEventSelector();
         renderCurrentEvent();
@@ -2848,8 +2866,7 @@ async function saveEventConfig(e) {
   const menuImgUrl = document.getElementById('cfgMenuImgData').value;
 
   // 智能防呆：若原 ID 含有不相符的舊日期 (如含有 1124 但活動為 12/04)，自動替換為相符的新活動代碼
-  const dateNum = (date || '').replace(/[^0-9]/g, '');
-  const datePart = dateNum.length >= 4 ? dateNum.slice(-4) : '';
+  const datePart = extractDateCode(date);
   if (!id || (datePart && id.includes('_') && !id.includes(datePart))) {
     id = datePart ? `event_${datePart}_${Date.now().toString().slice(-4)}` : `event_${Date.now()}`;
     if (document.getElementById('cfgEventId')) document.getElementById('cfgEventId').value = id;
