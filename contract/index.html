@@ -231,7 +231,14 @@
             <span class="brand-badge">NOVARTIS</span>
             <h5 class="mb-0 fw-bold"><i class="fa-solid fa-file-signature text-warning me-1"></i>台灣諾華 醫師顧問合約系統</h5>
         </div>
-        <div class="d-flex align-items-center gap-2">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <!-- 一鍵 LINE 傳送與傳送網址 (支援手機主畫面 PWA 分享) -->
+            <button type="button" class="btn btn-success fw-bold text-white shadow-sm" style="font-size: 0.95rem; padding: 8px 14px; background-color: #06c755; border-color: #05b34c;" onclick="shareContractToLine()">
+                <i class="fa-brands fa-line me-1 fs-5 align-middle"></i>一鍵 LINE 傳送
+            </button>
+            <button type="button" class="btn btn-info fw-bold text-dark shadow-sm" style="font-size: 0.95rem; padding: 8px 14px; background-color: #38bdf8; border-color: #0ea5e9;" onclick="copyContractUrl(this)">
+                <i class="fa-solid fa-share-nodes me-1 align-middle"></i>傳送網址
+            </button>
             <!-- 一鍵跳轉 BeSure II 小助理 -->
             <a href="../besure.html" class="btn fw-bold" style="font-size: 1rem; padding: 8px 16px; background-color: #eb6a0a; border-color: #c25405; color: white;">
                 <i class="fa-solid fa-clipboard-check me-1"></i>📋 BeSure II 填表小助理
@@ -1894,6 +1901,39 @@ async function applySignaturesToContract() {
     }, 400);
 
     alert(`🎉 恭喜！線上電子簽署圓滿完成！\n\n1. 顧問醫師與諾華主管之手寫真實筆跡已精確蓋章在第 5 頁。\n2. 已加蓋台灣《電子簽章法》SHA-256 防偽驗證戳記與時間/IP。\n3. 您現在點擊上方【下載 DocuSign 專用 PDF】，即可產出帶有真實簽名之正式契約！`);
+}
+
+// ==================== 手機主畫面分享功能 (LINE 傳送與複製網址) ====================
+function getContractShareUrl() {
+    if (window.location.protocol.startsWith('http')) {
+        return window.location.href.split('#')[0].split('?')[0];
+    }
+    return 'https://sandyhuang0225-boop.github.io/sandy-Line-bot/contract/index.html';
+}
+
+function shareContractToLine() {
+    const url = getContractShareUrl();
+    const text = `【台灣諾華 醫師顧問合約系統】\n敬請點擊以下專屬連結開啟系統：\n👉 ${url}`;
+    const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
+    window.open(lineUrl, '_blank');
+}
+
+function copyContractUrl(btn) {
+    const url = getContractShareUrl();
+    const origHtml = btn ? btn.innerHTML : '';
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => {
+            if (btn) btn.innerHTML = '<i class="fa-solid fa-check me-1"></i>已複製網址！';
+            alert(`✅ 網址已成功複製！\n\n${url}\n\n您可以直接貼到 LINE 傳送給客戶囉！`);
+            if (btn) setTimeout(() => btn.innerHTML = origHtml, 3000);
+        }).catch(() => fallbackPromptContract(url));
+    } else {
+        fallbackPromptContract(url);
+    }
+}
+
+function fallbackPromptContract(url) {
+    prompt('請複製以下專屬網址傳送：', url);
 }
 
 </script>

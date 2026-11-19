@@ -159,7 +159,14 @@
                     <small class="text-secondary" style="font-size: 0.75rem;">115 年 12 月 1 日最新健保擴大給付修訂新制 演示專案</small>
                 </div>
             </span>
-            <div class="d-flex align-items-center gap-2 no-print">
+            <div class="d-flex align-items-center gap-2 no-print flex-wrap">
+                <!-- 一鍵 LINE 傳送與傳送網址 (支援手機主畫面 PWA 分享) -->
+                <button type="button" class="btn btn-success fw-bold text-white shadow-sm" style="font-size: 0.88rem; background-color: #06c755; border-color: #05b34c;" onclick="shareNhiToLine()">
+                    <i class="fa-brands fa-line me-1 fs-5 align-middle"></i>一鍵 LINE 傳送
+                </button>
+                <button type="button" class="btn btn-info fw-bold text-dark shadow-sm" style="font-size: 0.88rem; background-color: #38bdf8; border-color: #0ea5e9;" onclick="copyNhiUrl(this)">
+                    <i class="fa-solid fa-share-nodes me-1 align-middle"></i>傳送網址
+                </button>
                 <span class="badge bg-success"><i class="fa-solid fa-shield-halved me-1"></i>健保署 12/1 規定已同步</span>
                 <span class="badge bg-primary">醫學中心 / 專案展示版</span>
             </div>
@@ -3344,6 +3351,39 @@ ${raw}`;
         onDoctorChange();
         renderPreview();
         loadCase('T2N1');
+
+        // ==================== 手機主畫面分享功能 (LINE 傳送與複製網址) ====================
+        function getNhiShareUrl() {
+            if (window.location.protocol.startsWith('http')) {
+                return window.location.href.split('#')[0].split('?')[0];
+            }
+            return 'https://sandyhuang0225-boop.github.io/sandy-Line-bot/nhi/';
+        }
+
+        function shareNhiToLine() {
+            const url = getNhiShareUrl();
+            const text = `【Kisqali (擊癌利) 全民健保事前審查智慧輔助系統】\n敬請點擊以下專屬連結開啟系統：\n👉 ${url}`;
+            const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
+            window.open(lineUrl, '_blank');
+        }
+
+        function copyNhiUrl(btn) {
+            const url = getNhiShareUrl();
+            const origHtml = btn ? btn.innerHTML : '';
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(() => {
+                    if (btn) btn.innerHTML = '<i class="fa-solid fa-check me-1"></i>已複製網址！';
+                    alert(`✅ 網址已成功複製！\n\n${url}\n\n您可以直接貼到 LINE 傳送給醫師或同仁囉！`);
+                    if (btn) setTimeout(() => btn.innerHTML = origHtml, 3000);
+                }).catch(() => fallbackPromptNhi(url));
+            } else {
+                fallbackPromptNhi(url);
+            }
+        }
+
+        function fallbackPromptNhi(url) {
+            prompt('請複製以下專屬網址傳送：', url);
+        }
     </script>
 </body>
 </html>
