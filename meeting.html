@@ -920,10 +920,16 @@ document.addEventListener('DOMContentLoaded', () => {
   loadEventsDb();
 
   const urlParams = new URLSearchParams(window.location.search);
-  const eventParam = urlParams.get('e');
+  let eventParam = urlParams.get('e');
+  if (eventParam && eventParam.includes('6124')) {
+    eventParam = eventParam.replace('6124', '1204');
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, '', `${window.location.origin}${window.location.pathname}?e=${eventParam}`);
+    }
+  }
   if (eventParam && eventsDb[eventParam]) {
     currentEventId = eventParam;
-  } else if (eventParam && (eventParam === '1124' || eventParam === '1124_wilson' || eventParam === '1204_cgmh')) {
+  } else {
     currentEventId = Object.keys(eventsDb)[0] || 'event_1204_1317';
   }
 
@@ -1681,32 +1687,41 @@ function loadEventsDb() {
     saveEventsDb();
   }
 
-  // 自動清理/遷移舊 localStorage 殘留的 1124 舊代碼，避免與 rtd.html 衝突
+  // 自動清理/遷移舊 localStorage 殘留的 1124 或 6124 舊代碼
+  if (eventsDb['event_6124_1317']) {
+    eventsDb['event_1204_1317'] = eventsDb['event_6124_1317'];
+    eventsDb['event_1204_1317'].id = 'event_1204_1317';
+    delete eventsDb['event_6124_1317'];
+    saveEventsDb();
+  }
   if (eventsDb['1124_wilson']) {
-    const old1124 = eventsDb['1124_wilson'];
-    if ((old1124.date && old1124.date.includes('12')) || (old1124.title && old1124.title.includes('基隆'))) {
-      old1124.id = '1204_cgmh';
-      eventsDb['1204_cgmh'] = old1124;
-      delete eventsDb['1124_wilson'];
-      saveEventsDb();
-    } else {
-      delete eventsDb['1124_wilson'];
-      saveEventsDb();
-    }
+    delete eventsDb['1124_wilson'];
+    saveEventsDb();
+  }
+  if (eventsDb['1204_cgmh']) {
+    delete eventsDb['1204_cgmh'];
+    saveEventsDb();
   }
 
   const urlParams = new URLSearchParams(window.location.search);
-  const eventParam = urlParams.get('e');
-  const savedCur = localStorage.getItem(STORAGE_CURRENT_EVENT_KEY);
+  let eventParam = urlParams.get('e');
+  if (eventParam && eventParam.includes('6124')) {
+    eventParam = eventParam.replace('6124', '1204');
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, '', `${window.location.origin}${window.location.pathname}?e=${eventParam}`);
+    }
+  }
 
+  const savedCur = localStorage.getItem(STORAGE_CURRENT_EVENT_KEY);
   if (eventParam && eventsDb[eventParam]) {
     currentEventId = eventParam;
-  } else if (eventParam && (eventParam === '1124' || eventParam === '1124_wilson')) {
-    currentEventId = Object.keys(eventsDb)[0] || '1204_cgmh';
+  } else if (savedCur && (savedCur.includes('6124') || savedCur.includes('1124') || savedCur === '1204_cgmh')) {
+    localStorage.setItem(STORAGE_CURRENT_EVENT_KEY, 'event_1204_1317');
+    currentEventId = 'event_1204_1317';
   } else if (savedCur && eventsDb[savedCur]) {
     currentEventId = savedCur;
   } else {
-    currentEventId = Object.keys(eventsDb)[0] || '1204_cgmh';
+    currentEventId = Object.keys(eventsDb)[0] || 'event_1204_1317';
   }
 
   // 自動向 Google Sheet 雲端資料庫拉取最新活動設定 (保證跨裝置與醫師端即時更新)
@@ -1716,15 +1731,21 @@ function loadEventsDb() {
       if (data && data.status === 'ok' && data.events && Object.keys(data.events).length > 0) {
         Object.assign(eventsDb, data.events);
         saveEventsDb();
-        const curP = new URLSearchParams(window.location.search).get('e');
+        let curP = new URLSearchParams(window.location.search).get('e');
+        if (curP && curP.includes('6124')) {
+          curP = curP.replace('6124', '1204');
+          if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', `${window.location.origin}${window.location.pathname}?e=${curP}`);
+          }
+        }
         if (curP && eventsDb[curP]) {
           currentEventId = curP;
-        } else if (curP && (curP === '1124' || curP === '1124_wilson')) {
-          currentEventId = Object.keys(eventsDb)[0] || '1204_cgmh';
-        } else if (!curP) {
+        } else {
           const cloudIds = Object.keys(data.events);
           if (cloudIds.length > 0) {
             currentEventId = cloudIds[cloudIds.length - 1];
+          } else {
+            currentEventId = 'event_1204_1317';
           }
         }
         renderEventSelector();

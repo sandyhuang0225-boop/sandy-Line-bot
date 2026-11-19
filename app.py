@@ -2519,6 +2519,10 @@ def api_meeting_events():
                         try:
                             ev = json.loads(r[8])
                             events[ev['id']] = ev
+                            # 相容處理：若 event_id 含 1204，同時映射 6124，避免先前發出的舊連結失效
+                            if '1204' in ev['id']:
+                                legacy_id = ev['id'].replace('1204', '6124')
+                                events[legacy_id] = ev
                         except Exception:
                             pass
             except Exception:
