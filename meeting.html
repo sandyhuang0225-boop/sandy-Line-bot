@@ -601,6 +601,9 @@
           <button type="button" class="btn btn-warning btn-sm text-dark fw-bold" onclick="createNewEventTemplate()">
             <i class="fa-solid fa-plus me-1"></i>開新場次
           </button>
+          <button type="button" class="btn btn-outline-danger btn-sm text-white" onclick="logoutAdminFromModal()" title="登出並重置密碼鎖">
+            <i class="fa-solid fa-lock me-1"></i>登出鎖定
+          </button>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
       </div>
@@ -609,12 +612,14 @@
         <div class="alert alert-primary d-flex align-items-start gap-2 py-2 px-3 mb-3 small border-primary">
           <i class="fa-solid fa-circle-info fs-5 mt-1 text-primary"></i>
           <div>
-            <strong>【自主更動說明】</strong>：您可以在此<strong>隨時修改活動主題、日期、時間、地點與菜單</strong>，並<strong>點選相簿上傳議程或菜單圖片</strong>。<br>
-            儲存後，醫師線上報名表與 <strong>100% 諾華 A4 簽到表</strong> 將全自動即時同步，完全不需工程人員介入！
+            <strong>【主辦人設定流程】</strong>：<br>
+            1. 在下方【圖檔上傳與 AI 辨識區】選取或拍攝 <strong>Agenda</strong> 與 <strong>菜單</strong> 照片。<br>
+            2. 點擊「<strong>啟動視覺 AI 智慧解析帶入</strong>」，系統將自動讀懂是中式合菜或西式套餐，並自動填妥所有資料。<br>
+            3. 確認下方內容無誤後，點擊最下方「<strong>儲存並套用活動</strong>」，醫師線上報名表與 A4 簽到表即時全自動更新！
           </div>
         </div>
 
-        <!-- 🌟 主辦人核心：上傳 Agenda & 菜單 視覺 AI 智慧解析帶入 🌟 -->
+        <!-- 🌟 主辦人核心：上傳 Agenda & 菜單 視覺 AI 智慧解析帶入 (全站唯一圖檔上傳入口) 🌟 -->
         <div class="card p-3 border-2 border-primary bg-light mb-3 shadow-sm rounded-3">
           <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
             <h6 class="mb-0 fw-bold text-primary">
@@ -624,35 +629,48 @@
               <i class="fa-solid fa-sparkles me-1"></i>視覺 AI 已就緒
             </span>
           </div>
-          <p class="text-muted small mb-2">
-            由 Gemini 視覺 AI 自動讀懂 Agenda（更新主題、時間、地點、演講題目、講師/座長）與菜單（自動判定合菜或個人套餐主餐），一鍵帶入下方設定並同步報名表！
-          </p>
 
-          <div class="row g-2 mb-2">
-            <!-- 1. Agenda 上傳 -->
+          <div class="row g-3 mb-2">
+            <!-- 1. Agenda 上傳與預覽 -->
             <div class="col-md-6 col-12">
-              <div class="bg-white p-2 border rounded">
+              <div class="bg-white p-3 border rounded h-100 shadow-sm">
                 <label for="aiAgendaInput" class="form-label fw-bold text-primary small mb-1 d-block">
-                  <i class="fa-solid fa-clipboard-list me-1"></i>【步驟 1：選取或拍攝 Agenda 照片/PDF】
+                  <i class="fa-solid fa-clipboard-list me-1"></i>【步驟 1A：選取或拍攝 Agenda 照片/PDF】
                 </label>
                 <input type="file" id="aiAgendaInput" accept="image/*,.pdf,application/pdf" class="form-control form-control-sm border-primary" onchange="handleAiFileChosen(this, 'agenda')">
                 <div id="aiAgendaChosenNotice" class="text-success fw-bold small mt-1" style="display: none; font-size: 0.78rem;"></div>
+                
+                <input type="hidden" id="cfgAgendaImgData" value="">
+                <div id="cfgAgendaImgPreviewBox" class="text-center p-2 border rounded bg-light mt-2" style="display: none;">
+                  <img id="cfgAgendaImgPreview" src="" style="max-height: 140px; max-width: 100%; object-fit: contain;" class="rounded mb-1">
+                  <div>
+                    <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size: 0.75rem;" onclick="clearImagePreview('cfgAgendaImgPreview', 'cfgAgendaImgData')">清除圖片</button>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <!-- 2. 菜單 上傳 -->
+            <!-- 2. 菜單 上傳與預覽 -->
             <div class="col-md-6 col-12">
-              <div class="bg-white p-2 border rounded">
+              <div class="bg-white p-3 border rounded h-100 shadow-sm">
                 <label for="aiMenuInput" class="form-label fw-bold text-success small mb-1 d-block">
                   <i class="fa-solid fa-utensils me-1"></i>【步驟 1B：選取或拍攝 菜單 照片】<small class="text-muted">(選填)</small>
                 </label>
                 <input type="file" id="aiMenuInput" accept="image/*" class="form-control form-control-sm border-success" onchange="handleAiFileChosen(this, 'menu')">
                 <div id="aiMenuChosenNotice" class="text-success fw-bold small mt-1" style="display: none; font-size: 0.78rem;"></div>
+
+                <input type="hidden" id="cfgMenuImgData" value="">
+                <div id="cfgMenuImgPreviewBox" class="text-center p-2 border rounded bg-light mt-2" style="display: none;">
+                  <img id="cfgMenuImgPreview" src="" style="max-height: 140px; max-width: 100%; object-fit: contain;" class="rounded mb-1">
+                  <div>
+                    <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size: 0.75rem;" onclick="clearImagePreview('cfgMenuImgPreview', 'cfgMenuImgData')">清除圖片</button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          <button type="button" id="btnStartMeetingAI" class="btn btn-warning w-100 py-2 fw-bold text-dark shadow-sm d-flex align-items-center justify-content-center" onclick="startMeetingAiAnalysis()">
+          <button type="button" id="btnStartMeetingAI" class="btn btn-warning w-100 py-2 fw-bold text-dark shadow-sm d-flex align-items-center justify-content-center mt-2" onclick="startMeetingAiAnalysis()">
             <i class="fa-solid fa-bolt me-2 text-danger fs-5"></i>
             <span>【步驟 2：啟動視覺 AI 智慧解析帶入下方各欄位】</span>
           </button>
@@ -697,10 +715,10 @@
               <input type="text" id="cfgEventTime" class="form-control" required placeholder="例如: 18:30 - 20:30">
             </div>
             <div class="col-md-4 col-12">
-              <label class="form-label fw-bold small text-primary">供餐型態 (重要！)</label>
+              <label class="form-label fw-bold small text-primary">供餐型態 (重要！AI自動判定或手動指定)</label>
               <select id="cfgMealMode" class="form-select fw-bold border-primary" onchange="handleMealModeChange(this.value)">
-                <option value="TABLE">🍲 中式桌菜 / 合菜（純瀏覽，免選主餐）</option>
-                <option value="SET">🥩 西式套餐（三選一選餐 + 飲品）</option>
+                <option value="TABLE">🍲 中式桌菜 / 合菜（純瀏覽，現場直接入席，免選主餐）</option>
+                <option value="SET">🥩 西式套餐（單選防呆：三道主餐二擇一或三擇一 + 飲品）</option>
                 <option value="NONE">☕ 純會議 / 無供餐</option>
               </select>
             </div>
@@ -712,64 +730,45 @@
 
             <hr class="my-2">
 
-            <!-- 🌟 議程 (Agenda) 設定：支援直接手機/電腦點選上傳圖片 🌟 -->
+            <!-- 🌟 議程 (Agenda) 文字內容設定 🌟 -->
             <div class="col-12">
               <label class="form-label fw-bold text-dark mb-1">
-                <i class="fa-solid fa-image text-primary me-1"></i>會議議程圖片 (可直接點選相簿上傳)
+                <i class="fa-solid fa-list-ol text-primary me-1"></i>會議議程文字條列 (由 AI 自動讀出帶入，亦可手動微調增修)
               </label>
-              <div class="d-flex align-items-center gap-2 mb-2">
-                <input type="file" id="cfgAgendaFileInput" class="form-control" accept="image/*" onchange="handleImageFilePick(this, 'cfgAgendaImgPreview', 'cfgAgendaImgData')">
-                <button type="button" class="btn btn-outline-secondary btn-sm text-nowrap" onclick="clearImagePreview('cfgAgendaImgPreview', 'cfgAgendaImgData')">清除圖片</button>
-              </div>
-              <input type="hidden" id="cfgAgendaImgData" value="">
-              <div id="cfgAgendaImgPreviewBox" class="text-center p-2 border rounded bg-light" style="display: none;">
-                <img id="cfgAgendaImgPreview" src="" style="max-height: 160px; object-fit: contain;" class="rounded">
-              </div>
-              
-              <div class="mt-2">
-                <label class="form-label small text-muted">或文字條列議程 (如無圖片可填此，每行: 時間 | 主題 | 講者)</label>
-                <textarea id="cfgAgendaText" class="form-control form-control-sm" rows="3" placeholder="18:30~19:00 | Reception 接待報到 | ALL&#10;19:00~19:40 | 最新臨床實證分享 | 專家醫師&#10;19:40~20:20 | 綜合座談交流 | ALL"></textarea>
-              </div>
+              <textarea id="cfgAgendaText" class="form-control form-control-sm" rows="3" placeholder="每行一筆: 時間 | 主題 | 講者 (例如: 18:30~19:00 | 接待報到 | ALL)"></textarea>
             </div>
 
             <hr class="my-2">
 
-            <!-- 🌟 菜單 (Menu) 設定：依模式切換西餐三選一或中式桌菜 🌟 -->
+            <!-- 🌟 菜單 (Menu) 內容設定：依模式切換西餐三選一或中式桌菜 🌟 -->
             <div class="col-12" id="cfgMenuSection">
               <label class="form-label fw-bold text-dark mb-1" id="cfgMenuLabel">
-                <i class="fa-solid fa-utensils text-success me-1"></i>菜單圖片 (可直接點選相簿上傳)
+                <i class="fa-solid fa-utensils text-success me-1"></i>供餐內容明細設定
               </label>
-              <div class="d-flex align-items-center gap-2 mb-2">
-                <input type="file" id="cfgMenuFileInput" class="form-control" accept="image/*" onchange="handleImageFilePick(this, 'cfgMenuImgPreview', 'cfgMenuImgData')">
-                <button type="button" class="btn btn-outline-secondary btn-sm text-nowrap" onclick="clearImagePreview('cfgMenuImgPreview', 'cfgMenuImgData')">清除圖片</button>
-              </div>
-              <input type="hidden" id="cfgMenuImgData" value="">
-              <div id="cfgMenuImgPreviewBox" class="text-center p-2 border rounded bg-light mb-2" style="display: none;">
-                <img id="cfgMenuImgPreview" src="" style="max-height: 160px; object-fit: contain;" class="rounded">
-              </div>
 
               <!-- 中式桌菜專用：菜色文字清單 -->
               <div id="cfgTableMenuBox">
-                <label class="form-label small fw-bold text-secondary">中式合菜菜色清單 (每行一道菜)</label>
-                <textarea id="cfgTableMenuItems" class="form-control form-control-sm" rows="4" placeholder="經典砂鍋土雞湯&#10;清蒸現流海上鮮&#10;特製紅蟳米糕&#10;手作紫菜捲&#10;季節炒時蔬&#10;精緻甜品鮮果盤"></textarea>
+                <label class="form-label small fw-bold text-secondary">中式合菜菜色清單 (由 AI 自動讀出，每行一道菜)</label>
+                <textarea id="cfgTableMenuItems" class="form-control form-control-sm" rows="5" placeholder="經典砂鍋土雞湯&#10;清蒸現流海上鮮&#10;特製紅蟳米糕&#10;手作紫菜捲&#10;季節炒時蔬&#10;精緻甜品鮮果盤"></textarea>
+                <small class="text-muted">中式合菜模式下，報名表不會顯示選菜表格，醫師將直接瀏覽菜色並直接簽名入席。</small>
               </div>
 
               <!-- 西式套餐專用：自訂三道主餐與飲品，直接連動報名選項 -->
               <div id="cfgSetMenuBox" style="display: none;">
-                <label class="form-label small fw-bold text-primary">西式套餐主餐選項 (自動連動醫師報名三選一防呆選項)</label>
+                <label class="form-label small fw-bold text-primary">西式套餐主餐選項 (由 AI 自動讀出，自動連動醫師報名單選防呆選項)</label>
                 <div class="row g-2 mb-2">
                   <div class="col-md-4 col-12">
-                    <input type="text" id="cfgSetMain1" class="form-control form-control-sm fw-bold" placeholder="主餐一: 嫩煎菲力牛排" value="嫩煎菲力牛排">
+                    <input type="text" id="cfgSetMain1" class="form-control form-control-sm fw-bold" placeholder="主餐選項一 (例如: 嫩煎菲力牛排)">
                   </div>
                   <div class="col-md-4 col-12">
-                    <input type="text" id="cfgSetMain2" class="form-control form-control-sm fw-bold" placeholder="主餐二: 蟹黃海鮮燉飯" value="蟹黃海鮮燉飯">
+                    <input type="text" id="cfgSetMain2" class="form-control form-control-sm fw-bold" placeholder="主餐選項二 (例如: 野生海鱸魚排)">
                   </div>
                   <div class="col-md-4 col-12">
-                    <input type="text" id="cfgSetMain3" class="form-control form-control-sm fw-bold" placeholder="主餐三: 西班牙伊比利老饕豬" value="西班牙伊比利老饕豬">
+                    <input type="text" id="cfgSetMain3" class="form-control form-control-sm fw-bold" placeholder="主餐選項三 (例如: 松露野菇燉飯)">
                   </div>
                 </div>
-                <label class="form-label small fw-bold text-secondary">飲品選項 (以斜線分隔)</label>
-                <input type="text" id="cfgSetDrinks" class="form-control form-control-sm" value="獨家單杯紅白酒 / 無酒精氣泡飲 / 獅王伯爵茶 / 美式咖啡">
+                <label class="form-label small fw-bold text-secondary">佐餐飲品選項 (以斜線分隔)</label>
+                <input type="text" id="cfgSetDrinks" class="form-control form-control-sm" placeholder="獨家單杯紅白酒 / 無酒精氣泡飲 / 獅王伯爵茶 / 美式咖啡">
               </div>
             </div>
 
@@ -900,6 +899,13 @@ let isAdmin = false;
 let lastSubmitted = null;
 
 document.addEventListener('DOMContentLoaded', () => {
+  // 清除舊版 localStorage 永久免密碼快取，確保重新進入網站必須輸入密碼認證
+  try {
+    localStorage.removeItem(STORAGE_ADMIN_AUTH_KEY);
+    localStorage.removeItem('novartis_admin_authed');
+    localStorage.removeItem('novartis_admin_authed_v2');
+  } catch(e) {}
+
   checkAdminAuth();
   loadEventsDb();
 
@@ -918,9 +924,9 @@ document.addEventListener('DOMContentLoaded', () => {
 function checkAdminAuth() {
   const urlParams = new URLSearchParams(window.location.search);
   const adminParam = urlParams.get('admin');
-  if (adminParam === 'sandy00001' || adminParam === 'sandy' || localStorage.getItem(STORAGE_ADMIN_AUTH_KEY) === 'true') {
+  // 僅當 URL 帶有 ?admin=sandy00001 或當前分頁 session 已驗證時有效，不以 localStorage 永久免密碼
+  if (adminParam === 'sandy00001' || adminParam === 'sandy' || sessionStorage.getItem('novartis_admin_session') === 'true') {
     isAdmin = true;
-    localStorage.setItem(STORAGE_ADMIN_AUTH_KEY, 'true');
   } else {
     isAdmin = false;
   }
@@ -972,6 +978,24 @@ function handleAiFileChosen(input, type) {
     if (noticeEl) {
       noticeEl.style.display = 'block';
       noticeEl.innerHTML = `<i class="fa-solid fa-check-circle me-1"></i>已選取【${file.name}】(${(file.size / 1024).toFixed(1)} KB)`;
+    }
+
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const previewBoxId = (type === 'agenda') ? 'cfgAgendaImgPreviewBox' : 'cfgMenuImgPreviewBox';
+        const previewImgId = (type === 'agenda') ? 'cfgAgendaImgPreview' : 'cfgMenuImgPreview';
+        const dataId = (type === 'agenda') ? 'cfgAgendaImgData' : 'cfgMenuImgData';
+
+        const previewBox = document.getElementById(previewBoxId);
+        const previewImg = document.getElementById(previewImgId);
+        const dataInput = document.getElementById(dataId);
+
+        if (previewImg) previewImg.src = e.target.result;
+        if (previewBox) previewBox.style.display = 'block';
+        if (dataInput) dataInput.value = e.target.result;
+      };
+      reader.readAsDataURL(file);
     }
   }
 }
@@ -1128,35 +1152,49 @@ async function startMeetingAiAnalysis() {
 1. 找出會議的主題全稱 (title)、會議短標籤 (badge，例如 "12月乳癌高峰論壇" 或 "RTD 醫學研討會")。
 2. 會議完整日期 (date，例如 "2026年12月04日（星期四）") 與時間區間 (time，例如 "18:30 - 20:30")。
 3. 會議地點/餐廳名稱與詳細地址 (venue，例如 "欣葉鐘菜（台北市中山區樂群二路199號）")。
-4. ★ 供餐型態 (mealMode) 精確判定：
-   - 若為「中式合菜、桌菜、宴會桌席（大家共吃一大盤一桌菜）」，mealMode 請設為 "TABLE"。
-   - 若為「西式排餐、法式/義式餐廳、個人專屬套餐（有牛排、魚排、雞排、燉飯、素食等主餐可挑選）」，mealMode 務必設為 "SET"！
+4. ★【供餐型態 (mealMode) 精確判定 - 極為重要！】★：
+   - 【中式合菜 / 桌菜 (TABLE)】：
+     * 若為中餐廳、海鮮餐廳、台菜、川菜、粵菜、大圓桌宴會、一桌人共吃一大盤的合菜菜色（如：土雞湯、佛跳牆、清蒸魚、米糕/油飯、拼盤、炒時蔬、點心、水果等）。
+     * mealMode 必須嚴格設為 "TABLE"！
+     * 此時 setMains 必須為空陣列 []，setDrinks 必須為空陣列 []！
+     * 請將所有的合菜菜色依序列入 menuItems 陣列（每一道菜一個字串）。
+   - 【西式套餐 / 排餐 (SET)】：
+     * 只有當餐廳為西餐廳、法式/義式餐廳，且菜單提供個人專屬套餐「二選一或三選一主餐供每位賓客單選」（如牛排、魚排、羊排、燉飯、素食主餐）時，mealMode 才設為 "SET"！
+     * 此時請抓出主餐選項填入 setMains 陣列（2~4 道獨立主菜），佐餐飲品填入 setDrinks 陣列。
 5. 議程表 (agendaLines)，每一筆包含：
    - time: 時段（例如 "18:30~19:00"）
-   - topic: 主題或活動（例如 "Reception 接待與報到"、"演講題目"、"綜合座談" 等）
-   - speaker: 主講人或座長主持人姓名（若有醫院職稱請一併帶入，例如 "陳醫師 (台大醫院)"，若為諾華同仁如 Sandy Huang 亦請帶入）
-6. ★ 菜單內容深度解析 (重要！請仔細讀懂菜單照片上的真實文字)：
-   - 若為西式個人套餐 (SET)：
-     * 請抓出菜單上的「主餐選項（Main Course / 主菜）」，放入 setMains 陣列（通常為 2~4 道可供挑選的獨立主菜，例如：["爐烤頂級肋眼牛排", "嫩煎野生海鱸魚", "松露野菇燉飯(素)"]）。
-     * 請抓出菜單上的「佐餐飲品選項（Beverage）」，放入 setDrinks 陣列（若菜單無明列可提供常用如 ["紅酒", "白酒", "無酒精果汁/氣泡飲", "熱茶/熱咖啡"]）。
-     * 將前菜、沙拉、湯品、甜點等固定副餐列入 menuItems 陣列。
-   - 若為中式合菜 (TABLE)：請將菜單上的所有菜色依序列入 menuItems 陣列。
+   - topic: 主題或活動（例如 "Reception 接待與報到"、演講題目、綜合座談等）
+   - speaker: 主講人或座長主持人姓名（含醫院職稱）
 
-請嚴格輸出合法的 JSON 物件，格式如下：
+請嚴格輸出合法的 JSON 物件格式：
+若為中式桌菜 (TABLE)，輸出格式範例：
 {
-  "title": "會議完整主題名稱",
-  "badge": "會議短標籤",
-  "date": "會議完整日期",
-  "time": "會議時間",
-  "venue": "會議餐廳/地點與地址",
-  "mealMode": "TABLE 或 SET",
+  "title": "12月乳癌高峰論壇",
+  "badge": "12/4 中式桌菜論壇",
+  "date": "2026年12月04日（星期四）",
+  "time": "18:30 - 20:30",
+  "venue": "欣葉鐘菜（台北市中山區樂群二路199號）",
+  "mealMode": "TABLE",
   "agendaLines": [
-    { "time": "18:30~19:00", "topic": "Reception 接待與報到", "speaker": "ALL" },
-    { "time": "19:00~19:40", "topic": "最新臨床治療指引", "speaker": "講師醫師 (服務醫院)" }
+    { "time": "18:30~19:00", "topic": "Reception 接待與報到", "speaker": "ALL" }
   ],
-  "menuItems": ["精選前菜", "手工現烤麵包", "經典主廚濃湯", "法式精緻甜點"],
-  "setMains": ["主菜選項一", "主菜選項二", "主菜選項三"],
-  "setDrinks": ["紅酒", "白酒", "無酒精果汁", "現煮研磨咖啡"]
+  "menuItems": ["經典排翅土雞湯", "清蒸野生海上鮮", "特製紅蟳米糕", "季節精選時蔬", "招牌甜品水果盤"],
+  "setMains": [],
+  "setDrinks": []
+}
+
+若為西式套餐 (SET)，輸出格式範例：
+{
+  "title": "三總乳癌討論會",
+  "badge": "11/24 西式套餐會議",
+  "date": "2026年11月24日（星期二）",
+  "time": "18:30 - 20:30",
+  "venue": "Wilson Park 威爾森公園餐廳",
+  "mealMode": "SET",
+  "agendaLines": [...],
+  "menuItems": ["附主廚特製前菜、經典沙拉、精燉濃湯與手工甜品"],
+  "setMains": ["嫩煎菲力牛排", "爐烤野生海鱸魚", "松露野菇燉飯(素)"],
+  "setDrinks": ["獨家單杯紅白酒", "無酒精氣泡飲", "獅王伯爵茶", "美式咖啡"]
 }`;
 
     const parts = [{ text: promptText }];
@@ -1187,25 +1225,34 @@ async function startMeetingAiAnalysis() {
     const evId = currentEventId || '1204_table';
     const existing = eventsDb[evId] || {};
 
-    // 智能判斷是否為西式個人選餐模式
-    const isSetMode = (aiResult.mealMode === 'SET' || (aiResult.setMains && Array.isArray(aiResult.setMains) && aiResult.setMains.length > 0));
-    const detectedMealMode = isSetMode ? 'SET' : 'TABLE';
+    // 智能精確判定供餐模式
+    let detectedMealMode = 'TABLE';
+    if (aiResult.mealMode === 'SET') {
+      detectedMealMode = 'SET';
+    } else if (aiResult.mealMode === 'NONE') {
+      detectedMealMode = 'NONE';
+    } else {
+      detectedMealMode = 'TABLE';
+    }
 
     let finalSetOptions = null;
-    if (isSetMode) {
+    let finalMenuItems = [];
+
+    if (detectedMealMode === 'SET') {
       finalSetOptions = {
-        mains: (aiResult.setMains && aiResult.setMains.length > 0) 
+        mains: (aiResult.setMains && Array.isArray(aiResult.setMains) && aiResult.setMains.length > 0) 
           ? aiResult.setMains 
           : ['特選主廚牛排', '嫩煎海鮮主餐', '主廚特製蔬食'],
-        drinks: (aiResult.setDrinks && aiResult.setDrinks.length > 0)
+        drinks: (aiResult.setDrinks && Array.isArray(aiResult.setDrinks) && aiResult.setDrinks.length > 0)
           ? aiResult.setDrinks
           : ['獨家單杯紅白酒', '無酒精氣泡飲', '鮮榨果汁', '熱茶/研磨咖啡']
       };
-    } else {
-      finalSetOptions = existing.setOptions || {
-        mains: ['特選主餐一', '特選主餐二', '蔬食套餐'],
-        drinks: ['無酒精氣泡飲', '熱茶']
-      };
+      finalMenuItems = aiResult.menuItems || ['附主廚特製前菜、經典沙拉、精燉濃湯與手工甜品'];
+    } else if (detectedMealMode === 'TABLE') {
+      finalMenuItems = (aiResult.menuItems && Array.isArray(aiResult.menuItems) && aiResult.menuItems.length > 0)
+        ? aiResult.menuItems
+        : ['主廚特選開胃拼盤', '經典砂鍋燉土雞湯', '清蒸現流野生海上鮮', '特製櫻花蝦米糕', '季節精選炒時蔬', '招牌手工甜品鮮果盤'];
+      finalSetOptions = null;
     }
 
     const updatedEvent = {
@@ -1219,7 +1266,7 @@ async function startMeetingAiAnalysis() {
       agendaImgUrl: (agendaData && agendaData.url) ? agendaData.url : (existing.agendaImgUrl || ''),
       agendaLines: (aiResult.agendaLines && aiResult.agendaLines.length > 0) ? aiResult.agendaLines : (existing.agendaLines || []),
       menuImgUrl: (menuData && menuData.url) ? menuData.url : (existing.menuImgUrl || ''),
-      menuItems: (aiResult.menuItems && aiResult.menuItems.length > 0) ? aiResult.menuItems : (existing.menuItems || []),
+      menuItems: finalMenuItems,
       setOptions: finalSetOptions,
       attendees: existing.attendees || []
     };
@@ -1245,6 +1292,10 @@ async function startMeetingAiAnalysis() {
       if (document.getElementById('cfgSetDrinks')) document.getElementById('cfgSetDrinks').value = (updatedEvent.setOptions.drinks || []).join(' / ');
     } else if (updatedEvent.mealMode === 'TABLE' && updatedEvent.menuItems) {
       if (document.getElementById('cfgTableMenuItems')) document.getElementById('cfgTableMenuItems').value = updatedEvent.menuItems.join('\n');
+      if (document.getElementById('cfgSetMain1')) document.getElementById('cfgSetMain1').value = '';
+      if (document.getElementById('cfgSetMain2')) document.getElementById('cfgSetMain2').value = '';
+      if (document.getElementById('cfgSetMain3')) document.getElementById('cfgSetMain3').value = '';
+      if (document.getElementById('cfgSetDrinks')) document.getElementById('cfgSetDrinks').value = '';
     }
     if (updatedEvent.agendaLines && updatedEvent.agendaLines.length > 0 && document.getElementById('cfgAgendaText')) {
       document.getElementById('cfgAgendaText').value = updatedEvent.agendaLines.map(l => `${l.time} | ${l.topic} | ${l.speaker}`).join('\n');
@@ -1266,6 +1317,17 @@ async function startMeetingAiAnalysis() {
         prevImg.src = updatedEvent.menuImgUrl;
         prevBox.style.display = 'block';
       }
+    }
+
+    if (successBanner) {
+      successBanner.style.display = 'block';
+      const modeText = (detectedMealMode === 'TABLE') ? '🍲 中式桌菜 / 合菜（免選主餐，現場直接入席）' : (detectedMealMode === 'SET' ? '🥩 西式個人套餐（三選一主餐）' : '☕ 純會議無供餐');
+      document.getElementById('aiMeetingSuccessText').innerHTML = `
+        <strong>視覺 AI 解析完成！</strong><br>
+        系統已自動判定供餐型態為：<span class="badge bg-primary fs-6">${modeText}</span><br>
+        活動主題、時間地點、條列式議程表與【${modeText}】菜色已全自動帶入下方！<br>
+        您可向下滾動微調檢查，確認無誤後點擊「儲存並套用活動」即可！
+      `;
     }
 
     // 🌟 同步推播存入 Google 試算表 (RTD_通用會議活動設定) 🌟
@@ -1402,7 +1464,12 @@ function submitAdminPassword(e) {
   const pwd = (document.getElementById('inputAdminPassword').value || '').trim();
   if (pwd === 'sandy00001' || pwd.toLowerCase() === 'sandy00001' || pwd.toLowerCase() === 'sandy') {
     isAdmin = true;
-    localStorage.setItem(STORAGE_ADMIN_AUTH_KEY, 'true');
+    sessionStorage.setItem('novartis_admin_session', 'true');
+    try {
+      localStorage.removeItem(STORAGE_ADMIN_AUTH_KEY);
+      localStorage.removeItem('novartis_admin_authed');
+      localStorage.removeItem('novartis_admin_authed_v2');
+    } catch(e) {}
     const modalEl = document.getElementById('adminLoginModal');
     const modalInst = bootstrap.Modal.getInstance(modalEl);
     if (modalInst) modalInst.hide();
@@ -1416,9 +1483,21 @@ function submitAdminPassword(e) {
 // 主辦人登出
 function logoutAdmin() {
   isAdmin = false;
-  localStorage.removeItem(STORAGE_ADMIN_AUTH_KEY);
+  sessionStorage.removeItem('novartis_admin_session');
+  try {
+    localStorage.removeItem(STORAGE_ADMIN_AUTH_KEY);
+    localStorage.removeItem('novartis_admin_authed');
+    localStorage.removeItem('novartis_admin_authed_v2');
+  } catch(e) {}
   checkAdminAuth();
-  alert('已成功登出主辦人管理模式！');
+  alert('已成功登出主辦人管理模式！系統已重新上鎖，需輸入密碼 sandy00001 才能進入。');
+}
+
+function logoutAdminFromModal() {
+  const modalEl = document.getElementById('eventEditorModal');
+  const modalInst = bootstrap.Modal.getInstance(modalEl);
+  if (modalInst) modalInst.hide();
+  logoutAdmin();
 }
 
 // 建立全新場次範本 (清空文字與圖片)
@@ -2389,12 +2468,17 @@ function openEventEditorModal() {
     document.getElementById('cfgTableMenuItems').value = '';
   }
 
-  // 西餐主餐預設
-  if (ev.setOptions) {
-    document.getElementById('cfgSetMain1').value = ev.setOptions.mains[0] || '';
-    document.getElementById('cfgSetMain2').value = ev.setOptions.mains[1] || '';
-    document.getElementById('cfgSetMain3').value = ev.setOptions.mains[2] || '';
-    document.getElementById('cfgSetDrinks').value = ev.setOptions.drinks.join(' / ');
+  // 西餐主餐預設 (僅在 SET 模式帶入，中式 TABLE 模式清空以防殘留)
+  if (ev.mealMode === 'SET' && ev.setOptions) {
+    document.getElementById('cfgSetMain1').value = ev.setOptions.mains?.[0] || '';
+    document.getElementById('cfgSetMain2').value = ev.setOptions.mains?.[1] || '';
+    document.getElementById('cfgSetMain3').value = ev.setOptions.mains?.[2] || '';
+    document.getElementById('cfgSetDrinks').value = (ev.setOptions.drinks || []).join(' / ');
+  } else {
+    document.getElementById('cfgSetMain1').value = '';
+    document.getElementById('cfgSetMain2').value = '';
+    document.getElementById('cfgSetMain3').value = '';
+    document.getElementById('cfgSetDrinks').value = '獨家單杯紅白酒 / 無酒精氣泡飲 / 獅王伯爵茶 / 美式咖啡';
   }
 
   handleMealModeChange(ev.mealMode || 'TABLE');
@@ -2411,12 +2495,12 @@ function handleMealModeChange(mode) {
     menuSec.style.display = 'block';
     tableBox.style.display = 'block';
     setBox.style.display = 'none';
-    label.innerHTML = '<i class="fa-solid fa-utensils text-success me-1"></i>中式合菜菜單圖片 (點選上傳)';
+    label.innerHTML = '<i class="fa-solid fa-utensils text-success me-1"></i>中式合菜菜色設定 (現場直接入席，免選主餐)';
   } else if (mode === 'SET') {
     menuSec.style.display = 'block';
     tableBox.style.display = 'none';
     setBox.style.display = 'block';
-    label.innerHTML = '<i class="fa-solid fa-utensils text-primary me-1"></i>西式套餐菜單圖片 (點選上傳)';
+    label.innerHTML = '<i class="fa-solid fa-utensils text-primary me-1"></i>西式套餐主餐設定 (三選一防呆選項)';
   } else {
     menuSec.style.display = 'none';
   }
@@ -2445,17 +2529,24 @@ function saveEventConfig(e) {
     };
   }) : [];
 
-  const menuRaw = document.getElementById('cfgTableMenuItems').value.trim();
-  const menuItems = menuRaw ? menuRaw.split('\n').filter(l => l.trim()) : [];
+  let menuItems = [];
+  let setOptions = null;
 
-  const setOptions = {
-    mains: [
-      document.getElementById('cfgSetMain1').value.trim() || '主餐一',
-      document.getElementById('cfgSetMain2').value.trim() || '主餐二',
-      document.getElementById('cfgSetMain3').value.trim() || '主餐三'
-    ],
-    drinks: document.getElementById('cfgSetDrinks').value.split('/').map(d => d.trim()).filter(Boolean)
-  };
+  if (mealMode === 'TABLE') {
+    const menuRaw = document.getElementById('cfgTableMenuItems').value.trim();
+    menuItems = menuRaw ? menuRaw.split('\n').filter(l => l.trim()) : [];
+    setOptions = null;
+  } else if (mealMode === 'SET') {
+    const m1 = document.getElementById('cfgSetMain1').value.trim();
+    const m2 = document.getElementById('cfgSetMain2').value.trim();
+    const m3 = document.getElementById('cfgSetMain3').value.trim();
+    const drinksRaw = document.getElementById('cfgSetDrinks').value.trim();
+    setOptions = {
+      mains: [m1, m2, m3].filter(Boolean),
+      drinks: drinksRaw ? drinksRaw.split('/').map(d => d.trim()).filter(Boolean) : ['獨家單杯紅白酒', '無酒精氣泡飲', '美式咖啡']
+    };
+    menuItems = ['附主廚特製前菜、經典沙拉、精燉濃湯與手工甜品'];
+  }
 
   const existingAttendees = eventsDb[id] ? eventsDb[id].attendees : [];
 
