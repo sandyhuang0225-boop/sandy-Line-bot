@@ -596,10 +596,13 @@
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content border-0 shadow">
       <div class="modal-header bg-dark text-white d-flex justify-content-between align-items-center">
-        <h5 class="modal-title fw-bold mb-0"><i class="fa-solid fa-calendar-plus me-2 text-warning"></i>醫學會議活動設定中心 (Sandy 主辦人)</h5>
+        <div>
+          <h5 class="modal-title fw-bold mb-0"><i class="fa-solid fa-calendar-plus me-2 text-warning"></i>醫學會議活動設定中心 (Sandy 主辦人)</h5>
+          <small class="text-white-50">更換當前會議：直接在下方【步驟 1】上傳 Agenda 與菜單照片即可</small>
+        </div>
         <div class="d-flex align-items-center gap-2">
-          <button type="button" class="btn btn-warning btn-sm text-dark fw-bold" onclick="createNewEventTemplate()">
-            <i class="fa-solid fa-plus me-1"></i>開新場次
+          <button type="button" class="btn btn-outline-light btn-sm" onclick="createNewEventTemplate()" title="另外建立一個全新空白場次（若只是更換當前會議內容，直接在下方上傳即可）">
+            <i class="fa-solid fa-folder-plus me-1"></i>建立全新場次
           </button>
           <button type="button" class="btn btn-outline-danger btn-sm text-white" onclick="logoutAdminFromModal()" title="登出並重置密碼鎖">
             <i class="fa-solid fa-lock me-1"></i>登出鎖定
@@ -612,10 +615,10 @@
         <div class="alert alert-primary d-flex align-items-start gap-2 py-2 px-3 mb-3 small border-primary">
           <i class="fa-solid fa-circle-info fs-5 mt-1 text-primary"></i>
           <div>
-            <strong>【主辦人設定流程】</strong>：<br>
-            1. 在下方【圖檔上傳與 AI 辨識區】選取或拍攝 <strong>Agenda</strong> 與 <strong>菜單</strong> 照片。<br>
-            2. 點擊「<strong>啟動視覺 AI 智慧解析帶入</strong>」，系統將自動讀懂是中式合菜或西式套餐，並自動填妥所有資料。<br>
-            3. 確認下方內容無誤後，點擊最下方「<strong>儲存並套用活動</strong>」，醫師線上報名表與 A4 簽到表即時全自動更新！
+            <strong>【主辦人快速更新會議流程】</strong>（無需先按建立新場次）：<br>
+            1. 在下方【步驟 1】直接選取或拍攝 <strong>Agenda</strong>（必選）與 <strong>菜單</strong> 照片。<br>
+            2. 點擊「<strong>【步驟 2：啟動視覺 AI 智慧解析帶入下方各欄位】</strong>」，AI 將自動辨識會議全稱、時間、地點、議程條列與菜色，並<strong>全自動填入下方所有欄位</strong>。<br>
+            3. 檢視下方已自動填妥的內容，點擊最下方「<strong>儲存並套用活動</strong>」，報名系統即時全自動更新！
           </div>
         </div>
 
@@ -1064,44 +1067,54 @@ function readPdfAsBase64(file) {
 async function callGeminiVisionApi(promptText, parts) {
   const apiKey = getStoredApiKey();
   const candidateModels = [
-    'gemini-2.5-flash',
     'gemini-3.1-flash-lite',
-    'gemini-flash-lite-latest'
+    'gemini-3.1-flash-lite-preview'
   ];
 
   let lastError = null;
   for (const model of candidateModels) {
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-      const payload = {
-        contents: [{ parts: parts }],
-        generationConfig: {
-          response_mime_type: "application/json",
-          temperature: 0.1
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        const payload = {
+          contents: [{ parts: parts }],
+          generationConfig: {
+            response_mime_type: "application/json",
+            temperature: 0.1
+          }
+        };
+
+        const resp = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!resp.ok) {
+          const errJson = await resp.json().catch(() => ({}));
+          const errMsg = errJson.error?.message || `HTTP ${resp.status}`;
+          if ((resp.status === 503 || resp.status === 429) && attempt < 2) {
+            console.warn(`Model ${model} returned ${resp.status}, retrying in 1.2s...`);
+            await new Promise(r => setTimeout(r, 1200));
+            continue;
+          }
+          throw new Error(errMsg);
         }
-      };
 
-      const resp = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (!resp.ok) {
-        const errJson = await resp.json().catch(() => ({}));
-        throw new Error(errJson.error?.message || `HTTP ${resp.status}`);
+        const resData = await resp.json();
+        const rawText = resData.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!rawText) throw new Error("無有效辨識回傳");
+        return JSON.parse(rawText);
+      } catch (e) {
+        console.warn(`Model ${model} attempt ${attempt} failed:`, e);
+        lastError = e;
+        if (attempt < 2) {
+          await new Promise(r => setTimeout(r, 1000));
+        }
       }
-
-      const resData = await resp.json();
-      const rawText = resData.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!rawText) throw new Error("無有效辨識回傳");
-      return JSON.parse(rawText);
-    } catch (e) {
-      console.warn(`Model ${model} failed, trying next:`, e);
-      lastError = e;
     }
   }
-  throw lastError || new Error("Gemini 視覺 AI 解析失敗，請重試");
+  throw lastError || new Error("Gemini 視覺 AI 解析失敗，請確認網路或稍後重試");
 }
 
 async function startMeetingAiAnalysis() {
@@ -1145,60 +1158,47 @@ async function startMeetingAiAnalysis() {
       menuData = await compressAndUploadImage(menuFile);
     }
 
-    const promptText = `你是一位台灣諾華（Novartis）醫學會議規劃專家。請仔細分析這張會議議程（Agenda）與餐廳菜單（Menu）照片/檔案。
-請精確辨識出此場會議的所有資訊，並組成條列式議程表與專屬餐點選項。
+    const promptText = `你是一位台灣諾華（Novartis）醫學會議規劃專家。
+請仔細分析所附的會議議程（Agenda）與餐廳菜單（Menu）照片或文件。
+請精確辨識出此場會議的所有真實資訊，嚴禁憑空捏造或填寫無關範例！
 
-【重要辨識規則】：
-1. 找出會議的主題全稱 (title)、會議短標籤 (badge，例如 "12月乳癌高峰論壇" 或 "RTD 醫學研討會")。
-2. 會議完整日期 (date，例如 "2026年12月04日（星期四）") 與時間區間 (time，例如 "18:30 - 20:30")。
-3. 會議地點/餐廳名稱與詳細地址 (venue，例如 "欣葉鐘菜（台北市中山區樂群二路199號）")。
-4. ★【供餐型態 (mealMode) 精確判定 - 極為重要！】★：
-   - 【中式合菜 / 桌菜 (TABLE)】：
-     * 若為中餐廳、海鮮餐廳、台菜、川菜、粵菜、大圓桌宴會、一桌人共吃一大盤的合菜菜色（如：土雞湯、佛跳牆、清蒸魚、米糕/油飯、拼盤、炒時蔬、點心、水果等）。
-     * mealMode 必須嚴格設為 "TABLE"！
-     * 此時 setMains 必須為空陣列 []，setDrinks 必須為空陣列 []！
-     * 請將所有的合菜菜色依序列入 menuItems 陣列（每一道菜一個字串）。
-   - 【西式套餐 / 排餐 (SET)】：
-     * 只有當餐廳為西餐廳、法式/義式餐廳，且菜單提供個人專屬套餐「二選一或三選一主餐供每位賓客單選」（如牛排、魚排、羊排、燉飯、素食主餐）時，mealMode 才設為 "SET"！
-     * 此時請抓出主餐選項填入 setMains 陣列（2~4 道獨立主菜），佐餐飲品填入 setDrinks 陣列。
-5. 議程表 (agendaLines)，每一筆包含：
-   - time: 時段（例如 "18:30~19:00"）
-   - topic: 主題或活動（例如 "Reception 接待與報到"、演講題目、綜合座談等）
-   - speaker: 主講人或座長主持人姓名（含醫院職稱）
+【各欄位辨識規則】：
+1. title: 會議主題正式全稱（請從議程表中完整擷取真實會議標題）
+2. badge: 會議短標籤（例如簡短月份或主題簡稱，如「11月乳癌研討會」）
+3. date: 會議完整日期（例如「2026年11月24日（星期二）」）
+4. time: 會議時段區間（例如「18:30 - 20:30」）
+5. venue: 會議舉行地點或餐廳名稱與詳細地址（請從議程中讀取完整餐廳名稱與詳細地址）
+6. agendaLines: 議程文字條列，每一筆必須包含：
+   - time: 時段（例如「18:30~19:00」）
+   - topic: 主題或活動全名（如報到接待、演講主題、PSP討論、綜合座談等）
+   - speaker: 主講人或座長主持人姓名職稱（含醫師姓名與所屬醫院；若為諾華同仁如 Sandy Huang 請保留全名與台灣諾華）
+7. mealMode 與菜單判定：
+   - 判斷餐廳供餐型態是中式桌席/合菜共享（TABLE）還是西式個人套餐（SET）：
+     * 若為中餐廳、海鮮台菜、大圓桌合菜、宴席料理：
+       mealMode 設為 "TABLE"，將所有菜色名稱依序填入 menuItems 陣列；setMains 與 setDrinks 設為空陣列 []。
+     * 若為西式排餐、法義餐廳、每位賓客需挑選一道個人主餐（如牛排、魚排、豬排、海鮮燉飯等）：
+       mealMode 設為 "SET"，將主餐選項填入 setMains 陣列（例如 2~4 道主菜），佐餐飲品填入 setDrinks 陣列，附餐（沙拉/湯品/甜點等）填入 menuItems 陣列。
+     * 若無提供菜單或無用餐安排，mealMode 設為 "TABLE"，menuItems 與 setMains 為空陣列 []。
 
-請嚴格輸出合法的 JSON 物件格式：
-若為中式桌菜 (TABLE)，輸出格式範例：
+請輸出嚴格合法的 JSON，格式如下（注意：鍵值請填寫圖片中真實讀到的內容）：
 {
-  "title": "12月乳癌高峰論壇",
-  "badge": "12/4 中式桌菜論壇",
-  "date": "2026年12月04日（星期四）",
-  "time": "18:30 - 20:30",
-  "venue": "欣葉鐘菜（台北市中山區樂群二路199號）",
-  "mealMode": "TABLE",
+  "title": "從議程讀到的會議全名",
+  "badge": "短標籤",
+  "date": "真實日期",
+  "time": "真實時間",
+  "venue": "真實地點與地址",
+  "mealMode": "TABLE 或 SET",
   "agendaLines": [
-    { "time": "18:30~19:00", "topic": "Reception 接待與報到", "speaker": "ALL" }
+    { "time": "時段", "topic": "講題全名", "speaker": "講者/座長姓名與醫院" }
   ],
-  "menuItems": ["經典排翅土雞湯", "清蒸野生海上鮮", "特製紅蟳米糕", "季節精選時蔬", "招牌甜品水果盤"],
-  "setMains": [],
-  "setDrinks": []
-}
-
-若為西式套餐 (SET)，輸出格式範例：
-{
-  "title": "三總乳癌討論會",
-  "badge": "11/24 西式套餐會議",
-  "date": "2026年11月24日（星期二）",
-  "time": "18:30 - 20:30",
-  "venue": "Wilson Park 威爾森公園餐廳",
-  "mealMode": "SET",
-  "agendaLines": [...],
-  "menuItems": ["附主廚特製前菜、經典沙拉、精燉濃湯與手工甜品"],
-  "setMains": ["嫩煎菲力牛排", "爐烤野生海鱸魚", "松露野菇燉飯(素)"],
-  "setDrinks": ["獨家單杯紅白酒", "無酒精氣泡飲", "獅王伯爵茶", "美式咖啡"]
+  "menuItems": ["真實菜色名稱"],
+  "setMains": ["真實主餐選項"],
+  "setDrinks": ["真實飲品選項"]
 }`;
 
-    const parts = [{ text: promptText }];
+    const parts = [];
     if (agendaData && agendaData.base64) {
+      parts.push({ text: "這是【檔案 1：會議議程表 (Agenda)】照片或檔案，請務必精確讀取其中的會議全稱、日期時間、地點餐廳詳細地址、以及議程條列清單（時段、演講活動題目、主講人與座長醫師姓名及醫院職稱）：" });
       parts.push({
         inline_data: {
           mime_type: agendaData.mimeType,
@@ -1207,13 +1207,17 @@ async function startMeetingAiAnalysis() {
       });
     }
     if (menuData && menuData.base64) {
+      parts.push({ text: "這是【檔案 2：餐廳菜單 (Menu)】照片，請務必精確讀取其中的餐廳菜色文字，判斷是中式桌席合菜共享（TABLE）還是西式個人套餐（SET），並如實讀出菜色名稱：" });
       parts.push({
         inline_data: {
           mime_type: menuData.mimeType,
           data: menuData.base64
         }
       });
+    } else {
+      parts.push({ text: "（本次未提供獨立餐廳菜單照片，請將供餐型態 mealMode 設為 TABLE，menuItems 與 setMains 皆設為空陣列 []）" });
     }
+    parts.push({ text: promptText });
 
     if (statusDetail) {
       statusDetail.innerHTML = `已讀取檔案，正在啟動 Google Gemini 視覺 AI 深度分析演講主題、講師與菜單...`;
@@ -1221,13 +1225,14 @@ async function startMeetingAiAnalysis() {
 
     const aiResult = await callGeminiVisionApi(promptText, parts);
 
-    // 整合至現有活動中
-    const evId = currentEventId || '1204_table';
+    // 整合至活動代碼中
+    const cfgIdInput = document.getElementById('cfgEventId');
+    const evId = (cfgIdInput && cfgIdInput.value.trim()) ? cfgIdInput.value.trim() : (currentEventId || '1204_table');
     const existing = eventsDb[evId] || {};
 
     // 智能精確判定供餐模式
     let detectedMealMode = 'TABLE';
-    if (aiResult.mealMode === 'SET') {
+    if (aiResult.mealMode === 'SET' && Array.isArray(aiResult.setMains) && aiResult.setMains.length > 0) {
       detectedMealMode = 'SET';
     } else if (aiResult.mealMode === 'NONE') {
       detectedMealMode = 'NONE';
@@ -1242,16 +1247,14 @@ async function startMeetingAiAnalysis() {
       finalSetOptions = {
         mains: (aiResult.setMains && Array.isArray(aiResult.setMains) && aiResult.setMains.length > 0) 
           ? aiResult.setMains 
-          : ['特選主廚牛排', '嫩煎海鮮主餐', '主廚特製蔬食'],
+          : [],
         drinks: (aiResult.setDrinks && Array.isArray(aiResult.setDrinks) && aiResult.setDrinks.length > 0)
           ? aiResult.setDrinks
-          : ['獨家單杯紅白酒', '無酒精氣泡飲', '鮮榨果汁', '熱茶/研磨咖啡']
+          : ['獨家單杯紅白酒', '無酒精氣泡飲', '美式咖啡']
       };
-      finalMenuItems = aiResult.menuItems || ['附主廚特製前菜、經典沙拉、精燉濃湯與手工甜品'];
+      finalMenuItems = aiResult.menuItems || [];
     } else if (detectedMealMode === 'TABLE') {
-      finalMenuItems = (aiResult.menuItems && Array.isArray(aiResult.menuItems) && aiResult.menuItems.length > 0)
-        ? aiResult.menuItems
-        : ['主廚特選開胃拼盤', '經典砂鍋燉土雞湯', '清蒸現流野生海上鮮', '特製櫻花蝦米糕', '季節精選炒時蔬', '招牌手工甜品鮮果盤'];
+      finalMenuItems = (aiResult.menuItems && Array.isArray(aiResult.menuItems)) ? aiResult.menuItems : [];
       finalSetOptions = null;
     }
 
@@ -1259,7 +1262,7 @@ async function startMeetingAiAnalysis() {
       id: evId,
       badge: aiResult.badge || aiResult.title || existing.badge || '醫學會議',
       title: aiResult.title || existing.title || '醫學研討會',
-      date: aiResult.date || existing.date || '2026年12月04日',
+      date: aiResult.date || existing.date || '',
       time: aiResult.time || existing.time || '18:30 - 20:30',
       venue: aiResult.venue || existing.venue || '',
       mealMode: detectedMealMode,
@@ -1272,11 +1275,14 @@ async function startMeetingAiAnalysis() {
     };
 
     eventsDb[evId] = updatedEvent;
+    currentEventId = evId;
     saveEventsDb();
     renderEventSelector();
     renderCurrentEvent();
 
     // 🌟 核心：自動將辨識內容即時填入彈窗下方的表單各欄位 🌟
+    if (document.getElementById('cfgEventId')) document.getElementById('cfgEventId').value = updatedEvent.id;
+    if (document.getElementById('cfgEventBadge')) document.getElementById('cfgEventBadge').value = updatedEvent.badge;
     if (document.getElementById('cfgEventTitle')) document.getElementById('cfgEventTitle').value = updatedEvent.title;
     if (document.getElementById('cfgEventDate')) document.getElementById('cfgEventDate').value = updatedEvent.date;
     if (document.getElementById('cfgEventTime')) document.getElementById('cfgEventTime').value = updatedEvent.time;
@@ -1321,12 +1327,13 @@ async function startMeetingAiAnalysis() {
 
     if (successBanner) {
       successBanner.style.display = 'block';
-      const modeText = (detectedMealMode === 'TABLE') ? '🍲 中式桌菜 / 合菜（免選主餐，現場直接入席）' : (detectedMealMode === 'SET' ? '🥩 西式個人套餐（三選一主餐）' : '☕ 純會議無供餐');
+      const modeText = (detectedMealMode === 'TABLE') ? '🍲 中式桌菜 / 合菜（免選主餐，現場直接入席）' : (detectedMealMode === 'SET' ? '🥩 西式個人套餐（單選主餐）' : '☕ 純會議無供餐');
       document.getElementById('aiMeetingSuccessText').innerHTML = `
         <strong>視覺 AI 解析完成！</strong><br>
-        系統已自動判定供餐型態為：<span class="badge bg-primary fs-6">${modeText}</span><br>
-        活動主題、時間地點、條列式議程表與【${modeText}】菜色已全自動帶入下方！<br>
-        您可向下滾動微調檢查，確認無誤後點擊「儲存並套用活動」即可！
+        活動主題：【<strong>${updatedEvent.title}</strong>】<br>
+        供餐型態自動判定為：<span class="badge bg-primary fs-6">${modeText}</span><br>
+        時間地點、條列式議程表與專屬菜色已<strong>全自動帶入下方表單</strong>！<br>
+        確認無誤後點擊最下方「<strong>儲存並套用活動</strong>」即可即時發布更新。
       `;
     }
 
@@ -1490,7 +1497,7 @@ function logoutAdmin() {
     localStorage.removeItem('novartis_admin_authed_v2');
   } catch(e) {}
   checkAdminAuth();
-  alert('已成功登出主辦人管理模式！系統已重新上鎖，需輸入密碼 sandy00001 才能進入。');
+  alert('已成功登出主辦人管理模式！系統已安全鎖定。');
 }
 
 function logoutAdminFromModal() {
@@ -1517,7 +1524,14 @@ function createNewEventTemplate() {
   document.getElementById('cfgTableMenuItems').value = '';
   
   handleMealModeChange('TABLE');
-  alert('已開立全新空白場次！請填寫會議主題、日期、地點，並上傳圖片後按儲存。');
+  
+  const banner = document.getElementById('aiMeetingSuccessBanner');
+  const bannerText = document.getElementById('aiMeetingSuccessText');
+  if (banner && bannerText) {
+    banner.style.display = 'block';
+    banner.className = 'alert alert-info py-2 px-3 mt-2 mb-0 shadow-sm small';
+    bannerText.innerHTML = '<i class="fa-solid fa-folder-plus text-primary me-2"></i><strong>已建立全新空白場次！</strong> 請在下方【步驟 1】上傳 Agenda 與菜單照片，啟動 AI 自動填入欄位。';
+  }
 }
 
 // 智慧文字快速貼上解析功能
