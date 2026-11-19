@@ -2643,36 +2643,78 @@ def api_meeting_attendees():
         sh = get_spreadsheet()
         attendees = []
         if sh:
+            # 優先從該活動的「專屬獨立分頁」讀取（Sandy 直接在該分頁刪除或修改，網頁立即同步更新）
+            event_title = ''
+            event_date = ''
             try:
-                ws_att = sh.worksheet('RTD_通用會議報名名冊')
-                rows = ws_att.get_all_values()
-                for idx, r in enumerate(rows[1:]):
-                    if len(r) >= 9 and r[8].strip():
-                        matched = False
-                        if not event_id:
-                            matched = True
-                        elif r[0].strip() == event_id:
-                            matched = True
-                        elif ('1204' in event_id or '6124' in event_id) and ('1204' in r[0] or '6124' in r[0]):
-                            matched = True
-                        
-                        if matched:
-                            attendees.append({
-                                'eventId': r[0] if len(r) > 0 else '',
-                                'eventTitle': r[1] if len(r) > 1 else '',
-                                'id': r[2] if (len(r) > 2 and r[2].strip()) else (idx + 1),
-                                'time': r[3] if len(r) > 3 else '',
-                                'city': r[4] if (len(r) > 4 and r[4].strip()) else '台北市',
-                                'hospital': r[5] if len(r) > 5 else '',
-                                'dept': r[6] if len(r) > 6 else '',
-                                'title': r[7] if len(r) > 7 else '醫師',
-                                'name': r[8] if len(r) > 8 else '',
-                                'mealChoice': r[9] if len(r) > 9 else '出席',
-                                'drink': r[10] if len(r) > 10 else '',
-                                'dietNotes': r[11] if len(r) > 11 else ''
-                            })
+                ws_cfg = sh.worksheet('RTD_通用會議活動設定')
+                for r in ws_cfg.get_all_values()[1:]:
+                    if not event_id or r[0].strip() == event_id or ('1204' in event_id and '1204' in r[0]):
+                        event_title = r[2].strip() if len(r) > 2 else ''
+                        event_date = r[3].strip() if len(r) > 3 else ''
+                        break
             except Exception:
                 pass
+
+            dedicated_tab_name = get_event_sheet_name(event_id, event_title, event_date)
+            loaded_from_dedicated = False
+
+            if dedicated_tab_name:
+                try:
+                    ws_ded = sh.worksheet(dedicated_tab_name)
+                    rows = ws_ded.get_all_values()
+                    for idx, r in enumerate(rows[1:]):
+                        if len(r) >= 7 and r[6].strip():
+                            attendees.append({
+                                'eventId': event_id,
+                                'eventTitle': event_title,
+                                'id': r[0] if (len(r) > 0 and r[0].strip()) else (idx + 1),
+                                'time': r[1] if len(r) > 1 else '',
+                                'city': r[2] if (len(r) > 2 and r[2].strip()) else '台北市',
+                                'hospital': r[3] if len(r) > 3 else '',
+                                'dept': r[4] if len(r) > 4 else '',
+                                'title': r[5] if len(r) > 5 else '醫師',
+                                'name': r[6] if len(r) > 6 else '',
+                                'mealChoice': r[7] if len(r) > 7 else '出席',
+                                'drink': r[8] if len(r) > 8 else '',
+                                'dietNotes': r[9] if len(r) > 9 else ''
+                            })
+                    loaded_from_dedicated = True
+                except Exception as e_ded:
+                    print(f"嘗試讀取專屬分頁 {dedicated_tab_name} 未果，退回通用名冊:", e_ded)
+
+            # 若專屬分頁不存在，才退回通用名冊讀取
+            if not loaded_from_dedicated:
+                try:
+                    ws_att = sh.worksheet('RTD_通用會議報名名冊')
+                    rows = ws_att.get_all_values()
+                    for idx, r in enumerate(rows[1:]):
+                        if len(r) >= 9 and r[8].strip():
+                            matched = False
+                            if not event_id:
+                                matched = True
+                            elif r[0].strip() == event_id:
+                                matched = True
+                            elif ('1204' in event_id or '6124' in event_id) and ('1204' in r[0] or '6124' in r[0]):
+                                matched = True
+                            
+                            if matched:
+                                attendees.append({
+                                    'eventId': r[0] if len(r) > 0 else '',
+                                    'eventTitle': r[1] if len(r) > 1 else '',
+                                    'id': r[2] if (len(r) > 2 and r[2].strip()) else (idx + 1),
+                                    'time': r[3] if len(r) > 3 else '',
+                                    'city': r[4] if (len(r) > 4 and r[4].strip()) else '台北市',
+                                    'hospital': r[5] if len(r) > 5 else '',
+                                    'dept': r[6] if len(r) > 6 else '',
+                                    'title': r[7] if len(r) > 7 else '醫師',
+                                    'name': r[8] if len(r) > 8 else '',
+                                    'mealChoice': r[9] if len(r) > 9 else '出席',
+                                    'drink': r[10] if len(r) > 10 else '',
+                                    'dietNotes': r[11] if len(r) > 11 else ''
+                                })
+                except Exception:
+                    pass
 
         resp = jsonify({'status': 'ok', 'attendees': attendees})
         resp.headers['Access-Control-Allow-Origin'] = '*'
