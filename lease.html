@@ -229,19 +229,19 @@ body.role-tenant #boxTenantSigPanel {
         <div class="row g-2 mb-2">
           <div class="col-6">
             <label class="form-label small fw-bold">每月租金 (NT$)</label>
-            <input type="number" id="inpRent" class="form-control form-control-sm fw-bold text-primary" value="8500" oninput="updateContract()">
-            <small class="text-muted d-block mt-1" id="rentChinese">捌仟伍佰元整</small>
+            <input type="number" id="inpRent" class="form-control form-control-sm fw-bold text-primary" value="30000" oninput="updateContract()">
+            <small class="text-muted d-block mt-1" id="rentChinese">參萬元整</small>
           </div>
           <div class="col-6">
             <label class="form-label small fw-bold">管理費 (NT$)</label>
-            <input type="number" id="inpManageFee" class="form-control form-control-sm" value="800" oninput="updateContract()">
+            <input type="number" id="inpManageFee" class="form-control form-control-sm" value="0" oninput="updateContract()">
           </div>
         </div>
         <div class="row g-2 mb-2">
           <div class="col-6">
             <label class="form-label small fw-bold">押金保證金 (NT$) <span class="badge bg-secondary-subtle text-secondary fw-normal">舊約原載金額</span></label>
-            <input type="number" id="inpDeposit" class="form-control form-control-sm fw-bold text-danger" value="17000" oninput="updateContract()">
-            <small class="text-muted d-block mt-1" id="depositChinese">壹萬柒仟元整</small>
+            <input type="number" id="inpDeposit" class="form-control form-control-sm fw-bold text-danger" value="60000" oninput="updateContract()">
+            <small class="text-muted d-block mt-1" id="depositChinese">陸萬元整</small>
             <div class="text-muted" style="font-size:0.75rem;"><i class="fa-solid fa-lock me-1"></i>按舊約原載金額退款，不以租金乘二</div>
           </div>
           <div class="col-6">
@@ -1578,9 +1578,9 @@ function switchProperty(pKey) {
   document.getElementById("inpCustomClause").value = p.customClause;
 
   // 特殊提示開關
-  document.getElementById("boxBiMonthlyNotice").style.display = (pKey === 'A102') ? 'block' : 'none';
+  document.getElementById("boxBiMonthlyNotice").style.display = (pKey === 'A103') ? 'block' : 'none';
   document.getElementById("boxP2Notice").style.display = (pKey === 'A105') ? 'block' : 'none';
-  document.getElementById("dispBiMonthlyClause").style.display = (pKey === 'A102') ? 'block' : 'none';
+  document.getElementById("dispBiMonthlyClause").style.display = (pKey === 'A103') ? 'block' : 'none';
 
   // 依據歷史舊合約實載內容自動精準帶入設備勾選與數量
   const eqConf = HISTORICAL_EQUIP_DB[pKey];
@@ -1647,27 +1647,15 @@ function updateContract() {
   document.getElementById("rentChinese").textContent = rentCh;
   document.getElementById("depositChinese").textContent = depositCh;
 
-  // 租金與費用說明 (Sandy 統一代收代繳管委會原則)
-  if (pKey === 'A104') {
-    document.getElementById("dispRentStr").textContent = `月租金 8,500 元 + 管理費 800 元，每月應繳總額 9,300 元整 (玖仟參佰元整)`;
-  } else if (pKey === 'A105') {
-    document.getElementById("dispRentStr").textContent = `月租金 12,199 元 + 清潔費 300 元，每月應繳總額 12,499 元整 (壹萬貳仟肆佰玖拾玖元整)`;
-  } else if (pKey === 'A106') {
-    document.getElementById("dispRentStr").textContent = `月租金 12,200 元 + 管理費 650 元，每月應繳總額 12,850 元整 (壹萬貳仟捌佰伍拾元整)`;
+  // 第三條 租金展示（動態讀取輸入值與物件設定）
+  if (pKey === 'A101') {
+    document.getElementById("dispRentStr").textContent = `${rentVal.toLocaleString()} 元整 (${rentCh})`;
   } else if (pKey === 'A102') {
-    document.getElementById("dispRentStr").textContent = `單數月 28,000 元整 (貳萬捌仟元整) · 雙數月雙月繳含管費 29,931 元整 (貳萬玖仟玖佰參拾壹元整)`;
-  } else if (pKey === 'A107') {
-    document.getElementById("dispRentStr").textContent = `月租金 17,100 元 + 管理費 700 元，每月應繳總額 17,800 元整 (壹萬柒仟捌佰元整)`;
-  } else if (pKey === 'A109') {
-    document.getElementById("dispRentStr").textContent = `月租金 8,900 元 + 管理費 400 元，每月應繳總額 9,300 元整 (玖仟參佰元整)`;
+    document.getElementById("dispRentStr").textContent = `${rentVal.toLocaleString()} 元整 (${rentCh}) · 免收管理費`;
   } else if (pKey === 'A103') {
-    document.getElementById("dispRentStr").textContent = `39,550 元整 (參萬玖仟伍佰伍拾元整，含管理費及車位)`;
-  } else if (pKey === 'B1-02') {
-    document.getElementById("dispRentStr").textContent = `一年 27,600 元整 (貳萬柒仟陸佰元整)`;
-  } else if (pKey === 'B1-03') {
-    document.getElementById("dispRentStr").textContent = `每月 3,000 元整 (參仟元整)`;
-  } else if (pKey === 'A108') {
-    document.getElementById("dispRentStr").textContent = `本標的為所有權人自用／自留住宅登記`;
+    document.getElementById("dispRentStr").textContent = `${rentVal.toLocaleString()} 元整 (${rentCh}) · 含地下二層平面車位(B2-02)`;
+  } else if (manageFeeVal > 0) {
+    document.getElementById("dispRentStr").textContent = `月租金 ${rentVal.toLocaleString()} 元 + 管理費 ${manageFeeVal.toLocaleString()} 元，每月應繳總額 ${(rentVal+manageFeeVal).toLocaleString()} 元整 (${numberToChinese(rentVal+manageFeeVal)})`;
   } else {
     document.getElementById("dispRentStr").textContent = `${rentVal.toLocaleString()} 元整 (${rentCh})`;
   }
