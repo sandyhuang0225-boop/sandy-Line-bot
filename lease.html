@@ -3,6 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Sandy 宅安心 ｜ 專屬智慧租賃合約產生與雙向電子簽章系統</title>
 
   <!-- Bootstrap 5 & FontAwesome -->
@@ -165,6 +168,18 @@ body.role-tenant #boxTenantSigPanel {
 </header>
 
 <div class="container py-4">
+  <!-- 系統即時功能狀態提示列 -->
+  <div class="alert alert-success d-flex justify-content-between align-items-center mb-3 shadow-sm border-success py-2 px-3 no-print">
+    <div class="small">
+      <span class="badge bg-success me-2"><i class="fa-solid fa-check me-1"></i>系統已全面更新到位</span>
+      <strong>已啟用功能：</strong>內政部完整23條公版、舊約設備清單自動帶入、一鍵下載PDF存電腦、一鍵傳LINE/Email、獨立房客簽約頁！
+    </div>
+    <div class="d-flex gap-2">
+      <button type="button" class="btn btn-sm btn-dark fw-bold" onclick="window.open('sign.html?p=' + document.getElementById('selProperty').value, '_blank')">
+        <i class="fa-solid fa-arrow-up-right-from-square me-1 text-warning"></i>直接開啟獨立房客簽署頁 (sign.html)
+      </button>
+    </div>
+  </div>
   <div class="row g-4">
 
     <!-- 左側：控制面板與物件切換 (Sandy 操作區) -->
@@ -1874,8 +1889,9 @@ function copySigningLink(btn) {
   const url = `${base}sign.html?p=${pKey}`;
   navigator.clipboard.writeText(url).then(() => {
     const orig = btn.innerHTML;
-    btn.innerHTML = `<i class="fa-solid fa-check me-1"></i>已複製房客專屬防竄改連結！`;
+    btn.innerHTML = `<i class="fa-solid fa-check me-1"></i>已複製 sign.html 簽署連結！`;
     btn.classList.replace("btn-outline-light", "btn-success");
+    alert("✅ 已成功複製房客專屬簽署連結：\n\n" + url + "\n\n【重要說明】：此連結指向全新的 sign.html 獨立簽署頁，裡面 100% 徹底移除了房東控制面板與所有修改按鈕，房客只能看合約、看設備清單與簽名，絕無可能竄改任何條款！請直接傳至房客 LINE 即可。");
     setTimeout(() => {
       btn.innerHTML = orig;
       btn.classList.replace("btn-success", "btn-outline-light");
