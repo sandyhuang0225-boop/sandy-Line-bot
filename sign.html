@@ -113,8 +113,14 @@
       <h5 class="mb-0 fw-bold">Sandy 宅安心 ｜ 房屋租賃契約書</h5>
     </div>
     <div class="d-flex align-items-center gap-2">
-      <button type="button" class="btn btn-warning text-dark btn-sm fw-bold shadow-sm" onclick="window.print()">
-        <i class="fa-solid fa-print me-1"></i>列印 / 預覽契約
+      <button type="button" class="btn btn-warning text-dark btn-sm fw-bold shadow-sm" onclick="downloadDirectPdf()">
+        <i class="fa-solid fa-file-arrow-down me-1"></i>下載正式 PDF
+      </button>
+      <button type="button" class="btn btn-outline-light btn-sm fw-bold" onclick="packageToEmail()">
+        <i class="fa-solid fa-envelope me-1 text-warning"></i>一鍵打包 Email 留存
+      </button>
+      <button type="button" class="btn btn-outline-light btn-sm fw-bold" onclick="window.print()">
+        <i class="fa-solid fa-print me-1"></i>列印
       </button>
     </div>
   </div>
@@ -136,6 +142,26 @@
   </div>
 
   <!-- 契約本文 (由 JavaScript 動態帶入物件條件與勾選設備，完全唯讀) -->
+  <!-- 簽署完成鎖定提示卡 (已簽署後自動展示，防重複簽署) -->
+  <div class="card bg-white border-success shadow-sm p-4 mb-4 text-center" id="boxAlreadySigned" style="display: none;">
+    <div class="text-success mb-2" style="font-size: 2.8rem;">
+      <i class="fa-solid fa-shield-check"></i>
+    </div>
+    <h4 class="fw-bold text-success mb-2">本租賃契約已由承租人線上親筆簽署完成並永久鎖定</h4>
+    <p class="text-secondary mb-3" style="max-width: 650px; margin: 0 auto;">
+      承租人已於 <strong class="text-dark" id="lockSignTime">已記錄存證時間</strong> 完成本租賃契約親筆手寫簽名，並已傳回房東 Sandy 存證用印。<br>
+      為確保契約之法律證據力與防偽不可否認性，<strong>本合約已進入唯讀封存狀態，不得重複簽署或任意變更。</strong>
+    </p>
+    <div class="d-flex justify-content-center gap-2 flex-wrap">
+      <span class="badge bg-success-subtle text-success border border-success px-3 py-2 fs-6">
+        <i class="fa-solid fa-lock me-1"></i>合約已鎖定 · 具完整法律效力
+      </span>
+      <button type="button" class="btn btn-sm btn-outline-success fw-bold" onclick="downloadDirectPdf()">
+        <i class="fa-solid fa-file-arrow-down me-1"></i>下載正式 PDF 備查
+      </button>
+    </div>
+  </div>
+
   <div class="contract-paper shadow-sm" id="contractPaper">
         
         <div class="contract-header">
@@ -1167,11 +1193,99 @@ function clearSig(id) {
   hasSigned = false;
 }
 
+
+// 下載正式 PDF
+function downloadDirectPdf() {
+  const contractEl = document.getElementById("contractPaper");
+  if (!contractEl) return;
+
+  const p = propConfig;
+  const tName = document.getElementById("dispTName") ? document.getElementById("dispTName").textContent : "承租人";
+  const filename = `Sandy宅安心_房屋租賃契約書_${p.roomNo || currentPKey}_${tName}.pdf`;
+
+  if (typeof html2pdf !== 'undefined') {
+    const opt = {
+      margin: [10, 8, 10, 8],
+      filename: filename,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 1.6, useCORS: true, logging: false, scrollY: 0 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(contractEl).save().catch((err) => {
+      console.warn("html2pdf fallback to print:", err);
+      window.print();
+    });
+  } else {
+    window.print();
+  }
+}
+
+// 一鍵打包 Email 留存
+function packageToEmail() {
+  const p = propConfig;
+  const tName = document.getElementById("dispTName") ? document.getElementById("dispTName").textContent : "承租人";
+  const tPhone = document.getElementById("dispTPhoneBottom") ? document.getElementById("dispTPhoneBottom").textContent : "";
+  const sDate = document.getElementById("dispStartStr") ? document.getElementById("dispStartStr").textContent : "";
+  const eDate = document.getElementById("dispEndStr") ? document.getElementById("dispEndStr").textContent : "";
+  const rentStr = document.getElementById("dispRentStr") ? document.getElementById("dispRentStr").textContent : "";
+  const depStr = document.getElementById("dispDepositStr") ? document.getElementById("dispDepositStr").textContent : "";
+
+  const subject = `【Sandy 宅安心】房屋租賃契約書存證留存 - ${p.title} (${tName})`;
+  const body = `承租人【${tName}】您好：\n\n已為您完成《${p.title}》租賃契約線上審閱與數位簽署！\n\n【物業標的】：${p.title}\n【租賃地址】：${p.address}\n【承租人】：${tName} (電話：${tPhone})\n【租賃期間】：${sDate} 至 ${eDate}\n【每月租金】：${rentStr}\n【押金金額】：${depStr}\n\n本契約已完成線上親筆手寫簽署並鎖定存證。\n請妥善保存本郵件作為雙方正式法律留存。\n此致\nSandy 宅安心 智慧租賃服務團隊`;
+
+  window.open(`mailto:sandyhuang0225@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+}
+
+// 防重複簽署檢查
+function checkAlreadySigned() {
+  const isSigned = localStorage.getItem(`tenant_signed_${currentPKey}`) === 'true' || urlParams.get("signed") === "1" || urlParams.get("status") === "completed";
+  const savedSig = localStorage.getItem(`tenant_sig_${currentPKey}`);
+  const signedTime = localStorage.getItem(`tenant_sig_time_${currentPKey}`) || "日前";
+
+  if (isSigned) {
+    // 1. 隱藏簽署板與指引橫幅
+    const pad = document.getElementById("boxTenantSigningPad");
+    if (pad) pad.style.setProperty("display", "none", "important");
+    const guide = document.getElementById("tenantInstructionAlert");
+    if (guide) guide.style.setProperty("display", "none", "important");
+
+    // 2. 顯示鎖定卡片
+    const lockCard = document.getElementById("boxAlreadySigned");
+    if (lockCard) lockCard.style.display = "block";
+    const timeEl = document.getElementById("lockSignTime");
+    if (timeEl) timeEl.textContent = signedTime;
+
+    // 3. 填入已簽好的簽名檔
+    const tenantName = document.getElementById("dispTName") ? document.getElementById("dispTName").textContent : "承租人";
+    if (savedSig) {
+      const dispTenantSig = document.getElementById("dispTenantSigSlot");
+      if (dispTenantSig) {
+        dispTenantSig.innerHTML = `
+          <img src="${savedSig}" style="max-height: 55px; max-width: 170px; object-fit: contain;" alt="承租人親筆簽名">
+          <div style="font-size:0.75rem;" class="text-success fw-bold"><i class="fa-solid fa-lock me-1"></i>已簽署鎖定存證</div>
+        `;
+      }
+      const dispAppTenant = document.getElementById("dispAppendixTenantName");
+      if (dispAppTenant) {
+        dispAppTenant.innerHTML = `${tenantName}<br><img src="${savedSig}" style="max-height: 40px; max-width: 120px; object-fit: contain;">`;
+      }
+    }
+  }
+}
+
 // 房客確認親筆簽名
 function commitTenantSign() {
   if (!hasSigned) {
     alert("⚠️ 請先在手寫簽名板中親筆簽名，再點選確認按鈕！");
     return;
+  }
+
+  const nowStr = new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' });
+  try {
+    localStorage.setItem(`tenant_signed_${currentPKey}`, 'true');
+    localStorage.setItem(`tenant_sig_time_${currentPKey}`, nowStr);
+  } catch (e) {
+    console.warn("Storage warning:", e);
   }
 
   const sigDataUrl = canvas.toDataURL("image/png");
@@ -1251,6 +1365,7 @@ ${landlordUrl}`;
 window.addEventListener("DOMContentLoaded", () => {
   initTenantContract();
   setupCanvas();
+  checkAlreadySigned();
 });
 </script>
 </body>
