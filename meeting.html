@@ -209,6 +209,10 @@
       <button type="button" class="btn btn-outline-light btn-sm fw-bold shadow-sm" onclick="syncLiveAttendeesFromServer(this)">
         <i class="fa-solid fa-arrows-rotate me-1 text-warning"></i>同步 Google 試算表
       </button>
+      <!-- 🌟 簽到名冊 (Total 報到人數) 快速捷徑與即時計數 🌟 -->
+      <a href="#signinSheetSection" class="btn btn-outline-light btn-sm fw-bold shadow-sm" title="點擊直接查看簽到名冊">
+        <i class="fa-solid fa-list-check me-1 text-info"></i>簽到名冊 (<span id="topAttendeeCount" class="text-warning fw-bold">0</span>人)
+      </a>
 
       <!-- 🌟 Sandy 登入後展開的管理控制列 🌟 -->
       <div id="adminControlsGroup" style="display: none;" class="d-flex gap-2 align-items-center">
@@ -444,7 +448,7 @@
   <div class="custom-card hide-on-print" id="tallySection">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
       <h4 class="fw-bold text-dark mb-0">
-        <i class="fa-solid fa-chart-pie text-warning me-2"></i><span id="tallyHeaderTitle">餐廳訂席與與會清單統計</span> <span class="badge bg-primary ms-1" id="topAttendeeCount">0</span>人出席
+        <i class="fa-solid fa-chart-pie text-warning me-2"></i><span id="tallyHeaderTitle">餐廳訂席與與會清單統計</span> <span class="badge bg-primary ms-1" id="tallyAttendeeCount">0</span>人出席
       </h4>
       <div class="d-flex gap-2">
         <button type="button" class="btn btn-sm btn-outline-success fw-bold" onclick="copyRestaurantSummary(this)">
@@ -2167,6 +2171,8 @@ function renderAttendeesAndTally() {
 
   const topCountEl = document.getElementById('topAttendeeCount');
   if (topCountEl) topCountEl.textContent = list.length;
+  const tallyCountEl = document.getElementById('tallyAttendeeCount');
+  if (tallyCountEl) tallyCountEl.textContent = list.length;
 
   const tallyCardsRow = document.getElementById('tallyCardsRow');
   const dietBox = document.getElementById('statDietBox');
