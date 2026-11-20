@@ -598,7 +598,7 @@ body.role-tenant #boxTenantSigPanel {
             (四) <strong>退租後持續追償機制：</strong>承租人退租後若因延遲辦理營業登記或稅籍遷出，致出租人於租賃期滿後次一年度仍遭課徵營業用稅捐者，出租人保有完整追繳求償權利。
           </div>
           <div id="dispTaxCompBox" style="display: none;" class="p-2 my-2 bg-light border-start border-3 border-secondary rounded small">
-            <strong>專屬定額報稅補貼約定：</strong>承租人若申報租賃所得稅或租金補貼，須於申報月份一次性補償出租方因申報所生之租賃所得稅額與二代健保補充保費。
+            <strong>專屬定額報稅補貼約定：</strong><span id="dispTaxCompText">承租人若申報租賃所得稅或租金補貼，須於申報月份一次性補償出租方因申報所生之租賃所得稅額與二代健保補充保費。</span>
           </div>
         </div>
 
@@ -1687,10 +1687,13 @@ function updateContract() {
   // 定額報稅補償 (百星侯爵 / 信義福德)
   const isTax = document.getElementById("chkTaxComp").checked;
   document.getElementById("dispTaxCompBox").style.display = isTax ? "block" : "none";
-  if (pKey === 'A102') {
-    document.getElementById("dispTaxCompText").textContent = "承租人若申報租賃所得稅或租金補貼，須於申報月份一次性補償出租方租賃稅 NT$ 2,879 + 二代健保費 NT$ 607 共 3,504 元/月。";
-  } else if (pKey === 'A101') {
-    document.getElementById("dispTaxCompText").textContent = "承租人若報稅，須於報稅月份一次補償出租方，每月補貼金額 3,000 元整，視所租月份一次全額補償。";
+  const taxCompEl = document.getElementById("dispTaxCompText");
+  if (taxCompEl) {
+    if (pKey === 'A102') {
+      taxCompEl.textContent = "承租人若申報租賃所得稅或租金補貼，須於申報月份一次性補償出租方租賃稅 NT$ 2,879 + 二代健保費 NT$ 607 共 3,504 元/月。";
+    } else if (pKey === 'A101') {
+      taxCompEl.textContent = "承租人若報稅，須於報稅月份一次補償出租方，每月補貼金額 3,000 元整，視所租月份一次全額補償。";
+    }
   }
 
   const isUtil = document.getElementById("chkUtilityFormula").checked;
@@ -1700,9 +1703,7 @@ function updateContract() {
   const customTxt = document.getElementById("inpCustomClause").value.trim();
   document.getElementById("dispCustomClauseText").textContent = customTxt || "雙方秉持誠信原則履約，未盡事宜悉依民法及內政部住宅租賃定型化契約法規辦理。";
 
-  // 更新附件一：設備點交表與承租人點交姓名
-  const appTName = document.getElementById("dispAppendixTenantName");
-  if (appTName) appTName.textContent = tName;
+  // 更新附件一：設備點交表
   if (typeof renderEquipmentTable === 'function') {
     renderEquipmentTable();
   }
@@ -2205,12 +2206,12 @@ function enterLandlordSignMode() {
   // 檢查是否有儲存的房客簽名
   const savedSig = localStorage.getItem(`tenant_sig_${pKey}`);
   const dispTenantSig = document.getElementById("dispTenantSigSlot");
+  const dispAppTenant = document.getElementById("dispAppendixTenantName");
   if (savedSig && dispTenantSig) {
     dispTenantSig.innerHTML = `
       <img src="${savedSig}" style="max-height: 55px; max-width: 170px; object-fit: contain;" alt="承租人親筆簽名">
       <div style="font-size:0.75rem;" class="text-success fw-bold"><i class="fa-solid fa-circle-check me-1"></i>承租人線上親筆簽名完成</div>
     `;
-    const dispAppTenant = document.getElementById("dispAppendixTenantName");
     if (dispAppTenant) {
       dispAppTenant.innerHTML = `${tName}<br><img src="${savedSig}" style="max-height: 40px; max-width: 120px; object-fit: contain;">`;
     }
@@ -2220,7 +2221,6 @@ function enterLandlordSignMode() {
         <i class="fa-solid fa-check-circle me-1"></i>承租人 (${tName}) 線上審閱確認無誤並簽回
       </span>
     `;
-    const dispAppTenant = document.getElementById("dispAppendixTenantName");
     if (dispAppTenant) {
       dispAppTenant.innerHTML = `${tName}<br><span class="badge bg-success-subtle text-success p-1">承租人簽妥</span>`;
     }
