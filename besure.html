@@ -799,7 +799,7 @@ dd {
             <dl>
               <dt>Choose type of Novartis event (活動屬性)</dt>
               <dd>
-                選取：<span class="choice-pill">Scientific Medical Non-Promotional event</span>
+                選取：<span class="choice-pill">Promotional event</span> <small class="text-muted">(因由業務 Sales 端發起主辦，依公司合規規範請務必選 Promotional event；非 Medical 主辦)</small>
               </dd>
 
               <dt>Will the event be co-owned by other Novartis functions?</dt>
@@ -853,8 +853,8 @@ dd {
           </summary>
           <div class="step-body">
             <dl>
-              <dt>Total number of External Experts selected in this submission</dt>
-              <dd>填入半形純數字：<span class="choice-pill">1</span></dd>
+              <dt>Total number of External Experts selected in this submission (本場提交聘請之外部專家總人數)</dt>
+              <dd>填入半形純數字：<span class="choice-pill" id="step5ExpertCountPill">1</span> <small class="text-muted">(與第 4 題完全一致：包含 Speaker 講者與 Moderator 座長之總人數)</small></dd>
 
               <dt>Will any External Experts be engaged through a Third Party?</dt>
               <dd>未經公關/活動代辦公司，請選：<span class="choice-pill">No</span></dd>
@@ -886,7 +886,7 @@ dd {
           <div class="step-body">
             <dl>
               <dt>What is the format of event? (活動形式)</dt>
-              <dd>點選：<span class="choice-pill">In-person</span> 或 <span class="choice-pill">Face-to-face</span></dd>
+              <dd>點選：<span class="choice-pill">Physical</span>（實體現場）或 <span class="choice-pill">Hybrid</span>（線上與現場混合，依活動實際形式選擇）</dd>
 
               <dt>Type of venue (場地類型)</dt>
               <dd>選取：<span class="choice-pill" id="badgeVenueType">Restaurant</span></dd>
@@ -1598,6 +1598,10 @@ function updateAllSteps() {
   if (step4Pill) {
     step4Pill.textContent = `${totalExperts}`;
   }
+  const step5Pill = document.getElementById("step5ExpertCountPill");
+  if (step5Pill) {
+    step5Pill.textContent = `${totalExperts}`;
+  }
 }
 
 // 一鍵複製監聽 (發射台大按鈕專用)
@@ -1861,10 +1865,10 @@ ${need}
 【4. 受聘專家遴選理由 (Step 4)】：
 ${docRationale}
 
-【5. 場地詳細與合規說明 (Step 5)】：
+【5. 場地詳細與合規說明 (Step 6)】：
 ${venue}
 
-【6. 目標與會受眾說明 (Step 6)】：
+【6. 目標與會受眾說明 (Step 8)】：
 ${audience}
 --------------------------------------------`;
 
