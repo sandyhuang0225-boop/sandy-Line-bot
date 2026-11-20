@@ -244,33 +244,73 @@
         <div class="section-title"><i class="fa-solid fa-sliders me-2"></i>4. Sandy 專屬特約開關 (一鍵啟閉)</div>
         
         <div class="form-check form-switch mb-2">
-          <input class="form-check-input" type="checkbox" id="chkSmoking" onchange="updateContract()">
-          <label class="form-check-label small fw-bold" for="chkSmoking">
-            🚭 嚴格禁菸特約 (文信路11-9)：陽台廁所抽菸一經發現賠償 2 個月押金+1個月擔保金並即刻解約
+          <input class="form-check-input" type="checkbox" id="chkSmoking" checked onchange="updateContract()">
+          <label class="form-check-label small fw-bold text-danger" for="chkSmoking">
+            🚭 嚴格禁菸特約 (全室、陽台、廁所禁菸 · 違者賠償2個月押金+1個月擔保金並即刻解約)
           </label>
         </div>
 
+        <!-- 寵物條款開關 (全物業可選：禁養/附條件飼養) -->
+        <div class="mb-2 p-2 bg-light rounded border">
+          <label class="form-label small fw-bold mb-1"><i class="fa-solid fa-paw me-1 text-success"></i>🐾 寵物約定條款：</label>
+          <div class="d-flex flex-wrap gap-2">
+            <div class="form-check form-check-inline mb-0">
+              <input class="form-check-input" type="radio" name="radPet" id="radPetBan" value="ban" checked onchange="updateContract()">
+              <label class="form-check-label small fw-bold text-danger" for="radPetBan">🚫 嚴格禁養 (預設)</label>
+            </div>
+            <div class="form-check form-check-inline mb-0">
+              <input class="form-check-input" type="radio" name="radPet" id="radPetAllow" value="allow" onchange="updateContract()">
+              <label class="form-check-label small fw-bold text-primary" for="radPetAllow">🐶🐱 同意附條件飼養</label>
+            </div>
+            <div class="form-check form-check-inline mb-0">
+              <input class="form-check-input" type="radio" name="radPet" id="radPetNone" value="none" onchange="updateContract()">
+              <label class="form-check-label small text-muted" for="radPetNone">不特別約定</label>
+            </div>
+          </div>
+          <small class="text-muted d-block mt-1" style="font-size:0.75rem;">一鍵套用「全室嚴格禁養」或「深層除臭清潔+咬抓損全額賠償特約」</small>
+        </div>
+
+        <!-- 3. 租屋補貼事先說明條款 (全新加入) -->
+        <div class="form-check form-switch mb-2">
+          <input class="form-check-input" type="checkbox" id="chkSubsidy" checked onchange="updateContract()">
+          <label class="form-check-label small fw-bold text-primary" for="chkSubsidy">
+            🏛️ 租屋補貼事先說明條款 (申辦前30日須書面說明確認 · 虛偽冒領負完全法律責任)
+          </label>
+        </div>
+
+        <!-- 4. 營業登記事先說明與增補條款 -->
+        <div class="form-check form-switch mb-2">
+          <input class="form-check-input" type="checkbox" id="chkBizReg" onchange="updateContract()">
+          <label class="form-check-label small fw-bold text-warning-emphasis" for="chkBizReg">
+            📋 營業登記／稅籍設立增補條款 (未經同意嚴禁營登 · 經同意退租7日內遷出註銷 · 違者沒收押金)
+          </label>
+        </div>
+
+        <!-- 5. 稅法衍生稅金追繳特約 (房屋稅、地價稅、健保、所得稅) -->
+        <div class="form-check form-switch mb-2">
+          <input class="form-check-input" type="checkbox" id="chkTaxLawComp" checked onchange="updateContract()">
+          <label class="form-check-label small fw-bold text-danger" for="chkTaxLawComp">
+            ⚖️ 稅金追繳特約 (追繳營業用房屋稅差額、一般地價稅差額、2.11%二代健保保費及所得稅)
+          </label>
+        </div>
+
+        <!-- 6. 百星侯爵/福德街專屬固定報稅補償 -->
         <div class="form-check form-switch mb-2">
           <input class="form-check-input" type="checkbox" id="chkTaxComp" onchange="updateContract()">
           <label class="form-check-label small fw-bold" for="chkTaxComp">
-            💰 租金補貼/報稅補償約定 (百星侯爵/福德街)：若申報須於報稅月一次補償租賃稅及二代健保
+            💰 固定額度報稅補償約定 (百星侯爵月補3504 / 福德街月補3000)
           </label>
         </div>
 
+        <!-- 7. 工作室限制 -->
         <div class="form-check form-switch mb-2">
           <input class="form-check-input" type="checkbox" id="chkStudio" onchange="updateContract()">
           <label class="form-check-label small fw-bold" for="chkStudio">
-            🏢 商業工作室使用限制 (明華路)：僅供工作室使用、絕不能留宿過夜
+            🏢 商業工作室使用限制 (明華路)：僅供工作使用、絕不能留宿過夜
           </label>
         </div>
 
-        <div class="form-check form-switch mb-2">
-          <input class="form-check-input" type="checkbox" id="chkBizReg" onchange="updateContract()">
-          <label class="form-check-label small fw-bold" for="chkBizReg">
-            📋 營業登記增補條款 (依貝美甲)：同意商號登記、退租7日內遷出註銷
-          </label>
-        </div>
-
+        <!-- 8. 水電分攤 -->
         <div class="form-check form-switch mb-3">
           <input class="form-check-input" type="checkbox" id="chkUtilityFormula" onchange="updateContract()">
           <label class="form-check-label small fw-bold" for="chkUtilityFormula">
@@ -333,6 +373,20 @@
           </p>
         </div>
 
+        <!-- 寵物飼養特約條款 (全新加入) -->
+        <div class="contract-clause" id="dispPetClauseBox" style="display: none;">
+          <div class="clause-title text-success"><i class="fa-solid fa-paw me-1"></i>第四條之二 寵物飼養特約條款</div>
+          <div id="dispPetBanText" class="p-2 bg-danger-subtle border border-danger rounded mb-0 text-danger-emphasis" style="display: none;">
+            <strong>【嚴格禁止飼養寵物約定】：</strong>未經出租人書面同意，本租賃房屋室內外嚴格禁止飼養任何禽畜、寵物（包括但不限於犬、貓、鳥、爬蟲類等）。承租人若違反約定擅自飼養，除應立即將寵物遷離並負擔全室專業消毒消臭除蟲之全部費用外，承諾賠償出租人 <strong>1 個月租金之違約金</strong>，出租人並得立即終止本契約。
+          </div>
+          <div id="dispPetAllowText" class="p-2 bg-info-subtle border border-info rounded mb-0 text-info-emphasis" style="display: none;">
+            <strong>【附帶條件同意飼養寵物特約】：</strong>出租人同意承租人於租賃期間飼養指定寵物，承租人承諾遵守下列約定：
+            <br>1. 承租人應善盡管教與照護責任，遵守社區大樓規約，不得製造噪音、異味或滋生跳蚤寄生蟲影響鄰居安寧。
+            <br>2. 租期屆滿交還房屋時，承租人應自費委託專業清潔消毒公司進行<strong>全屋深層清潔、除臭及除蚤消毒</strong>，並出具施作證明交予出租人。
+            <br>3. 房屋之裝潢、門窗、牆面壁紙、地板、紗窗及附屬家具家電，若有遭寵物抓傷、啃咬、便溺污損或破壞，承租人承諾<strong>全額照價賠償或原樣修復</strong>，得由押金抵扣，不足部分仍應全額補足。
+          </div>
+        </div>
+
         <div class="contract-clause">
           <div class="clause-title">第五條 租賃期間相關費用之支付</div>
           <p class="mb-1" id="dispManageFeeText">一、管理費：每月新臺幣 800 元整，由承租人負擔。</p>
@@ -342,19 +396,47 @@
           </div>
         </div>
 
-        <!-- 營業登記與工作室限制 -->
+        <!-- 營業登記與工作室限制增補條款 -->
         <div class="contract-clause" id="dispBizClauseBox" style="display: none;">
-          <div class="clause-title">第六條 營業登記及使用限制增補條款</div>
-          <div class="p-2 bg-light border-start border-3 border-warning small mb-0">
-            <p class="mb-1" id="dispStudioOnlyText" style="display: none;"><strong>工作室專用限制：</strong>本標的僅供日間商業工作空間使用，不作居住住宅使用，嚴禁留宿過夜。</p>
-            <p class="mb-1" id="dispBizRegText" style="display: none;"><strong>營業登記約定：</strong>同意承租人辦理本人經營商號之營業登記及稅籍登記。租約終止或屆滿時，承租人須於 7 日內完成遷出或註銷登記並提供證明，否則出租人得沒收全額押金並追償相關稅損。</p>
+          <div class="clause-title text-warning-emphasis"><i class="fa-solid fa-briefcase me-1"></i>第六條 營業登記及商業使用限制增補條款</div>
+          <div class="p-3 bg-light border-start border-4 border-warning small rounded mb-0">
+            <p class="mb-2" id="dispStudioOnlyText" style="display: none;"><strong>【商業工作室使用限制】：</strong>本租賃標的僅供承租人日間商業工作空間、辦公接待使用，嚴禁作為夜間居住留宿之用，承租人或其受僱人絕對不得留宿過夜。</p>
+            <div id="dispBizRegText" style="display: none;">
+              <p class="mb-1 fw-bold text-dark">【營業登記及稅籍設立正式約定】：</p>
+              <p class="mb-1">一、<strong>事先說明與書面許可：</strong>未經出租人事前書面同意，承租人嚴禁擅自向主管機關辦理商業登記、公司設立、分公司登記、稅籍設立登記、扣繳單位設籍或任何借址登記。經出租人事前書面同意者，僅限承租人本人經營之合法商號/公司設立登記。</p>
+              <p class="mb-1">二、<strong>法規自主負責：</strong>承租人應自行確認營業項目完全符合建築法、消防法、都市計畫土地使用分區及主管機關之相關法規；出租人同意登記不代表保證主管機關必然核准，所生之申請費、規費及相關法律責任均由承租人自負。嚴禁借址登記予第三人，亦不得從事特種行業、違反善良風俗或危害公共安全之行為。</p>
+              <p class="mb-1">三、<strong>租期屆滿遷出與註銷義務：</strong>租賃契約期滿、提前終止或解除之日起 <strong>7 日內</strong>，承租人應向主管機關辦妥該地址之營業登記／稅籍登記遷出、停業或註銷手續，並向出租人出具主管機關之核准公文證明。</p>
+              <p class="mb-0 text-danger">四、<strong>違約罰則與沒收押金：</strong>承租人若逾期未完成遷出或註銷，每逾一日按日租金五倍計算懲罰性違約金；逾期滿一個月仍未遷出者，出租人得<strong>全額沒收第四條之保證金（押金）</strong>；且承租人仍須持續負擔所有因此衍生之稅捐與法律損害賠償。出租人並得依法向主管機關申請逕為廢止或更正登記，所生規費與律師費用全由承租人負擔。</p>
+            </div>
           </div>
         </div>
 
-        <!-- 報稅與二代健保補貼 -->
+        <!-- 政府租屋補貼事先說明約定 -->
+        <div class="contract-clause" id="dispSubsidyBox" style="display: none;">
+          <div class="clause-title text-primary"><i class="fa-solid fa-landmark me-1"></i>第七條 政府租屋補貼事先說明與申報約定</div>
+          <div class="p-3 bg-primary-subtle border border-primary rounded small mb-0 text-primary-emphasis">
+            <p class="mb-1">一、<strong>事先說明告知義務：</strong>承租人如欲向主管機關申辦「中央擴大租金補貼」或其他任何政府租屋補助，<strong>必須於簽訂本契約前或提出申請前 30 日事先以書面或通訊軟體主動向出租人說明並取得確認</strong>，以利雙方核對身分與出租資料。</p>
+            <p class="mb-0">二、<strong>資格保證與損害賠償：</strong>承租人承諾自身資格完全符合法定補貼條件，絕無冒名頂替、虛報戶籍、重複請領、冒領或虛偽申報之情事。若因承租人資格不符或虛偽申報遭主管機關查處、追繳，或致出租人受有任何行政裁罰或溢課稅捐者，承租人承諾負完全法律責任，並無條件全額賠償出租人因此所受之一切損害。</p>
+          </div>
+        </div>
+
+        <!-- 稅法權責劃分與衍生稅費追繳特約 -->
+        <div class="contract-clause" id="dispTaxLawBox" style="display: none;">
+          <div class="clause-title text-danger"><i class="fa-solid fa-scale-balanced me-1"></i>第八條 稅法權責劃分與衍生稅費追繳特約</div>
+          <div class="p-3 bg-danger-subtle border border-danger rounded small mb-0 text-danger-emphasis">
+            <p class="mb-1 fw-bold">本租賃契約約定之租金金額為「出租人實收之淨租金」，因承租人使用行為所衍生之稅捐差額約定如下：</p>
+            <p class="mb-1">一、<strong>房屋稅差額補償：</strong>房屋原適用自住住家用稅率（1.2%）。因承租人辦理營業登記或設籍營業，致房屋稅遭稅捐機關改課為「營業用稅率（3%~5%）」者，其衍生之<strong>房屋稅差額（多出之 1.8% 以上稅金）</strong>，全部由承租人全數負擔補償，於稅單開徵月份或退租結算時全數給付出租人。</p>
+            <p class="mb-1">二、<strong>地價稅差額補償：</strong>基地土地原適用自用住宅優惠稅率（2‰）。因承租人營業登記致喪失自用住宅資格改課「一般用地累進稅率（10‰ 至 55‰）」者，其所產生之<strong>地價稅差額（多出之 8‰ 以上稅金）</strong>，全部由承租人全數負擔補償。</p>
+            <p class="mb-1">三、<strong>二代健保補充保費（2.11%）追繳代扣約定：</strong>承租人若為法人、商號、公司或扣繳義務人，依《全民健康保險法》第 31 條規定，每月給付租金達新臺幣 2 萬元以上依法應扣取 2.11% 補充保費者，應由<strong>承租人自行額外吸收並繳納健保署</strong>，不得自每月應付租金中內扣；若由出租人負擔者，承租人應於繳款時一併全額補償出租人。</p>
+            <p class="mb-1">四、<strong>個人綜合所得稅補償約定：</strong>承租人若申報報稅扣除或營業扣繳憑單申報，致出租人產生個人綜合所得稅之租賃所得稅賦增加者，承租人應按雙方約定之補償金額於申報月份一次性全額補償予出租人。</p>
+            <p class="mb-0">五、<strong>退租後持續追償機制：</strong>若因承租人延遲辦理營業登記或稅籍遷出，致出租人於租賃期滿後次一年度仍遭稅捐機關課徵營業用房屋稅或一般用地地價稅，出租人保有完整<strong>追繳求償權利</strong>，得逕自押金抵扣，不足額或押金已退還者，承租人接獲出租人通知後 7 日內應無條件全額補足，並承擔相關法律費用。</p>
+          </div>
+        </div>
+
+        <!-- 專屬定額報稅補貼約定 (百星侯爵/信義福德) -->
         <div class="contract-clause" id="dispTaxCompBox" style="display: none;">
-          <div class="clause-title">第七條 稅捐與租金補貼約定</div>
-          <p class="p-2 bg-warning-subtle border border-warning rounded mb-0 text-dark small" id="dispTaxCompText">
+          <div class="clause-title text-secondary">第九條 專屬定額報稅補貼約定</div>
+          <p class="p-2 bg-light border-start border-3 border-secondary rounded mb-0 text-dark small" id="dispTaxCompText">
             承租人若申報租賃所得稅或租金補貼，須於申報月份一次性補償出租方因申報所生之租賃所得稅額與二代健保補充保費，視所租月份一次全額補償。
           </p>
         </div>
@@ -528,7 +610,10 @@ const PROPERTIES_DB = {
     tenantAddress: "新北市蘆洲區永德里3鄰中原路20巷15號3樓",
     bank: "dbs",
     carParkText: "無附設車位。租客如需停車請自行於大樓或周邊承租。",
-    smoking: false,
+    smoking: true,
+    petMode: "ban",
+    subsidy: true,
+    taxLawComp: true,
     taxComp: false,
     studio: false,
     bizReg: false,
@@ -538,8 +623,8 @@ const PROPERTIES_DB = {
   p2: {
     title: "高雄市鼓山區文信路 209 號 11 樓之 9 房屋租賃契約書",
     address: "高雄市鼓山區文信路 209 號 11 樓之 9",
-    rent: 12199, // 租金 12,199 元/月
-    manageFee: 300, // 清潔費 300 元（租客負擔，隨租金匯給屋主統一向管委會繳納）
+    rent: 12199,
+    manageFee: 300,
     deposit: 24398, // ★ 舊約實載金額！退租返還 24,398 元
     tenantName: "李乃亘",
     tenantId: "B223392818",
@@ -548,7 +633,10 @@ const PROPERTIES_DB = {
     tenantAddress: "台中北屯區北屯里太原路三段139巷40號",
     bank: "dbs",
     carParkText: "無附設車位。大樓清潔費 300 元由承租人負擔，隨每月租金一併匯付出租人，由出租人統一向管委會繳納。",
-    smoking: true, // Sandy 專屬嚴格禁菸條款
+    smoking: true,
+    petMode: "ban",
+    subsidy: true,
+    taxLawComp: true,
     taxComp: false,
     studio: false,
     bizReg: false,
@@ -559,7 +647,7 @@ const PROPERTIES_DB = {
     title: "高雄市鼓山區南屏路 555 號 12 樓之 7 房屋租賃契約書",
     address: "高雄市鼓山區南屏路 555 號 12 樓之 7",
     rent: 12200,
-    manageFee: 650, // 連同租金共 12,850 匯款
+    manageFee: 650,
     deposit: 24400, // 舊約實載金額
     tenantName: "汪晉宇",
     tenantId: "N123456789",
@@ -568,7 +656,10 @@ const PROPERTIES_DB = {
     tenantAddress: "彰化縣員林市南平里7鄰南平東街9巷7號",
     bank: "dbs",
     carParkText: "獨立套房無附設車位，無天然瓦斯設備。需停車者自行於大樓另行承租。",
-    smoking: false,
+    smoking: true,
+    petMode: "ban",
+    subsidy: true,
+    taxLawComp: true,
     taxComp: false,
     studio: false,
     bizReg: false,
@@ -586,9 +677,12 @@ const PROPERTIES_DB = {
     tenantPhone: "0928-865583",
     tenantEmail: "bababafu@hotmail.com",
     tenantAddress: "高雄縣岡山區信義里介壽路10巷27弄89號",
-    bank: "ctbc", // 中信帳號
+    bank: "ctbc",
     carParkText: "含 B1 平面車位 1 號及 B1 機車位 3 號使用權。",
-    smoking: false,
+    smoking: true,
+    petMode: "ban",
+    subsidy: true,
+    taxLawComp: true,
     taxComp: true, // Sandy 專屬雙月 29931 / 報稅補償 3,504
     studio: false,
     bizReg: false,
@@ -608,7 +702,10 @@ const PROPERTIES_DB = {
     tenantAddress: "高雄市三民區本揚里10鄰清華街89號14樓之3",
     bank: "dbs",
     carParkText: "無車位。特別約定本標的僅供商業工作室使用，不能留宿過夜。",
-    smoking: false,
+    smoking: true,
+    petMode: "ban",
+    subsidy: true,
+    taxLawComp: true,
     taxComp: false,
     studio: true, // 工作室不能過夜
     bizReg: false,
@@ -628,8 +725,10 @@ const PROPERTIES_DB = {
     tenantAddress: "高雄市苓雅區和平一路268號之3",
     bank: "dbs",
     carParkText: "無車位。本租賃範圍僅供依貝美甲工作室營業使用，不能過夜。",
-    smoking: false,
-    taxComp: false,
+    smoking: true,
+    petMode: "ban",
+    subsidy: true,
+    taxLawComp: true,
     studio: true,
     bizReg: true, // 營業登記增補條款
     utilityFormula: true, // 水費 1/3，獨立電表
@@ -648,7 +747,10 @@ const PROPERTIES_DB = {
     tenantAddress: "台南市北區文成二路159號11樓-2",
     bank: "dbs",
     carParkText: "含 B2 平面車位 1 號及 B1 機車位 3 號。大樓管理費與停車費由出租人統一向管委會代繳（已計入總額）。冰箱為租客自購。",
-    smoking: false,
+    smoking: true,
+    petMode: "ban",
+    subsidy: true,
+    taxLawComp: true,
     taxComp: false,
     studio: false,
     bizReg: false,
@@ -658,7 +760,7 @@ const PROPERTIES_DB = {
   p8: {
     title: "太子美學 2 號停車位租賃契約",
     address: "台南市北區文成二路 159 號 B2 2 號車位",
-    rent: 2300, // 一年 27,600
+    rent: 2300,
     manageFee: 0,
     deposit: 4400, // ★ 舊約實載保證金！
     tenantName: "陳又慈",
@@ -668,7 +770,10 @@ const PROPERTIES_DB = {
     tenantAddress: "台南市北區文成二路155號6樓",
     bank: "dbs",
     carParkText: "純汽車停車位出租，專供停放小客車使用，遵守管委會規約。",
-    smoking: false,
+    smoking: true,
+    petMode: "none",
+    subsidy: false,
+    taxLawComp: false,
     taxComp: false,
     studio: false,
     bizReg: false,
@@ -688,14 +793,15 @@ const PROPERTIES_DB = {
     tenantAddress: "台北市信義區福德街300巷12號3樓",
     bank: "dbs",
     carParkText: "無車位。水費、電費、大台北瓦斯帳單由承租人自繳。",
-    smoking: false,
+    smoking: true,
+    petMode: "ban",
+    subsidy: true,
+    taxLawComp: true,
     taxComp: true, // 報稅補貼 3000
     studio: false,
     bizReg: false,
     utilityFormula: false,
     customClause: "承租人若報稅，須於報稅月份一次補償出租方，每月補貼金額 3,000 元整，視所租月份一次全額補償。本公寓物業無大樓管委會管理費。"
-  }
-    customClause: "承租人若報稅，須於報稅月份一次補償出租方，每月補貼金額 3,000 元整，視所租月份一次全額補償。台水、台電、大台北瓦斯自行繳納。"
   }
 };
 
@@ -754,11 +860,19 @@ function switchProperty(pKey) {
   document.getElementById("inpTenantEmail").value = p.tenantEmail;
   document.getElementById("inpTenantAddress").value = p.tenantAddress;
 
-  document.getElementById("chkSmoking").checked = p.smoking;
-  document.getElementById("chkTaxComp").checked = p.taxComp;
-  document.getElementById("chkStudio").checked = p.studio;
-  document.getElementById("chkBizReg").checked = p.bizReg;
-  document.getElementById("chkUtilityFormula").checked = p.utilityFormula;
+  document.getElementById("chkSmoking").checked = (p.smoking !== undefined) ? p.smoking : true;
+  document.getElementById("chkSubsidy").checked = (p.subsidy !== undefined) ? p.subsidy : true;
+  document.getElementById("chkTaxLawComp").checked = (p.taxLawComp !== undefined) ? p.taxLawComp : true;
+  document.getElementById("chkTaxComp").checked = !!p.taxComp;
+  document.getElementById("chkStudio").checked = !!p.studio;
+  document.getElementById("chkBizReg").checked = !!p.bizReg;
+  document.getElementById("chkUtilityFormula").checked = !!p.utilityFormula;
+
+  const pMode = p.petMode || (pKey === 'p8' ? 'none' : 'ban');
+  if (pMode === 'ban' && document.getElementById('radPetBan')) document.getElementById('radPetBan').checked = true;
+  else if (pMode === 'allow' && document.getElementById('radPetAllow')) document.getElementById('radPetAllow').checked = true;
+  else if (document.getElementById('radPetNone')) document.getElementById('radPetNone').checked = true;
+
   document.getElementById("inpCustomClause").value = p.customClause;
 
   // 特殊提示開關
@@ -868,18 +982,45 @@ function updateContract() {
     document.getElementById("dispManageFeeText").innerHTML = `一、管理費：本物業無單獨管理費，或已內含於租金由出租人負擔。`;
   }
 
-  // 特約開關
+  // 特約開關 (全面聯動 Sandy 專屬特約)
   const isSmoking = document.getElementById("chkSmoking").checked;
   document.getElementById("dispSmokingClauseBox").style.display = isSmoking ? "block" : "none";
 
-  const isTax = document.getElementById("chkTaxComp").checked;
-  document.getElementById("dispTaxCompBox").style.display = isTax ? "block" : "none";
-  if (pKey === 'p4') {
-    document.getElementById("dispTaxCompText").textContent = "承租人若申報租賃所得稅或租金補貼，須於申報月份一次性補償出租方租賃稅 NT$ 2,879 + 二代健保費 NT$ 607 共 3,504 元/月。";
-  } else if (pKey === 'p9') {
-    document.getElementById("dispTaxCompText").textContent = "承租人若報稅，須於報稅月份一次補償出租方，每月補貼金額 3,000 元整，視所租月份一次全額補償。";
+  // 寵物特約
+  const petRadios = document.getElementsByName("radPet");
+  let selectedPet = "ban";
+  for (const r of petRadios) {
+    if (r.checked) {
+      selectedPet = r.value;
+      break;
+    }
+  }
+  const petBox = document.getElementById("dispPetClauseBox");
+  const petBanTxt = document.getElementById("dispPetBanText");
+  const petAllowTxt = document.getElementById("dispPetAllowText");
+  if (selectedPet === "ban") {
+    petBox.style.display = "block";
+    petBanTxt.style.display = "block";
+    petAllowTxt.style.display = "none";
+  } else if (selectedPet === "allow") {
+    petBox.style.display = "block";
+    petBanTxt.style.display = "none";
+    petAllowTxt.style.display = "block";
+  } else {
+    petBox.style.display = "none";
+    petBanTxt.style.display = "none";
+    petAllowTxt.style.display = "none";
   }
 
+  // 租屋補貼事先說明約定
+  const isSubsidy = document.getElementById("chkSubsidy").checked;
+  document.getElementById("dispSubsidyBox").style.display = isSubsidy ? "block" : "none";
+
+  // 稅法衍生稅金追繳特約 (房屋稅、地價稅、二代健保、所得稅)
+  const isTaxLaw = document.getElementById("chkTaxLawComp").checked;
+  document.getElementById("dispTaxLawBox").style.display = isTaxLaw ? "block" : "none";
+
+  // 營業登記與工作室限制
   const isStudio = document.getElementById("chkStudio").checked;
   const isBizReg = document.getElementById("chkBizReg").checked;
   if (isStudio || isBizReg) {
@@ -888,6 +1029,15 @@ function updateContract() {
     document.getElementById("dispBizRegText").style.display = isBizReg ? "block" : "none";
   } else {
     document.getElementById("dispBizClauseBox").style.display = "none";
+  }
+
+  // 定額報稅補償 (百星侯爵 / 信義福德)
+  const isTax = document.getElementById("chkTaxComp").checked;
+  document.getElementById("dispTaxCompBox").style.display = isTax ? "block" : "none";
+  if (pKey === 'p4') {
+    document.getElementById("dispTaxCompText").textContent = "承租人若申報租賃所得稅或租金補貼，須於申報月份一次性補償出租方租賃稅 NT$ 2,879 + 二代健保費 NT$ 607 共 3,504 元/月。";
+  } else if (pKey === 'p9') {
+    document.getElementById("dispTaxCompText").textContent = "承租人若報稅，須於報稅月份一次補償出租方，每月補貼金額 3,000 元整，視所租月份一次全額補償。";
   }
 
   const isUtil = document.getElementById("chkUtilityFormula").checked;
