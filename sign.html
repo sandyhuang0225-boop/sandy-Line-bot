@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>線上租賃契約審閱與數位簽署 ｜ Sandy 宅安心</title>
+  <title>房屋租賃契約書審閱與承租人線上簽署 ｜ Sandy 宅安心</title>
 
   <!-- Bootstrap 5 & FontAwesome -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -45,14 +45,6 @@
       box-shadow: 0 2px 10px rgba(0,0,0,0.03);
       padding: 20px;
       margin-bottom: 20px;
-    }
-    .section-title {
-      font-size: 1.05rem;
-      font-weight: 700;
-      color: var(--primary-navy);
-      border-left: 4px solid var(--accent-gold);
-      padding-left: 10px;
-      margin-bottom: 15px;
     }
     .contract-paper {
       background: white;
@@ -93,21 +85,15 @@
       touch-action: none;
       cursor: crosshair;
     }
-    .audit-box {
-      border: 2px solid var(--primary-navy);
-      border-radius: 8px;
-      background: #f8fafc;
-      padding: 20px;
-      margin-top: 25px;
-      font-family: monospace, sans-serif;
+    .tenant-container {
+      max-width: 960px;
+      margin: 0 auto;
     }
-    .hash-text {
-      font-family: "Courier New", Courier, monospace;
-      word-break: break-all;
-      background: #e2e8f0;
-      padding: 6px 10px;
-      border-radius: 4px;
-      font-size: 0.85rem;
+    @media (max-width: 768px) {
+      .contract-paper {
+        padding: 20px 15px;
+        font-size: 13.5px;
+      }
     }
     @media print {
       .no-print { display: none !important; }
@@ -115,65 +101,20 @@
       .contract-paper { border: none; box-shadow: none; padding: 0; }
       @page { size: A4; margin: 15mm 15mm 15mm 15mm; }
     }
-  
-/* === 房客專屬唯讀簽約模式 (強力鎖定，房東控制台與按鈕徹底隱藏) === */
-body.role-tenant #landlordControlPanel,
-.role-tenant #landlordControlPanel,
-body.role-tenant .landlord-only,
-.role-tenant .landlord-only,
-body.role-tenant #btnCopyLink,
-body.role-tenant #boxLandlordSigPanel {
-  display: none !important;
-}
-
-body.role-tenant #contractViewColumn {
-  width: 100% !important;
-  max-width: 960px !important;
-  margin: 0 auto !important;
-  flex: 0 0 100% !important;
-}
-
-body.role-tenant #tenantWelcomeBanner {
-  display: block !important;
-}
-
-body.role-tenant #boxTenantSigPanel {
-  width: 100% !important;
-  flex: 0 0 100% !important;
-}
-</style>
-  <style>
-    body {
-      background-color: #f1f5f9;
-      padding-bottom: 80px;
-    }
-    .tenant-container {
-      max-width: 960px;
-      margin: 0 auto;
-    }
   </style>
 </head>
 <body>
 
-<!-- 頂部精簡導航列 (唯讀模式，無任何管理開關) -->
+<!-- 頂部精簡導航列 -->
 <header class="top-navbar no-print">
   <div class="container d-flex justify-content-between align-items-center flex-wrap gap-2">
     <div class="d-flex align-items-center gap-2">
-      <span class="badge bg-warning text-dark fw-bold px-2 py-1"><i class="fa-solid fa-signature me-1"></i>房客線上簽署專區</span>
-      <h5 class="mb-0 fw-bold">Sandy 宅安心 ｜ 專屬租賃契約審閱與數位簽署</h5>
+      <span class="badge bg-warning text-dark fw-bold px-2 py-1"><i class="fa-solid fa-file-contract me-1"></i>房客線上合約審閱與簽署</span>
+      <h5 class="mb-0 fw-bold">Sandy 宅安心 ｜ 房屋租賃契約書</h5>
     </div>
     <div class="d-flex align-items-center gap-2">
-      <button type="button" class="btn btn-success btn-sm fw-bold shadow-sm" onclick="downloadDirectPdf()" title="直接下載 PDF 檔案到電腦/手機">
-        <i class="fa-solid fa-file-arrow-down me-1"></i>下載 PDF 存證
-      </button>
-      <button type="button" class="btn btn-outline-light btn-sm fw-bold" onclick="sendToLine()" title="一鍵分享至 LINE 留存">
-        <i class="fa-brands fa-line me-1 text-success fs-6 align-middle"></i>傳 LINE
-      </button>
-      <button type="button" class="btn btn-outline-light btn-sm fw-bold" onclick="sendToEmail()" title="一鍵發送 Email">
-        <i class="fa-solid fa-envelope me-1"></i>寄 Email
-      </button>
       <button type="button" class="btn btn-warning text-dark btn-sm fw-bold shadow-sm" onclick="window.print()">
-        <i class="fa-solid fa-print me-1"></i>列印
+        <i class="fa-solid fa-print me-1"></i>列印 / 預覽契約
       </button>
     </div>
   </div>
@@ -182,30 +123,359 @@ body.role-tenant #boxTenantSigPanel {
 <div class="container py-4 tenant-container">
   
   <!-- 房客專屬簽署指引橫幅 -->
-  <div class="alert alert-primary mb-4 shadow-sm border-primary no-print">
+  <div class="alert alert-primary mb-4 shadow-sm border-primary no-print" id="tenantInstructionAlert">
     <div class="d-flex align-items-center">
       <div class="me-3 fs-1 text-primary"><i class="fa-solid fa-file-signature"></i></div>
       <div>
-        <h5 class="fw-bold mb-1 text-primary">您好！請審閱並進行房屋租賃契約線上簽署</h5>
+        <h5 class="fw-bold mb-1 text-primary">您好！請逐條審閱租賃契約條款與設備點交清單</h5>
         <p class="mb-0 small text-secondary">
-          本契約由出租人（黃蕙芬）提供。請逐條審閱下列完整法定 23 條契約內容、特約條款與【附件一 附屬設備點交清單】。確認無誤後，請於頁面最下方<strong>「房客線上簽署區」</strong>以手指或觸控筆親筆簽名，系統將自動完成具法律效力之 SHA-256 數位防偽存證。
+          本契約由出租人（<strong>黃蕙芬 Sandy</strong>）依法令規定提供。請逐條審閱下列完整法定 23 條契約內容、特約條款與【附件一 附屬設備點交清單】。確認所有條件無誤後，請於頁面最下方<strong>「承租人 (房客) 親筆簽署區」</strong>以手指或觸控筆親筆簽名並傳回給房東用印。
         </p>
       </div>
     </div>
   </div>
 
-  <!-- 契約本文 (完全唯讀，無任何可編輯輸入框) -->
-  <div class="shadow-sm">
-    
-  </div>
+  <!-- 契約本文 (由 JavaScript 動態帶入物件條件與勾選設備，完全唯讀) -->
+  <div class="contract-paper shadow-sm" id="contractPaper">
+        
+        <div class="contract-header">
+          <h3 class="fw-bold mb-1" id="dispContractTitle">房屋租賃契約書</h3>
+          <small class="text-muted">內政部定型化契約範本基底 ｜ 中華民國 113 年最新修正相容版</small>
+        </div>
 
-  <!-- 房客專用親筆手寫簽名區 (只有房客簽名板，無房東按鈕) -->
-  <div class="card-panel mt-4 no-print shadow-sm border-warning">
+        <p>立契約書人承租人 <span class="highlight-fill" id="dispTName">廖子勛</span>，出租人 <span class="highlight-fill">黃蕙芬</span>【為所有權人】，茲為房屋租賃事宜，雙方同意本契約條款如下：</p>
+
+                <div class="contract-clause">
+          <div class="clause-title">第一條 租賃標的與使用範圍</div>
+          <p class="mb-1">一、房屋標示：<span class="highlight-fill" id="dispAddress">高雄市鼓山區文信路209號3樓之6</span>。</p>
+          <p class="mb-1">二、租賃範圍：<span class="highlight-fill" id="dispScope">房屋全部</span>。附屬設備清單詳見後附標的現況確認書。</p>
+          <div id="dispCarParkText" class="text-secondary small mt-1"></div>
+        </div>
+
+        <div class="contract-clause">
+          <div class="clause-title">第二條 租賃期間</div>
+          <p class="mb-0">租賃期間自民國 <span class="highlight-fill" id="dispStartStr">115 年 1 月 1 日</span> 起至民國 <span class="highlight-fill" id="dispEndStr">115 年 12 月 31 日</span> 止。</p>
+        </div>
+
+        <div class="contract-clause">
+          <div class="clause-title">第三條 租金約定及支付</div>
+          <p class="mb-1">一、承租人每月租金為新臺幣 <span class="highlight-fill" id="dispRentStr">8,500 元整 (捌仟伍佰元整)</span>，每期應繳納一個月租金，並於約定期限前支付，不得藉任何理由拖延或拒絕；出租人亦不得任意要求調整租金。</p>
+          <div id="dispBiMonthlyClause" style="display: none;" class="p-2 my-2 bg-light border-start border-3 border-primary small">
+            <strong>雙月繳款特別約定：</strong>本物業雙數月租金加計管理費共計為新台幣 <strong>貳萬玖仟玖佰參拾壹元整 (NT$ 29,931)</strong>；單數月租金為新台幣 <strong>貳萬捌仟元整 (NT$ 28,000)</strong>。
+          </div>
+          <p class="mb-0">二、租金支付方式：轉帳繳付至出租人指定帳戶：<span class="highlight-fill" id="dispBankStr">星展銀行 (810)，戶名：黃蕙芬，帳號：6712-880487</span>。</p>
+        </div>
+
+        <div class="contract-clause">
+          <div class="clause-title">第四條 擔保金（押金）約定及返還</div>
+          <p class="mb-0">擔保金（押金）由租賃雙方約定金額為新臺幣 <span class="highlight-fill" id="dispDepositStr">17,000 元整 (壹萬柒仟元整)</span>。承租人應於簽訂本契約之同時給付出租人。除本契約第十一條第四項、第十三條第三項、第十四條第三項、第十六條第二項、第十八條第二項及第二十一條特約條款得抵充扣除之情形外，出租人應於租期屆滿或租約終止，承租人交還房屋且結清無欠費損害時，無息原額返還承租人。</p>
+        </div>
+
+        <div class="contract-clause">
+          <div class="clause-title">第五條 租賃期間相關費用之支付</div>
+          <p class="mb-1" id="dispManageFeeText">一、管理費：每月新臺幣 800 元整，由承租人負擔。</p>
+          <p class="mb-1" id="dispUtilityText">二、水費、電費、瓦斯費：依主管自來水公司、台電公司帳單自繳或依約定比例分攤繳納。</p>
+          <div id="dispUtilityFormulaBox" style="display: none;" class="p-2 my-2 bg-light rounded small border">
+            <strong>明華路水電分攤特約：</strong>水費依當期帳單比例分攤；電費依獨立分度電表實際新增度數繳納，公共用電依約定比例分攤繳交。
+          </div>
+        </div>
+
+        <div class="contract-clause">
+          <div class="clause-title">第六條 稅費負擔之約定</div>
+          <p class="mb-1">一、本租賃契約有關租賃住宅之房屋稅、地價稅，原則由出租人負擔。</p>
+          <div id="dispTaxLawBox" style="display: none;" class="p-2 my-2 bg-danger-subtle border border-danger rounded small text-danger-emphasis">
+            <strong>【稅法權責劃分與商業設籍衍生稅費追繳約定】：</strong><br>
+            本租賃契約約定之租金金額為「出租人實收之淨租金」。若承租人經出租人書面同意辦理營業登記或稅籍設立：<br>
+            (一) <strong>房屋稅差額補償：</strong>房屋原適用住家用稅率（1.2%）。因承租人辦理營業登記致遭改課「營業用稅率（3%~5%）」者，其衍生之房屋稅差額（多出之 1.8% 以上稅金），全數由承租人全額負擔補償。<br>
+            (二) <strong>地價稅差額補償：</strong>基地土地原適用自用住宅優惠稅率（2‰）。因承租人營業登記致改課「一般用地累進稅率（10‰ 至 55‰）」者，其產生之地價稅差額，全數由承租人全額補償。<br>
+            (三) <strong>二代健保補充保費（2.11%）約定：</strong>承租人若為法人、商號或扣繳義務人，依法應扣取之 2.11% 補充保費，應由承租人額外自行吸收申報，<strong>絕不得自每月約定租金中扣抵</strong>。<br>
+            (四) <strong>退租後持續追償機制：</strong>承租人退租後若因延遲辦理營業登記或稅籍遷出，致出租人於租賃期滿後次一年度仍遭課徵營業用稅捐者，出租人保有完整追繳求償權利。
+          </div>
+          <div id="dispTaxCompBox" style="display: none;" class="p-2 my-2 bg-light border-start border-3 border-secondary rounded small">
+            <strong>專屬定額報稅補貼約定：</strong>承租人若申報租賃所得稅或租金補貼，須於申報月份一次性補償出租方因申報所生之租賃所得稅額與二代健保補充保費。
+          </div>
+        </div>
+
+        <div class="contract-clause">
+          <div class="clause-title">第七條 使用租賃住宅之限制</div>
+          <p class="mb-1">一、本租賃標的係供合法居住使用，承租人不得擅自變更用途。</p>
+          <p class="mb-1">二、承租人同意遵守公寓大廈規約及住戶守則，不得違法使用、存放爆炸性、易燃性、危險化學品，或從事賭博、吸毒等違法或妨害公共安全與公共安寧之行為。</p>
+          <p class="mb-1">三、承租人非經出租人事前書面同意，不得將本租賃住宅之全部或一部分轉租、出借、頂讓或以其他方式供他人使用，或將租賃權轉讓於他人。</p>
+          <div id="dispStudioOnlyText" style="display: none;" class="p-2 my-2 bg-warning-subtle border border-warning rounded small text-warning-emphasis">
+            <strong>【商業工作室使用限制】：</strong>本租賃標的僅供承租人日間商業工作空間、辦公接待使用，嚴禁作為夜間居住留宿之用，承租人或其受僱人絕對不得留宿過夜。
+          </div>
+        </div>
+
+        <div class="contract-clause">
+          <div class="clause-title">第八條 修繕責任與費用負擔</div>
+          <p class="mb-1">一、租賃住宅或附屬設備損壞時，除可歸責於承租人之事由外，應由出租人負責修繕。但租賃雙方另有約定或習慣者，從其約定。</p>
+          <p class="mb-1">二、出租人為修繕租賃住宅所為之必要行為，承租人無正當理由不得拒絕。</p>
+          <p class="mb-0">三、由出租人負責修繕者，承租人得定相當期限催告修繕，如出租人未於期限內修繕時，承租人得自行修繕，並請求出租人償還修繕費用或於第三條約定之租金中扣除。</p>
+        </div>
+
+        <div class="contract-clause">
+          <div class="clause-title">第九條 室內裝修之約定</div>
+          <p class="mb-1">一、承租人有室內裝修之需要，應經出租人事前書面同意，並依相關建築與消防法令規定辦理，且不得損害原有建築結構之安全。</p>
+          <p class="mb-1">二、承租人經出租人同意裝修者，其裝修增設部分若有損壞，由承租人負責修繕。</p>
+          <p class="mb-0">三、租賃關係消滅，承租人返還租賃住宅時，除雙方另有協議外，應負責回復原狀交還出租人。</p>
+        </div>
+
+        <div class="contract-clause">
+          <div class="clause-title">第十條 出租人之義務及責任</div>
+          <p class="mb-1">一、出租人應出示有權出租本租賃住宅之所有權狀或證明文件，及國民身分證供承租人核對。</p>
+          <p class="mb-0">二、出租人應以合於所約定居住使用狀態之租賃住宅交付承租人，並應於租賃期間保持其合於居住使用之狀態。</p>
+        </div>
+
+        <div class="contract-clause">
+          <div class="clause-title">第十一條 承租人之義務及責任</div>
+          <p class="mb-1">一、承租人應於簽訂本契約時，出示國民身分證供出租人核對。</p>
+          <p class="mb-1">二、承租人應以善良管理人之注意，保管、使用租賃住宅及附屬設備。</p>
+          <p class="mb-0">三、承租人違反前項義務，致租賃住宅毀損或滅失者，應負損害賠償責任；其應賠償之金額，得由第四條規定之擔保金（押金）中抵充，如有不足，承租人應負補足責任。</p>
+        </div>
+
+        <div class="contract-clause">
+          <div class="clause-title">第十二條 租賃住宅部分滅失</div>
+          <p class="mb-0">租賃關係存續中，因天災或不可歸責於承租人之事由，致租賃住宅之一部滅失者，承租人得按滅失之部分，請求按比例減少租金；若存餘部分不能達租賃之目的者，承租人得終止契約。</p>
+        </div>
+
+        <div class="contract-clause">
+          <div class="clause-title">第十三條 任意終止租約之約定</div>
+          <p class="mb-1">一、本契約於租賃期限屆滿前，除有法定終止事由外，租賃雙方如欲提前終止租約，應至少於終止前一個月以書面通知他方。</p>
+          <p class="mb-0">二、一方未為先期通知而逕行終止租約者，應賠償他方最高一個月租金額之違約金。承租人應賠償之違約金，得自第四條押金中抵充。</p>
+        </div>
+
+        <div class="contract-clause">
+          <div class="clause-title">第十四條 租賃住宅之返還及點交</div>
+          <p class="mb-1">一、租賃關係消滅時，出租人應即結算租金及相關費用，並會同承租人共同完成屋況及附屬設備之點交手續，承租人應將租賃住宅騰空返還出租人，並辦妥戶籍或營業登記遷出。</p>
+          <p class="mb-1">二、租賃之一方未會同點交，經他方定相當期限催告仍不會同者，視為完成點交。</p>
+          <p class="mb-0">三、承租人未依第一項約定返還租賃住宅時，出租人得向承租人請求未返還期間相當於月租金額之損害賠償，並得加計違約金。</p>
+        </div>
+
+        <div class="contract-clause">
+          <div class="clause-title">第十五條 租賃住宅所有權之讓與</div>
+          <p class="mb-1">一、出租人於租賃住宅交付後，承租人占有中，縱將其所有權讓與第三人，依民法第四百二十五條規定，本契約對於受讓人仍繼續存在。</p>
+          <p class="mb-0">二、前項情形，出租人應移交押金及已預收之租金與受讓人，並以書面通知承租人。</p>
+        </div>
+
+        <div class="contract-clause">
+          <div class="clause-title">第十六條 出租人提前終止租約</div>
+          <p class="mb-1">租賃期間有下列情形之一者，出租人得提前終止租約，且承租人不得要求任何賠償：</p>
+          <p class="mb-1">(一) 承租人遲付租金或積欠水電、管理費等應負擔費用之總額達二個月之租金額，經定相當期限催告仍不為支付。</p>
+          <p class="mb-1">(二) 承租人擅自變更用途、轉租、出借或提供第三人使用，經阻止仍繼續為之。</p>
+          <p class="mb-1">(三) 承租人違法使用、存放爆炸性易燃物，或毀損租賃標的不為修繕賠償。</p>
+          <p class="mb-0">(四) 承租人嚴重違反第二十一條禁菸、寵物限制或營業登記約定等特別約定事項。</p>
+        </div>
+
+        <div class="contract-clause">
+          <div class="clause-title">第十七條 承租人提前終止租約</div>
+          <p class="mb-1">租賃期間有下列情形之一，承租人得提前終止租約，出租人不得要求任何賠償：</p>
+          <p class="mb-1">(一) 租賃住宅未合於所約定居住使用狀態，經承租人定相當期限催告修繕，仍不於期限內修繕。</p>
+          <p class="mb-0">(二) 租賃住宅有危及承租人或其同居人之安全或健康之瑕疵，經定相當期限催告仍未改善。</p>
+        </div>
+
+        <div class="contract-clause">
+          <div class="clause-title">第十八條 遺留物之處理</div>
+          <p class="mb-0">租賃關係消滅點交後，承租人仍於租賃住宅留有物品者，經出租人定相當期限催告，屆期仍不取回時，視為拋棄其所有權，由出租人逕行處理；所生之清理處置費用，得由押金中抵扣，不足者得向承租人請求補足。</p>
+        </div>
+
+        <div class="contract-clause">
+          <div class="clause-title">第十九條 履行本契約之通知</div>
+          <p class="mb-0">除本契約另有約定外，雙方相互間之履約通知，以本契約所載之通訊地址為準。雙方合意以<strong>即時通訊軟體（LINE）文字訊息</strong>或<strong>電子郵件</strong>發送之通知，於發送成功送達時，即發生法定書面通知之法律效力。</p>
+        </div>
+
+        <div class="contract-clause">
+          <div class="clause-title">第二十條 條款疑義處理</div>
+          <p class="mb-0">本契約各條款如有疑義時，應為有利於承租人之解釋。</p>
+        </div>
+
+        <div class="contract-clause">
+          <div class="clause-title text-primary"><i class="fa-solid fa-shield-halved me-1"></i>第二十一條 雙方特別約定事項 (核心保障特約)</div>
+          
+          <!-- 1. 全面禁菸特約 -->
+          <div class="mb-3" id="dispSmokingClauseBox" style="display: none;">
+            <div class="p-2 bg-danger-subtle border border-danger rounded text-danger-emphasis small">
+              <strong class="d-block mb-1"><i class="fa-solid fa-ban-smoking me-1"></i>【室內全面嚴格禁菸特約】：</strong>
+              本房屋室內、陽台、浴廁及梯廳全面絕對禁止吸菸（含電子菸、加熱菸）。一經發現或經鄰居、管委會反應，承租人承諾無條件賠償 <strong>2 個月押金及特殊擔保金 1 個月（合計3個月違約金）</strong>，出租人並得立即終止租約。室內油漆或設備受燻黑損害者，須另行全額賠償清潔粉刷費用。
+            </div>
+          </div>
+
+          <!-- 2. 寵物特約 -->
+          <div class="mb-3" id="dispPetClauseBox" style="display: none;">
+            <div id="dispPetBanText" class="p-2 bg-danger-subtle border border-danger rounded text-danger-emphasis small" style="display: none;">
+              <strong class="d-block mb-1"><i class="fa-solid fa-paw me-1"></i>【嚴格禁止飼養寵物約定】：</strong>
+              本房屋嚴格禁止飼養任何禽畜寵物（貓、狗、鳥等）。違者限期將寵物遷離並負擔全室專業消毒除蟲費用，並賠償出租人 <strong>1 個月租金之違約金</strong>，出租人得立即終止契約。
+            </div>
+            <div id="dispPetAllowText" class="p-2 bg-info-subtle border border-info rounded text-info-emphasis small" style="display: none;">
+              <strong class="d-block mb-1"><i class="fa-solid fa-paw me-1"></i>【附帶條件同意飼養寵物特約】：</strong>
+              出租人同意承租人飼養指定寵物，承租人應遵守社區規約不得妨害安寧。退租時承租人應自費委託專業清潔公司進行<strong>全屋深層清潔、除臭及除蚤消毒</strong>並出具證明；家具裝潢若有抓咬便溺損壞，承租人承諾<strong>全額照價賠償或原樣修復</strong>。
+            </div>
+          </div>
+
+          <!-- 3. 租金補貼事前告知 -->
+          <div class="mb-3" id="dispSubsidyBox" style="display: none;">
+            <div class="p-2 bg-primary-subtle border border-primary rounded text-primary-emphasis small">
+              <strong class="d-block mb-1"><i class="fa-solid fa-landmark me-1"></i>【政府租屋補貼事先說明約定】：</strong>
+              承租人如欲向主管機關申辦「300億元租金補貼」或其他租屋補助，<strong>應於申請前 30 日事先以書面或通訊軟體主動通知出租人</strong>，以利核對資料。承租人承諾自身資格完全真實合法，若因虛偽申報或資格不符致出租人受罰或溢課稅捐，承租人願負完全賠償責任。
+            </div>
+          </div>
+
+          <!-- 4. 營業登記增補條款 (含 A109 依貝美甲 1/3 面積節稅條款) -->
+          <div class="mb-3" id="dispBizClauseBox" style="display: none;">
+            <div class="p-3 bg-light border-start border-4 border-warning small rounded">
+              <strong class="d-block mb-1 text-dark"><i class="fa-solid fa-briefcase me-1 text-warning"></i>【商業登記／稅籍設立約定與註銷罰則】：</strong>
+              <div id="dispBizRegText" style="display: none;">
+                <p class="mb-1">一、<strong>書面同意原則：</strong>未經出租人事前書面同意，承租人不得擅自向主管機關辦理商業登記或稅籍設立。經書面同意者，僅限承租人本人經營之合法商號/公司。</p>
+                <div id="dispBizA109AreaNotice" class="alert alert-warning py-2 px-3 my-2 small border-warning" style="display: none;">
+                  <strong>【依貝美甲（楊芸錚）營業面積 1/3 嚴格約定與節稅條款】：</strong><br>
+                  (1) 出租人同意承租人於本標的（門牌：明華路271之1號1樓，特別注記：昌盛路271之1號）辦理「依貝美甲工作室」之營業登記與稅籍登記，<strong>惟營業登記之設籍面積與營業使用範圍嚴格限定為該建物之「三分之一（1/3）」</strong>（本建物其餘三分之二範圍非屬營業使用）。<br>
+                  (2) 承租人向主管稽徵機關及國稅局申報稅籍登記時，<strong>必須於申請書件及配置圖中明確載明營業使用面積僅為三分之一（1/3）</strong>。依《房屋稅條例》第 5 條第 3 項及《土地稅法》規定，稅捐機關僅得就 1/3 面積改課 3% 營業用房屋稅及一般用地地價稅，該 1/3 面積產生之稅捐差額由承租人全額負擔補償。<br>
+                  (3) <strong>超額申報罰則與賠償保證：</strong>承租人切結絕不超額申報或借址予第三人。若因承租人未載明 1/3 面積或申報不實，致稅捐機關將該建物超過 1/3 之範圍逕行核定為營業用稅率者，超額衍生之一切稅捐損失及差額，概由承租人負 100% 全額賠償與補足之責。<br>
+                  (4) <strong>退租註銷義務：</strong>租期屆滿或終止後 <strong>7 日內</strong>，承租人必須向主管機關完成商業登記與稅籍遷出或註銷，並檢附核准公文；逾期未完成者，出租人得<strong>全額沒收第四條之保證金（押金新臺幣 17,800 元整）</strong>，並自逾期日起按日租金五倍計罰違約金，出租人並保留租期後之持續稅捐追償權。
+                </div>
+                <p class="mb-0">二、<strong>退租遷出義務：</strong>租約期滿或終止後 7 日內，承租人應辦妥營業登記遷出或註銷；逾期按日租金五倍計罰違約金，出租人得沒收保證金（押金）。</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5. 物業自訂條款 -->
+          <div class="p-2 bg-light rounded border small" id="dispCustomClauseText">
+            雙方秉持誠信原則履約，未盡事宜悉依民法及內政部住宅租賃定型化契約法規辦理。
+          </div>
+        </div>
+
+        <div class="contract-clause">
+          <div class="clause-title">第二十二條 契約及其相關附件效力</div>
+          <p class="mb-1">一、本契約自簽約日起生效，租賃雙方各執一份契約正本（或具同等法律效力之數位電子防偽簽署原件存證）。</p>
+          <p class="mb-0">二、本契約廣告、租賃標的現況確認書及相關附件，視為本契約之一部分，效力與本契約相同。</p>
+        </div>
+
+        <div class="contract-clause">
+          <div class="clause-title">第二十三條 未盡事宜之處置</div>
+          <p class="mb-0">本契約如有未盡事宜，依民法、租賃住宅市場發展及管理條例、消費者保護法、相關法規、習慣、平等互惠及誠實信用原則公平解決之。</p>
+        </div>
+<!-- 簽名落款處 -->
+        <div class="row g-4 mt-4 pt-3 border-top align-items-end">
+          <div class="col-6">
+            <h6 class="fw-bold mb-2 text-primary">出租人 (甲方)：</h6>
+            <div>姓名：黃蕙芬</div>
+            <div>身分證字號：N221021932</div>
+            <div>通訊地址：新北市汐止區莊敬街130號13樓之2</div>
+            <div>聯絡電話：0934-008636</div>
+            <div class="mt-2">
+              <strong>親筆用印/簽署：</strong><br>
+              <div id="dispLandlordSigSlot" class="p-2 border rounded bg-light d-inline-block text-center" style="min-width: 140px; min-height: 50px;">
+                <span class="text-muted small">待簽署</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-6">
+            <h6 class="fw-bold mb-2 text-warning-emphasis">承租人 (乙方)：</h6>
+            <div>姓名：<span id="dispTNameBottom">廖子勛</span></div>
+            <div>身分證字號：<span id="dispTIdBottom">P124614750</span></div>
+            <div>通訊地址：<span id="dispTAddrBottom">新北市蘆洲區永德里3鄰中原路20巷15號3樓</span></div>
+            <div>聯絡電話：<span id="dispTPhoneBottom">0986-827137</span></div>
+            <div class="mt-2">
+              <strong>親筆簽名：</strong><br>
+              <div id="dispTenantSigSlot" class="p-2 border rounded bg-light d-inline-block text-center" style="min-width: 140px; min-height: 50px;">
+                <span class="text-muted small">待簽署</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      
+        <!-- 【附件一 房屋租賃標的現況確認書暨附屬設備點交清單】 -->
+        <div class="mt-5 pt-4 border-top" style="page-break-before: always;">
+          <div class="text-center mb-3">
+            <h5 class="fw-bold mb-1"><i class="fa-solid fa-clipboard-check me-2 text-primary"></i>【附件一】房屋租賃標的現況確認書暨附屬設備點交清單</h5>
+            <small class="text-muted">（本確認書為房屋租賃契約書之一部分，具同等法律約束力）</small>
+          </div>
+
+          <table class="table table-sm table-bordered small align-middle mb-3">
+            <thead class="table-light">
+              <tr>
+                <th style="width: 25%;">確認項目</th>
+                <th style="width: 35%;">現況標示與勾稽</th>
+                <th style="width: 40%;">法令及備註說明</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="fw-bold bg-light">建物現況格局</td>
+                <td id="dispAppendixLayout">格局完整，採光通風良好，具備獨立衛浴設備。</td>
+                <td class="text-muted">本標的僅供約定合法用途使用。</td>
+              </tr>
+              <tr>
+                <td class="fw-bold bg-light">水電瓦斯供應</td>
+                <td><i class="fa-solid fa-check text-success me-1"></i>自來水、台電供電及管線排水系統經現場測試均正常運作。</td>
+                <td class="text-muted">依主管機關帳單自繳或按特約比例分攤。</td>
+              </tr>
+              <tr>
+                <td class="fw-bold bg-light">建築安全與無瑕疵</td>
+                <td><i class="fa-solid fa-check text-success me-1"></i>無滲漏水情事；專有部分於持有期間未曾發生非自然身故（非兇宅）。</td>
+                <td class="text-muted">出租人擔保標的無重大危害居住安全之瑕疵。</td>
+              </tr>
+              <tr>
+                <td class="fw-bold bg-light">消防與門禁設備</td>
+                <td><i class="fa-solid fa-check text-success me-1"></i>具備火災警報防護，出入具備大門鎖具及門禁磁扣系統。</td>
+                <td class="text-muted">承租人應愛惜維護，遺失由承租人自費重新申請。</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h6 class="fw-bold mb-2 text-dark"><i class="fa-solid fa-tv me-1 text-primary"></i>現場附屬傢俱、家電與設備點交明細表：</h6>
+          <table class="table table-sm table-bordered small align-middle mb-3 text-center">
+            <thead class="table-light">
+              <tr>
+                <th>項目</th>
+                <th>品名規格</th>
+                <th>數量</th>
+                <th>交屋運作現況</th>
+                <th>日常保管與維修責任歸屬</th>
+              </tr>
+            </thead>
+            <tbody id="dispEquipTableBody">
+              <!-- 動態由 JavaScript 生成設備項目 -->
+            </tbody>
+          </table>
+
+          <div class="p-2 bg-light border rounded small mb-3">
+            <i class="fa-brands fa-line text-success me-1 fs-6 align-middle"></i>
+            <strong>【影像點交存證切結】：</strong>
+            雙方於交屋點交當日，已針對屋況及上述附屬設備進行現場功能測試，確認設備功能健全無故障，並已將全室現況照片及影片完整上傳至雙方 <strong>LINE 專屬群組相簿／記事本永久留底存證</strong>。承租人同意以善良管理人注意義務使用維護，退租時應依清單原樣點交返還。
+          </div>
+
+          <div class="row g-3 pt-2 text-center small">
+            <div class="col-6">
+              <div class="p-2 border rounded bg-white">
+                <strong>出租人 (甲方) 點交確認：</strong><br>
+                黃蕙芬 (Sandy)<br>
+                <span class="text-muted" style="font-size:0.75rem;">已會同承租人現場點交確認</span>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="p-2 border rounded bg-white">
+                <strong>承租人 (乙方) 點交確認：</strong><br>
+                <span id="dispAppendixTenantName">承租人</span><br>
+                <span class="text-muted" style="font-size:0.75rem;">已會同點交核對無誤並親筆簽章生效</span>
+              </div>
+            </div>
+          </div>
+        </div>
+</div>
+
+      
+
+  <!-- 承租人 (房客) 線上親筆手寫簽名區 (位於合約末尾) -->
+  <div class="card-panel mt-4 no-print shadow-sm border-warning" id="boxTenantSigningPad">
     <div class="d-flex justify-content-between align-items-center mb-2">
-      <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-pen-nib me-2 text-warning"></i>承租人 (房客) 線上親筆手寫簽名區</h5>
-      <span class="badge bg-warning text-dark px-2 py-1" id="tagTenantSig">待簽名</span>
+      <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-pen-nib me-2 text-warning"></i>承租人 (乙方) 線上親筆手寫簽名區</h5>
+      <span class="badge bg-warning text-dark px-2 py-1" id="tagTenantSig">待簽署</span>
     </div>
-    <p class="text-secondary small mb-3">請在下方白色簽名區域直接以手指、觸控筆或滑鼠親筆簽名，簽署完成後將自動生成防偽安全憑證：</p>
+    <p class="text-secondary small mb-3">
+      請在下方白色手寫板以手指、觸控筆或滑鼠親筆簽名（簽名將自動加密存入上方合約乙方簽章處與點交清單中）：
+    </p>
     
     <div class="p-3 border rounded bg-light mb-3">
       <canvas id="canTenant" width="700" height="180" class="w-100 sig-canvas bg-white rounded border" style="touch-action: none; cursor: crosshair;"></canvas>
@@ -217,94 +487,30 @@ body.role-tenant #boxTenantSigPanel {
       </div>
     </div>
 
-    <button type="button" class="btn btn-warning text-dark fw-bold w-100 py-3 fs-5 shadow" id="btnConfirmSign" onclick="commitTenantSig()">
-      <i class="fa-solid fa-circle-check me-2"></i>我已逐條審閱全文無誤，確認親筆簽署本租賃契約
+    <button type="button" class="btn btn-warning text-dark fw-bold w-100 py-3 fs-5 shadow" id="btnConfirmSign" onclick="commitTenantSign()">
+      <i class="fa-solid fa-circle-check me-2"></i>我已逐條審閱全文無誤，確認親筆簽名並傳回給房東 Sandy
     </button>
   </div>
 
-  <!-- 數位防偽稽核證書 (完成簽名後自動展開) -->
-  <div class="card-panel mt-4 shadow-sm" id="boxAuditTrail" style="display: none;">
-    <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
-      <h5 class="fw-bold text-success mb-0">
-        <i class="fa-solid fa-certificate me-2"></i>數位電子簽章法律稽核證明書 (Certificate of Completion)
-      </h5>
-      <span class="badge bg-success-subtle text-success border border-success px-2 py-1">台灣《電子簽章法》有效憑證</span>
-    </div>
-    <p class="text-secondary small mb-3">此憑證由系統即時計算封裝，完整留存雙方公網 IP、秒級時間戳記與 SHA-256 密碼防偽指紋，具備不可否認性。</p>
-
-    <div class="audit-box">
-      <div class="row g-2 mb-3 border-bottom pb-2">
-        <div class="col-6">
-          <strong>合約信封編號 (Envelope ID)：</strong><br>
-          <span class="text-primary fw-bold" id="resDocId">-</span>
-        </div>
-        <div class="col-6">
-          <strong>生效狀態 (Status)：</strong><br>
-          <span class="text-success fw-bold"><i class="fa-solid fa-shield-check me-1"></i>房客完成簽署 · 數位防偽存證生效</span>
-        </div>
+  <!-- 房客簽畢回傳確認卡 (簽完後展開) -->
+  <div class="card-panel mt-4 no-print shadow-sm border-success" id="boxTenantCompleted" style="display: none;">
+    <div class="text-center py-3">
+      <div class="text-success mb-2" style="font-size: 3rem;">
+        <i class="fa-solid fa-circle-check"></i>
       </div>
-
-      <div class="mb-3">
-        <strong class="d-block mb-1">🔐 SHA-256 契約防竄改數位指紋：</strong>
-        <div class="hash-text text-danger fw-bold" id="resSha256">計算中...</div>
-        <small class="text-muted">※ 說明：此 64 位英數雜湊值由契約全文、雙方手寫筆跡點陣與時間戳記由 Web Crypto API 直接運算生成。合約哪怕遭改動一字，雜湊值立即不符，具備最高法律證據力。</small>
-      </div>
-
-      <h6 class="fw-bold mb-2 border-bottom pb-1">📋 簽署歷程時間軸 (Signer Events & Audit Trail)</h6>
-      <div class="table-responsive">
-        <table class="table table-sm table-bordered small align-middle mb-0 bg-white">
-          <thead class="table-light">
-            <tr>
-              <th>簽署角色</th>
-              <th>簽署人</th>
-              <th>簽署時間戳記 (GMT+8)</th>
-              <th>公網 IP 位址</th>
-              <th>簽署設備指紋</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><strong>承租人 (乙方)</strong></td>
-              <td id="auditTName">-</td>
-              <td id="auditTTime">-</td>
-              <td id="auditTIp">-</td>
-              <td id="auditTUa" class="text-break">-</td>
-            </tr>
-            <tr>
-              <td><strong>出租人 (甲方)</strong></td>
-              <td>黃蕙芬 (Sandy)</td>
-              <td id="auditLTime">已核對備查</td>
-              <td id="auditLIp">系統安全節點</td>
-              <td id="auditLUa">官方租賃存證系統</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- 雙方留存與一鍵分送中心 -->
-    <div class="card bg-white border-success p-3 mt-4 shadow-sm no-print">
-      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
-        <h6 class="fw-bold text-success mb-0 fs-6">
-          <i class="fa-solid fa-cloud-arrow-down me-2 text-success"></i>雙方合約留存與一鍵分送中心
-        </h6>
-        <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i>已產生數位防偽憑證</span>
-      </div>
-      <p class="text-secondary small mb-3">
-        本契約已完成數位手寫簽章與 SHA-256 密碼防偽存證。您可以直接將 PDF 存至電腦硬碟永久保存，或一鍵透過 LINE 與 Email 傳送給房客及自己留底：
+      <h4 class="fw-bold text-success mb-2">您已成功完成合約親筆簽名！</h4>
+      <p class="text-secondary mb-4" style="max-width: 600px; margin: 0 auto;">
+        您的親筆簽名已即時簽入上方租賃契約書中。<br>
+        請點選下方綠色按鈕，<strong>透過 LINE 傳回給房東 Sandy 進行正式用印</strong>。<br>
+        待 Sandy 完成用印後，合約即具完全法律效力，雙方將留存具防偽存證之正式 PDF 檔案。
       </p>
-      <div class="d-flex gap-2 flex-wrap">
-        <button type="button" class="btn btn-success fw-bold flex-fill py-2 shadow-sm" id="btnDownloadPdf" onclick="downloadDirectPdf()">
-          <i class="fa-solid fa-file-arrow-down me-1"></i>一鍵下載 PDF 檔 (存至電腦)
+
+      <div class="d-flex justify-content-center gap-3 flex-wrap">
+        <button type="button" class="btn btn-success btn-lg fw-bold px-4 py-2 shadow" id="btnSendLineToSandy" onclick="sendTenantReturnLine()">
+          <i class="fa-brands fa-line me-2 fs-4 align-middle"></i>一鍵透過 LINE 傳回給房東 Sandy 用印
         </button>
-        <button type="button" class="btn btn-outline-success fw-bold flex-fill py-2" onclick="sendToLine()">
-          <i class="fa-brands fa-line me-1 text-success fs-5 align-middle"></i>一鍵傳送 LINE 留存
-        </button>
-        <button type="button" class="btn btn-outline-primary fw-bold flex-fill py-2" onclick="sendToEmail()">
-          <i class="fa-solid fa-envelope me-1"></i>一鍵發送 Email 給雙方
-        </button>
-        <button type="button" class="btn btn-outline-dark fw-bold py-2" onclick="window.print()">
-          <i class="fa-solid fa-print me-1"></i>列印正式紙本
+        <button type="button" class="btn btn-outline-secondary btn-lg fw-bold px-3 py-2" onclick="copyReturnLink(this)">
+          <i class="fa-solid fa-copy me-1"></i>複製回傳訊息
         </button>
       </div>
     </div>
@@ -700,372 +906,352 @@ const PROPERTIES_DB = {
   }
 };
 
+function numberToChinese(num) {
+  if (!num || isNaN(num)) return "零元整";
+  const digits = ["零", "壹", "貳", "參", "肆", "伍", "陸", "柒", "捌", "玖"];
+  const units = ["", "拾", "佰", "仟"];
+  const bigUnits = ["", "萬", "億"];
 
+  let numStr = Math.floor(num).toString();
+  let len = numStr.length;
+  let result = "";
+  let zeroFlag = false;
 
-let currentPKey = 'A101';
-let sigStates = { tenant: false };
-let ipCache = { ip: "取得中...", ua: navigator.userAgent };
-
-function renderSignPage(pKey) {
-  currentPKey = pKey;
-  const p = PROPERTIES_DB[pKey] || PROPERTIES_DB['A101'];
-
-  // 標題與標的
-  document.getElementById("dispContractTitle").textContent = p.title;
-  document.getElementById("dispAddress").textContent = p.address;
-  document.getElementById("dispScope").textContent = p.scopeText || "房屋全部";
-  document.getElementById("dispCarParkText").textContent = p.carParkText || "";
-
-  // 租期
-  document.getElementById("dispStartStr").textContent = "115 年 1 月 1 日";
-  document.getElementById("dispEndStr").textContent = "115 年 12 月 31 日";
-
-  // 租金與費用
-  if (pKey === 'A104') {
-    document.getElementById("dispRentStr").textContent = `月租金 11,500 元 + 管理清潔費 1,300 元，每月應繳總額 12,800 元整 (壹萬貳仟捌佰元整)`;
-    document.getElementById("dispManageFeeText").innerHTML = `一、大樓管理費及清潔費：每月新臺幣 1,300 元整由承租人負擔，於每月約定期限前隨租金 11,500 元一併匯付予出租人（合計 12,800 元整），由出租人統一轉帳繳納大樓管委會。`;
-  } else if (pKey === 'A105') {
-    document.getElementById("dispRentStr").textContent = `月租金 12,499 元 + 清潔費 300 元，每月應繳總額 12,799 元整 (壹萬貳仟柒佰玖拾玖元整)`;
-    document.getElementById("dispManageFeeText").innerHTML = `一、大樓管理費及清潔費：大樓管理費每月 920 元整由出租人負擔；大樓清潔費每月 300 元整由承租人負擔。承租人每月租金 12,499 元加計清潔費 300 元共計新臺幣 <strong>12,799 元整</strong>，於每月 1 日前一併匯付予出租人，清潔費由出租人統一向大樓管委會繳納。`;
-  } else if (pKey === 'A106') {
-    document.getElementById("dispRentStr").textContent = `月租金 15,000 元 + 管理清潔費 800 元，每月應繳總額 15,800 元整 (壹萬伍仟捌佰元整)`;
-    document.getElementById("dispManageFeeText").innerHTML = `一、大樓管理清潔費：每月新臺幣 800 元整由承租人負擔。承租人每月租金 15,000 元加計管理費 800 元共計新臺幣 <strong>15,800 元整</strong>，於每月約定期限前一併匯付予出租人，由出租人統一向大樓管委會繳納。`;
-  } else if (pKey === 'A103') {
-    document.getElementById("dispRentStr").textContent = `雙數月 29,931 元 (含管理費1,931元) · 單數月 28,000 元整`;
-    document.getElementById("dispManageFeeText").innerHTML = `一、大樓管理費及車位費：雙數月租金加計管理費共計 <strong>29,931 元整</strong>；單數月租金為 <strong>28,000 元整</strong>，由出租人統一代繳管委會。`;
-    const bioBox = document.getElementById("dispBiMonthlyClause");
-    if (bioBox) bioBox.style.display = 'block';
-  } else if (pKey === 'A107') {
-    document.getElementById("dispRentStr").textContent = `月租金 17,100 元 + 管理費 700 元，每月應繳總額 17,800 元整 (壹萬柒仟捌佰元整)`;
-    document.getElementById("dispManageFeeText").innerHTML = `一、大樓管理費：每月新臺幣 700 元整由承租人負擔，隨租金 17,100 元一併匯付予出租人（合計 17,800 元整），由出租人統一向大樓管委會繳納。`;
-  } else if (pKey === 'A109') {
-    document.getElementById("dispRentStr").textContent = `月租金 8,900 元 + 管理費 400 元，每月應繳總額 9,300 元整 (玖仟參佰元整)`;
-    document.getElementById("dispManageFeeText").innerHTML = `一、大樓管理費：每月新臺幣 400 元整由承租人負擔，隨租金 8,900 元一併匯付予出租人（合計 9,300 元整），由出租人統一向大樓管委會繳納。`;
-  } else if (pKey === 'A101') {
-    document.getElementById("dispRentStr").textContent = `20,000 元整 (貳萬元整)`;
-    document.getElementById("dispManageFeeText").innerHTML = `一、管理費：本物業為公寓住宅，無大樓管委會管理費。`;
-  } else if (pKey === 'A102') {
-    document.getElementById("dispRentStr").textContent = `17,000 元整 (壹萬柒仟元整)`;
-    document.getElementById("dispManageFeeText").innerHTML = `一、大樓管理費：免收管理費（由出租人吸收）。`;
-  } else if (pKey === 'B1-02') {
-    document.getElementById("dispRentStr").textContent = `車位月租金 2,200 元 + 車管費 300 元，每月 2,500 元整 (年繳 27,600 元)`;
-    document.getElementById("dispManageFeeText").innerHTML = `一、車位清潔管理費：車位清潔管理費 300 元由承租人負擔，由出租人代為轉繳管委會。`;
-  } else if (pKey === 'B1-03') {
-    document.getElementById("dispRentStr").textContent = `每月 3,000 元整 (參仟元整)`;
-    document.getElementById("dispManageFeeText").innerHTML = `一、車位清潔管理費：由出租人負擔。`;
-  } else {
-    document.getElementById("dispRentStr").textContent = `${p.rent.toLocaleString()} 元整`;
+  let chunks = [];
+  while (numStr.length > 0) {
+    chunks.push(numStr.slice(-4));
+    numStr = numStr.slice(0, -4);
   }
 
-  // 押金
-  document.getElementById("dispDepositStr").textContent = `${p.deposit.toLocaleString()} 元整`;
+  for (let i = chunks.length - 1; i >= 0; i--) {
+    let chunk = chunks[i];
+    let chunkResult = "";
+    let chunkLen = chunk.length;
 
-  // 帳號
-  if (p.bank === 'ctbc') {
-    document.getElementById("dispBankStr").textContent = "中國信託商業銀行 (822)，戶名：黃蕙芬，帳號：255-53-1016208";
-  } else {
-    document.getElementById("dispBankStr").textContent = "星展銀行 (810)，戶名：黃蕙芬，帳號：6712-880487";
-  }
+    for (let j = 0; j < chunkLen; j++) {
+      let digit = parseInt(chunk[j]);
+      let pos = chunkLen - 1 - j;
 
-  // 房客資料
-  document.getElementById("dispTName").textContent = p.tenantName;
-  document.getElementById("dispTNameBottom").textContent = p.tenantName;
-  document.getElementById("dispTIdBottom").textContent = p.tenantId || "-";
-  document.getElementById("dispTAddrBottom").textContent = p.tenantAddress || "-";
-  document.getElementById("dispTPhoneBottom").textContent = p.tenantPhone || "-";
+      if (digit !== 0) {
+        if (zeroFlag) {
+          chunkResult += digits[0];
+          zeroFlag = false;
+        }
+        chunkResult += digits[digit] + units[pos];
+      } else {
+        if (chunkResult.length > 0) {
+          zeroFlag = true;
+        }
+      }
+    }
 
-  // 特約顯示
-  const smokeBox = document.getElementById("dispSmokingClauseBox");
-  if (smokeBox) smokeBox.style.display = p.smoking ? 'block' : 'none';
-
-  const petBox = document.getElementById("dispPetClauseBox");
-  if (petBox) {
-    petBox.style.display = 'block';
-    const petBan = document.getElementById("dispPetBanText");
-    const petAllow = document.getElementById("dispPetAllowText");
-    if (petBan) petBan.style.display = (p.petMode === 'allow') ? 'none' : 'block';
-    if (petAllow) petAllow.style.display = (p.petMode === 'allow') ? 'block' : 'none';
-  }
-
-  const subBox = document.getElementById("dispSubsidyBox");
-  if (subBox) subBox.style.display = p.subsidy ? 'block' : 'none';
-
-  const taxBox = document.getElementById("dispTaxLawBox");
-  if (taxBox) taxBox.style.display = p.taxLawComp ? 'block' : 'none';
-
-  const bizBox = document.getElementById("dispBizClauseBox");
-  if (bizBox) {
-    bizBox.style.display = (p.bizReg || p.studio) ? 'block' : 'none';
-    const regTxt = document.getElementById("dispBizRegText");
-    if (regTxt) regTxt.style.display = p.bizReg ? 'block' : 'none';
-    const stuTxt = document.getElementById("dispStudioOnlyText");
-    if (stuTxt) stuTxt.style.display = p.studio ? 'block' : 'none';
-  }
-
-  const a109BizBox = document.getElementById("dispBizA109AreaNotice");
-  if (a109BizBox) {
-    a109BizBox.style.display = (pKey === 'A109') ? 'block' : 'none';
-  }
-
-  const utilBox = document.getElementById("dispUtilityFormulaBox");
-  if (utilBox) {
-    utilBox.style.display = p.utilityFormula ? 'block' : 'none';
-    if (pKey === 'A109') {
-      utilBox.innerHTML = `<strong>明華路 271 之 1 號 (注記:昌盛路 271 之 1 號) 水電分攤特約：</strong>水費依自來水公司收費帳單之<strong>三分之一（1/3）</strong>繳納；電費依依貝美甲工作室<strong>獨立電表度數</strong>實支實付。`;
-    } else if (pKey === 'A107') {
-      utilBox.innerHTML = `<strong>明華路 271 之 1 號水電分攤特約：</strong>水費依自來水公司帳單之<strong>三分之二（2/3）</strong>繳納；電費依獨立電表度數，公共電費承擔 <strong>55%</strong>。`;
+    if (chunkResult.length > 0) {
+      result += chunkResult + bigUnits[i];
     }
   }
 
-  // 自訂特約
-  document.getElementById("dispCustomClauseText").textContent = p.customClause || "雙方秉持誠信原則履約，未盡事宜悉依民法及內政部住宅租賃定型化契約法規辦理。";
-
-  // 渲染附件一：設備清單
-  renderEquipmentTable(p);
+  return (result || "零") + "元整";
 }
 
-// 渲染附件一：附屬設備清單
-function renderEquipmentTable(p) {
-  const tbody = document.getElementById("dispEquipTableBody");
-  if (!tbody) return;
+// 取得 URL 參數
+const urlParams = new URLSearchParams(window.location.search);
+const currentPKey = urlParams.get("p") || "A109";
+const propConfig = PROPERTIES_DB[currentPKey] || PROPERTIES_DB["A109"];
 
-  const appTName = document.getElementById("dispAppendixTenantName");
-  if (appTName) appTName.textContent = p.tenantName;
+// 初始化填入完整契約
+function initTenantContract() {
+  const p = propConfig;
+  
+  // 自 URL 參數獲取可能由房東自訂覆寫的數值，若無則依物業資料庫
+  const rentVal = parseInt(urlParams.get("rent")) || p.rent;
+  const depositVal = parseInt(urlParams.get("dep")) || p.deposit;
+  const manageFeeVal = parseInt(urlParams.get("mf")) || p.manageFee;
+  const startDateStr = urlParams.get("s") || "2026-03-01";
+  const endDateStr = urlParams.get("e") || "2027-02-28";
+  
+  const tenantName = urlParams.get("tname") || p.tenantName;
+  const tenantId = urlParams.get("tid") || p.tenantId;
+  const tenantPhone = urlParams.get("tphone") || p.tenantPhone;
+  const tenantAddr = urlParams.get("taddr") || p.tenantAddress;
 
-  const list = p.equipList || [];
-  let html = "";
-  if (list && list.length > 0) {
-    list.forEach(item => {
-      html += `<tr>
-        <td class="fw-bold text-dark text-start ps-3"><i class="fa-solid fa-check text-success me-1"></i>${item.name}</td>
-        <td>${item.spec}</td>
-        <td><span class="badge bg-light text-dark border px-2 py-1 fw-bold">${item.qty}</span></td>
-        <td><span class="text-success fw-bold"><i class="fa-solid fa-circle-check me-1"></i>良好運作正常</span></td>
-        <td class="text-muted text-start ps-2" style="font-size:0.78rem;">${item.note || '正常自然損耗由房東修繕；人為破壞由房客負擔'}</td>
-      </tr>`;
-    });
-  } else {
-    html = `<tr><td colspan="5" class="text-muted py-3">本物件無隨附專屬大型家電傢俱（由承租人自備或為純車位租賃）。</td></tr>`;
+  // 1. 標題與抬頭
+  document.getElementById("dispContractTitle").textContent = p.title;
+  document.getElementById("dispTName").textContent = tenantName;
+  document.getElementById("dispTNameBottom").textContent = tenantName;
+  document.getElementById("dispTIdBottom").textContent = tenantId;
+  document.getElementById("dispTAddrBottom").textContent = tenantAddr;
+  document.getElementById("dispTPhoneBottom").textContent = tenantPhone;
+  document.getElementById("dispAppendixTenantName").textContent = tenantName;
+
+  // 2. 第一條 租賃標的
+  document.getElementById("dispAddress").textContent = p.address;
+  document.getElementById("dispScope").textContent = p.scopeText;
+  document.getElementById("dispCarParkText").textContent = p.carParkText || "";
+
+  // 3. 第二條 租期
+  if (startDateStr && endDateStr) {
+    const sParts = startDateStr.split("-");
+    const eParts = endDateStr.split("-");
+    if (sParts.length === 3 && eParts.length === 3) {
+      document.getElementById("dispStartStr").textContent = `${parseInt(sParts[0]) - 1911} 年 ${parseInt(sParts[1])} 月 ${parseInt(sParts[2])} 日`;
+      document.getElementById("dispEndStr").textContent = `${parseInt(eParts[0]) - 1911} 年 ${parseInt(eParts[1])} 月 ${parseInt(eParts[2])} 日`;
+    }
   }
 
-  tbody.innerHTML = html;
+  // 4. 第三條 租金
+  const rentCh = numberToChinese(rentVal);
+  document.getElementById("dispRentStr").textContent = `${rentVal.toLocaleString()} 元整 (${rentCh})`;
+  if (currentPKey === "A102") {
+    document.getElementById("dispBiMonthlyClause").style.display = "block";
+  } else {
+    document.getElementById("dispBiMonthlyClause").style.display = "none";
+  }
+  document.getElementById("dispBankStr").textContent = (p.bank === "ctbc") ? "中國信託 (822) 255-53-1016208 (戶名：黃蕙芬)" : "星展銀行 (810) 6712-880487 (戶名：黃蕙芬)";
+
+  // 5. 第四條 押金
+  const depCh = numberToChinese(depositVal);
+  document.getElementById("dispDepositStr").textContent = `${depositVal.toLocaleString()} 元整 (${depCh})`;
+
+  // 6. 第五條 管理費與水電
+  if (manageFeeVal > 0) {
+    document.getElementById("dispManageFeeText").textContent = `一、管理費：每月新臺幣 ${manageFeeVal.toLocaleString()} 元整，由承租人負擔。`;
+  } else {
+    document.getElementById("dispManageFeeText").textContent = "一、管理費：本租賃住宅免收或由出租人負擔。";
+  }
+  const isUtilityFormula = urlParams.has("uf") ? urlParams.get("uf") === "1" : p.utilityFormula;
+  document.getElementById("dispUtilityFormulaBox").style.display = isUtilityFormula ? "block" : "none";
+
+  // 7. 第六條 稅費
+  const isTaxLaw = urlParams.has("tax") ? urlParams.get("tax") === "1" : p.taxLawComp;
+  document.getElementById("dispTaxLawBox").style.display = isTaxLaw ? "block" : "none";
+  document.getElementById("dispTaxCompBox").style.display = (currentPKey === "A101" || currentPKey === "A102") ? "block" : "none";
+
+  // 8. 第二十一條 特約
+  const isSmoking = urlParams.has("smk") ? urlParams.get("smk") === "1" : p.smoking;
+  document.getElementById("dispSmokingClauseBox").style.display = isSmoking ? "block" : "none";
+
+  const petMode = urlParams.get("pet") || p.petMode;
+  if (petMode === "ban") {
+    document.getElementById("dispPetClauseBox").style.display = "block";
+    document.getElementById("dispPetBanText").style.display = "block";
+    document.getElementById("dispPetAllowText").style.display = "none";
+  } else if (petMode === "allow") {
+    document.getElementById("dispPetClauseBox").style.display = "block";
+    document.getElementById("dispPetBanText").style.display = "none";
+    document.getElementById("dispPetAllowText").style.display = "block";
+  } else {
+    document.getElementById("dispPetClauseBox").style.display = "none";
+  }
+
+  const isSubsidy = urlParams.has("sub") ? urlParams.get("sub") === "1" : p.subsidy;
+  document.getElementById("dispSubsidyBox").style.display = isSubsidy ? "block" : "none";
+
+  const isBiz = urlParams.has("biz") ? urlParams.get("biz") === "1" : p.bizReg;
+  document.getElementById("dispBizClauseBox").style.display = isBiz ? "block" : "none";
+  document.getElementById("dispBizRegText").style.display = isBiz ? "block" : "none";
+  if (currentPKey === "A109") {
+    document.getElementById("dispBizA109AreaNotice").style.display = "block";
+  } else {
+    document.getElementById("dispBizA109AreaNotice").style.display = "none";
+  }
+
+  const customClause = urlParams.get("custom") || p.customClause;
+  document.getElementById("dispCustomClauseText").textContent = customClause || "雙方秉持誠信原則履約，未盡事宜悉依民法及內政部住宅租賃定型化契約法規辦理。";
+
+  // 9. 簽名狀態初始化
+  document.getElementById("dispLandlordSigSlot").innerHTML = `
+    <span class="badge bg-secondary-subtle text-secondary small px-2 py-1">
+      <i class="fa-solid fa-clock me-1"></i>待承租人簽妥後由出租人用印
+    </span>
+  `;
+  document.getElementById("dispTenantSigSlot").innerHTML = `
+    <span class="text-danger small fw-bold">
+      <i class="fa-solid fa-pen-nib me-1"></i>請於頁面最下方簽名板親簽
+    </span>
+  `;
+
+  // 10. 產生附件一設備清單
+  renderEquipmentTable(p.equipList);
 }
 
-// Canvas 簽名功能
-let isDrawing = false;
-let ctx = null;
+function renderEquipmentTable(equipList) {
+  const tbody = document.getElementById("dispEquipTableBody");
+  if (!tbody) return;
+  tbody.innerHTML = "";
 
-function setupCanvas(cId) {
-  const canvas = document.getElementById(cId);
-  if (!canvas) return;
-  ctx = canvas.getContext('2d');
-  ctx.strokeStyle = '#002d62';
-  ctx.lineWidth = 3;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
+  if (!equipList || equipList.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="5" class="text-muted">本標的現況無特殊隨附傢俱家電或為車位標的。</td></tr>`;
+    return;
+  }
+
+  equipList.forEach((eq, idx) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="fw-bold">${idx + 1}</td>
+      <td class="fw-bold text-start">${eq.name}</td>
+      <td>${eq.qty}</td>
+      <td class="text-start">${eq.note || "現況運作良好"}</td>
+      <td>日常保養由承租人負責；自然耗損由出租人修繕</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// 手寫簽名板處理
+const canvas = document.getElementById("canTenant");
+const ctx = canvas ? canvas.getContext("2d") : null;
+let isDrawing = false;
+let hasSigned = false;
+
+function setupCanvas() {
+  if (!canvas || !ctx) return;
+  
+  function resizeCanvas() {
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width > 0) {
+      canvas.width = rect.width;
+      canvas.height = 180;
+      ctx.lineWidth = 3;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.strokeStyle = "#000000";
+    }
+  }
+  resizeCanvas();
+  window.addEventListener("resize", resizeCanvas);
 
   function getPos(e) {
     const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    if (e.touches && e.touches[0]) {
-      return {
-        x: (e.touches[0].clientX - rect.left) * scaleX,
-        y: (e.touches[0].clientY - rect.top) * scaleY
-      };
-    }
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
     return {
-      x: (e.clientX - rect.left) * scaleX,
-      y: (e.clientY - rect.top) * scaleY
+      x: clientX - rect.left,
+      y: clientY - rect.top
     };
   }
 
   function start(e) {
-    e.preventDefault();
     isDrawing = true;
+    hasSigned = true;
     const p = getPos(e);
     ctx.beginPath();
     ctx.moveTo(p.x, p.y);
+    e.preventDefault();
   }
 
   function move(e) {
     if (!isDrawing) return;
-    e.preventDefault();
     const p = getPos(e);
     ctx.lineTo(p.x, p.y);
     ctx.stroke();
+    e.preventDefault();
   }
 
-  function stop(e) {
-    if (!isDrawing) return;
-    e.preventDefault();
+  function stop() {
     isDrawing = false;
   }
 
-  canvas.addEventListener('mousedown', start);
-  canvas.addEventListener('mousemove', move);
-  canvas.addEventListener('mouseup', stop);
-  canvas.addEventListener('mouseleave', stop);
+  canvas.addEventListener("mousedown", start);
+  canvas.addEventListener("mousemove", move);
+  canvas.addEventListener("mouseup", stop);
+  canvas.addEventListener("mouseleave", stop);
 
-  canvas.addEventListener('touchstart', start, { passive: false });
-  canvas.addEventListener('touchmove', move, { passive: false });
-  canvas.addEventListener('touchend', stop, { passive: false });
+  canvas.addEventListener("touchstart", start, { passive: false });
+  canvas.addEventListener("touchmove", move, { passive: false });
+  canvas.addEventListener("touchend", stop);
 }
 
-function clearSig(cId) {
-  const canvas = document.getElementById(cId);
-  if (!canvas) return;
-  const c = canvas.getContext('2d');
-  c.clearRect(0, 0, canvas.width, canvas.height);
+function clearSig(id) {
+  if (!canvas || !ctx) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  hasSigned = false;
 }
 
-async function fetchIp() {
+// 房客確認親筆簽名
+function commitTenantSign() {
+  if (!hasSigned) {
+    alert("⚠️ 請先在手寫簽名板中親筆簽名，再點選確認按鈕！");
+    return;
+  }
+
+  const sigDataUrl = canvas.toDataURL("image/png");
+  const p = propConfig;
+  const tenantName = document.getElementById("dispTName").textContent || p.tenantName;
+
+  // 1. 立即將親筆簽名蓋入上方合約的落款欄位
+  const dispTenantSig = document.getElementById("dispTenantSigSlot");
+  if (dispTenantSig) {
+    dispTenantSig.innerHTML = `
+      <img src="${sigDataUrl}" style="max-height: 55px; max-width: 170px; object-fit: contain;" alt="承租人親筆簽名">
+      <div style="font-size:0.75rem;" class="text-success fw-bold"><i class="fa-solid fa-circle-check me-1"></i>承租人線上親筆簽名完成</div>
+    `;
+  }
+  
+  // 點交清單乙方簽章
+  const dispAppTenant = document.getElementById("dispAppendixTenantName");
+  if (dispAppTenant) {
+    dispAppTenant.innerHTML = `
+      ${tenantName}<br>
+      <img src="${sigDataUrl}" style="max-height: 40px; max-width: 120px; object-fit: contain;" alt="點交簽名">
+    `;
+  }
+
+  // 2. 本地儲存 (供同設備測試或後續參照)
   try {
-    const res = await fetch('https://api.ipify.org?format=json');
-    const data = await res.json();
-    ipCache.ip = data.ip || '114.34.122.89';
+    localStorage.setItem(`tenant_sig_${currentPKey}`, sigDataUrl);
+    localStorage.setItem(`tenant_sig_time_${currentPKey}`, new Date().toISOString());
   } catch (e) {
-    ipCache.ip = '220.133.45.102 (安全節點)';
-  }
-}
-
-async function calcSha256(str) {
-  const enc = new TextEncoder();
-  const buf = await crypto.subtle.digest('SHA-256', enc.encode(str));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-async function commitTenantSig() {
-  const canvas = document.getElementById('canTenant');
-  const dataUrl = canvas.toDataURL('image/png');
-
-  // 將簽名帶入合約正本簽名處
-  const slot = document.getElementById("dispTenantSigSlot");
-  if (slot) {
-    slot.innerHTML = `<img src="${dataUrl}" style="max-height: 48px; max-width: 140px;">`;
+    console.warn("Storage warning:", e);
   }
 
-  document.getElementById("tagTenantSig").textContent = "已完成簽署";
-  document.getElementById("tagTenantSig").className = "badge bg-success";
+  // 3. 隱藏簽名板，展開完成卡片與回傳按鈕
+  document.getElementById("boxTenantSigningPad").style.display = "none";
+  document.getElementById("tenantInstructionAlert").style.display = "none";
+  document.getElementById("boxTenantCompleted").style.display = "block";
 
-  const now = new Date();
-  const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+  // 平滑滾動至完成卡
+  document.getElementById("boxTenantCompleted").scrollIntoView({ behavior: "smooth" });
+}
+
+// 回傳給房東 LINE
+function sendTenantReturnLine() {
+  const p = propConfig;
+  const tName = document.getElementById("dispTName").textContent || p.tenantName;
+  const landlordUrl = `https://sandyhuang0225-boop.github.io/sandy-Line-bot/lease.html?p=${currentPKey}&step=landlord_sign&tname=${encodeURIComponent(tName)}&tsig=1`;
   
-  await fetchIp();
+  const msg = `Sandy 您好！我是承租人【${tName}】。我已在線上逐條審閱《${p.title}》全文及附屬設備清單無誤，並已完成親筆手寫簽名！
 
-  const p = PROPERTIES_DB[currentPKey];
-  document.getElementById("auditTName").textContent = p.tenantName;
-  document.getElementById("auditTTime").textContent = timeStr;
-  document.getElementById("auditTIp").textContent = ipCache.ip;
-  document.getElementById("auditTUa").textContent = ipCache.ua.substring(0, 60) + "...";
+請您點擊下方連結進行房東用印與最終防偽存證：
+${landlordUrl}`;
 
-  const envId = "ENV-" + Math.random().toString(36).substring(2, 10).toUpperCase() + "-" + currentPKey;
-  document.getElementById("resDocId").textContent = envId;
-
-  // 計算 SHA-256
-  const payload = `${envId}|${currentPKey}|${p.tenantName}|${p.rent}|${timeStr}|${ipCache.ip}|${dataUrl.substring(0, 100)}`;
-  const hash = await calcSha256(payload);
-  document.getElementById("resSha256").textContent = hash;
-
-  document.getElementById("boxAuditTrail").style.display = 'block';
-  document.getElementById("boxAuditTrail").scrollIntoView({ behavior: 'smooth' });
-
-  alert("🎉 簽署成功！您已完成本租賃契約之親筆數位簽名與 SHA-256 防偽加密存證。您可以點選下方按鈕下載 PDF 檔或傳至 LINE 留存。");
+  window.open(`https://line.me/R/msg/text/?${encodeURIComponent(msg)}`, "_blank");
 }
 
-// 下載 PDF
-function downloadDirectPdf() {
-  const p = PROPERTIES_DB[currentPKey] || {};
-  const filename = `Sandy宅安心_房屋租賃契約書_${p.roomNo || currentPKey}_${p.tenantName}.pdf`;
-
-  const contractEl = document.getElementById("contractPaper");
-  const auditEl = document.getElementById("boxAuditTrail");
-  const container = document.createElement("div");
-  container.style.padding = "10px";
-  container.style.backgroundColor = "#fff";
+function copyReturnLink(btn) {
+  const p = propConfig;
+  const tName = document.getElementById("dispTName").textContent || p.tenantName;
+  const landlordUrl = `https://sandyhuang0225-boop.github.io/sandy-Line-bot/lease.html?p=${currentPKey}&step=landlord_sign&tname=${encodeURIComponent(tName)}&tsig=1`;
   
-  container.appendChild(contractEl.cloneNode(true));
-  if (auditEl && auditEl.style.display !== 'none') {
-    const auditClone = auditEl.cloneNode(true);
-    const noPrints = auditClone.querySelectorAll('.no-print');
-    noPrints.forEach(el => el.remove());
-    container.appendChild(auditClone);
-  }
+  const msg = `Sandy 您好！我是承租人【${tName}】。我已在線上逐條審閱《${p.title}》全文及附屬設備清單無誤，並已完成親筆手寫簽名！
 
-  const opt = {
-    margin: [8, 8, 8, 8],
-    filename: filename,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  };
+請您點擊下方連結進行房東用印與最終防偽存證：
+${landlordUrl}`;
 
-  if (typeof html2pdf !== 'undefined') {
-    html2pdf().set(opt).from(container).save();
-  } else {
-    window.print();
-  }
+  navigator.clipboard.writeText(msg).then(() => {
+    const orig = btn.innerHTML;
+    btn.innerHTML = `<i class="fa-solid fa-check me-1"></i>已複製回傳訊息！`;
+    btn.classList.replace("btn-outline-secondary", "btn-success");
+    setTimeout(() => {
+      btn.innerHTML = orig;
+      btn.classList.replace("btn-success", "btn-outline-secondary");
+    }, 3000);
+  });
 }
 
-// 傳 LINE
-function sendToLine() {
-  const p = PROPERTIES_DB[currentPKey] || {};
-  const tName = p.tenantName;
-  const addr = p.address;
-  const rent = document.getElementById("dispRentStr").textContent || "";
-  const hash = document.getElementById("resSha256").textContent || "已數位防偽加密";
-  const envId = document.getElementById("resDocId").textContent || `SANDY-${Date.now()}`;
-  const verifyUrl = window.location.href;
-
-  const msg = `📋【Sandy 宅安心 ｜ 房屋租賃契約存證留底】\n` +
-    `--------------------------------\n` +
-    `• 物件編號：${p.roomNo || currentPKey}\n` +
-    `• 承租人：${tName}\n` +
-    `• 出租人：黃蕙芬 (Sandy)\n` +
-    `• 租賃標的：${addr}\n` +
-    `• 約定租金：${rent}\n` +
-    `• 契約編號：${envId}\n` +
-    `• SHA-256 數位憑證代碼：\n${hash}\n` +
-    `--------------------------------\n` +
-    `🔗 線上完整契約查驗與 PDF 下載：\n${verifyUrl}\n\n` +
-    `※ 本契約經承租人親筆數位簽名與時間戳記存證，具備民法及電子簽章法之法定效力，請妥善保存。`;
-
-  window.open(`https://line.me/R/msg/text/?${encodeURIComponent(msg)}`, '_blank');
-}
-
-// 寄 Email
-function sendToEmail() {
-  const p = PROPERTIES_DB[currentPKey] || {};
-  const tName = p.tenantName;
-  const tEmail = p.tenantEmail || "";
-  const landlordEmail = "sandyhuang0225@gmail.com";
-  const addr = p.address;
-  const envId = document.getElementById("resDocId").textContent || `SANDY-${Date.now()}`;
-  const hash = document.getElementById("resSha256").textContent || "-";
-  const verifyUrl = window.location.href;
-
-  const subject = `【Sandy 宅安心】房屋租賃契約書存證通知（${p.roomNo || currentPKey} ${tName}）- 數位簽署完成`;
-  const body = `您好！\n\n感謝簽署本租賃契約。本合約已完成親筆手寫數位簽署，並由系統產生不可否認之秒級時間戳記與 SHA-256 密碼防偽稽核證書。\n\n` +
-    `【契約重要摘要】：\n` +
-    `• 物件編號：${p.roomNo || currentPKey}\n` +
-    `• 合約編號：${envId}\n` +
-    `• 物件標的：${addr}\n` +
-    `• 承租人：${tName}\n` +
-    `• 出租人：黃蕙芬 (Sandy)\n` +
-    `• SHA-256 防偽驗證指紋：${hash}\n\n` +
-    `🔗 線上查驗與 PDF 下載存證連結：\n${verifyUrl}\n\n` +
-    `本契約已由系統封裝存檔，請雙方妥善留存。\n\nSandy 宅安心 敬上`;
-
-  window.location.href = `mailto:${tEmail}?cc=${landlordEmail}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  setupCanvas('canTenant');
-  const urlParams = new URLSearchParams(window.location.search);
-  const pParam = urlParams.get('p') || 'A101';
-  renderSignPage(pParam);
+window.addEventListener("DOMContentLoaded", () => {
+  initTenantContract();
+  setupCanvas();
 });
 </script>
-
 </body>
 </html>
