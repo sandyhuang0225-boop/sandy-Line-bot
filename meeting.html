@@ -2392,12 +2392,20 @@ function syncLiveAttendeesFromServer(btnEl) {
   if (btnEl) {
     btnEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>同步中...';
   }
-  fetch(`${API_BASE}/attendees?e=${currentEventId}&t=${Date.now()}`)
+  const targetId = (currentEventId && currentEventId.includes('6124'))
+    ? currentEventId.replace('6124', '1204')
+    : (currentEventId || 'event_1204_1317');
+  currentEventId = targetId;
+
+  fetch(`${API_BASE}/attendees?e=${targetId}&t=${Date.now()}`)
     .then(res => res.json())
     .then(data => {
       if (data && data.status === 'ok' && Array.isArray(data.attendees)) {
-        if (eventsDb[currentEventId]) {
-          eventsDb[currentEventId].attendees = data.attendees;
+        if (!eventsDb[targetId] && DEFAULT_EVENTS[targetId]) {
+          eventsDb[targetId] = JSON.parse(JSON.stringify(DEFAULT_EVENTS[targetId]));
+        }
+        if (eventsDb[targetId]) {
+          eventsDb[targetId].attendees = data.attendees;
           saveEventsDb();
           renderAttendeesAndTally();
         }
@@ -2415,6 +2423,27 @@ function syncLiveAttendeesFromServer(btnEl) {
       }
     });
 }
+
+// 📱 解決手機加入主畫面 (PWA / Standalone) 休眠喚醒不自動更新問題：
+// 1. 當使用者從手機主畫面切換回 App 或點開時，立刻自動同步名冊
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    syncLiveAttendeesFromServer();
+  }
+});
+window.addEventListener('pageshow', () => {
+  syncLiveAttendeesFromServer();
+});
+window.addEventListener('focus', () => {
+  syncLiveAttendeesFromServer();
+});
+
+// 2. 只要畫面開著，每 25 秒在背景輕量自動輪詢一次，自動刷新簽到人數與名冊
+setInterval(() => {
+  if (document.visibilityState === 'visible') {
+    syncLiveAttendeesFromServer();
+  }
+}, 25000);
 
 function handleRegistrationSubmit(e) {
   e.preventDefault();
