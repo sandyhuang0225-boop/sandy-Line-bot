@@ -843,21 +843,10 @@ body.role-tenant #boxTenantSigPanel {
             </tbody>
           </table>
 
-          <h6 class="fw-bold mb-2 text-dark"><i class="fa-solid fa-tv me-1 text-primary"></i>現場附屬傢俱、家電與設備點交明細表：</h6>
-          <table class="table table-sm table-bordered small align-middle mb-3 text-center">
-            <thead class="table-light">
-              <tr>
-                <th>項目</th>
-                <th>品名規格</th>
-                <th>數量</th>
-                <th>交屋運作現況</th>
-                <th>日常保管與維修責任歸屬</th>
-              </tr>
-            </thead>
-            <tbody id="dispEquipTableBody">
-              <!-- 動態由 JavaScript 生成設備項目 -->
-            </tbody>
-          </table>
+          <h6 class="fw-bold mb-2 text-dark"><i class="fa-solid fa-clipboard-check me-2 text-primary"></i>現場附屬傢俱、家電與設備點交清單：</h6>
+          <div id="dispEquipChecklistContainer" class="p-3 border rounded bg-white shadow-sm mb-3">
+            <!-- 動態生成雙欄條列式勾選清單，與第5區塊完全一致 -->
+          </div>
 
           <div class="p-2 bg-light border rounded small mb-3">
             <i class="fa-brands fa-line text-success me-1 fs-6 align-middle"></i>
@@ -1019,6 +1008,146 @@ body.role-tenant #boxTenantSigPanel {
 
 <script>
 // Sandy 名下 9 大專屬物業預設資產庫
+
+// 依據歷史舊合約實載內容精準預設附屬設備與數量
+const HISTORICAL_EQUIP_DB = {
+  A101: {
+    ac: { checked: true, qty: 4 },
+    fridge: { checked: true, qty: 1 },
+    washer: { checked: true, qty: 1 },
+    tv: { checked: false, qty: 1 },
+    heater: { checked: true, qty: 1 },
+    bed: { checked: true, qty: 2 },
+    wardrobe: { checked: true, qty: 2 },
+    keys: { checked: true, qty: 2 },
+    fobs: { checked: true, qty: 2 },
+    sofa: false,
+    table: false,
+    subMeter: false,
+    proofNote: "排油煙機 1 台、流理台 1 件、天然瓦斯、全室燈飾、置物櫃及全室裝潢固定式家具，已於交屋當日拍照並於雙方 LINE 相簿/記事本存證備查。"
+  },
+  A102: {
+    ac: { checked: true, qty: 4 },
+    fridge: { checked: true, qty: 1 },
+    washer: { checked: false, qty: 1 },
+    tv: { checked: false, qty: 1 },
+    heater: { checked: true, qty: 1 },
+    bed: { checked: false, qty: 1 },
+    wardrobe: { checked: false, qty: 1 },
+    keys: { checked: true, qty: 2 },
+    fobs: { checked: true, qty: 2 },
+    sofa: false,
+    table: false,
+    subMeter: false,
+    proofNote: "瓦斯爐 1 台、排油煙機、廚房流理台、窗簾、全室燈飾及裝潢固定式家具，已於交屋當日拍照並於雙方 LINE 留存照片影片備查。"
+  },
+  A103: {
+    ac: { checked: true, qty: 3 },
+    fridge: { checked: false, qty: 1 }, // 舊約載明：冰箱為租客自購
+    washer: { checked: true, qty: 1 },
+    tv: { checked: false, qty: 1 },
+    heater: { checked: true, qty: 2 },
+    bed: { checked: true, qty: 1 },
+    wardrobe: { checked: true, qty: 1 },
+    keys: { checked: true, qty: 2 },
+    fobs: { checked: true, qty: 2 },
+    sofa: true,
+    table: true,
+    subMeter: false,
+    proofNote: "冰箱為租客自購。高級沙發茶几組、電視櫃、餐桌椅、書桌椅、梳妝台、排油煙機、流理台、瓦斯爐、天然瓦斯及裝潢固定式家具，含平面車位 B2-02 遙控磁扣，已於交屋當日存證備查。"
+  },
+  A104: {
+    ac: { checked: true, qty: 1 },
+    fridge: { checked: true, qty: 1 },
+    washer: { checked: true, qty: 1 },
+    tv: { checked: true, qty: 1 },
+    heater: { checked: true, qty: 1 },
+    bed: { checked: true, qty: 1 },
+    wardrobe: { checked: true, qty: 1 },
+    keys: { checked: true, qty: 2 },
+    fobs: { checked: true, qty: 2 },
+    sofa: false,
+    table: true,
+    subMeter: false,
+    proofNote: "電視櫃 1 件、窗簾 1 組、燈飾 2 件、烘碗機 1 台、書櫃 1 件、置物櫃 1 件、安博電視盒 1 台，已於交屋當日拍照並於 LINE 記事本存查。"
+  },
+  A105: {
+    ac: { checked: true, qty: 1 },
+    fridge: { checked: true, qty: 1 },
+    washer: { checked: true, qty: 1 },
+    tv: { checked: true, qty: 1 },
+    heater: { checked: true, qty: 1 },
+    bed: { checked: true, qty: 1 },
+    wardrobe: { checked: true, qty: 1 },
+    keys: { checked: true, qty: 2 },
+    fobs: { checked: true, qty: 2 },
+    sofa: false,
+    table: true,
+    subMeter: false,
+    proofNote: "窗簾 1 組、燈飾 5 件、置物櫃 1 件、流理台 1 件、電磁爐 1 台、安博 8 電視盒 1 台，已於交屋當日存證留查。"
+  },
+  A106: {
+    ac: { checked: true, qty: 1 },
+    fridge: { checked: true, qty: 1 },
+    washer: { checked: true, qty: 1 },
+    tv: { checked: false, qty: 1 },
+    heater: { checked: true, qty: 1 },
+    bed: { checked: true, qty: 1 },
+    wardrobe: { checked: true, qty: 1 },
+    keys: { checked: true, qty: 2 },
+    fobs: { checked: true, qty: 2 },
+    sofa: true,
+    table: true,
+    subMeter: false,
+    proofNote: "電視櫃 1 件、沙發 1 組、茶几 1 件、鞋櫃、窗簾 1 組、燈飾 2 件、流理台 1 件，已於交屋當日拍照並於 LINE 存證備查。"
+  },
+  A107: {
+    ac: { checked: true, qty: 2 },
+    fridge: { checked: false, qty: 1 },
+    washer: { checked: false, qty: 1 },
+    tv: { checked: false, qty: 1 },
+    heater: { checked: true, qty: 1 },
+    bed: { checked: false, qty: 1 },
+    wardrobe: { checked: false, qty: 1 },
+    keys: { checked: true, qty: 2 },
+    fobs: { checked: true, qty: 2 },
+    sofa: false,
+    table: true,
+    subMeter: true,
+    proofNote: "黑色法式鏡、白色鐵藝餐邊櫃、固定式裝潢家具，現場設備及獨立電表起算度數已拍照於雙方 LINE 相簿存證備查。"
+  },
+  A108: {
+    ac: { checked: true, qty: 3 },
+    fridge: { checked: true, qty: 1 },
+    washer: { checked: true, qty: 1 },
+    tv: { checked: false, qty: 1 },
+    heater: { checked: true, qty: 1 },
+    bed: { checked: true, qty: 2 },
+    wardrobe: { checked: true, qty: 2 },
+    keys: { checked: true, qty: 2 },
+    fobs: { checked: true, qty: 2 },
+    sofa: false,
+    table: false,
+    subMeter: false,
+    proofNote: "全室現況設備良好，現場照片及影片已建檔留存備查。"
+  },
+  A109: {
+    ac: { checked: true, qty: 1 },
+    fridge: { checked: false, qty: 1 },
+    washer: { checked: false, qty: 1 },
+    tv: { checked: false, qty: 1 },
+    heater: { checked: true, qty: 2 }, // 舊約載明：電熱水器 2台
+    bed: { checked: false, qty: 1 },
+    wardrobe: { checked: false, qty: 1 },
+    keys: { checked: true, qty: 2 },
+    fobs: { checked: true, qty: 2 },
+    sofa: false,
+    table: true,
+    subMeter: true,
+    proofNote: "美甲工作區燈飾照明（詳見照片）、固定式洗手水槽及美甲設備，現場獨立電表度數已拍照並於 LINE 記事本存證備查。"
+  }
+};
+
 const PROPERTIES_DB = {
   A101: {
     roomNo: "A101",
@@ -1481,49 +1610,48 @@ function switchProperty(pKey) {
   document.getElementById("boxP2Notice").style.display = (pKey === 'A105') ? 'block' : 'none';
   document.getElementById("dispBiMonthlyClause").style.display = (pKey === 'A102') ? 'block' : 'none';
 
-  // 依物業類型設定預設設備勾選狀態
-  if (pKey === 'B1-02' || pKey === 'B1-03') {
-    // 車位：無家電家具，僅磁扣/遙控器
-    if (document.getElementById("eqAc")) document.getElementById("eqAc").checked = false;
-    if (document.getElementById("eqFridge")) document.getElementById("eqFridge").checked = false;
-    if (document.getElementById("eqWasher")) document.getElementById("eqWasher").checked = false;
-    if (document.getElementById("eqTv")) document.getElementById("eqTv").checked = false;
-    if (document.getElementById("eqHeater")) document.getElementById("eqHeater").checked = false;
-    if (document.getElementById("eqBed")) document.getElementById("eqBed").checked = false;
-    if (document.getElementById("eqWardrobe")) document.getElementById("eqWardrobe").checked = false;
-    if (document.getElementById("eqSofa")) document.getElementById("eqSofa").checked = false;
-    if (document.getElementById("eqTable")) document.getElementById("eqTable").checked = false;
-    if (document.getElementById("eqSubMeter")) document.getElementById("eqSubMeter").checked = false;
-    if (document.getElementById("eqKeys")) document.getElementById("eqKeys").checked = false;
-    if (document.getElementById("eqFobs")) document.getElementById("eqFobs").checked = true;
-  } else if (pKey === 'A109' || pKey === 'A107') {
-    // 工作室 (美甲/前間)：冷氣、獨立電表、工作桌椅、鑰匙、磁扣；無床組、大型冰箱、洗衣機
-    if (document.getElementById("eqAc")) document.getElementById("eqAc").checked = true;
-    if (document.getElementById("eqFridge")) document.getElementById("eqFridge").checked = false;
-    if (document.getElementById("eqWasher")) document.getElementById("eqWasher").checked = false;
-    if (document.getElementById("eqTv")) document.getElementById("eqTv").checked = false;
-    if (document.getElementById("eqHeater")) document.getElementById("eqHeater").checked = true;
-    if (document.getElementById("eqBed")) document.getElementById("eqBed").checked = false;
-    if (document.getElementById("eqWardrobe")) document.getElementById("eqWardrobe").checked = false;
-    if (document.getElementById("eqSofa")) document.getElementById("eqSofa").checked = false;
-    if (document.getElementById("eqTable")) document.getElementById("eqTable").checked = true;
-    if (document.getElementById("eqSubMeter")) document.getElementById("eqSubMeter").checked = true;
-    if (document.getElementById("eqKeys")) document.getElementById("eqKeys").checked = true;
-    if (document.getElementById("eqFobs")) document.getElementById("eqFobs").checked = true;
-  } else {
-    // 住宅套房 (A101~A106, A108)：標準住宅傢俱家電
-    if (document.getElementById("eqAc")) document.getElementById("eqAc").checked = true;
-    if (document.getElementById("eqFridge")) document.getElementById("eqFridge").checked = true;
-    if (document.getElementById("eqWasher")) document.getElementById("eqWasher").checked = true;
-    if (document.getElementById("eqTv")) document.getElementById("eqTv").checked = (pKey === 'A102' || pKey === 'A103');
-    if (document.getElementById("eqHeater")) document.getElementById("eqHeater").checked = true;
-    if (document.getElementById("eqBed")) document.getElementById("eqBed").checked = true;
-    if (document.getElementById("eqWardrobe")) document.getElementById("eqWardrobe").checked = true;
-    if (document.getElementById("eqSofa")) document.getElementById("eqSofa").checked = (pKey === 'A102' || pKey === 'A103');
-    if (document.getElementById("eqTable")) document.getElementById("eqTable").checked = true;
-    if (document.getElementById("eqSubMeter")) document.getElementById("eqSubMeter").checked = false;
-    if (document.getElementById("eqKeys")) document.getElementById("eqKeys").checked = true;
-    if (document.getElementById("eqFobs")) document.getElementById("eqFobs").checked = true;
+  // 依據歷史舊合約實載內容自動精準帶入設備勾選與數量
+  const eqConf = HISTORICAL_EQUIP_DB[pKey];
+  if (eqConf) {
+    if (document.getElementById("eqAc")) {
+      document.getElementById("eqAc").checked = !!(eqConf.ac && eqConf.ac.checked);
+      if (document.getElementById("eqAcQty") && eqConf.ac) document.getElementById("eqAcQty").value = eqConf.ac.qty;
+    }
+    if (document.getElementById("eqFridge")) {
+      document.getElementById("eqFridge").checked = !!(eqConf.fridge && eqConf.fridge.checked);
+      if (document.getElementById("eqFridgeQty") && eqConf.fridge) document.getElementById("eqFridgeQty").value = eqConf.fridge.qty;
+    }
+    if (document.getElementById("eqWasher")) {
+      document.getElementById("eqWasher").checked = !!(eqConf.washer && eqConf.washer.checked);
+      if (document.getElementById("eqWasherQty") && eqConf.washer) document.getElementById("eqWasherQty").value = eqConf.washer.qty;
+    }
+    if (document.getElementById("eqTv")) {
+      document.getElementById("eqTv").checked = !!(eqConf.tv && eqConf.tv.checked);
+      if (document.getElementById("eqTvQty") && eqConf.tv) document.getElementById("eqTvQty").value = eqConf.tv.qty;
+    }
+    if (document.getElementById("eqHeater")) {
+      document.getElementById("eqHeater").checked = !!(eqConf.heater && eqConf.heater.checked);
+      if (document.getElementById("eqHeaterQty") && eqConf.heater) document.getElementById("eqHeaterQty").value = eqConf.heater.qty;
+    }
+    if (document.getElementById("eqBed")) {
+      document.getElementById("eqBed").checked = !!(eqConf.bed && eqConf.bed.checked);
+      if (document.getElementById("eqBedQty") && eqConf.bed) document.getElementById("eqBedQty").value = eqConf.bed.qty;
+    }
+    if (document.getElementById("eqWardrobe")) {
+      document.getElementById("eqWardrobe").checked = !!(eqConf.wardrobe && eqConf.wardrobe.checked);
+      if (document.getElementById("eqWardrobeQty") && eqConf.wardrobe) document.getElementById("eqWardrobeQty").value = eqConf.wardrobe.qty;
+    }
+    if (document.getElementById("eqKeys")) {
+      document.getElementById("eqKeys").checked = !!(eqConf.keys && eqConf.keys.checked);
+      if (document.getElementById("eqKeysQty") && eqConf.keys) document.getElementById("eqKeysQty").value = eqConf.keys.qty;
+    }
+    if (document.getElementById("eqFobs")) {
+      document.getElementById("eqFobs").checked = !!(eqConf.fobs && eqConf.fobs.checked);
+      if (document.getElementById("eqFobsQty") && eqConf.fobs) document.getElementById("eqFobsQty").value = eqConf.fobs.qty;
+    }
+    if (document.getElementById("eqSofa")) document.getElementById("eqSofa").checked = !!eqConf.sofa;
+    if (document.getElementById("eqTable")) document.getElementById("eqTable").checked = !!eqConf.table;
+    if (document.getElementById("eqSubMeter")) document.getElementById("eqSubMeter").checked = !!eqConf.subMeter;
   }
 
   updateContract();
@@ -1867,73 +1995,86 @@ async function commitSig(role) {
 
 // 動態產生附件一：附屬設備點交清單表格 (依房東勾選與數量即時呈現)
 function renderEquipmentTable() {
-  const tbody = document.getElementById("dispEquipTableBody");
-  if (!tbody) return;
-  tbody.innerHTML = "";
+  const container = document.getElementById("dispEquipChecklistContainer");
+  if (!container) return;
 
   const items = [];
   if (document.getElementById("eqAc") && document.getElementById("eqAc").checked) {
     const q = document.getElementById("eqAcQty") ? document.getElementById("eqAcQty").value : "1";
-    items.push({ name: "冷氣空調設備", qty: `${q} 台`, note: "各室冷氣功能正常，運作良好" });
+    items.push({ icon: "❄️", name: "冷氣", qty: `${q} 台` });
   }
   if (document.getElementById("eqFridge") && document.getElementById("eqFridge").checked) {
     const q = document.getElementById("eqFridgeQty") ? document.getElementById("eqFridgeQty").value : "1";
-    items.push({ name: "電冰箱", qty: `${q} 台`, note: "冷藏冷凍功能正常" });
+    items.push({ icon: "🧊", name: "冰箱", qty: `${q} 台` });
   }
   if (document.getElementById("eqWasher") && document.getElementById("eqWasher").checked) {
     const q = document.getElementById("eqWasherQty") ? document.getElementById("eqWasherQty").value : "1";
-    items.push({ name: "洗衣機", qty: `${q} 台`, note: "進排水及脫水運作正常" });
+    items.push({ icon: "🧺", name: "洗衣機", qty: `${q} 台` });
   }
   if (document.getElementById("eqTv") && document.getElementById("eqTv").checked) {
     const q = document.getElementById("eqTvQty") ? document.getElementById("eqTvQty").value : "1";
-    items.push({ name: "電視機及配件", qty: `${q} 台`, note: "螢幕顯示正常，附遙控器" });
+    items.push({ icon: "📺", name: "電視", qty: `${q} 台` });
   }
   if (document.getElementById("eqHeater") && document.getElementById("eqHeater").checked) {
     const q = document.getElementById("eqHeaterQty") ? document.getElementById("eqHeaterQty").value : "1";
-    items.push({ name: "熱水器", qty: `${q} 台`, note: "冷熱水供水正常" });
+    items.push({ icon: "♨️", name: "熱水器", qty: `${q} 台` });
   }
   if (document.getElementById("eqBed") && document.getElementById("eqBed").checked) {
     const q = document.getElementById("eqBedQty") ? document.getElementById("eqBedQty").value : "1";
-    items.push({ name: "雙人床組 (床架/床墊)", qty: `${q} 套`, note: "結構穩固清潔" });
+    items.push({ icon: "🛏️", name: "床組", qty: `${q} 套` });
   }
   if (document.getElementById("eqWardrobe") && document.getElementById("eqWardrobe").checked) {
     const q = document.getElementById("eqWardrobeQty") ? document.getElementById("eqWardrobeQty").value : "1";
-    items.push({ name: "衣櫃/收納置物櫃", qty: `${q} 組`, note: "門片抽屜開合正常" });
-  }
-  if (document.getElementById("eqSofa") && document.getElementById("eqSofa").checked) {
-    items.push({ name: "客廳沙發/茶几組", qty: "1 組", note: "外觀完整無破損" });
-  }
-  if (document.getElementById("eqTable") && document.getElementById("eqTable").checked) {
-    items.push({ name: "書桌/餐桌椅組", qty: "1 組", note: "現況良好" });
+    items.push({ icon: "🚪", name: "衣櫃", qty: `${q} 組` });
   }
   if (document.getElementById("eqKeys") && document.getElementById("eqKeys").checked) {
     const q = document.getElementById("eqKeysQty") ? document.getElementById("eqKeysQty").value : "2";
-    items.push({ name: "門禁大門鎖匙", qty: `${q} 支`, note: "現況點交" });
+    items.push({ icon: "🔑", name: "大門鑰匙", qty: `${q} 支` });
   }
   if (document.getElementById("eqFobs") && document.getElementById("eqFobs").checked) {
     const q = document.getElementById("eqFobsQty") ? document.getElementById("eqFobsQty").value : "2";
-    items.push({ name: "大樓出入感應磁扣", qty: `${q} 個`, note: "感應正常" });
+    items.push({ icon: "🗝️", name: "大樓磁扣", qty: `${q} 個` });
+  }
+  if (document.getElementById("eqSofa") && document.getElementById("eqSofa").checked) {
+    items.push({ icon: "🛋️", name: "沙發茶几", qty: "1 組" });
+  }
+  if (document.getElementById("eqTable") && document.getElementById("eqTable").checked) {
+    items.push({ icon: "🪑", name: "桌椅組", qty: "1 組" });
   }
   if (document.getElementById("eqSubMeter") && document.getElementById("eqSubMeter").checked) {
-    items.push({ name: "獨立分度電表", qty: "1 具", note: "計度運作正常" });
+    items.push({ icon: "⚡", name: "獨立分度電表", qty: "1 具" });
   }
 
+  const pKey = document.getElementById("selProperty") ? document.getElementById("selProperty").value : "A101";
+  const eqConf = HISTORICAL_EQUIP_DB[pKey] || {};
+  const proofNote = eqConf.proofNote || "現場設備現況照片及全室錄影檔案，已於交屋當日於雙方 LINE 相簿/記事本存證備查。";
+
   if (items.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="text-muted text-center py-2">本標的現況無特殊隨附設備或為車位標的。</td></tr>`;
+    container.innerHTML = `<div class="p-3 text-muted text-center bg-light rounded">本標的現況無隨附額外家電傢俱或為停車位標的。</div>`;
     return;
   }
 
-  items.forEach((item, idx) => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td class="fw-bold">${idx + 1}</td>
-      <td class="fw-bold text-start">${item.name}</td>
-      <td>${item.qty}</td>
-      <td class="text-start">${item.note}</td>
-      <td>日常保養由承租人負責；自然耗損由出租人修繕</td>
+  let html = '<div class="row g-2">';
+  items.forEach(it => {
+    html += `
+      <div class="col-6">
+        <div class="p-2 border rounded bg-light d-flex align-items-center justify-content-between shadow-xs">
+          <span><i class="fa-solid fa-square-check text-primary me-2 fs-6 align-middle"></i><strong class="text-dark">${it.icon} ${it.name}</strong></span>
+          <span class="badge bg-white text-primary border border-primary px-2 py-1 fs-6">${it.qty}</span>
+        </div>
+      </div>
     `;
-    tbody.appendChild(tr);
   });
+  html += '</div>';
+
+  html += `
+    <div class="mt-3 pt-2 border-top small text-muted">
+      <i class="fa-solid fa-camera me-1 text-primary"></i><strong>交屋點交存證備註：</strong>
+      <span>${proofNote}</span>
+    </div>
+  `;
+
+  container.innerHTML = html;
 }
 
 // 下載正式 PDF (直指已渲染好的合約本文，徹底解決空白問題)
