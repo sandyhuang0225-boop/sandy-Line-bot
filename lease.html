@@ -471,15 +471,12 @@ body.role-tenant #boxTenantSigPanel {
             <i class="fa-brands fa-line text-success me-1"></i><strong>交屋點交存證備註：</strong>現場設備現況照片及全室錄影檔案，已於交屋當日於雙方 LINE 相簿/記事本存證備查。
           </div>
         </div>
-</div>
 
-    
-        <!-- 6. 房客簽約派送與用印中心 -->
-                <!-- 6. 房客簽約派送與用印中心 -->
-        <div class="card-panel bg-light border-primary shadow-sm mt-3">
-          <div class="section-title text-primary"><i class="fa-solid fa-paper-plane me-2"></i>6. 生成獨立合約與派送</div>
+        <!-- 6. 房客簽約派送與用印中心 (位於房東面板最底端) -->
+        <div class="card-panel bg-light border-primary shadow-sm">
+          <div class="section-title text-primary"><i class="fa-solid fa-wand-magic-sparkles me-2"></i>6. 生成獨立合約與派送</div>
           <p class="small text-secondary mb-3">
-            設定完成後，點擊下方大按鈕即可<strong>完全切換為獨立合約模式（隱藏全部設定欄）</strong>，只顯示從《房屋租賃契約書》抬頭到附件設備與簽名處的完整內容：
+            設定完成後，點擊下方大按鈕即可<strong>完全切換為獨立合約模式（隱藏所有設定欄）</strong>，檢視純淨完整契約：
           </p>
 
           <button type="button" class="btn btn-warning text-dark fw-bold w-100 py-3 mb-3 shadow fs-5" onclick="generateCleanContractView()">
@@ -508,10 +505,10 @@ body.role-tenant #boxTenantSigPanel {
             </button>
           </div>
         </div>
-      </div>
+      </div><!-- end of #landlordControlPanel -->
 
       <!-- 右側：合約即時預覽與雙向簽署區 -->
-    <div class="col-lg-7 col-12" id="contractViewColumn">
+      <div class="col-lg-7 col-12" id="contractViewColumn">
       <!-- 房客專用審閱與簽署指引橫幅 (房客開啟連結時自動顯示，房東介面預設隱藏) -->
       <div id="tenantWelcomeBanner" class="alert alert-primary mb-3 shadow-sm border-primary no-print" style="display: none;">
         <div class="d-flex align-items-center">
@@ -527,7 +524,7 @@ body.role-tenant #boxTenantSigPanel {
       
       <!-- 合約正式紙本預覽 (A4 格式) -->
       <!-- 獨立合約生成工具列 (點選「生成獨立租約」時顯示) -->
-      <div id="cleanContractToolbar" class="alert alert-success d-flex justify-content-between align-items-center mb-3 shadow-sm border-success py-2 px-3 no-print" style="display: none;">
+      <div id="cleanContractToolbar" class="alert alert-success justify-content-between align-items-center mb-3 shadow-sm border-success py-2 px-3 no-print" style="display: none !important;">
         <div class="d-flex align-items-center gap-2">
           <span class="badge bg-success px-2 py-1"><i class="fa-solid fa-check-circle me-1"></i>獨立合約已生成</span>
           <span class="small fw-bold text-dark">已完全隱藏房東設定欄！下方即為傳送給房客之完整合約全文：</span>
@@ -2108,15 +2105,28 @@ function getTenantSigningUrl() {
   return `${baseUrl}?p=${pKey}&rent=${rentVal}&dep=${depVal}&mf=${mfVal}&s=${sDate}&e=${eDate}&smk=${smk}&pet=${pet}&sub=${sub}&tax=${tax}&biz=${biz}&uf=${uf}&custom=${custom}&tname=${tname}&tid=${tid}&tphone=${tphone}&taddr=${taddr}`;
 }
 
-function sendContractToTenant() {
+function sendContractToTenant(btn) {
   const url = getTenantSigningUrl();
   const pKey = document.getElementById("selProperty").value;
   const p = PROPERTIES_DB[pKey] || {};
   const tName = document.getElementById("inpTenantName").value || p.tenantName;
 
-  navigator.clipboard.writeText(url).then(() => {
-    alert(`✅ 已成功複製房客專屬簽約連結！\n\n【傳送對象】：${tName}\n【物業標的】：${p.title}\n\n房客開啟此連結後，將【從頭逐條審閱完整房屋租賃契約書（23條法規+特約條款+附件設備清單）】，並於合約最末端親筆簽名回傳。\n\n您現在可以直接將此連結貼到 LINE 傳給房客！`);
-  });
+  function notifySuccess() {
+    if (btn) {
+      const orig = btn.innerHTML;
+      btn.innerHTML = '<i class="fa-solid fa-check me-1"></i>已複製簽約連結！';
+      setTimeout(() => { btn.innerHTML = orig; }, 3000);
+    }
+    alert("✅ 已成功複製房客專屬簽約連結！\n\n【傳送對象】： " + tName + "\n【簽約標的】： " + p.title + "\n\n房客開啟此連結後，將【從頭逐條審閱完整房屋租賃契約書（23條法規+特約條款+附件設備清單）】，並於合約最末端親筆簽名回傳。\n\n您現在可以直接貼到 LINE 傳給房客！");
+  }
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(notifySuccess).catch(() => {
+      prompt("請複製下方房客專屬簽約連結，貼給房客：", url);
+    });
+  } else {
+    prompt("請複製下方房客專屬簽約連結，貼給房客：", url);
+  }
 }
 
 function shareContractToTenantLine() {
@@ -2138,19 +2148,22 @@ function generateCleanContractView() {
   const btnSetup = document.getElementById("btnModeSetup");
   const btnGen = document.getElementById("btnModeGenerated");
 
-  if (panel) panel.style.display = "none";
+  if (panel) {
+    panel.style.setProperty("display", "none", "important");
+  }
   if (viewCol) {
     viewCol.className = "col-12 mx-auto";
     viewCol.style.maxWidth = "960px";
   }
-  if (toolbar) toolbar.style.display = "flex";
+  if (toolbar) {
+    toolbar.style.setProperty("display", "flex", "important");
+  }
 
   if (btnSetup) {
-    btnSetup.classList.replace("btn-primary", "btn-light");
-    btnSetup.classList.replace("btn-warning", "btn-light");
+    btnSetup.className = "btn btn-light btn-sm fw-bold";
   }
   if (btnGen) {
-    btnGen.className = "btn btn-warning text-dark fw-bold";
+    btnGen.className = "btn btn-warning text-dark btn-sm fw-bold shadow-sm";
   }
 
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -2163,18 +2176,22 @@ function showSettingsPanel() {
   const btnSetup = document.getElementById("btnModeSetup");
   const btnGen = document.getElementById("btnModeGenerated");
 
-  if (panel) panel.style.display = "block";
+  if (panel) {
+    panel.style.setProperty("display", "block", "important");
+  }
   if (viewCol) {
     viewCol.className = "col-lg-7 col-12";
     viewCol.style.maxWidth = "";
   }
-  if (toolbar) toolbar.style.display = "none";
+  if (toolbar) {
+    toolbar.style.setProperty("display", "none", "important");
+  }
 
   if (btnSetup) {
-    btnSetup.className = "btn btn-primary text-white fw-bold";
+    btnSetup.className = "btn btn-primary text-white btn-sm fw-bold";
   }
   if (btnGen) {
-    btnGen.className = "btn btn-light fw-bold";
+    btnGen.className = "btn btn-light btn-sm fw-bold";
   }
 
   window.scrollTo({ top: 0, behavior: "smooth" });
