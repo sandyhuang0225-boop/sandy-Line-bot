@@ -1405,17 +1405,40 @@ function checkAlreadySigned() {
   }
 }
 
+let tenantCapturedIp = '';
+let tenantCapturedTime = '';
+let tenantCapturedDev = '';
+
+async function fetchTenantIp() {
+  try {
+    const res = await fetch('https://api.ipify.org?format=json');
+    const data = await res.json();
+    return data.ip || '';
+  } catch (e) {
+    return '';
+  }
+}
+
 // 房客確認親筆簽名
-function commitTenantSign() {
+async function commitTenantSign() {
   if (!hasSigned) {
     alert("⚠️ 請先在手寫簽名板中親筆簽名，再點選確認按鈕！");
     return;
   }
 
-  const nowStr = new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' });
+  const now = new Date();
+  tenantCapturedTime = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')} GMT+8`;
+  tenantCapturedDev = /iPhone/i.test(navigator.userAgent) ? "Apple iPhone (iOS Safari)" : (/Android/i.test(navigator.userAgent) ? "Android 行動裝置" : "個人電腦瀏覽器");
+  
+  if (!tenantCapturedIp) {
+    tenantCapturedIp = await fetchTenantIp();
+  }
+
   try {
     localStorage.setItem(`tenant_signed_${currentPKey}`, 'true');
-    localStorage.setItem(`tenant_sig_time_${currentPKey}`, nowStr);
+    localStorage.setItem(`tenant_sig_time_${currentPKey}`, tenantCapturedTime);
+    localStorage.setItem(`tenant_ip_${currentPKey}`, tenantCapturedIp);
+    localStorage.setItem(`tenant_dev_${currentPKey}`, tenantCapturedDev);
   } catch (e) {
     console.warn("Storage warning:", e);
   }
@@ -1445,7 +1468,6 @@ function commitTenantSign() {
   // 2. 本地儲存 (供同設備測試或後續參照)
   try {
     localStorage.setItem(`tenant_sig_${currentPKey}`, sigDataUrl);
-    localStorage.setItem(`tenant_sig_time_${currentPKey}`, new Date().toISOString());
   } catch (e) {
     console.warn("Storage warning:", e);
   }
@@ -1463,7 +1485,11 @@ function commitTenantSign() {
 function sendTenantReturnLine() {
   const p = propConfig;
   const tName = document.getElementById("dispTName").textContent || p.tenantName;
-  const landlordUrl = `https://sandyhuang0225-boop.github.io/sandy-Line-bot/lease.html?p=${currentPKey}&step=landlord_sign&tname=${encodeURIComponent(tName)}&tsig=1`;
+  const tip = tenantCapturedIp || localStorage.getItem(`tenant_ip_${currentPKey}`) || '';
+  const ttime = tenantCapturedTime || localStorage.getItem(`tenant_sig_time_${currentPKey}`) || '';
+  const tdev = tenantCapturedDev || localStorage.getItem(`tenant_dev_${currentPKey}`) || '';
+
+  const landlordUrl = `https://sandyhuang0225-boop.github.io/sandy-Line-bot/lease.html?p=${currentPKey}&step=landlord_sign&tname=${encodeURIComponent(tName)}&tsig=1&tip=${encodeURIComponent(tip)}&ttime=${encodeURIComponent(ttime)}&tdev=${encodeURIComponent(tdev)}`;
   
   const msg = `Sandy 您好！我是承租人【${tName}】。我已在線上逐條審閱《${p.title}》全文及附屬設備清單無誤，並已完成親筆手寫簽名！
 
@@ -1476,7 +1502,11 @@ ${landlordUrl}`;
 function copyReturnLink(btn) {
   const p = propConfig;
   const tName = document.getElementById("dispTName").textContent || p.tenantName;
-  const landlordUrl = `https://sandyhuang0225-boop.github.io/sandy-Line-bot/lease.html?p=${currentPKey}&step=landlord_sign&tname=${encodeURIComponent(tName)}&tsig=1`;
+  const tip = tenantCapturedIp || localStorage.getItem(`tenant_ip_${currentPKey}`) || '';
+  const ttime = tenantCapturedTime || localStorage.getItem(`tenant_sig_time_${currentPKey}`) || '';
+  const tdev = tenantCapturedDev || localStorage.getItem(`tenant_dev_${currentPKey}`) || '';
+
+  const landlordUrl = `https://sandyhuang0225-boop.github.io/sandy-Line-bot/lease.html?p=${currentPKey}&step=landlord_sign&tname=${encodeURIComponent(tName)}&tsig=1&tip=${encodeURIComponent(tip)}&ttime=${encodeURIComponent(ttime)}&tdev=${encodeURIComponent(tdev)}`;
   
   const msg = `Sandy 您好！我是承租人【${tName}】。我已在線上逐條審閱《${p.title}》全文及附屬設備清單無誤，並已完成親筆手寫簽名！
 
@@ -1495,6 +1525,7 @@ ${landlordUrl}`;
 }
 
 window.addEventListener("DOMContentLoaded", () => {
+  fetchTenantIp().then(ip => { tenantCapturedIp = ip; });
   initTenantContract();
   setupCanvas();
   checkAlreadySigned();

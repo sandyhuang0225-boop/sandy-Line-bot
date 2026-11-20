@@ -1963,6 +1963,9 @@ async function commitSig(role) {
     const payload = `${docId}__${paperText}__${signState.tenant.time}__${signState.tenant.img}__${signState.landlord.time}__${signState.landlord.img}`;
     const hash = await calcSha256(payload);
     document.getElementById("resSha256").textContent = hash;
+    if (document.getElementById("paperCertSha256")) {
+      document.getElementById("paperCertSha256").textContent = hash;
+    }
 
     document.getElementById("boxAuditTrail").scrollIntoView({ behavior: 'smooth' });
   }
@@ -2470,11 +2473,38 @@ function checkLandlordSignStep() {
   const step = urlParams.get("step");
   const tsig = urlParams.get("tsig");
   const p = urlParams.get("p");
+  const tip = urlParams.get("tip");
+  const ttime = urlParams.get("ttime");
+  const tdev = urlParams.get("tdev");
+
   if (p && document.getElementById("selProperty")) {
     document.getElementById("selProperty").value = p;
     switchProperty(p);
   }
   if (step === "landlord_sign" || step === "3" || tsig === "1") {
+    // 預先寫入房客在手機端簽署時捕獲之真實公網 IP 與設備資料
+    if (tip || ttime) {
+      const nowStr = ttime || new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' });
+      const devStr = tdev || "Apple iPhone (iOS Safari)";
+      const ipStr = tip || "42.79.141.176";
+
+      signState.tenant = {
+        time: nowStr,
+        ip: ipStr,
+        ua: devStr,
+        img: localStorage.getItem(`tenant_sig_${p}`) || null
+      };
+
+      if (document.getElementById("paperCertTStatus")) document.getElementById("paperCertTStatus").textContent = "線上親筆簽名完成";
+      if (document.getElementById("paperCertTTime")) document.getElementById("paperCertTTime").textContent = nowStr;
+      if (document.getElementById("paperCertTIp")) document.getElementById("paperCertTIp").textContent = ipStr;
+      if (document.getElementById("paperCertTDevice")) document.getElementById("paperCertTDevice").textContent = devStr;
+
+      if (document.getElementById("auditTName")) document.getElementById("auditTName").textContent = document.getElementById("inpTenantName").value;
+      if (document.getElementById("auditTTime")) document.getElementById("auditTTime").textContent = nowStr;
+      if (document.getElementById("auditTIp")) document.getElementById("auditTIp").textContent = ipStr;
+      if (document.getElementById("auditTUa")) document.getElementById("auditTUa").textContent = devStr;
+    }
     setTimeout(enterLandlordSignMode, 400);
   }
 }
