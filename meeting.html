@@ -879,14 +879,14 @@ const DEFAULT_EVENTS = {
     time: '18:30-20:30',
     venue: '青樓中式餐酒館（台北市松山區八德路四段512-1號）',
     mealMode: 'TABLE',
-    agendaImgUrl: 'https://sandy-line-bot.onrender.com/static/uploads/agendaImgUrl_34c01983.jpg',
+    agendaImgUrl: 'assets/rtt_agenda.jpg',
     agendaLines: [
       { time: '18:30~19:00', topic: 'Reception 接待與報到', speaker: 'ALL' },
       { time: '19:00~19:40', topic: 'KISQALI Does it Again: A Moment for OS in NATALEE', speaker: '主講人：李春輝醫師（基隆長庚）/ 座長：簡志穎醫師（基隆長庚）' },
       { time: '19:40~20:20', topic: 'Empowering the Treatment Journey: AE Management and QOL in KISQALI Treatment', speaker: '主講人：張悅詩醫師（基隆長庚）/ 座長：黃彥閔醫師（基隆長庚）' },
       { time: '20:20~20:30', topic: 'Discussion 綜合座談與討論', speaker: '全體與會貴賓' }
     ],
-    menuImgUrl: 'https://sandy-line-bot.onrender.com/static/uploads/menuImgUrl_d7ec8670.jpg',
+    menuImgUrl: 'assets/rtt_menu.jpg',
     menuItems: [
       '荷風海皇五拼盤（龍蝦、烏魚子、中卷、九孔、蟹肉棒）',
       'XO醬炒雙鮮',
@@ -1809,9 +1809,19 @@ function renderCurrentEvent() {
   document.getElementById('sheetEventVenue').textContent = ev.venue;
 
   // 1. 議程展示 (圖與條列智能呈現)
-  if (ev.agendaImgUrl && ev.agendaImgUrl.trim() !== '') {
+  let activeAgendaSrc = ev.agendaImgUrl;
+  if (!activeAgendaSrc || activeAgendaSrc.includes('onrender.com') || ev.id === 'event_1204_1317') {
+    activeAgendaSrc = 'assets/rtt_agenda.jpg';
+  }
+  if (activeAgendaSrc && activeAgendaSrc.trim() !== '') {
+    const agendaEl = document.getElementById('agendaImg');
+    agendaEl.onerror = function() {
+      if (this.src !== 'assets/rtt_agenda.jpg' && !this.src.endsWith('assets/rtt_agenda.jpg')) {
+        this.src = 'assets/rtt_agenda.jpg';
+      }
+    };
+    agendaEl.src = activeAgendaSrc;
     document.getElementById('agendaImgBox').style.display = 'block';
-    document.getElementById('agendaImg').src = ev.agendaImgUrl;
     document.getElementById('agendaZoomTag').style.display = 'inline-block';
   } else {
     document.getElementById('agendaImgBox').style.display = 'none';
@@ -1848,9 +1858,19 @@ function renderCurrentEvent() {
     menuModeBadge.textContent = '中式桌宴 · 免選主餐';
     menuModeBadge.className = 'badge bg-success-subtle text-success border border-success small';
 
-    if (ev.menuImgUrl && ev.menuImgUrl.trim() !== '') {
+    let activeMenuSrc = ev.menuImgUrl;
+    if (!activeMenuSrc || activeMenuSrc.includes('onrender.com') || ev.id === 'event_1204_1317') {
+      activeMenuSrc = 'assets/rtt_menu.jpg';
+    }
+    if (activeMenuSrc && activeMenuSrc.trim() !== '') {
+      const menuEl = document.getElementById('menuImg');
+      menuEl.onerror = function() {
+        if (this.src !== 'assets/rtt_menu.jpg' && !this.src.endsWith('assets/rtt_menu.jpg')) {
+          this.src = 'assets/rtt_menu.jpg';
+        }
+      };
+      menuEl.src = activeMenuSrc;
       document.getElementById('menuImgBox').style.display = 'block';
-      document.getElementById('menuImg').src = ev.menuImgUrl;
     } else {
       document.getElementById('menuImgBox').style.display = 'none';
     }
@@ -1893,9 +1913,19 @@ function renderCurrentEvent() {
     menuModeBadge.textContent = '精緻套餐 · 專屬選餐';
     menuModeBadge.className = 'badge bg-primary-subtle text-primary border border-primary small';
 
-    if (ev.menuImgUrl && ev.menuImgUrl.trim() !== '') {
+    let activeMenuSrc = ev.menuImgUrl;
+    if (!activeMenuSrc || activeMenuSrc.includes('onrender.com') || ev.id === 'event_1204_1317') {
+      activeMenuSrc = 'assets/rtt_menu.jpg';
+    }
+    if (activeMenuSrc && activeMenuSrc.trim() !== '') {
+      const menuEl = document.getElementById('menuImg');
+      menuEl.onerror = function() {
+        if (this.src !== 'assets/rtt_menu.jpg' && !this.src.endsWith('assets/rtt_menu.jpg')) {
+          this.src = 'assets/rtt_menu.jpg';
+        }
+      };
+      menuEl.src = activeMenuSrc;
       document.getElementById('menuImgBox').style.display = 'block';
-      document.getElementById('menuImg').src = ev.menuImgUrl;
     } else {
       document.getElementById('menuImgBox').style.display = 'none';
     }

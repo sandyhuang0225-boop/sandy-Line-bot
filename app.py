@@ -2518,6 +2518,10 @@ def api_meeting_events():
                     if len(r) >= 9 and r[8].strip():
                         try:
                             ev = json.loads(r[8])
+                            # 確保長庚場次或舊死鏈自動映射至持久性 assets 路徑
+                            if '1204' in ev.get('id', '') or ev.get('id') == 'event_1204_1317':
+                                ev['agendaImgUrl'] = 'assets/rtt_agenda.jpg'
+                                ev['menuImgUrl'] = 'assets/rtt_menu.jpg'
                             events[ev['id']] = ev
                             # 相容處理：若 event_id 含 1204，同時映射 6124，避免先前發出的舊連結失效
                             if '1204' in ev['id']:
