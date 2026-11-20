@@ -1870,7 +1870,8 @@ function sendToEmail() {
 // 複製房客專屬安全簽約連結 (自動帶入 &role=tenant 唯讀鎖定模式)
 function copySigningLink(btn) {
   const pKey = document.getElementById("selProperty").value;
-  const url = `${window.location.origin}${window.location.pathname}?p=${pKey}&role=tenant`;
+  const base = window.location.origin + window.location.pathname.replace('lease.html', '');
+  const url = `${base}sign.html?p=${pKey}`;
   navigator.clipboard.writeText(url).then(() => {
     const orig = btn.innerHTML;
     btn.innerHTML = `<i class="fa-solid fa-check me-1"></i>已複製房客專屬防竄改連結！`;
@@ -1882,20 +1883,12 @@ function copySigningLink(btn) {
   });
 }
 
-// 切換房客視角 / 房東管理模式 (支援即時無刷新切換 + URL連動)
+// 預覽房客簽署視角 (直接開啟 100% 獨立的 sign.html 房客專屬簽署頁)
 function toggleTenantView() {
-  const isCurrentlyTenant = document.body.classList.contains("role-tenant");
   const pKey = document.getElementById("selProperty").value;
-
-  if (isCurrentlyTenant) {
-    // 切換回房東模式
-    applyRoleMode(null);
-    history.replaceState(null, '', `${window.location.pathname}?p=${pKey}`);
-  } else {
-    // 切換為房客唯讀鎖定視角
-    applyRoleMode('tenant');
-    history.replaceState(null, '', `${window.location.pathname}?p=${pKey}&role=tenant`);
-  }
+  const base = window.location.origin + window.location.pathname.replace('lease.html', '');
+  const url = `${base}sign.html?p=${pKey}`;
+  window.open(url, '_blank');
 }
 
 // 權限視角控制 (防止房客竄改金額與條款，利用 class 與 DOM 雙重強力防護)

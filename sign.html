@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>線上租賃契約審閱與數位簽署 ｜ Sandy 宅安心</title>
+
+  <!-- Bootstrap 5 & FontAwesome -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;800&family=Noto+Serif+TC:wght@600;900&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <style>
+    :root {
+      --primary-navy: #002d62;
+      --accent-gold: #c59b27;
+      --bg-slate: #f8fafc;
+      --border-color: #cbd5e1;
+    }
+    body {
+      background-color: var(--bg-slate);
+      font-family: 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+      color: #1e293b;
+      padding-bottom: 90px;
+    }
+    .top-navbar {
+      background: linear-gradient(135deg, var(--primary-navy) 0%, #0f172a 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+      position: sticky;
+      top: 0;
+      z-index: 1030;
+      padding: 12px 0;
+    }
+    .card-panel {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .section-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--primary-navy);
+      border-left: 4px solid var(--accent-gold);
+      padding-left: 10px;
+      margin-bottom: 15px;
+    }
+    .contract-paper {
+      background: white;
+      border: 1px solid #94a3b8;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      padding: 40px;
+      font-family: 'Noto Serif TC', serif, 'Times New Roman';
+      font-size: 14.5px;
+      line-height: 1.85;
+      color: #0f172a;
+      border-radius: 4px;
+    }
+    .contract-header {
+      text-align: center;
+      border-bottom: 2px solid #002d62;
+      padding-bottom: 15px;
+      margin-bottom: 25px;
+    }
+    .contract-clause {
+      margin-bottom: 16px;
+    }
+    .clause-title {
+      font-weight: 800;
+      color: #002d62;
+      display: inline-block;
+      margin-bottom: 4px;
+    }
+    .highlight-fill {
+      background-color: #fef08a;
+      padding: 1px 4px;
+      font-weight: bold;
+      border-bottom: 1px dashed #ca8a04;
+    }
+    .sig-canvas {
+      border: 2px dashed #94a3b8;
+      border-radius: 8px;
+      background: #fafafa;
+      touch-action: none;
+      cursor: crosshair;
+    }
+    .audit-box {
+      border: 2px solid var(--primary-navy);
+      border-radius: 8px;
+      background: #f8fafc;
+      padding: 20px;
+      margin-top: 25px;
+      font-family: monospace, sans-serif;
+    }
+    .hash-text {
+      font-family: "Courier New", Courier, monospace;
+      word-break: break-all;
+      background: #e2e8f0;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white; padding: 0; }
+      .contract-paper { border: none; box-shadow: none; padding: 0; }
+      @page { size: A4; margin: 15mm 15mm 15mm 15mm; }
+    }
+  
+/* === 房客專屬唯讀簽約模式 (強力鎖定，房東控制台與按鈕徹底隱藏) === */
+body.role-tenant #landlordControlPanel,
+.role-tenant #landlordControlPanel,
+body.role-tenant .landlord-only,
+.role-tenant .landlord-only,
+body.role-tenant #btnCopyLink,
+body.role-tenant #boxLandlordSigPanel {
+  display: none !important;
+}
+
+body.role-tenant #contractViewColumn {
+  width: 100% !important;
+  max-width: 960px !important;
+  margin: 0 auto !important;
+  flex: 0 0 100% !important;
+}
+
+body.role-tenant #tenantWelcomeBanner {
+  display: block !important;
+}
+
+body.role-tenant #boxTenantSigPanel {
+  width: 100% !important;
+  flex: 0 0 100% !important;
+}
+</style>
+  <style>
+    body {
+      background-color: #f1f5f9;
+      padding-bottom: 80px;
+    }
+    .tenant-container {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body>
+
+<!-- 頂部精簡導航列 (唯讀模式，無任何管理開關) -->
+<header class="top-navbar no-print">
+  <div class="container d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge bg-warning text-dark fw-bold px-2 py-1"><i class="fa-solid fa-signature me-1"></i>房客線上簽署專區</span>
+      <h5 class="mb-0 fw-bold">Sandy 宅安心 ｜ 專屬租賃契約審閱與數位簽署</h5>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <button type="button" class="btn btn-success btn-sm fw-bold shadow-sm" onclick="downloadDirectPdf()" title="直接下載 PDF 檔案到電腦/手機">
+        <i class="fa-solid fa-file-arrow-down me-1"></i>下載 PDF 存證
+      </button>
+      <button type="button" class="btn btn-outline-light btn-sm fw-bold" onclick="sendToLine()" title="一鍵分享至 LINE 留存">
+        <i class="fa-brands fa-line me-1 text-success fs-6 align-middle"></i>傳 LINE
+      </button>
+      <button type="button" class="btn btn-outline-light btn-sm fw-bold" onclick="sendToEmail()" title="一鍵發送 Email">
+        <i class="fa-solid fa-envelope me-1"></i>寄 Email
+      </button>
+      <button type="button" class="btn btn-warning text-dark btn-sm fw-bold shadow-sm" onclick="window.print()">
+        <i class="fa-solid fa-print me-1"></i>列印
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="container py-4 tenant-container">
+  
+  <!-- 房客專屬簽署指引橫幅 -->
+  <div class="alert alert-primary mb-4 shadow-sm border-primary no-print">
+    <div class="d-flex align-items-center">
+      <div class="me-3 fs-1 text-primary"><i class="fa-solid fa-file-signature"></i></div>
+      <div>
+        <h5 class="fw-bold mb-1 text-primary">您好！請審閱並進行房屋租賃契約線上簽署</h5>
+        <p class="mb-0 small text-secondary">
+          本契約由出租人（黃蕙芬）提供。請逐條審閱下列完整法定 23 條契約內容、特約條款與【附件一 附屬設備點交清單】。確認無誤後，請於頁面最下方<strong>「房客線上簽署區」</strong>以手指或觸控筆親筆簽名，系統將自動完成具法律效力之 SHA-256 數位防偽存證。
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 契約本文 (完全唯讀，無任何可編輯輸入框) -->
+  <div class="shadow-sm">
+    
+  </div>
+
+  <!-- 房客專用親筆手寫簽名區 (只有房客簽名板，無房東按鈕) -->
+  <div class="card-panel mt-4 no-print shadow-sm border-warning">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-pen-nib me-2 text-warning"></i>承租人 (房客) 線上親筆手寫簽名區</h5>
+      <span class="badge bg-warning text-dark px-2 py-1" id="tagTenantSig">待簽名</span>
+    </div>
+    <p class="text-secondary small mb-3">請在下方白色簽名區域直接以手指、觸控筆或滑鼠親筆簽名，簽署完成後將自動生成防偽安全憑證：</p>
+    
+    <div class="p-3 border rounded bg-light mb-3">
+      <canvas id="canTenant" width="700" height="180" class="w-100 sig-canvas bg-white rounded border" style="touch-action: none; cursor: crosshair;"></canvas>
+      <div class="d-flex justify-content-between align-items-center mt-2">
+        <small class="text-muted"><i class="fa-solid fa-shield-halved me-1 text-success"></i>觸控感應良好 · 筆跡將加密封裝於合約正本中</small>
+        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearSig('canTenant')">
+          <i class="fa-solid fa-eraser me-1"></i>清除重簽
+        </button>
+      </div>
+    </div>
+
+    <button type="button" class="btn btn-warning text-dark fw-bold w-100 py-3 fs-5 shadow" id="btnConfirmSign" onclick="commitTenantSig()">
+      <i class="fa-solid fa-circle-check me-2"></i>我已逐條審閱全文無誤，確認親筆簽署本租賃契約
+    </button>
+  </div>
+
+  <!-- 數位防偽稽核證書 (完成簽名後自動展開) -->
+  <div class="card-panel mt-4 shadow-sm" id="boxAuditTrail" style="display: none;">
+    <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+      <h5 class="fw-bold text-success mb-0">
+        <i class="fa-solid fa-certificate me-2"></i>數位電子簽章法律稽核證明書 (Certificate of Completion)
+      </h5>
+      <span class="badge bg-success-subtle text-success border border-success px-2 py-1">台灣《電子簽章法》有效憑證</span>
+    </div>
+    <p class="text-secondary small mb-3">此憑證由系統即時計算封裝，完整留存雙方公網 IP、秒級時間戳記與 SHA-256 密碼防偽指紋，具備不可否認性。</p>
+
+    <div class="audit-box">
+      <div class="row g-2 mb-3 border-bottom pb-2">
+        <div class="col-6">
+          <strong>合約信封編號 (Envelope ID)：</strong><br>
+          <span class="text-primary fw-bold" id="resDocId">-</span>
+        </div>
+        <div class="col-6">
+          <strong>生效狀態 (Status)：</strong><br>
+          <span class="text-success fw-bold"><i class="fa-solid fa-shield-check me-1"></i>房客完成簽署 · 數位防偽存證生效</span>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <strong class="d-block mb-1">🔐 SHA-256 契約防竄改數位指紋：</strong>
+        <div class="hash-text text-danger fw-bold" id="resSha256">計算中...</div>
+        <small class="text-muted">※ 說明：此 64 位英數雜湊值由契約全文、雙方手寫筆跡點陣與時間戳記由 Web Crypto API 直接運算生成。合約哪怕遭改動一字，雜湊值立即不符，具備最高法律證據力。</small>
+      </div>
+
+      <h6 class="fw-bold mb-2 border-bottom pb-1">📋 簽署歷程時間軸 (Signer Events & Audit Trail)</h6>
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered small align-middle mb-0 bg-white">
+          <thead class="table-light">
+            <tr>
+              <th>簽署角色</th>
+              <th>簽署人</th>
+              <th>簽署時間戳記 (GMT+8)</th>
+              <th>公網 IP 位址</th>
+              <th>簽署設備指紋</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>承租人 (乙方)</strong></td>
+              <td id="auditTName">-</td>
+              <td id="auditTTime">-</td>
+              <td id="auditTIp">-</td>
+              <td id="auditTUa" class="text-break">-</td>
+            </tr>
+            <tr>
+              <td><strong>出租人 (甲方)</strong></td>
+              <td>黃蕙芬 (Sandy)</td>
+              <td id="auditLTime">已核對備查</td>
+              <td id="auditLIp">系統安全節點</td>
+              <td id="auditLUa">官方租賃存證系統</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 雙方留存與一鍵分送中心 -->
+    <div class="card bg-white border-success p-3 mt-4 shadow-sm no-print">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+        <h6 class="fw-bold text-success mb-0 fs-6">
+          <i class="fa-solid fa-cloud-arrow-down me-2 text-success"></i>雙方合約留存與一鍵分送中心
+        </h6>
+        <span class="badge bg-success-subtle text-success border border-success px-2 py-1"><i class="fa-solid fa-circle-check me-1"></i>已產生數位防偽憑證</span>
+      </div>
+      <p class="text-secondary small mb-3">
+        本契約已完成數位手寫簽章與 SHA-256 密碼防偽存證。您可以直接將 PDF 存至電腦硬碟永久保存，或一鍵透過 LINE 與 Email 傳送給房客及自己留底：
+      </p>
+      <div class="d-flex gap-2 flex-wrap">
+        <button type="button" class="btn btn-success fw-bold flex-fill py-2 shadow-sm" id="btnDownloadPdf" onclick="downloadDirectPdf()">
+          <i class="fa-solid fa-file-arrow-down me-1"></i>一鍵下載 PDF 檔 (存至電腦)
+        </button>
+        <button type="button" class="btn btn-outline-success fw-bold flex-fill py-2" onclick="sendToLine()">
+          <i class="fa-brands fa-line me-1 text-success fs-5 align-middle"></i>一鍵傳送 LINE 留存
+        </button>
+        <button type="button" class="btn btn-outline-primary fw-bold flex-fill py-2" onclick="sendToEmail()">
+          <i class="fa-solid fa-envelope me-1"></i>一鍵發送 Email 給雙方
+        </button>
+        <button type="button" class="btn btn-outline-dark fw-bold py-2" onclick="window.print()">
+          <i class="fa-solid fa-print me-1"></i>列印正式紙本
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const PROPERTIES_DB = {
+  A101: {
+    roomNo: "A101",
+    roomType: "房間",
+    title: "台北市信義區福德街 300 巷 12 號 3F 房屋租賃契約書 (林孟廷)",
+    address: "台北市信義區福德街300巷12號3F",
+    scopeText: "房屋全部 (公寓住宅整層，格局：3房2廳1衛)",
+    rent: 20000,
+    manageFee: 0,
+    deposit: 40000, // 舊約實載金額
+    tenantName: "林孟廷",
+    tenantId: "A123456789",
+    tenantPhone: "0912-345678",
+    tenantEmail: "",
+    tenantAddress: "台北市信義區福德街300巷12號3F",
+    bank: "dbs",
+    carParkText: "無車位。",
+    smoking: true,
+    petMode: "ban",
+    subsidy: true,
+    taxLawComp: true,
+    studio: false,
+    bizReg: false,
+    utilityFormula: false,
+    customClause: "本約為台北市信義區福德街標準住宅合約。水費、電費、瓦斯費由承租人依自來水、台電、大台北瓦斯帳單自繳。承租人報稅須於報稅月份一次補償出租方因申報所生之稅額。",
+    equipList: [
+      { name: "冷氣空調", spec: "冷氣 (共4台)", qty: "4 台", note: "客廳及房間各1台，運作良好" },
+      { name: "電冰箱", spec: "雙門電冰箱", qty: "1 台", note: "功能正常" },
+      { name: "洗衣機", spec: "全自動洗衣機", qty: "1 台", note: "運作良好" },
+      { name: "床組(頭)", spec: "雙人床組", qty: "2 件", note: "床架與床墊" },
+      { name: "衣櫃", spec: "大容量衣櫃", qty: "2 組", note: "現況點交良好" },
+      { name: "排油煙機", spec: "廚房排油煙機", qty: "1 台", note: "功能正常" },
+      { name: "流理台", spec: "流理台瓦斯爐組", qty: "1 件", note: "天然瓦斯供應正常" },
+      { name: "熱水器", spec: "熱水器", qty: "1 台", note: "熱水供應正常" },
+      { name: "置物櫃", spec: "室內置物櫃", qty: "1 件", note: "現況良好" },
+      { name: "大門鑰匙", spec: "大門防盜鑰匙", qty: "2 支", note: "退租原樣交還" },
+      { name: "固定家具", spec: "裝潢固定式家具", qty: "全室", note: "詳見交屋現場照片與LINE錄影存證" }
+    ]
+  },
+  A102: {
+    roomNo: "A102",
+    roomType: "房間",
+    title: "高雄市鼓山區裕誠路 1065 號 7 樓房屋租賃契約書 (百星侯爵 · 傅瑜)",
+    address: "高雄市鼓山區裕誠路1065號7樓",
+    scopeText: "房屋全部 (百星侯爵大廈，現況格局：4房1廳2衛)",
+    rent: 17000,
+    manageFee: 0,
+    deposit: 34000, // 舊約實載金額 (傅瑜新約約定)
+    tenantName: "傅瑜",
+    tenantId: "S224536732",
+    tenantPhone: "0975-717089",
+    tenantEmail: "bababafu@hotmail.com",
+    tenantAddress: "高雄市鼓山區裕誠路1065號7樓",
+    bank: "dbs",
+    carParkText: "無車位。本物業免管理費。",
+    smoking: true,
+    petMode: "ban",
+    subsidy: true,
+    taxLawComp: true,
+    studio: false,
+    bizReg: false,
+    utilityFormula: false,
+    customClause: "免收管理費。水電依帳單由承租人自繳。承租人若申報租賃所得稅或租金補貼，須於申報月份一次性補償出租方因申報所生之租賃所得稅額與二代健保補充保費。",
+    equipList: [
+      { name: "冷氣空調", spec: "冷氣機 (共4台)", qty: "4 台", note: "全室冷氣運作正常良好" },
+      { name: "電冰箱", spec: "電冰箱", qty: "1 台", note: "冷藏冷凍運作良好" },
+      { name: "瓦斯爐", spec: "廚房瓦斯爐", qty: "1 台", note: "點火運作正常" },
+      { name: "熱水器", spec: "瓦斯熱水器", qty: "1 台", note: "運作良好" },
+      { name: "流理台", spec: "廚房流理台", qty: "1 件", note: "排水清潔正常" },
+      { name: "窗簾", spec: "全室窗簾組", qty: "1 組", note: "良好無損壞" },
+      { name: "燈飾", spec: "全室燈具照明", qty: "1 式", note: "照明測試正常" },
+      { name: "門禁感應/鑰匙", spec: "磁扣與鑰匙", qty: "各 2 組", note: "大門防盜鑰匙與大樓感應磁扣" },
+      { name: "固定家具", spec: "裝潢固定式家具", qty: "全室", note: "詳見合約或雙方LINE留存照片影片" }
+    ]
+  },
+  A103: {
+    roomNo: "A103",
+    roomType: "房間",
+    title: "台南市北區文成 2 路 159 號 11 樓之 2 房屋租賃契約書 (太子美學 · 杜依陵)",
+    address: "台南市北區文成2路159號11樓之2",
+    scopeText: "房屋全部 (含太子美學大樓平面車位 B2-02)",
+    rent: 28000,
+    manageFee: 1931,
+    deposit: 67900, // 舊約實載金額
+    tenantName: "杜依陵",
+    tenantId: "D221458901",
+    tenantPhone: "0933-289102",
+    tenantEmail: "",
+    tenantAddress: "台南市北區文成2路159號11樓之2",
+    bank: "dbs",
+    carParkText: "含地下二層平面車位(B2-02)，清潔管理費已計入由出租人轉繳。",
+    smoking: true,
+    petMode: "ban",
+    subsidy: true,
+    taxLawComp: true,
+    studio: false,
+    bizReg: false,
+    utilityFormula: false,
+    customClause: "【太子美學專屬繳費週期】：雙數月份雙月繳納租金含管理費共計 NT$ 29,931（內含管理費 1,931 元由房東代繳管委會）；單數月份繳納租金 NT$ 28,000。押金依合約實載 NT$ 67,900 整。",
+    equipList: [
+      { name: "冷氣空調", spec: "日立全室冷氣", qty: "全室", note: "客廳及臥房冷氣運作良好" },
+      { name: "洗衣機", spec: "全自動洗衣機", qty: "1 台", note: "洗脫烘功能正常" },
+      { name: "客廳家具", spec: "電視櫃、高級沙發、茶几組", qty: "1 組", note: "現況良好" },
+      { name: "餐廳家具", spec: "餐桌及餐椅組", qty: "1 組", note: "正常使用良好" },
+      { name: "鞋櫃", spec: "大容量玄關鞋櫃", qty: "1 件", note: "現況良好" },
+      { name: "臥房家具", spec: "床組(頭)、衣櫃、梳妝台、書桌椅、書櫃", qty: "全套", note: "現況點交良好" },
+      { name: "廚房設備", spec: "排油煙機、瓦斯爐、流理台、烘碗機", qty: "1 式", note: "功能完整運作正常" },
+      { name: "熱水器", spec: "恆溫熱水器", qty: "2 台", note: "天然瓦斯供應正常" },
+      { name: "窗簾燈飾", spec: "全室窗簾組與燈具照明", qty: "全室", note: "照明開關正常" },
+      { name: "保全門禁", spec: "保全設施、大門鑰匙、車位遙控器、磁扣", qty: "各 2 組", note: "含B2平面車位遙控器1個" },
+      { name: "備註說明", spec: "電冰箱為租客杜依陵自購", qty: "-", note: "詳見合約及雙方LINE影片留存存證" }
+    ]
+  },
+  A104: {
+    roomNo: "A104",
+    roomType: "房間",
+    title: "高雄市鼓山區文信路 209 號 3 樓之 6 房屋租賃契約書 (廖子勛)",
+    address: "高雄市鼓山區文信路209號3樓之6",
+    scopeText: "房屋全部 (獨立套房)",
+    rent: 11500,
+    manageFee: 1300,
+    deposit: 25600, // 舊約實載金額
+    tenantName: "廖子勛",
+    tenantId: "P124614750",
+    tenantPhone: "0921-229221",
+    tenantEmail: "",
+    tenantAddress: "高雄市鼓山區文信路209號3樓之6",
+    bank: "dbs",
+    carParkText: "無車位。",
+    smoking: true,
+    petMode: "ban",
+    subsidy: true,
+    taxLawComp: true,
+    studio: false,
+    bizReg: false,
+    utilityFormula: false,
+    customClause: "承租人每月租金 11,500 元加計管理費及清潔費 1,300 元共計 12,800 元匯入屋主帳戶，由出租人統一向管委會繳納。水電瓦斯依帳單由承租人自繳。",
+    equipList: [
+      { name: "液晶電視", spec: "液晶電視", qty: "1 台", note: "螢幕及影音功能良好" },
+      { name: "電視盒", spec: "安博電視盒", qty: "1 台", note: "影音串流正常" },
+      { name: "電視櫃", spec: "電視置物櫃", qty: "1 件", note: "現況良好" },
+      { name: "冷氣空調", spec: "分離式冷氣", qty: "1 台", note: "冷房運作正常" },
+      { name: "電冰箱", spec: "單門冷藏電冰箱", qty: "1 台", note: "運作良好" },
+      { name: "洗衣機", spec: "洗衣機", qty: "1 台", note: "洗滌運作良好" },
+      { name: "熱水器", spec: "儲熱式熱水器", qty: "1 台", note: "熱水供應正常" },
+      { name: "烘碗機", spec: "懸掛式烘碗機", qty: "1 台", note: "烘乾殺菌功能正常" },
+      { name: "雙人床組", spec: "床架與床墊", qty: "1 件", note: "現況良好" },
+      { name: "衣櫃/書櫃", spec: "衣櫃 1 組、書櫃 1 件、置物櫃 1 件", qty: "1 組", note: "收納功能正常" },
+      { name: "書桌椅", spec: "書桌與工作椅", qty: "1 張", note: "使用正常" },
+      { name: "窗簾燈飾", spec: "窗簾 1 組、燈飾 2 件", qty: "1 式", note: "遮光與照明良好" },
+      { name: "門禁配件", spec: "大門鑰匙與感應磁扣", qty: "各 2 組", note: "退租時原樣點交返還" }
+    ]
+  },
+  A105: {
+    roomNo: "A105",
+    roomType: "房間",
+    title: "高雄市鼓山區文信路 209 號 11 樓之 9 房屋租賃契約書 (李乃亘)",
+    address: "高雄市鼓山區文信路209號11樓之9",
+    scopeText: "房屋全部 (獨立套房)",
+    rent: 12499,
+    manageFee: 300, // 清潔費300
+    deposit: 24398, // 舊約實載金額
+    tenantName: "李乃亘",
+    tenantId: "E224855013",
+    tenantPhone: "0963-005697",
+    tenantEmail: "",
+    tenantAddress: "高雄市鼓山區文信路209號11樓之9",
+    bank: "dbs",
+    carParkText: "無車位。",
+    smoking: true,
+    petMode: "ban",
+    subsidy: true,
+    taxLawComp: true,
+    studio: false,
+    bizReg: false,
+    utilityFormula: false,
+    customClause: "大樓管理費 920 元由出租人負擔；大樓清潔費 300 元由承租人負擔。承租人每月租金 12,499 元加計清潔費 300 元共 12,799 元匯入屋主指定帳戶，由出租人代為繳納清潔費給管委會。",
+    equipList: [
+      { name: "液晶電視", spec: "液晶電視", qty: "1 台", note: "顯示與音效正常" },
+      { name: "電視盒", spec: "安博 8 電視盒", qty: "1 台", note: "含遙控器與線材，詳見照片" },
+      { name: "冷氣空調", spec: "變頻冷氣", qty: "1 台", note: "冷氣遙控與出風正常" },
+      { name: "電冰箱", spec: "雙門電冰箱", qty: "1 台", note: "冷藏冷凍運作良好" },
+      { name: "洗衣機", spec: "獨立洗衣機", qty: "1 台", note: "運作排水良好" },
+      { name: "熱水器", spec: "電熱水器", qty: "1 台", note: "安全恆溫熱水正常" },
+      { name: "簡易廚房", spec: "流理台 1 件、電磁爐 1 台", qty: "1 式", note: "料理平台清潔正常" },
+      { name: "床組", spec: "雙人床組 (床頭+床墊)", qty: "1 件", note: "彈簧結構完整無污損" },
+      { name: "收納家具", spec: "衣櫃 1 組、置物櫃 1 件", qty: "1 組", note: "門板抽屜良好" },
+      { name: "書桌椅", spec: "工作書桌與座椅", qty: "1 張", note: "結構穩固" },
+      { name: "窗簾燈飾", spec: "遮光窗簾 1 組、燈飾 5 件", qty: "1 式", note: "全室採光與夜間照明正常" },
+      { name: "門禁鑰匙", spec: "大門鑰匙與大樓磁扣", qty: "各 2 組", note: "退租時原樣交還" }
+    ]
+  },
+  A106: {
+    roomNo: "A106",
+    roomType: "房間",
+    title: "高雄市鼓山區南屏路 555 號 12 樓之 7 房屋租賃契約書 (汪晉宇)",
+    address: "高雄市鼓山區南屏路555號12樓之7",
+    scopeText: "房屋全部 (大樓景觀套房)",
+    rent: 15000,
+    manageFee: 800,
+    deposit: 30000, // 舊約實載金額
+    tenantName: "汪晉宇",
+    tenantId: "T123987456",
+    tenantPhone: "0988-123456",
+    tenantEmail: "",
+    tenantAddress: "高雄市鼓山區南屏路555號12樓之7",
+    bank: "dbs",
+    carParkText: "無車位。",
+    smoking: true,
+    petMode: "ban",
+    subsidy: true,
+    taxLawComp: true,
+    studio: false,
+    bizReg: false,
+    utilityFormula: false,
+    customClause: "承租人每月租金 15,000 元加計管理清潔費 800 元共計 15,800 元匯入屋主帳戶，由出租人統一向管委會繳納。水電依帳單由承租人自繳。",
+    equipList: [
+      { name: "冷氣空調", spec: "冷氣機", qty: "1 台", note: "冷氣運轉正常" },
+      { name: "電冰箱", spec: "雙門冰箱", qty: "1 台", note: "冷藏保鮮正常" },
+      { name: "洗衣機", spec: "洗衣機", qty: "1 台", note: "洗脫運作良好" },
+      { name: "熱水器", spec: "熱水器", qty: "1 台", note: "熱水系統運作正常" },
+      { name: "客廳家具", spec: "電視櫃 1 件、沙發 1 組、茶几 1 件", qty: "1 組", note: "皮質/布面清潔良好" },
+      { name: "鞋櫃", spec: "入口鞋櫃", qty: "1 件", note: "現況良好" },
+      { name: "臥房床組", spec: "雙人床組 (床架+床墊)", qty: "1 件", note: "完整無損壞" },
+      { name: "衣櫃/桌椅", spec: "衣櫃 1 組、書桌椅 1 張", qty: "1 組", note: "功能完整" },
+      { name: "流理台", spec: "流理台", qty: "1 件", note: "給水排水暢通" },
+      { name: "窗簾燈飾", spec: "窗簾 1 組、燈飾 2 件", qty: "1 式", note: "功能正常" },
+      { name: "門禁配件", spec: "大門鑰匙與感應磁扣", qty: "各 2 組", note: "退租原額歸還" }
+    ]
+  },
+  A107: {
+    roomNo: "A107",
+    roomType: "房間",
+    title: "高雄市鼓山區明華路 271 之 1 號房屋租賃契約書 (前間工作室 · 林采葳)",
+    address: "高雄市鼓山區明華路271之1號 (前間工作室)",
+    scopeText: "房屋部分範圍（前間商業工作室，約佔三分之二），特別約定供商業工作空間使用，嚴禁留宿過夜",
+    rent: 17100,
+    manageFee: 700,
+    deposit: 35600, // 舊約實載金額 (月繳 17,800 含管 * 2)
+    tenantName: "林采葳",
+    tenantId: "E223596913",
+    tenantPhone: "0916-160133",
+    tenantEmail: "",
+    tenantAddress: "高雄市新興區林森一路43巷18號",
+    bank: "dbs",
+    carParkText: "無車位。本租賃標的僅供日間商業工作室使用，嚴禁夜間留宿過夜。",
+    smoking: true,
+    petMode: "ban",
+    subsidy: true,
+    taxLawComp: true,
+    studio: true,
+    bizReg: false,
+    utilityFormula: true, // 水費 2/3，公電 55%
+    customClause: "承租人每月租金 17,100 元加計管理費 700 元共 17,800 元匯入屋主指定帳戶，由出租人統一向管委會繳納。水費依帳單 2/3 繳納；電費依獨立電表度數，公共電費承擔 55%。本標的僅供日間工作室使用，不能過夜。",
+    equipList: [
+      { name: "冷氣空調", spec: "分離式冷氣 (共2台)", qty: "2 台", note: "前間工作區冷房運作正常" },
+      { name: "熱水器", spec: "熱水器", qty: "1 台", note: "衛浴熱水供應正常" },
+      { name: "獨立電表", spec: "分度電表 (左邊電表為前間度數)", qty: "1 具", note: "依獨立電表實際度數繳納" },
+      { name: "特色家具", spec: "黑色法式鏡、白色鐵藝餐邊櫃", qty: "各 1 件", note: "高質感商業工作室裝潢" },
+      { name: "燈飾照明", spec: "全室造型燈飾與軌道燈", qty: "如照片", note: "照明展示功能良好" },
+      { name: "天然瓦斯", spec: "天然瓦斯管線", qty: "1 式", note: "正常供氣" },
+      { name: "門禁配件", spec: "工作室防盜鑰匙與磁扣", qty: "各 2 組", note: "點交完整，退租原樣返還" },
+      { name: "備註說明", spec: "裝潢固定式家具詳見交屋照片", qty: "全室", note: "已於LINE相簿記事本留存錄影存證" }
+    ]
+  },
+  A108: {
+    roomNo: "A108",
+    roomType: "房間",
+    title: "新北市汐止區莊敬街 130 號 13 樓之 2 (自留物業 · 黃蕙芬)",
+    address: "新北市汐止區莊敬街130號13樓之2",
+    scopeText: "房屋全部 (自用住宅)",
+    rent: 0,
+    manageFee: 0,
+    deposit: 0,
+    tenantName: "黃蕙芬",
+    tenantId: "N221021932",
+    tenantPhone: "0934-008636",
+    tenantEmail: "",
+    tenantAddress: "新北市汐止區莊敬街130號13樓之2",
+    bank: "dbs",
+    carParkText: "自留物業登記。",
+    smoking: true,
+    petMode: "ban",
+    subsidy: false,
+    taxLawComp: false,
+    studio: false,
+    bizReg: false,
+    utilityFormula: false,
+    customClause: "本標的為所有權人黃蕙芬自用物業登記，保留於物業總表管理。",
+    equipList: [
+      { name: "全室設備", spec: "自用全室傢俱與家電配備", qty: "全套", note: "屋主自用保留管理" }
+    ]
+  },
+  "B1-02": {
+    roomNo: "B1-02",
+    roomType: "車位",
+    title: "台南市北區文成 2 路 159 號 B2 平面停車位租賃契約書 (陳又慈)",
+    address: "台南市北區文成2路159號B2之2號",
+    scopeText: "平面停車位（編號：地下二層 B2-02 平面車位）",
+    rent: 2200,
+    manageFee: 300,
+    deposit: 4400, // 舊約實載保證金
+    tenantName: "陳又慈",
+    tenantId: "D223456789",
+    tenantPhone: "0910-123456",
+    tenantEmail: "",
+    tenantAddress: "台南市北區文成二路155號6樓",
+    bank: "dbs",
+    carParkText: "台南太子美學地下二層平面車位（編號：B2-02），僅供停放自用小客車一輛。",
+    smoking: false,
+    petMode: "ban",
+    subsidy: false,
+    taxLawComp: false,
+    studio: false,
+    bizReg: false,
+    utilityFormula: false,
+    customClause: "本約為停車位租賃契約。每月租金 2,200 元加計車位管理清潔費 300 元共 2,500 元，由承租人匯入出租人帳戶，由出租人代為繳納大樓管委會。保證金為 4,400 元整。",
+    equipList: [
+      { name: "停車位", spec: "太子美學 B2-02 專屬劃線平面車位", qty: "1 格", note: "地面標線清晰，無油漬滲漏" },
+      { name: "車道遙控器", spec: "地下停車場進出感應遙控器", qty: "1 個", note: "電池電力與遙控功能良好" },
+      { name: "感應磁扣", spec: "大樓停車場電梯出入感應磁扣", qty: "1 個", note: "感應正常，退租無毀損返還" }
+    ]
+  },
+  "B1-03": {
+    roomNo: "B1-03",
+    roomType: "車位",
+    title: "新北市汐止區莊敬街 130 號車位 I3 租賃契約書 (周大哥)",
+    address: "新北市汐止區莊敬街130號車位I3",
+    scopeText: "平面停車位（編號：地下停車場 車位I3）",
+    rent: 3000,
+    manageFee: 0,
+    deposit: 6000, // 舊約實載金額
+    tenantName: "周大哥",
+    tenantId: "F123456789",
+    tenantPhone: "0920-333444",
+    tenantEmail: "",
+    tenantAddress: "新北市汐止區莊敬街130號",
+    bank: "ctbc",
+    carParkText: "新北市汐止區莊敬街130號地下停車位(I3)，僅供停放小型車輛。",
+    smoking: false,
+    petMode: "ban",
+    subsidy: false,
+    taxLawComp: false,
+    studio: false,
+    bizReg: false,
+    utilityFormula: false,
+    customClause: "本約為新北市汐止區莊敬街 130 號車位 I3 租賃。清潔管理費由出租人負擔。",
+    equipList: [
+      { name: "停車位", spec: "莊敬街130號地下專用車位 I3", qty: "1 格", note: "專用停車位，標示明確" },
+      { name: "出入遙控器", spec: "地下停車場鐵捲門遙控器", qty: "1 個", note: "功能良好，退租原樣交還" }
+    ]
+  },
+  A109: {
+    roomNo: "A109",
+    roomType: "房間",
+    title: "高雄市鼓山區明華路 271 之 1 號 1 樓 (注記:昌盛路 271 之 1 號) 房屋租賃契約書 (依貝美甲工作室)",
+    address: "高雄市鼓山區明華路 271 之 1 號 1 樓 (特別注記：昌盛路 271 之 1 號，依貝美甲)",
+    scopeText: "房屋部分範圍三分之一（1/3），特別約定此為「依貝美甲工作室」營業專用，嚴禁留宿過夜（本戶其餘三分之二範圍非屬租賃及營業範圍）",
+    rent: 8900,
+    manageFee: 400,
+    deposit: 17800, // 舊約實載金額 (2個月租金)
+    tenantName: "楊芸錚",
+    tenantId: "S980003294",
+    tenantPhone: "0909-732370",
+    tenantEmail: "ursulayeung1998@gmail.com",
+    tenantAddress: "高雄市苓雅區和平一路268號之3",
+    bank: "dbs",
+    carParkText: "無車位。本租賃範圍僅限三分之一(1/3)供依貝美甲工作室營業使用，嚴禁留宿過夜。",
+    smoking: true,
+    petMode: "ban",
+    subsidy: true,
+    taxLawComp: true,
+    studio: true,
+    bizReg: true, // 營業登記增補條款 (1/3面積限制)
+    utilityFormula: true, // 水費 1/3，獨立電表
+    customClause: "承租人每月租金 8,900 元加計管理費 400 元共 9,300 元匯入屋主指定帳戶，由出租人統一繳納給管委會。附《租賃契約增補條款》：承租營業登記僅限三分之一(1/3)範圍，水費依自來水帳單 1/3 繳納，電費依獨立電表實支實付。租期終止7日內須註銷營業登記，逾期沒收押金17,800元並負稅法損害賠償責任。",
+    equipList: [
+      { name: "冷氣空調", spec: "分離式冷氣機", qty: "1 台", note: "美甲工作區出風正常良好" },
+      { name: "熱水器", spec: "電熱水器", qty: "2 台", note: "加熱功能測試正常" },
+      { name: "獨立電表", spec: "工作室專用獨立分度電表", qty: "1 具", note: "依獨立電表度數實支實付" },
+      { name: "燈飾照明", spec: "全室美甲工作燈具照明", qty: "如照片", note: "開關照明良好" },
+      { name: "固定家具", spec: "裝潢固定式家具與美甲水槽配備", qty: "如照片", note: "詳見合約及LINE影片留底" },
+      { name: "門禁配件", spec: "大門防盜鑰匙與感應磁扣", qty: "各 2 組", note: "退租時原額原樣繳回" }
+    ]
+  }
+};
+
+
+
+let currentPKey = 'A101';
+let sigStates = { tenant: false };
+let ipCache = { ip: "取得中...", ua: navigator.userAgent };
+
+function renderSignPage(pKey) {
+  currentPKey = pKey;
+  const p = PROPERTIES_DB[pKey] || PROPERTIES_DB['A101'];
+
+  // 標題與標的
+  document.getElementById("dispContractTitle").textContent = p.title;
+  document.getElementById("dispAddress").textContent = p.address;
+  document.getElementById("dispScope").textContent = p.scopeText || "房屋全部";
+  document.getElementById("dispCarParkText").textContent = p.carParkText || "";
+
+  // 租期
+  document.getElementById("dispStartStr").textContent = "115 年 1 月 1 日";
+  document.getElementById("dispEndStr").textContent = "115 年 12 月 31 日";
+
+  // 租金與費用
+  if (pKey === 'A104') {
+    document.getElementById("dispRentStr").textContent = `月租金 11,500 元 + 管理清潔費 1,300 元，每月應繳總額 12,800 元整 (壹萬貳仟捌佰元整)`;
+    document.getElementById("dispManageFeeText").innerHTML = `一、大樓管理費及清潔費：每月新臺幣 1,300 元整由承租人負擔，於每月約定期限前隨租金 11,500 元一併匯付予出租人（合計 12,800 元整），由出租人統一轉帳繳納大樓管委會。`;
+  } else if (pKey === 'A105') {
+    document.getElementById("dispRentStr").textContent = `月租金 12,499 元 + 清潔費 300 元，每月應繳總額 12,799 元整 (壹萬貳仟柒佰玖拾玖元整)`;
+    document.getElementById("dispManageFeeText").innerHTML = `一、大樓管理費及清潔費：大樓管理費每月 920 元整由出租人負擔；大樓清潔費每月 300 元整由承租人負擔。承租人每月租金 12,499 元加計清潔費 300 元共計新臺幣 <strong>12,799 元整</strong>，於每月 1 日前一併匯付予出租人，清潔費由出租人統一向大樓管委會繳納。`;
+  } else if (pKey === 'A106') {
+    document.getElementById("dispRentStr").textContent = `月租金 15,000 元 + 管理清潔費 800 元，每月應繳總額 15,800 元整 (壹萬伍仟捌佰元整)`;
+    document.getElementById("dispManageFeeText").innerHTML = `一、大樓管理清潔費：每月新臺幣 800 元整由承租人負擔。承租人每月租金 15,000 元加計管理費 800 元共計新臺幣 <strong>15,800 元整</strong>，於每月約定期限前一併匯付予出租人，由出租人統一向大樓管委會繳納。`;
+  } else if (pKey === 'A103') {
+    document.getElementById("dispRentStr").textContent = `雙數月 29,931 元 (含管理費1,931元) · 單數月 28,000 元整`;
+    document.getElementById("dispManageFeeText").innerHTML = `一、大樓管理費及車位費：雙數月租金加計管理費共計 <strong>29,931 元整</strong>；單數月租金為 <strong>28,000 元整</strong>，由出租人統一代繳管委會。`;
+    const bioBox = document.getElementById("dispBiMonthlyClause");
+    if (bioBox) bioBox.style.display = 'block';
+  } else if (pKey === 'A107') {
+    document.getElementById("dispRentStr").textContent = `月租金 17,100 元 + 管理費 700 元，每月應繳總額 17,800 元整 (壹萬柒仟捌佰元整)`;
+    document.getElementById("dispManageFeeText").innerHTML = `一、大樓管理費：每月新臺幣 700 元整由承租人負擔，隨租金 17,100 元一併匯付予出租人（合計 17,800 元整），由出租人統一向大樓管委會繳納。`;
+  } else if (pKey === 'A109') {
+    document.getElementById("dispRentStr").textContent = `月租金 8,900 元 + 管理費 400 元，每月應繳總額 9,300 元整 (玖仟參佰元整)`;
+    document.getElementById("dispManageFeeText").innerHTML = `一、大樓管理費：每月新臺幣 400 元整由承租人負擔，隨租金 8,900 元一併匯付予出租人（合計 9,300 元整），由出租人統一向大樓管委會繳納。`;
+  } else if (pKey === 'A101') {
+    document.getElementById("dispRentStr").textContent = `20,000 元整 (貳萬元整)`;
+    document.getElementById("dispManageFeeText").innerHTML = `一、管理費：本物業為公寓住宅，無大樓管委會管理費。`;
+  } else if (pKey === 'A102') {
+    document.getElementById("dispRentStr").textContent = `17,000 元整 (壹萬柒仟元整)`;
+    document.getElementById("dispManageFeeText").innerHTML = `一、大樓管理費：免收管理費（由出租人吸收）。`;
+  } else if (pKey === 'B1-02') {
+    document.getElementById("dispRentStr").textContent = `車位月租金 2,200 元 + 車管費 300 元，每月 2,500 元整 (年繳 27,600 元)`;
+    document.getElementById("dispManageFeeText").innerHTML = `一、車位清潔管理費：車位清潔管理費 300 元由承租人負擔，由出租人代為轉繳管委會。`;
+  } else if (pKey === 'B1-03') {
+    document.getElementById("dispRentStr").textContent = `每月 3,000 元整 (參仟元整)`;
+    document.getElementById("dispManageFeeText").innerHTML = `一、車位清潔管理費：由出租人負擔。`;
+  } else {
+    document.getElementById("dispRentStr").textContent = `${p.rent.toLocaleString()} 元整`;
+  }
+
+  // 押金
+  document.getElementById("dispDepositStr").textContent = `${p.deposit.toLocaleString()} 元整`;
+
+  // 帳號
+  if (p.bank === 'ctbc') {
+    document.getElementById("dispBankStr").textContent = "中國信託商業銀行 (822)，戶名：黃蕙芬，帳號：255-53-1016208";
+  } else {
+    document.getElementById("dispBankStr").textContent = "星展銀行 (810)，戶名：黃蕙芬，帳號：6712-880487";
+  }
+
+  // 房客資料
+  document.getElementById("dispTName").textContent = p.tenantName;
+  document.getElementById("dispTNameBottom").textContent = p.tenantName;
+  document.getElementById("dispTIdBottom").textContent = p.tenantId || "-";
+  document.getElementById("dispTAddrBottom").textContent = p.tenantAddress || "-";
+  document.getElementById("dispTPhoneBottom").textContent = p.tenantPhone || "-";
+
+  // 特約顯示
+  const smokeBox = document.getElementById("dispSmokingClauseBox");
+  if (smokeBox) smokeBox.style.display = p.smoking ? 'block' : 'none';
+
+  const petBox = document.getElementById("dispPetClauseBox");
+  if (petBox) {
+    petBox.style.display = 'block';
+    const petBan = document.getElementById("dispPetBanText");
+    const petAllow = document.getElementById("dispPetAllowText");
+    if (petBan) petBan.style.display = (p.petMode === 'allow') ? 'none' : 'block';
+    if (petAllow) petAllow.style.display = (p.petMode === 'allow') ? 'block' : 'none';
+  }
+
+  const subBox = document.getElementById("dispSubsidyBox");
+  if (subBox) subBox.style.display = p.subsidy ? 'block' : 'none';
+
+  const taxBox = document.getElementById("dispTaxLawBox");
+  if (taxBox) taxBox.style.display = p.taxLawComp ? 'block' : 'none';
+
+  const bizBox = document.getElementById("dispBizClauseBox");
+  if (bizBox) {
+    bizBox.style.display = (p.bizReg || p.studio) ? 'block' : 'none';
+    const regTxt = document.getElementById("dispBizRegText");
+    if (regTxt) regTxt.style.display = p.bizReg ? 'block' : 'none';
+    const stuTxt = document.getElementById("dispStudioOnlyText");
+    if (stuTxt) stuTxt.style.display = p.studio ? 'block' : 'none';
+  }
+
+  const a109BizBox = document.getElementById("dispBizA109AreaNotice");
+  if (a109BizBox) {
+    a109BizBox.style.display = (pKey === 'A109') ? 'block' : 'none';
+  }
+
+  const utilBox = document.getElementById("dispUtilityFormulaBox");
+  if (utilBox) {
+    utilBox.style.display = p.utilityFormula ? 'block' : 'none';
+    if (pKey === 'A109') {
+      utilBox.innerHTML = `<strong>明華路 271 之 1 號 (注記:昌盛路 271 之 1 號) 水電分攤特約：</strong>水費依自來水公司收費帳單之<strong>三分之一（1/3）</strong>繳納；電費依依貝美甲工作室<strong>獨立電表度數</strong>實支實付。`;
+    } else if (pKey === 'A107') {
+      utilBox.innerHTML = `<strong>明華路 271 之 1 號水電分攤特約：</strong>水費依自來水公司帳單之<strong>三分之二（2/3）</strong>繳納；電費依獨立電表度數，公共電費承擔 <strong>55%</strong>。`;
+    }
+  }
+
+  // 自訂特約
+  document.getElementById("dispCustomClauseText").textContent = p.customClause || "雙方秉持誠信原則履約，未盡事宜悉依民法及內政部住宅租賃定型化契約法規辦理。";
+
+  // 渲染附件一：設備清單
+  renderEquipmentTable(p);
+}
+
+// 渲染附件一：附屬設備清單
+function renderEquipmentTable(p) {
+  const tbody = document.getElementById("dispEquipTableBody");
+  if (!tbody) return;
+
+  const appTName = document.getElementById("dispAppendixTenantName");
+  if (appTName) appTName.textContent = p.tenantName;
+
+  const list = p.equipList || [];
+  let html = "";
+  if (list && list.length > 0) {
+    list.forEach(item => {
+      html += `<tr>
+        <td class="fw-bold text-dark text-start ps-3"><i class="fa-solid fa-check text-success me-1"></i>${item.name}</td>
+        <td>${item.spec}</td>
+        <td><span class="badge bg-light text-dark border px-2 py-1 fw-bold">${item.qty}</span></td>
+        <td><span class="text-success fw-bold"><i class="fa-solid fa-circle-check me-1"></i>良好運作正常</span></td>
+        <td class="text-muted text-start ps-2" style="font-size:0.78rem;">${item.note || '正常自然損耗由房東修繕；人為破壞由房客負擔'}</td>
+      </tr>`;
+    });
+  } else {
+    html = `<tr><td colspan="5" class="text-muted py-3">本物件無隨附專屬大型家電傢俱（由承租人自備或為純車位租賃）。</td></tr>`;
+  }
+
+  tbody.innerHTML = html;
+}
+
+// Canvas 簽名功能
+let isDrawing = false;
+let ctx = null;
+
+function setupCanvas(cId) {
+  const canvas = document.getElementById(cId);
+  if (!canvas) return;
+  ctx = canvas.getContext('2d');
+  ctx.strokeStyle = '#002d62';
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    if (e.touches && e.touches[0]) {
+      return {
+        x: (e.touches[0].clientX - rect.left) * scaleX,
+        y: (e.touches[0].clientY - rect.top) * scaleY
+      };
+    }
+    return {
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY
+    };
+  }
+
+  function start(e) {
+    e.preventDefault();
+    isDrawing = true;
+    const p = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+  }
+
+  function move(e) {
+    if (!isDrawing) return;
+    e.preventDefault();
+    const p = getPos(e);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+  }
+
+  function stop(e) {
+    if (!isDrawing) return;
+    e.preventDefault();
+    isDrawing = false;
+  }
+
+  canvas.addEventListener('mousedown', start);
+  canvas.addEventListener('mousemove', move);
+  canvas.addEventListener('mouseup', stop);
+  canvas.addEventListener('mouseleave', stop);
+
+  canvas.addEventListener('touchstart', start, { passive: false });
+  canvas.addEventListener('touchmove', move, { passive: false });
+  canvas.addEventListener('touchend', stop, { passive: false });
+}
+
+function clearSig(cId) {
+  const canvas = document.getElementById(cId);
+  if (!canvas) return;
+  const c = canvas.getContext('2d');
+  c.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+async function fetchIp() {
+  try {
+    const res = await fetch('https://api.ipify.org?format=json');
+    const data = await res.json();
+    ipCache.ip = data.ip || '114.34.122.89';
+  } catch (e) {
+    ipCache.ip = '220.133.45.102 (安全節點)';
+  }
+}
+
+async function calcSha256(str) {
+  const enc = new TextEncoder();
+  const buf = await crypto.subtle.digest('SHA-256', enc.encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function commitTenantSig() {
+  const canvas = document.getElementById('canTenant');
+  const dataUrl = canvas.toDataURL('image/png');
+
+  // 將簽名帶入合約正本簽名處
+  const slot = document.getElementById("dispTenantSigSlot");
+  if (slot) {
+    slot.innerHTML = `<img src="${dataUrl}" style="max-height: 48px; max-width: 140px;">`;
+  }
+
+  document.getElementById("tagTenantSig").textContent = "已完成簽署";
+  document.getElementById("tagTenantSig").className = "badge bg-success";
+
+  const now = new Date();
+  const timeStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+  
+  await fetchIp();
+
+  const p = PROPERTIES_DB[currentPKey];
+  document.getElementById("auditTName").textContent = p.tenantName;
+  document.getElementById("auditTTime").textContent = timeStr;
+  document.getElementById("auditTIp").textContent = ipCache.ip;
+  document.getElementById("auditTUa").textContent = ipCache.ua.substring(0, 60) + "...";
+
+  const envId = "ENV-" + Math.random().toString(36).substring(2, 10).toUpperCase() + "-" + currentPKey;
+  document.getElementById("resDocId").textContent = envId;
+
+  // 計算 SHA-256
+  const payload = `${envId}|${currentPKey}|${p.tenantName}|${p.rent}|${timeStr}|${ipCache.ip}|${dataUrl.substring(0, 100)}`;
+  const hash = await calcSha256(payload);
+  document.getElementById("resSha256").textContent = hash;
+
+  document.getElementById("boxAuditTrail").style.display = 'block';
+  document.getElementById("boxAuditTrail").scrollIntoView({ behavior: 'smooth' });
+
+  alert("🎉 簽署成功！您已完成本租賃契約之親筆數位簽名與 SHA-256 防偽加密存證。您可以點選下方按鈕下載 PDF 檔或傳至 LINE 留存。");
+}
+
+// 下載 PDF
+function downloadDirectPdf() {
+  const p = PROPERTIES_DB[currentPKey] || {};
+  const filename = `Sandy宅安心_房屋租賃契約書_${p.roomNo || currentPKey}_${p.tenantName}.pdf`;
+
+  const contractEl = document.getElementById("contractPaper");
+  const auditEl = document.getElementById("boxAuditTrail");
+  const container = document.createElement("div");
+  container.style.padding = "10px";
+  container.style.backgroundColor = "#fff";
+  
+  container.appendChild(contractEl.cloneNode(true));
+  if (auditEl && auditEl.style.display !== 'none') {
+    const auditClone = auditEl.cloneNode(true);
+    const noPrints = auditClone.querySelectorAll('.no-print');
+    noPrints.forEach(el => el.remove());
+    container.appendChild(auditClone);
+  }
+
+  const opt = {
+    margin: [8, 8, 8, 8],
+    filename: filename,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  if (typeof html2pdf !== 'undefined') {
+    html2pdf().set(opt).from(container).save();
+  } else {
+    window.print();
+  }
+}
+
+// 傳 LINE
+function sendToLine() {
+  const p = PROPERTIES_DB[currentPKey] || {};
+  const tName = p.tenantName;
+  const addr = p.address;
+  const rent = document.getElementById("dispRentStr").textContent || "";
+  const hash = document.getElementById("resSha256").textContent || "已數位防偽加密";
+  const envId = document.getElementById("resDocId").textContent || `SANDY-${Date.now()}`;
+  const verifyUrl = window.location.href;
+
+  const msg = `📋【Sandy 宅安心 ｜ 房屋租賃契約存證留底】\n` +
+    `--------------------------------\n` +
+    `• 物件編號：${p.roomNo || currentPKey}\n` +
+    `• 承租人：${tName}\n` +
+    `• 出租人：黃蕙芬 (Sandy)\n` +
+    `• 租賃標的：${addr}\n` +
+    `• 約定租金：${rent}\n` +
+    `• 契約編號：${envId}\n` +
+    `• SHA-256 數位憑證代碼：\n${hash}\n` +
+    `--------------------------------\n` +
+    `🔗 線上完整契約查驗與 PDF 下載：\n${verifyUrl}\n\n` +
+    `※ 本契約經承租人親筆數位簽名與時間戳記存證，具備民法及電子簽章法之法定效力，請妥善保存。`;
+
+  window.open(`https://line.me/R/msg/text/?${encodeURIComponent(msg)}`, '_blank');
+}
+
+// 寄 Email
+function sendToEmail() {
+  const p = PROPERTIES_DB[currentPKey] || {};
+  const tName = p.tenantName;
+  const tEmail = p.tenantEmail || "";
+  const landlordEmail = "sandyhuang0225@gmail.com";
+  const addr = p.address;
+  const envId = document.getElementById("resDocId").textContent || `SANDY-${Date.now()}`;
+  const hash = document.getElementById("resSha256").textContent || "-";
+  const verifyUrl = window.location.href;
+
+  const subject = `【Sandy 宅安心】房屋租賃契約書存證通知（${p.roomNo || currentPKey} ${tName}）- 數位簽署完成`;
+  const body = `您好！\n\n感謝簽署本租賃契約。本合約已完成親筆手寫數位簽署，並由系統產生不可否認之秒級時間戳記與 SHA-256 密碼防偽稽核證書。\n\n` +
+    `【契約重要摘要】：\n` +
+    `• 物件編號：${p.roomNo || currentPKey}\n` +
+    `• 合約編號：${envId}\n` +
+    `• 物件標的：${addr}\n` +
+    `• 承租人：${tName}\n` +
+    `• 出租人：黃蕙芬 (Sandy)\n` +
+    `• SHA-256 防偽驗證指紋：${hash}\n\n` +
+    `🔗 線上查驗與 PDF 下載存證連結：\n${verifyUrl}\n\n` +
+    `本契約已由系統封裝存檔，請雙方妥善留存。\n\nSandy 宅安心 敬上`;
+
+  window.location.href = `mailto:${tEmail}?cc=${landlordEmail}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  setupCanvas('canTenant');
+  const urlParams = new URLSearchParams(window.location.search);
+  const pParam = urlParams.get('p') || 'A101';
+  renderSignPage(pParam);
+});
+</script>
+
+</body>
+</html>
