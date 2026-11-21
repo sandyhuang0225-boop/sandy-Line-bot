@@ -700,6 +700,100 @@ const HISTORICAL_EQUIP_DB = {
     customEquip: "全室現況附屬裝潢與燈飾設備",
     proofNote: "全室現況設備良好，現場照片及影片已建檔留存備查。"
   },
+  "B1-02": {
+    roomNo: "B1-02",
+    roomType: "車位",
+    title: "台南市北區文成二路 159 號 B2-2 號車位租賃契約書 (陳又慈)",
+    address: "台南市北區文成二路159號B2",
+    scopeText: "車位部分：台南市北區文成二路159號地下二層 B2 平面式 2 號停車位",
+    rent: 27600,
+    payCycle: "annually",
+    cleaningFee: 0,
+    manageFee: 0,
+    deposit: 4400,
+    tenantName: "陳又慈",
+    tenantId: "D223456789",
+    tenantPhone: "0912-345678",
+    tenantEmail: "sandy.huang0225@gmail.com",
+    tenantAddress: "台南市北區文成二路159號",
+    bank: "dbs",
+    carParkText: "地下二層 B2-2 號平面式汽車停車位 1 位。",
+    smoking: false,
+    petMode: "none",
+    subsidy: false,
+    taxLawComp: false,
+    studio: false,
+    bizReg: false,
+    utilityFormula: false,
+    customClause: "一、本停車位係供汽車停放之用，一切汽車停放規定須符合太子美學管理委員會所訂定之規則。二、車位清潔管理費由出租人統籌向大樓管委會繳納，承租人免另繳管理費。三、租金採年繳制（每年 27,600 元，換算每月 2,300 元），承租人應於每年 12 月 31 日前一次付清次年全年租金。四、保證金新臺幣 4,400 元整，於租賃期滿交還停車位時無息返還承租人。",
+    equipList: [
+      { name: "車位出入磁扣", spec: "地下室車道出入感應磁扣/遙控器", qty: "1 個", note: "退租時原額原樣繳回" },
+      { name: "車位現況", spec: "B2-2 號平面汽車停車格", qty: "1 位", note: "地坪劃線良好" }
+    ]
+  },
+  "B1-03": {
+    roomNo: "B1-03",
+    roomType: "車位",
+    title: "新北市汐止區莊敬街 130 號 B1-I3 車位租賃契約書 (周大哥)",
+    address: "新北市汐止區莊敬街130號B1",
+    scopeText: "車位部分：新北市汐止區莊敬街130號地下一層 B1 平面式 I3 號停車位",
+    rent: 5400,
+    payCycle: "quarterly",
+    cleaningFee: 0,
+    manageFee: 0,
+    deposit: 0,
+    tenantName: "周大哥",
+    tenantId: "F123456789",
+    tenantPhone: "0928-123456",
+    tenantEmail: "sandy.huang0225@gmail.com",
+    tenantAddress: "新北市汐止區莊敬街130號",
+    bank: "dbs",
+    carParkText: "地下一層 B1-I3 號平面式汽車停車位 1 位。",
+    smoking: false,
+    petMode: "none",
+    subsidy: false,
+    taxLawComp: false,
+    studio: false,
+    bizReg: false,
+    utilityFormula: false,
+    customClause: "一、本停車位係供汽車停放之用，停車規範遵照大樓管委會規則。二、車位清潔管理費由出租人負擔。三、租金採季繳制（每季 5,400 元，換算每月 1,800 元），承租人應於每季首月（1、4、7、10月）1 日前預先支付當季租金。四、保證金 0 元。",
+    equipList: [
+      { name: "車位感應遙控/磁扣", spec: "地下室車道出入感應磁扣", qty: "1 個", note: "退租時原樣交回" },
+      { name: "車位現況", spec: "B1-I3 號平面汽車停車格", qty: "1 位", note: "標線及現況良好" }
+    ]
+  },
+  "B1-02": {
+    ac: { checked: false, qty: 0 },
+    fridge: { checked: false, qty: 0 },
+    washer: { checked: false, qty: 0 },
+    tv: { checked: false, qty: 0 },
+    heater: { checked: false, qty: 0 },
+    bed: { checked: false, qty: 0 },
+    wardrobe: { checked: false, qty: 0 },
+    keys: { checked: false, qty: 0 },
+    fobs: { checked: true, qty: 1 },
+    sofa: false,
+    table: false,
+    subMeter: false,
+    customEquip: "地下二層平面車位(B2-02)、車道出入感應磁扣/遙控器 1 個",
+    proofNote: "太子美學 B2-02 平面停車位現場車位標線及地坪現況，車道感應磁扣 1 個，已於交交當日留存照片備查。"
+  },
+  "B1-03": {
+    ac: { checked: false, qty: 0 },
+    fridge: { checked: false, qty: 0 },
+    washer: { checked: false, qty: 0 },
+    tv: { checked: false, qty: 0 },
+    heater: { checked: false, qty: 0 },
+    bed: { checked: false, qty: 0 },
+    wardrobe: { checked: false, qty: 0 },
+    keys: { checked: false, qty: 0 },
+    fobs: { checked: true, qty: 1 },
+    sofa: false,
+    table: false,
+    subMeter: false,
+    customEquip: "地下一層平面車位(B1-I3)、車道出入感應遙控器/磁扣 1 個",
+    proofNote: "汐止莊敬街130號 B1-I3 車位現況良好，感應磁扣 1 個已點交交還。"
+  },
   A109: {
     ac: { checked: true, qty: 1 },
     fridge: { checked: false, qty: 1 },
@@ -869,6 +963,8 @@ const PROPERTIES_DB = {
     address: "高雄市鼓山區文信路209號11樓之9",
     scopeText: "房屋全部 (獨立大套房，格局：1房1衛)",
     rent: 12199,
+    cleaningFee: 300,
+    totalMonthly: 12499,
     manageFee: 0,
     deposit: 24398, // 舊約實載金額 (2個月租金)
     tenantName: "李乃亘",
@@ -1085,6 +1181,8 @@ function initTenantContract() {
   const rentVal = parseInt(urlParams.get("rent")) || p.rent;
   const depositVal = parseInt(urlParams.get("dep")) || p.deposit;
   const manageFeeVal = parseInt(urlParams.get("mf")) || p.manageFee;
+  const cleanVal = parseInt(urlParams.get("clean")) || p.cleaningFee || 0;
+  const payCycle = urlParams.get("cycle") || p.payCycle || "monthly";
   const startDateStr = urlParams.get("s") || "2026-03-01";
   const endDateStr = urlParams.get("e") || "2027-02-28";
   
@@ -1117,9 +1215,25 @@ function initTenantContract() {
     }
   }
 
-  // 4. 第三條 租金
+  // 4. 第三條 租金（支援年繳、季繳、清潔費與各物業專屬約定）
   const rentCh = numberToChinese(rentVal);
-  document.getElementById("dispRentStr").textContent = `${rentVal.toLocaleString()} 元整 (${rentCh})`;
+  if (currentPKey === "B1-02" || payCycle === "annually") {
+    document.getElementById("dispRentStr").textContent = `停車位一年租金新臺幣 ${rentVal.toLocaleString()} 元整 (${rentCh})，每年 12 月 31 日前一次付清次年租金（換算每月 2,300 元）`;
+  } else if (currentPKey === "B1-03" || payCycle === "quarterly") {
+    document.getElementById("dispRentStr").textContent = `停車位每季租金新臺幣 ${rentVal.toLocaleString()} 元整 (${rentCh})，於每季首月（1、4、7、10月）1 日前預先支付當季租金（換算每月 1,800 元）`;
+  } else if (currentPKey === "A105" || cleanVal > 0) {
+    const totalA105 = rentVal + cleanVal;
+    document.getElementById("dispRentStr").textContent = `月租金 ${rentVal.toLocaleString()} 元整 (${rentCh})，另計每月清潔費 ${cleanVal.toLocaleString()} 元整，每月向承租人收取總額合計新臺幣 ${totalA105.toLocaleString()} 元整 (${numberToChinese(totalA105)})`;
+  } else if (currentPKey === "A102") {
+    document.getElementById("dispRentStr").textContent = `${rentVal.toLocaleString()} 元整 (${rentCh}) · 免收管理費`;
+  } else if (currentPKey === "A103") {
+    document.getElementById("dispRentStr").textContent = `${rentVal.toLocaleString()} 元整 (${rentCh}) · 含地下二層平面車位(B2-02)`;
+  } else if (manageFeeVal > 0) {
+    document.getElementById("dispRentStr").textContent = `月租金 ${rentVal.toLocaleString()} 元 + 管理費 ${manageFeeVal.toLocaleString()} 元，每月應繳總額 ${(rentVal+manageFeeVal).toLocaleString()} 元整 (${numberToChinese(rentVal+manageFeeVal)})`;
+  } else {
+    document.getElementById("dispRentStr").textContent = `${rentVal.toLocaleString()} 元整 (${rentCh})`;
+  }
+
   if (currentPKey === "A103") {
     document.getElementById("dispBiMonthlyClause").style.display = "block";
   } else {
@@ -1131,11 +1245,15 @@ function initTenantContract() {
   const depCh = numberToChinese(depositVal);
   document.getElementById("dispDepositStr").textContent = `${depositVal.toLocaleString()} 元整 (${depCh})`;
 
-  // 6. 第五條 管理費與水電
-  if (manageFeeVal > 0) {
-    document.getElementById("dispManageFeeText").textContent = `一、管理費：每月新臺幣 ${manageFeeVal.toLocaleString()} 元整，由承租人負擔。`;
+  // 6. 第五條 管理費與清潔費
+  if (currentPKey === "B1-02" || currentPKey === "B1-03") {
+    document.getElementById("dispManageFeeText").innerHTML = "一、車位清潔管理費：車位清潔管理費由出租人統籌向大樓管委會繳納，承租人免另繳管理費。";
+  } else if (currentPKey === "A105" || cleanVal > 0) {
+    document.getElementById("dispManageFeeText").innerHTML = `一、大樓管理費及清潔費：大樓管理費每月 920 元整由出租人負擔；大樓清潔費每月 300 元整由承租人負擔。承租人每月租金 12,199 元加計清潔費 300 元共計新臺幣 <strong>12,499 元整</strong>，於每月 1 日前一併匯付予出租人，清潔費由出租人統一向大樓管委會繳納。`;
+  } else if (manageFeeVal > 0) {
+    document.getElementById("dispManageFeeText").innerHTML = `一、管理費：每月新臺幣 ${manageFeeVal.toLocaleString()} 元整，由承租人負擔。`;
   } else {
-    document.getElementById("dispManageFeeText").textContent = "一、管理費：本租賃住宅免收或由出租人負擔。";
+    document.getElementById("dispManageFeeText").innerHTML = "一、管理費：本租賃住宅免收或由出租人負擔。";
   }
   const isUtilityFormula = urlParams.has("uf") ? urlParams.get("uf") === "1" : p.utilityFormula;
   document.getElementById("dispUtilityFormulaBox").style.display = isUtilityFormula ? "block" : "none";
