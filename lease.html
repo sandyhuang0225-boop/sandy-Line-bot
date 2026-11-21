@@ -154,9 +154,6 @@ body.role-tenant #boxTenantSigPanel {
       <h5 class="mb-0 fw-bold" id="headerTitle">租賃契約智慧生成與雙向數位簽章系統</h5>
     </div>
     <div class="d-flex align-items-center gap-2" id="headerActions">
-      <button type="button" class="btn btn-outline-warning btn-sm fw-bold" onclick="clearAllTestLocks(true)" title="解除並清空所有物件的測試鎖定記錄">
-        <i class="fa-solid fa-lock-open me-1"></i>解鎖全部測試合約
-      </button>
       <button type="button" class="btn btn-warning text-dark btn-sm fw-bold shadow-sm" onclick="downloadDirectPdf()" title="下載正式 PDF 契約檔">
         <i class="fa-solid fa-file-arrow-down me-1"></i>下載正式 PDF
       </button>
@@ -2671,28 +2668,25 @@ function checkLandlordSignStep() {
   }
 }
 
-// 全面解除並清空所有測試合約的鎖定記錄（依房東需求：昨天的所有測試合約全面打開恢復全新狀態）
-function clearAllTestLocks(showAlert = false) {
+// 系統自動執行一次性歷史測試快取遷移：清空昨天測試遺留之鎖定標記，使所有合約全面恢復全新未簽署狀態
+const MIGRATION_KEY = "sandy_contract_migration_20261121_v2";
+if (!localStorage.getItem(MIGRATION_KEY)) {
   try {
     const keysToRemove = [];
     for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && (key.startsWith('tenant_signed_') || key.startsWith('tenant_sig_') || key.startsWith('tenant_ip_') || key.startsWith('tenant_dev_'))) {
-        keysToRemove.push(key);
+      const k = localStorage.key(i);
+      if (k && (k.startsWith('tenant_signed_') || k.startsWith('tenant_sig_') || k.startsWith('tenant_ip_') || k.startsWith('tenant_dev_'))) {
+        keysToRemove.push(k);
       }
     }
     keysToRemove.forEach(k => localStorage.removeItem(k));
-    if (showAlert) {
-      alert("✅ 已成功解除並清空所有物件的測試簽名鎖定！所有合約已全面打開，隨時可重新親筆簽名。");
-      window.location.reload();
-    }
+    localStorage.setItem(MIGRATION_KEY, "done");
   } catch (e) {
-    console.warn("clearAllTestLocks warning:", e);
+    console.warn("Migration warning:", e);
   }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  clearAllTestLocks(false);
   checkLandlordSignStep();
   setupCanvas('canTenant');
   setupCanvas('canLandlord');
