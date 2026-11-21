@@ -6,7 +6,11 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>Sandy 宅安心 ｜ 專屬智慧租賃合約產生與雙向電子簽章系統</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="OKSIGN">
+  <meta name="application-name" content="OKSIGN">
+  <title>OKSIGN ｜ Sandy 專屬智慧租賃與雙向數位簽章系統</title>
 
   <!-- Bootstrap 5 & FontAwesome -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -150,8 +154,8 @@ body.role-tenant #boxTenantSigPanel {
 <header class="top-navbar no-print">
   <div class="container d-flex justify-content-between align-items-center flex-wrap gap-2">
     <div class="d-flex align-items-center gap-2">
-      <span class="badge bg-warning text-dark fw-bold px-2 py-1" id="brandBadge"><i class="fa-solid fa-building-user me-1"></i>Sandy 專屬</span>
-      <h5 class="mb-0 fw-bold" id="headerTitle">租賃契約智慧生成與雙向數位簽章系統</h5>
+      <span class="badge bg-warning text-dark fw-bold px-2 py-1 fs-6 shadow-sm" id="brandBadge"><i class="fa-solid fa-signature me-1"></i>OKSIGN</span>
+      <h5 class="mb-0 fw-bold" id="headerTitle">Sandy 宅安心 ｜ 租賃契約智慧生成與雙向數位簽章系統</h5>
     </div>
     <div class="d-flex align-items-center gap-2" id="headerActions">
       <button type="button" class="btn btn-outline-warning btn-sm fw-bold" onclick="landlordResetCurrentToUnsigned()" title="房東專用：一鍵將目前選取的物業回復為未簽署狀態">
@@ -920,7 +924,7 @@ body.role-tenant #boxTenantSigPanel {
           <div class="mt-4 p-3 border border-2 border-primary rounded bg-light" id="boxDigitalCertPaper">
             <div class="d-flex justify-content-between align-items-center mb-2 border-bottom pb-2 flex-wrap gap-2">
               <span class="fw-bold text-primary fs-6">
-                <i class="fa-solid fa-shield-halved me-1"></i>台灣《電子簽章法》相容 · 雙向數位簽署與稽核存證標章
+                <i class="fa-solid fa-shield-halved me-1"></i>OKSIGN ｜ 台灣《電子簽章法》相容 · 雙向數位簽署與稽核存證標章
               </span>
               <span class="badge bg-success text-white px-2 py-1"><i class="fa-solid fa-lock me-1"></i>防偽不可否認存證已封存</span>
             </div>
@@ -2499,12 +2503,12 @@ function sendContractToTenant(btn) {
   const cleanUrl = `https://sandyhuang0225-boop.github.io/sandy-Line-bot/sign.html?p=${pKey}`;
 
   // 格式化為親切易讀、具備完整表頭（地址、名字、合約名稱）的 LINE 專屬簽約訊息
-  const lineMessage = `【Sandy 宅安心 ｜ 專屬線上租賃契約】
+  const lineMessage = `【OKSIGN ｜ Sandy 宅安心 專屬線上租賃契約】
 👤 承租人：${tName} 您好
 🏠 租賃標的：${p.address}
 📄 合約名稱：${p.title}
 
-您好！我是房東黃蕙芬（Sandy）。已為您備妥專屬線上租賃契約與點交清單，請點擊下方專屬連結逐條審閱完整合約內容，確認無誤後於最末端親筆手寫簽名：
+您好！我是房東黃蕙芬（Sandy）。已為您備妥 OKSIGN 專屬線上租賃契約與點交清單，請點擊下方專屬連結逐條審閱完整合約內容，確認無誤後於最末端親筆手寫簽名：
 👉 ${cleanUrl}`;
 
   function notifySuccess() {
