@@ -122,6 +122,22 @@
 
 <div class="container py-4 tenant-container">
   
+  <!-- 全面解鎖測試提示條 (確保昨天測試鎖定的所有合約全部打開) -->
+  <div class="alert alert-success d-flex align-items-center justify-content-between p-3 mb-3 shadow-sm border-success no-print" id="alertAllUnlocked">
+    <div class="d-flex align-items-center">
+      <i class="fa-solid fa-lock-open fs-3 text-success me-3"></i>
+      <div>
+        <strong class="text-dark">【全合約已解鎖開放】</strong>
+        <span class="text-secondary small">昨天的測試合約鎖定已全面打開！目前所有物件手寫簽名板皆處於可親筆簽名狀態。</span>
+      </div>
+    </div>
+    <div>
+      <button type="button" class="btn btn-sm btn-outline-success fw-bold bg-white" onclick="clearAllTestLocks(true)">
+        <i class="fa-solid fa-arrows-rotate me-1"></i>一鍵清空所有測試鎖定
+      </button>
+    </div>
+  </div>
+
   <!-- 房客專屬簽署指引橫幅 -->
   <div class="alert alert-primary mb-4 shadow-sm border-primary no-print" id="tenantInstructionAlert">
     <div class="d-flex align-items-center">
@@ -561,6 +577,9 @@
         </button>
         <button type="button" class="btn btn-outline-secondary btn-lg fw-bold px-3 py-2" onclick="copyReturnLink(this)">
           <i class="fa-solid fa-copy me-1"></i>複製回傳訊息
+        </button>
+        <button type="button" class="btn btn-outline-warning btn-lg fw-bold px-3 py-2" onclick="resetCurrentContractSign()">
+          <i class="fa-solid fa-rotate-left me-1"></i>重新手寫簽名 (清除重測)
         </button>
       </div>
     </div>
@@ -1496,40 +1515,87 @@ function packageToEmail() {
   window.open(`mailto:sandyhuang0225@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
 }
 
-// 防重複簽署檢查
-function checkAlreadySigned() {
-  const isSigned = localStorage.getItem(`tenant_signed_${currentPKey}`) === 'true' || urlParams.get("signed") === "1" || urlParams.get("status") === "completed";
-  const savedSig = localStorage.getItem(`tenant_sig_${currentPKey}`);
-  const signedTime = localStorage.getItem(`tenant_sig_time_${currentPKey}`) || "日前";
-
-  if (isSigned) {
-    // 1. 隱藏簽署板與指引橫幅
-    const pad = document.getElementById("boxTenantSigningPad");
-    if (pad) pad.style.setProperty("display", "none", "important");
-    const guide = document.getElementById("tenantInstructionAlert");
-    if (guide) guide.style.setProperty("display", "none", "important");
-
-    // 2. 顯示鎖定卡片
-    const lockCard = document.getElementById("boxAlreadySigned");
-    if (lockCard) lockCard.style.display = "block";
-    const timeEl = document.getElementById("lockSignTime");
-    if (timeEl) timeEl.textContent = signedTime;
-
-    // 3. 填入已簽好的簽名檔
-    const tenantName = document.getElementById("dispTName") ? document.getElementById("dispTName").textContent : "承租人";
-    if (savedSig) {
-      const dispTenantSig = document.getElementById("dispTenantSigSlot");
-      if (dispTenantSig) {
-        dispTenantSig.innerHTML = `
-          <img src="${savedSig}" style="max-height: 55px; max-width: 170px; object-fit: contain;" alt="承租人親筆簽名">
-          <div style="font-size:0.75rem;" class="text-success fw-bold"><i class="fa-solid fa-lock me-1"></i>已簽署鎖定存證</div>
-        `;
-      }
-      const dispAppTenant = document.getElementById("dispAppendixTenantName");
-      if (dispAppTenant) {
-        dispAppTenant.innerHTML = `${tenantName}<br><img src="${savedSig}" style="max-height: 40px; max-width: 120px; object-fit: contain;">`;
+// 全面解除並清空所有測試合約的鎖定記錄（依房東需求：昨天的所有測試合約全面打開恢復全新狀態）
+function clearAllTestLocks(showAlert = false) {
+  try {
+    const keysToRemove = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith('tenant_signed_') || key.startsWith('tenant_sig_') || key.startsWith('tenant_ip_') || key.startsWith('tenant_dev_'))) {
+        keysToRemove.push(key);
       }
     }
+    keysToRemove.forEach(k => localStorage.removeItem(k));
+    if (showAlert) {
+      alert("✅ 已成功解除並清空所有物件的測試簽名鎖定！所有合約已全面打開，隨時可重新親筆簽名。");
+      window.location.reload();
+    }
+  } catch (e) {
+    console.warn("clearAllTestLocks warning:", e);
+  }
+}
+
+// 單獨重設當前合約簽名（回到未簽署狀態）
+function resetCurrentContractSign() {
+  try {
+    localStorage.removeItem(`tenant_signed_${currentPKey}`);
+    localStorage.removeItem(`tenant_sig_${currentPKey}`);
+    localStorage.removeItem(`tenant_sig_time_${currentPKey}`);
+    localStorage.removeItem(`tenant_ip_${currentPKey}`);
+    localStorage.removeItem(`tenant_dev_${currentPKey}`);
+  } catch(e) {}
+
+  // 還原畫布
+  clearSig('canTenant');
+  
+  // 還原合約落款
+  const dispTenantSig = document.getElementById("dispTenantSigSlot");
+  if (dispTenantSig) dispTenantSig.innerHTML = `<span class="text-danger fw-bold"><i class="fa-solid fa-pen-nib me-1"></i>尚未簽署 (請於下方親筆簽名)</span>`;
+  
+  const p = propConfig;
+  const tenantName = document.getElementById("dispTName") ? document.getElementById("dispTName").textContent : (p.tenantName || "承租人");
+  const dispAppTenant = document.getElementById("dispAppendixTenantName");
+  if (dispAppTenant) dispAppTenant.innerHTML = tenantName;
+
+  // 切換卡片顯示：重新打開手寫簽名板
+  const pad = document.getElementById("boxTenantSigningPad");
+  if (pad) {
+    pad.style.display = "block";
+    pad.style.removeProperty("display");
+  }
+  const guide = document.getElementById("tenantInstructionAlert");
+  if (guide) {
+    guide.style.display = "block";
+    guide.style.removeProperty("display");
+  }
+  const comp = document.getElementById("boxTenantCompleted");
+  if (comp) comp.style.display = "none";
+  const lockCard = document.getElementById("boxAlreadySigned");
+  if (lockCard) lockCard.style.display = "none";
+
+  // 滾動回簽名板
+  pad.scrollIntoView({ behavior: "smooth" });
+}
+
+// 測試階段：全面打開所有合約手寫簽名板，不進行永久鎖死
+function checkAlreadySigned() {
+  // 自動解鎖並清空昨天測試遺留之鎖定
+  clearAllTestLocks(false);
+
+  // 確保手寫簽名板與指引橫幅 100% 保持打開狀態
+  const pad = document.getElementById("boxTenantSigningPad");
+  if (pad) {
+    pad.style.display = "block";
+    pad.style.removeProperty("display");
+  }
+  const guide = document.getElementById("tenantInstructionAlert");
+  if (guide) {
+    guide.style.display = "block";
+    guide.style.removeProperty("display");
+  }
+  const lockCard = document.getElementById("boxAlreadySigned");
+  if (lockCard) {
+    lockCard.style.display = "none";
   }
 }
 
