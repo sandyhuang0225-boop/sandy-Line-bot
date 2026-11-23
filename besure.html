@@ -646,8 +646,9 @@ dd {
             本場共 1 位外部專家（1 講者 + 0 座長 · 每位固定 NT$ 5,000）
           </span>
         </div>
-        <div class="copy-card-body mb-2" id="launchDocRationale">
-          受邀專家廖國秀醫師具備三軍總醫院乳房外科豐富實證診療經驗，其專業領域與本次研討會主題「KISQALI Does it Again: A Moment for OS in NATALEE」高度契合。特別邀請擔任演講講者，針對最新臨床試驗數據（NATALEE OS）與臨床照護經驗進行專業學術分享與交流。
+        <div class="copy-card-body mb-2" id="launchDocRationale" style="white-space: pre-line;">
+【議程演講時段：19:30-20:10】（演講 40 分鐘 + 準備 20 分鐘，共 1 小時）
+受邀專家廖國秀醫師具備三軍總醫院乳房外科豐富實證診療經驗，其專業領域與本次研討會主題「KISQALI Does it Again: A Moment for OS in NATALEE」高度契合。特別邀請於議程時段 19:30-20:10 擔任演講講者，針對最新臨床試驗數據（NATALEE OS）與臨床照護經驗進行專業學術分享與交流。
         </div>
         <div class="d-flex gap-2 flex-wrap mb-3">
           <button type="button" class="btn-launchpad-copy" data-target="launchDocRationale" style="background: #2563eb;">
@@ -1511,24 +1512,37 @@ function updateAllSteps() {
     countBadgeEl.textContent = `本場共 ${totalExperts} 位外部專家（${speakerCount} 講者 + ${moderatorCount} 座長 · 每位固定 NT$ 5,000）`;
   }
 
-  // 產生每位專家的獨立理由文字 (自動將議程演講/主持時段精準嵌入)
+  // 產生每位專家的獨立理由文字 (將議程演講/主持時段置頂並精準嵌入，符合 BeSure 審查要求)
   experts.forEach(e => {
-    const timePhrase = (e.sessionTime && e.sessionTime.trim()) ? `特別邀請於議程時段【${e.sessionTime.trim()}】` : `特別邀請`;
-    if (e.role === 'Moderator') {
-      e.rationale = `受邀專家${e.name}醫師為${e.hospital || primaryHospital}${e.dept || '乳房外科'}資深臨床權威，具備主持大型醫學研討會之豐富經驗。${timePhrase}擔任本次會議座長（Moderator），主持臨床個案討論與多專科問答環節，引導醫療團隊針對早期乳癌最新治療策略與病友照護深入交流。`;
-    } else {
-      e.rationale = `受邀專家${e.name}醫師具備${e.hospital || primaryHospital}${e.dept || '乳房外科'}豐富實證診療經驗，其專業領域與本次研討會主題「${e.topic || eventName}」高度契合。${timePhrase}擔任演講講者，針對最新臨床試驗數據（NATALEE OS）與臨床照護經驗進行專業學術分享與交流。`;
-    }
+    const isMod = (e.role || '').toLowerCase().includes('mod') || (e.role || '').includes('座') || (e.role || '').includes('主');
+    const timeStr = (e.sessionTime && e.sessionTime.trim()) ? e.sessionTime.trim() : (isMod ? '18:30-19:10' : '19:30-20:10');
+    const roleTitle = isMod ? '主持' : '演講';
+
+    e.rationale = `【議程${roleTitle}時段：${timeStr}】（${roleTitle} 40 分鐘 + 準備 20 分鐘，共 1 小時）\n` +
+      (isMod
+        ? `受邀專家${e.name}醫師為${e.hospital || primaryHospital}${e.dept || '乳房外科'}資深臨床權威，具備主持大型醫學研討會之豐富經驗。特別邀請於議程指定時段 ${timeStr} 擔任本次會議座長（Moderator），主持臨床個案討論與多專科問答環節，引導醫療團隊針對早期乳癌最新治療策略與病友照護深入交流。`
+        : `受邀專家${e.name}醫師具備${e.hospital || primaryHospital}${e.dept || '乳房外科'}豐富實證診療經驗，其專業領域與本次研討會主題「${e.topic || eventName}」高度契合。特別邀請於議程指定時段 ${timeStr} 擔任演講講者，針對最新臨床試驗數據（NATALEE OS）與臨床照護經驗進行專業學術分享與交流。`
+      );
   });
 
-  // 合併理由 (亦自動帶入各醫師時段)
+  // 合併理由 (條列化呈現每位醫師之時段、角色與遴選理由，可直接全選貼入 BeSure 系統)
   if (totalExperts === 1) {
     document.getElementById("launchDocRationale").textContent = experts[0].rationale;
   } else {
     document.getElementById("launchDocRationale").textContent = 
-      `本次學術研討會共聘請 ${totalExperts} 位外部臨床專家顧問（包含 ${speakerCount} 位主講講者及 ${moderatorCount} 位座長主持人）：` +
-      experts.map(e => `【${e.name}】醫師（${e.hospital || ''}${e.dept || ''}，於時段【${e.sessionTime || '指定議程時段'}】擔任 ${e.role === 'Moderator' ? '座長主持' : '主講'}「${e.topic || 'NATALEE 臨床討論'}」）`).join('、') +
-      `。各受邀專家皆具備乳癌領域豐富臨床診療與學術主持經驗，其專業與本次研討會議題高度契合，特邀進行專業學術分享、跨科別個案交流與臨床討論引領。`;
+      `本次學術研討會共聘請 ${totalExperts} 位外部臨床專家顧問（包含 ${speakerCount} 位主講講者及 ${moderatorCount} 位座長主持人），各專家之議程時段、職責與遴選理由如下：\n\n` +
+      experts.map((e, idx) => {
+        const isMod = (e.role || '').toLowerCase().includes('mod') || (e.role || '').includes('座') || (e.role || '').includes('主');
+        const timeStr = (e.sessionTime && e.sessionTime.trim()) ? e.sessionTime.trim() : '指定議程時段';
+        const roleName = isMod ? '座長主持' : '主講講者';
+        const actionName = isMod ? '主持' : '演講';
+        return `${idx + 1}. 【${roleName}】${e.name} 醫師（${e.hospital || ''}${e.dept || ''}）\n` +
+          `• 議程${actionName}時段：${timeStr}（${actionName} 40 分鐘 + 準備 20 分鐘，服務 1 小時，酬金 NT$ 5,000）\n` +
+          `• 專家遴選理由：${isMod 
+            ? `專家為${e.hospital || primaryHospital}資深臨床權威，具備主持醫學會議之豐富經驗，特邀於議程時段 ${timeStr} 擔任座長主持，引領多專科臨床個案討論與深入交流。`
+            : `專家具備豐富實證診療經驗，專業與研討會主題「${e.topic || eventName}」高度契合，特邀於議程時段 ${timeStr} 進行最新臨床數據（NATALEE OS）專業學術演講分享。`}`;
+      }).join('\n\n') +
+      `\n\n各受邀專家皆具備乳癌領域豐富臨床診療與學術主持經驗，其專業與本次研討會議題高度契合，特邀進行專業學術分享、跨科別個案交流與臨床討論引領。`;
   }
 
   // 渲染逐位專家獨立卡片清單
@@ -1561,12 +1575,15 @@ function updateAllSteps() {
             <span class="badge bg-light text-dark border">準備 00h 20m</span>
             <span class="badge bg-light text-dark border">交通 00h 00m</span>
           </div>
-          <div class="p-2 bg-light rounded text-secondary small mb-2 border" id="expertRationaleText_${idx}" style="font-size: 0.85rem; line-height: 1.4;">
+          <div class="p-2 bg-light rounded text-secondary small mb-2 border" id="expertRationaleText_${idx}" style="font-size: 0.85rem; line-height: 1.45; white-space: pre-line;">
             ${e.rationale}
           </div>
           <div class="d-flex gap-2 mt-auto">
             <button type="button" class="btn btn-outline-secondary btn-sm flex-fill fw-bold" onclick="copyTextDirect('${e.name}', this)">
-              <i class="fa-solid fa-copy me-1"></i>複製姓名
+              <i class="fa-solid fa-user me-1"></i>複製姓名
+            </button>
+            <button type="button" class="btn btn-outline-info btn-sm flex-fill fw-bold" onclick="copyTextDirect('${(e.sessionTime || '').trim()}', this)" title="單獨複製此位醫師之議程演講時段">
+              <i class="fa-solid fa-clock me-1"></i>複製時段
             </button>
             <button type="button" class="btn btn-primary btn-sm flex-fill fw-bold" onclick="copyTextDirect(document.getElementById('expertRationaleText_${idx}').innerText, this)">
               <i class="fa-solid fa-copy me-1"></i>複製此位理由
