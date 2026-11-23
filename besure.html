@@ -648,6 +648,7 @@ dd {
         </div>
         <div class="copy-card-body mb-2" id="launchDocRationale" style="white-space: pre-line;">
 【議程演講時段：19:30-20:10】
+【Speaker Phone Number：ND03306】
 受邀專家廖國秀醫師具備三軍總醫院乳房外科豐富實證診療經驗，其專業領域與本次研討會主題「KISQALI Does it Again: A Moment for OS in NATALEE」高度契合。特別邀請於議程時段 19:30-20:10 擔任演講講者，針對最新臨床試驗數據（NATALEE OS）與臨床照護經驗進行專業學術分享與交流。
         </div>
         <div class="d-flex gap-2 flex-wrap mb-3">
@@ -1091,8 +1092,44 @@ dd {
   </div>
 </div>
 
+<script src="speaker_db.js"></script>
 <script>
 let currentSelectedFile = null;
+
+// 🌟 3,800+ 諾華受聘專家庫自動秒查對照核心演算法
+function lookupSpeakerPool(name, hospital) {
+  if (!window.NOVARTIS_SPEAKER_DATABASE || !Array.isArray(window.NOVARTIS_SPEAKER_DATABASE)) {
+    return null;
+  }
+  if (!name || !name.trim()) return null;
+
+  const cleanName = name.replace(/醫師|主任|教授|院長|副院長|總藥師|藥師|個管師|護理師/g, '').trim();
+  const candidates = window.NOVARTIS_SPEAKER_DATABASE.filter(d => d.n === cleanName);
+  if (candidates.length === 0) return null;
+  if (candidates.length === 1) return candidates[0];
+
+  // 多位同名醫師，依醫院模糊對照
+  if (hospital && hospital.trim()) {
+    const rawHosp = hospital.trim();
+    // 依關鍵字精確比對
+    for (const c of candidates) {
+      if (c.h && (c.h.includes(rawHosp) || rawHosp.includes(c.h))) {
+        return c;
+      }
+    }
+    // 特殊醫院簡稱模糊比對
+    const hospKeywords = ['台大', '臺大', '北榮', '中榮', '高榮', '高醫', '成大', '長庚', '三總', '三軍總醫院', '彰基', '奇美', '慈濟', '新光', '國泰', '雙和', '亞東', '童綜合', '秀傳', '義大', '馬偕', '敏盛', '門諾', '聖保祿', '若瑟', '耕莘'];
+    for (const kw of hospKeywords) {
+      if (rawHosp.includes(kw)) {
+        for (const c of candidates) {
+          if (c.h && c.h.includes(kw)) return c;
+        }
+      }
+    }
+  }
+  return candidates[0];
+}
+
 
 // 全局受聘專家名單 (含 Speaker 與 Moderator)
 window.detectedExperts = [
@@ -1102,6 +1139,7 @@ window.detectedExperts = [
     dept: "乳房外科",
     role: "Speaker",
     sessionTime: "19:30-20:10",
+    speakerNumber: "ND03306",
     topic: "KISQALI Does it Again: A Moment for OS in NATALEE"
   }
 ];
@@ -1323,17 +1361,23 @@ async function triggerManualAnalysis() {
     if (parsed.venue) document.getElementById("inpVenue").value = parsed.venue;
 
     if (parsed.experts && Array.isArray(parsed.experts) && parsed.experts.length > 0) {
-      window.detectedExperts = parsed.experts.map(e => ({
-        ...e,
-        sessionTime: e.sessionTime || e.time || ""
-      }));
+      window.detectedExperts = parsed.experts.map(e => {
+        const match = lookupSpeakerPool(e.name, e.hospital || parsed.hospital || "");
+        return {
+          ...e,
+          sessionTime: e.sessionTime || e.time || "",
+          speakerNumber: (match && match.p) ? match.p : ""
+        };
+      });
     } else if (parsed.doctor) {
+      const match = lookupSpeakerPool(parsed.doctor, parsed.hospital || "");
       window.detectedExperts = [{
         name: parsed.doctor,
         hospital: parsed.hospital || "外部醫院",
         dept: parsed.dept || "乳房外科",
         role: "Speaker",
         sessionTime: parsed.sessionTime || parsed.time || "19:30-20:10",
+        speakerNumber: (match && match.p) ? match.p : "",
         topic: parsed.topic || parsed.eventName || ""
       }];
     }
@@ -1345,6 +1389,7 @@ async function triggerManualAnalysis() {
       if (document.getElementById("inpHospital")) document.getElementById("inpHospital").value = first.hospital || "";
       if (document.getElementById("inpTopic")) document.getElementById("inpTopic").value = first.topic || "";
       if (document.getElementById("inpSessionTime")) document.getElementById("inpSessionTime").value = first.sessionTime || "";
+      if (document.getElementById("inpSpeakerNumber")) document.getElementById("inpSpeakerNumber").value = first.speakerNumber || "";
     }
 
     const expCount = window.detectedExperts ? window.detectedExperts.length : 1;
@@ -1362,7 +1407,7 @@ async function triggerManualAnalysis() {
     if (chipsEl && window.detectedExperts) {
       chipsEl.innerHTML = window.detectedExperts.map(e => `
         <span class="badge ${e.role === 'Moderator' ? 'bg-primary' : 'bg-warning text-dark'} px-2 py-1 fs-6">
-          ${e.role === 'Moderator' ? '🧑‍⚖️ Moderator 座長' : '🎤 Speaker 講者'}: ${e.name} 醫師 (${e.hospital || ''}${e.sessionTime ? ` · ⏰ ${e.sessionTime}` : ''}) · 固定 NT$ 5,000
+          ${e.role === 'Moderator' ? '🧑‍⚖️ Moderator 座長' : '🎤 Speaker 講者'}: ${e.name} 醫師 (${e.hospital || ''}${e.speakerNumber ? ` · 🆔 ${e.speakerNumber}` : ''}${e.sessionTime ? ` · ⏰ ${e.sessionTime}` : ''}) · 固定 NT$ 5,000
         </span>
       `).join('');
     }
@@ -1473,10 +1518,12 @@ function updateAllSteps() {
     const manualHosp = document.getElementById("inpHospital") ? document.getElementById("inpHospital").value.trim() : "";
     const manualTopic = document.getElementById("inpTopic") ? document.getElementById("inpTopic").value.trim() : "";
     const manualTime = document.getElementById("inpSessionTime") ? document.getElementById("inpSessionTime").value.trim() : "";
+    const manualSpNum = document.getElementById("inpSpeakerNumber") ? document.getElementById("inpSpeakerNumber").value.trim() : "";
     if (manualDoc) window.detectedExperts[0].name = manualDoc;
     if (manualHosp) window.detectedExperts[0].hospital = manualHosp;
     if (manualTopic) window.detectedExperts[0].topic = manualTopic;
     if (manualTime) window.detectedExperts[0].sessionTime = manualTime;
+    if (manualSpNum) window.detectedExperts[0].speakerNumber = manualSpNum;
   }
 
   const experts = (window.detectedExperts && window.detectedExperts.length > 0) 
@@ -1518,7 +1565,19 @@ function updateAllSteps() {
     const timeStr = (e.sessionTime && e.sessionTime.trim()) ? e.sessionTime.trim() : (isMod ? '18:30-19:10' : '19:30-20:10');
     const roleTitle = isMod ? '主持' : '演講';
 
+    // 自動比對 4,300+ 專家資料庫取得 Speaker Pool / Phone Number
+    if (!e.speakerNumber || !e.speakerNumber.trim()) {
+      const match = lookupSpeakerPool(e.name, e.hospital || primaryHospital);
+      if (match && match.p) {
+        e.speakerNumber = match.p;
+        if (!e.dept && match.d) e.dept = match.d;
+        if (!e.hospital && match.h) e.hospital = match.h;
+      }
+    }
+    const spNumStr = (e.speakerNumber && e.speakerNumber.trim()) ? `【Speaker Phone Number：${e.speakerNumber.trim()}】\n` : '';
+
     e.rationale = `【議程${roleTitle}時段：${timeStr}】\n` +
+      spNumStr +
       (isMod
         ? `受邀專家${e.name}醫師為${e.hospital || primaryHospital}${e.dept || '乳房外科'}資深臨床權威，具備主持大型醫學研討會之豐富經驗。特別邀請於議程指定時段 ${timeStr} 擔任本次會議座長（Moderator），主持臨床個案討論與多專科問答環節，引導醫療團隊針對早期乳癌最新治療策略與病友照護深入交流。`
         : `受邀專家${e.name}醫師具備${e.hospital || primaryHospital}${e.dept || '乳房外科'}豐富實證診療經驗，其專業領域與本次研討會主題「${e.topic || eventName}」高度契合。特別邀請於議程指定時段 ${timeStr} 擔任演講講者，針對最新臨床試驗數據（NATALEE OS）與臨床照護經驗進行專業學術分享與交流。`
@@ -1538,6 +1597,7 @@ function updateAllSteps() {
         const actionName = isMod ? '主持' : '演講';
         return `${idx + 1}. 【${roleName}】${e.name} 醫師（${e.hospital || ''}${e.dept || ''}）\n` +
           `• 議程${actionName}時段：${timeStr}\n` +
+          (e.speakerNumber ? `• Speaker Phone Number：${e.speakerNumber}\n` : '') +
           `• 專家遴選理由：${isMod 
             ? `專家為${e.hospital || primaryHospital}資深臨床權威，具備主持醫學會議之豐富經驗，特邀於議程時段 ${timeStr} 擔任座長主持，引領多專科臨床個案討論與深入交流。`
             : `專家具備豐富實證診療經驗，專業與研討會主題「${e.topic || eventName}」高度契合，特邀於議程時段 ${timeStr} 進行最新臨床數據（NATALEE OS）專業學術演講分享。`}`;
@@ -1560,6 +1620,18 @@ function updateAllSteps() {
           <div class="fw-bold fs-6 text-dark mb-1">
             ${e.name} 醫師 <span class="text-secondary small fw-normal">(${e.hospital || ''} ${e.dept || ''})</span>
           </div>
+          <div class="d-flex flex-wrap gap-1 mb-2">
+            ${e.speakerNumber ? `
+            <span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle px-2 py-1 fw-bold">
+              <i class="fa-solid fa-id-badge me-1"></i>Speaker No：${e.speakerNumber}
+            </span>
+            ` : '<span class="badge bg-secondary-subtle text-secondary px-2 py-1">未建代碼</span>'}
+            ${e.sessionTime ? `
+            <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-2 py-1 fw-bold">
+              <i class="fa-solid fa-clock me-1"></i>時段：${e.sessionTime}
+            </span>
+            ` : ''}
+          </div>
           ${e.sessionTime ? `
           <div class="mb-2">
             <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-2 py-1 fw-bold">
@@ -1578,12 +1650,15 @@ function updateAllSteps() {
           <div class="p-2 bg-light rounded text-secondary small mb-2 border" id="expertRationaleText_${idx}" style="font-size: 0.85rem; line-height: 1.45; white-space: pre-line;">
             ${e.rationale}
           </div>
-          <div class="d-flex gap-2 mt-auto">
+          <div class="d-flex gap-1 flex-wrap mt-auto">
             <button type="button" class="btn btn-outline-secondary btn-sm flex-fill fw-bold" onclick="copyTextDirect('${e.name}', this)">
-              <i class="fa-solid fa-user me-1"></i>複製姓名
+              <i class="fa-solid fa-user me-1"></i>姓名
+            </button>
+            <button type="button" class="btn btn-outline-primary btn-sm flex-fill fw-bold" onclick="copyTextDirect('${(e.speakerNumber || '').trim()}', this)" title="單獨複製 Speaker Phone Number">
+              <i class="fa-solid fa-id-card me-1"></i>代碼(${e.speakerNumber || '無'})
             </button>
             <button type="button" class="btn btn-outline-info btn-sm flex-fill fw-bold" onclick="copyTextDirect('${(e.sessionTime || '').trim()}', this)" title="單獨複製此位醫師之議程演講時段">
-              <i class="fa-solid fa-clock me-1"></i>複製時段
+              <i class="fa-solid fa-clock me-1"></i>時段
             </button>
             <button type="button" class="btn btn-primary btn-sm flex-fill fw-bold" onclick="copyTextDirect(document.getElementById('expertRationaleText_${idx}').innerText, this)">
               <i class="fa-solid fa-copy me-1"></i>複製此位理由
