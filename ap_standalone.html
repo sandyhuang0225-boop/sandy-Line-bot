@@ -342,7 +342,7 @@ body {
           <span id="spkFeeSummaryText">已安排 2 位講者，每位固定 1 小時 NT$ 5,000，講師費小計 NT$ 10,000</span>
         </div>
         <div class="text-muted">
-          受款人代碼：餐費/交通填 <strong>12246 (黃蕙芬)</strong>；講師費填 <strong>醫師專屬 SAP Vendor Code</strong>
+          受款人代碼：餐費填 <strong>12246 (黃蕙芬)</strong>；講師費填 <strong>醫師專屬 SAP Vendor Code</strong>；交通費填 <strong>1126226 (金龍永盛旅行社股份有限公司)</strong>
         </div>
       </div>
     </div>
@@ -960,7 +960,7 @@ async function generateOfficialExcel(btn) {
         wsAP[`Y${r}`] = { t: 's', v: 'Open' };
       });
 
-      // 3. 交通費列 (如有)
+      // 3. 交通費列 (如有，受款人為金龍永盛旅行社股份有限公司 1126226)
       if (evTrans > 0) {
         r++;
         const subId = `4-${activeSpeakers.length + 1}`;
@@ -982,8 +982,8 @@ async function generateOfficialExcel(btn) {
         wsAP[`Q${r}`] = { t: 'n', v: 0 };
         wsAP[`R${r}`] = { t: 's', v: evHospCode };
         wsAP[`S${r}`] = { t: 's', v: evHospName };
-        wsAP[`T${r}`] = { t: 's', v: '12246' };
-        wsAP[`U${r}`] = { t: 's', v: '黃蕙芬' };
+        wsAP[`T${r}`] = { t: 's', v: '1126226' };
+        wsAP[`U${r}`] = { t: 's', v: '金龍永盛旅行社股份有限公司' };
         wsAP[`Y${r}`] = { t: 's', v: 'Open' };
       }
 
