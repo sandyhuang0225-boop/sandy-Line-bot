@@ -647,7 +647,7 @@ dd {
           </span>
         </div>
         <div class="copy-card-body mb-2" id="launchDocRationale" style="white-space: pre-line;">
-【議程演講時段：19:30-20:10】（演講 40 分鐘 + 準備 20 分鐘，共 1 小時）
+【議程演講時段：19:30-20:10】
 受邀專家廖國秀醫師具備三軍總醫院乳房外科豐富實證診療經驗，其專業領域與本次研討會主題「KISQALI Does it Again: A Moment for OS in NATALEE」高度契合。特別邀請於議程時段 19:30-20:10 擔任演講講者，針對最新臨床試驗數據（NATALEE OS）與臨床照護經驗進行專業學術分享與交流。
         </div>
         <div class="d-flex gap-2 flex-wrap mb-3">
@@ -1518,7 +1518,7 @@ function updateAllSteps() {
     const timeStr = (e.sessionTime && e.sessionTime.trim()) ? e.sessionTime.trim() : (isMod ? '18:30-19:10' : '19:30-20:10');
     const roleTitle = isMod ? '主持' : '演講';
 
-    e.rationale = `【議程${roleTitle}時段：${timeStr}】（${roleTitle} 40 分鐘 + 準備 20 分鐘，共 1 小時）\n` +
+    e.rationale = `【議程${roleTitle}時段：${timeStr}】\n` +
       (isMod
         ? `受邀專家${e.name}醫師為${e.hospital || primaryHospital}${e.dept || '乳房外科'}資深臨床權威，具備主持大型醫學研討會之豐富經驗。特別邀請於議程指定時段 ${timeStr} 擔任本次會議座長（Moderator），主持臨床個案討論與多專科問答環節，引導醫療團隊針對早期乳癌最新治療策略與病友照護深入交流。`
         : `受邀專家${e.name}醫師具備${e.hospital || primaryHospital}${e.dept || '乳房外科'}豐富實證診療經驗，其專業領域與本次研討會主題「${e.topic || eventName}」高度契合。特別邀請於議程指定時段 ${timeStr} 擔任演講講者，針對最新臨床試驗數據（NATALEE OS）與臨床照護經驗進行專業學術分享與交流。`
@@ -1537,7 +1537,7 @@ function updateAllSteps() {
         const roleName = isMod ? '座長主持' : '主講講者';
         const actionName = isMod ? '主持' : '演講';
         return `${idx + 1}. 【${roleName}】${e.name} 醫師（${e.hospital || ''}${e.dept || ''}）\n` +
-          `• 議程${actionName}時段：${timeStr}（${actionName} 40 分鐘 + 準備 20 分鐘，服務 1 小時，酬金 NT$ 5,000）\n` +
+          `• 議程${actionName}時段：${timeStr}\n` +
           `• 專家遴選理由：${isMod 
             ? `專家為${e.hospital || primaryHospital}資深臨床權威，具備主持醫學會議之豐富經驗，特邀於議程時段 ${timeStr} 擔任座長主持，引領多專科臨床個案討論與深入交流。`
             : `專家具備豐富實證診療經驗，專業與研討會主題「${e.topic || eventName}」高度契合，特邀於議程時段 ${timeStr} 進行最新臨床數據（NATALEE OS）專業學術演講分享。`}`;
