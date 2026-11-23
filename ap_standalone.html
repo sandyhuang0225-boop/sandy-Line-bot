@@ -361,7 +361,7 @@ body {
         </div>
         <div class="col-md-2 col-12">
           <label class="form-label fw-bold small text-secondary">交通費 (金龍旅行社 NT$)</label>
-          <input type="number" id="evTransFee" class="form-control fw-bold text-secondary" value="0" oninput="calculateAll()">
+          <input type="number" id="evTransFee" class="form-control fw-bold text-secondary" value="3000" oninput="calculateAll()">
         </div>
       </div>
       
@@ -556,6 +556,11 @@ let agendaItems = [
 document.addEventListener('DOMContentLoaded', () => {
   renderAgendaTable();
   calculateAll();
+  // 🌟 預設將本月雙活動完整範例（1場 Event 研討會 + 1場 Detailing 拜訪餐敘）帶入清單 🌟
+  if (monthlyPlanList.length === 0) {
+    addCurrentEventToPlan(true);
+    addCurrentDetailingToPlan(true);
+  }
   renderCartTable();
 });
 
@@ -592,7 +597,7 @@ function clearEventForm() {
   document.getElementById('evHcpCount').value = 15;
   document.getElementById('evNvsCount').value = 2;
   document.getElementById('evMealFee').value = '';
-  document.getElementById('evTransFee').value = 0;
+  document.getElementById('evTransFee').value = 3000;
   agendaItems = [
     { time: '18:30~19:00', topic: 'Reception', speaker: '', spkHosp: '', spkVendor: '', spkPool: '', moderator: 'ALL' },
     { time: '19:00~19:40', topic: '', speaker: '', spkHosp: '', spkVendor: '', spkPool: '', moderator: '' },
@@ -604,12 +609,12 @@ function clearEventForm() {
 }
 
 function clearDetailingForm() {
-  document.getElementById('dtVenue').value = '';
-  document.getElementById('dtHosp').value = '';
-  document.getElementById('dtHospCode').value = '';
+  document.getElementById('dtVenue').value = '彭湃海鮮餐廳';
+  document.getElementById('dtHosp').value = '三軍總醫院附設民眾診療服務處';
+  document.getElementById('dtHospCode').value = '177160';
   document.getElementById('dtHcpCount').value = 4;
   document.getElementById('dtNvsCount').value = 1;
-  document.getElementById('dtMealFee').value = '';
+  document.getElementById('dtMealFee').value = 17500;
   calculateAll();
 }
 
@@ -621,16 +626,29 @@ function validateDtCount() {
   }
 }
 
+// 輔助清洗醫師純姓名
+function cleanDoctorName(rawText) {
+  if (!rawText) return '';
+  const clean = rawText.replace(/醫師|主任|教授|副教授|顧問|部長|台灣諾華公司|諾華公司|Novartis/gi, '')
+                       .replace(/\([^)]*\)/g, '')
+                       .replace(/（[^）]*）/g, '')
+                       .replace(/萬芳醫院|三軍總醫院|台大醫院|基隆長庚紀念醫院|基隆長庚醫院|基隆長庚|台北長庚|林口長庚|長庚醫院|臺北榮民總醫院|台北榮總|榮總|新光吳火獅紀念醫院|新光醫院|馬偕紀念醫院|馬偕醫院|雙和醫院|彰化基督教醫院|三總|北榮|中榮|高榮|成大|高醫/g, '')
+                       .replace(/\s+/g, '').trim();
+  if (!clean || clean === 'ALL' || clean.includes('ALL') || clean.includes('Sandy') || clean.includes('Discussion') || clean.includes('Reception')) return '';
+  const m = clean.match(/[\u4e00-\u9fa5]{2,4}/);
+  return m ? m[0] : clean;
+}
+
 // 🌟 自動深度解析醫師資訊 (姓名、所屬醫院、HP Code、Vendor Code、Speaker Pool No) 🌟
 function resolveDoctorDeep(rawText) {
   if (!rawText) return null;
   const clean = rawText.replace(/醫師|主任|教授|副教授|顧問|部長|台灣諾華公司|諾華公司|Novartis/gi, '')
                        .replace(/\([^)]*\)/g, '')
                        .replace(/（[^）]*）/g, '')
-                       .replace(/萬芳醫院|三軍總醫院|台大醫院|基隆長庚紀念醫院|基隆長庚醫院|長庚醫院|榮總|新光醫院/g, '')
+                       .replace(/萬芳醫院|三軍總醫院|台大醫院|基隆長庚紀念醫院|基隆長庚醫院|基隆長庚|台北長庚|林口長庚|長庚醫院|臺北榮民總醫院|台北榮總|榮總|新光吳火獅紀念醫院|新光醫院|馬偕紀念醫院|馬偕醫院|雙和醫院|彰化基督教醫院|三總|北榮|中榮|高榮|成大|高醫/g, '')
                        .replace(/\s+/g, '').trim();
 
-  if (!clean || clean === 'ALL' || clean.includes('Sandy')) return null;
+  if (!clean || clean === 'ALL' || clean.includes('ALL') || clean.includes('Sandy') || clean.includes('Discussion') || clean.includes('Reception')) return null;
 
   const speakers = window.NOVARTIS_SPEAKER_DATABASE || [];
   const vendors = window.NOVARTIS_VENDORS || [];
@@ -770,12 +788,12 @@ async function handleAgendaImageUpload(input) {
 }`;
 
     const candidateModels = [
-      'gemini-3-flash-preview',
       'gemini-3.5-flash-lite',
-      'gemini-3.1-flash-lite',
+      'gemini-3.5-flash',
       'gemini-flash-lite-latest',
-      'gemini-flash-latest',
-      'gemini-3.5-flash'
+      'gemini-3.1-flash-lite',
+      'gemini-3-flash-preview',
+      'gemini-flash-latest'
     ];
 
     let data = null;
@@ -858,7 +876,7 @@ async function handleAgendaImageUpload(input) {
       agendaItems = rawItems.map(item => {
         // Speaker
         const spkResolved = resolveDoctorDeep(item.speaker);
-        const spkName = spkResolved ? spkResolved.name : (item.speaker || '');
+        const spkName = spkResolved ? spkResolved.name : cleanDoctorName(item.speaker || '');
         const spkHosp = spkResolved ? spkResolved.hpName : (item.speaker_hospital || item.spkHosp || '');
         const spkVen = spkResolved ? spkResolved.vendorCode : '';
         const spkPool = spkResolved ? spkResolved.poolNo : '';
@@ -869,8 +887,8 @@ async function handleAgendaImageUpload(input) {
         const modResolved = resolveDoctorDeep(item.moderator);
         if (modResolved) {
           modStr = `${modResolved.name} 醫師 (${modResolved.hpName})`;
-        } else if (item.moderator_hospital && item.moderator && item.moderator !== 'ALL') {
-          modStr = `${item.moderator} (${item.moderator_hospital})`;
+        } else if (item.moderator_hospital && item.moderator && !item.moderator.includes('ALL')) {
+          modStr = `${cleanDoctorName(item.moderator)} 醫師 (${item.moderator_hospital})`;
         }
 
         return {
@@ -890,7 +908,13 @@ async function handleAgendaImageUpload(input) {
     notice.className = 'alert alert-success py-2 px-3 mt-3 mb-0 small text-start';
     msg.innerHTML = `<i class="fa-solid fa-circle-check text-success me-1"></i><strong>Gemini 視覺 AI 辨識成功！</strong>已為您將「${file.name}」中的會議名稱、地點、時間、講者與主持人自動帶入下方表格。請確認人數與金額即可！`;
 
+    updateSpeakerFeeCount();
     calculateAll();
+    // 🌟 若購物車已有第一場 Event，立即用全新視覺辨識出的資料覆寫更新 🌟
+    if (monthlyPlanList.length > 0 && monthlyPlanList[0].type === 'EVENT') {
+      monthlyPlanList[0] = buildEventPlanFromCurrentForm();
+      renderCartTable();
+    }
 
   } catch (e) {
     console.error(e);
@@ -899,23 +923,40 @@ async function handleAgendaImageUpload(input) {
   }
 }
 
+function syncAgendaFromDOM() {
+  const tbody = document.getElementById('agendaTbody');
+  if (!tbody) return;
+  const trs = tbody.querySelectorAll('tr');
+  trs.forEach((tr, idx) => {
+    if (idx < agendaItems.length) {
+      const inputs = tr.querySelectorAll('input');
+      if (inputs.length >= 4) {
+        agendaItems[idx].time = inputs[0].value.trim();
+        agendaItems[idx].topic = inputs[1].value.trim();
+        agendaItems[idx].speaker = inputs[2].value.trim();
+        agendaItems[idx].moderator = inputs[3].value.trim();
+      }
+    }
+  });
+}
+
 function renderAgendaTable() {
   const tbody = document.getElementById('agendaTbody');
   tbody.innerHTML = agendaItems.map((item, idx) => `
     <tr>
       <td>
-        <input type="text" class="form-control form-control-sm fw-bold text-center" value="${item.time}" onchange="agendaItems[${idx}].time = this.value; calculateAll();">
+        <input type="text" class="form-control form-control-sm fw-bold text-center" value="${item.time}" oninput="agendaItems[${idx}].time = this.value;" onchange="calculateAll();">
       </td>
       <td>
-        <input type="text" class="form-control form-control-sm fw-bold" value="${item.topic}" placeholder="講題內容" onchange="agendaItems[${idx}].topic = this.value;">
+        <input type="text" class="form-control form-control-sm fw-bold" value="${item.topic}" placeholder="講題內容" oninput="agendaItems[${idx}].topic = this.value;">
       </td>
       <td class="position-relative">
-        <input type="text" class="form-control form-control-sm fw-bold" value="${item.speaker}" placeholder="講者姓名" oninput="searchDoctor(${idx}, this.value, 'speaker')">
+        <input type="text" class="form-control form-control-sm fw-bold" value="${item.speaker}" placeholder="講者姓名" oninput="agendaItems[${idx}].speaker = this.value; searchDoctor(${idx}, this.value, 'speaker'); updateSpeakerFeeCount();" onchange="agendaItems[${idx}].speaker = this.value; calculateAll();">
         <small class="text-muted d-block" style="font-size:0.75rem;">${item.spkHosp || ''} ${item.spkVendor ? '· SAP:' + item.spkVendor : ''} ${item.spkPool ? '· ' + item.spkPool : ''}</small>
         <div id="spkAuto_${idx}" class="autocomplete-box d-none"></div>
       </td>
       <td class="position-relative">
-        <input type="text" class="form-control form-control-sm fw-bold" value="${item.moderator}" placeholder="主持人姓名 / ALL" oninput="searchDoctor(${idx}, this.value, 'moderator')">
+        <input type="text" class="form-control form-control-sm fw-bold" value="${item.moderator}" placeholder="主持人姓名 / ALL" oninput="agendaItems[${idx}].moderator = this.value; searchDoctor(${idx}, this.value, 'moderator'); updateSpeakerFeeCount();" onchange="agendaItems[${idx}].moderator = this.value; calculateAll();">
         ${(() => {
           const modRes = resolveDoctorDeep(item.moderator);
           return modRes ? `<small class="text-muted d-block" style="font-size:0.75rem;">${modRes.hpName || ''} ${modRes.vendorCode ? '· SAP:' + modRes.vendorCode : ''} ${modRes.poolNo ? '· ' + modRes.poolNo : ''}</small>` : '';
@@ -1043,24 +1084,41 @@ document.addEventListener('click', (e) => {
 
 // 統計所有受款人 (包括 Speaker 與 Moderator)
 function getActiveExperts() {
+  syncAgendaFromDOM();
   const list = [];
   const seen = new Set();
 
   agendaItems.forEach(item => {
     // 1. Speaker
-    if (item.speaker && !item.speaker.includes('Sandy') && item.speaker !== 'ALL') {
+    if (item.speaker && !item.speaker.includes('Sandy') && item.speaker !== 'ALL' && !item.speaker.includes('ALL')) {
       const res = resolveDoctorDeep(item.speaker);
-      if (res && !seen.has(res.name)) {
-        seen.add(res.name);
-        list.push({ ...res, role: 'Speaker 演講費' });
+      const docName = res ? res.name : cleanDoctorName(item.speaker);
+      if (docName && !seen.has(docName)) {
+        seen.add(docName);
+        list.push({
+          name: docName,
+          poolNo: res ? res.poolNo : (item.spkPool || ''),
+          vendorCode: res ? res.vendorCode : (item.spkVendor || ''),
+          hpCode: res ? res.hpCode : (item.spkHpCode || document.getElementById('evHospCode').value || '177160'),
+          hpName: res ? res.hpName : (item.spkHosp || document.getElementById('evHosp').value || '三軍總醫院附設民眾診療服務處'),
+          role: 'Speaker 演講費'
+        });
       }
     }
     // 2. Moderator
-    if (item.moderator && !item.moderator.includes('Sandy') && item.moderator !== 'ALL') {
+    if (item.moderator && !item.moderator.includes('Sandy') && item.moderator !== 'ALL' && !item.moderator.includes('ALL')) {
       const res = resolveDoctorDeep(item.moderator);
-      if (res && !seen.has(res.name)) {
-        seen.add(res.name);
-        list.push({ ...res, role: 'Moderator 主持費' });
+      const docName = res ? res.name : cleanDoctorName(item.moderator);
+      if (docName && !seen.has(docName)) {
+        seen.add(docName);
+        list.push({
+          name: docName,
+          poolNo: res ? res.poolNo : '',
+          vendorCode: res ? res.vendorCode : '',
+          hpCode: res ? res.hpCode : (document.getElementById('evHospCode').value || '177160'),
+          hpName: res ? res.hpName : (document.getElementById('evHosp').value || '三軍總醫院附設民眾診療服務處'),
+          role: 'Moderator 主持費'
+        });
       }
     }
   });
@@ -1129,22 +1187,23 @@ function calculateAll() {
 // ========================================================
 // 🌟 本月費用規劃清單 (Activity Cart) 功能 🌟
 // ========================================================
-function addCurrentEventToPlan(silent = false) {
+function buildEventPlanFromCurrentForm() {
+  syncAgendaFromDOM();
   const prefix = document.getElementById('agPrefix').value.trim() || '全北區';
   const meetingTitle = `【${prefix}乳癌研討會】`;
-  const subtitle = document.getElementById('agSubtitle').value || 'From Shared Decision to Long-Term Confidence';
+  const subtitle = document.getElementById('agSubtitle').value.trim() || 'From Shared Decision to Long-Term Confidence';
   const agDate = document.getElementById('agDate').value || '2026-11-24';
   const agTime = document.getElementById('agTime').value || '18:30-20:30';
-  const agVenue = document.getElementById('agVenue').value || '餐廳';
-  const evHospName = document.getElementById('evHosp').value || '三軍總醫院附設民眾診療服務處';
-  const evHospCode = document.getElementById('evHospCode').value || '177160';
+  const agVenue = document.getElementById('agVenue').value.trim() || 'VG the Seafood Bar';
+  const evHospName = document.getElementById('evHosp').value.trim() || '三軍總醫院附設民眾診療服務處';
+  const evHospCode = document.getElementById('evHospCode').value.trim() || '177160';
   const evHcp = parseInt(document.getElementById('evHcpCount').value) || 20;
   const evNvs = parseInt(document.getElementById('evNvsCount').value) || 2;
   const evMeal = parseFloat(document.getElementById('evMealFee').value) || 70000;
-  const evTrans = parseFloat(document.getElementById('evTransFee').value) || 0;
+  const evTrans = parseFloat(document.getElementById('evTransFee').value) || 3000;
   const experts = getActiveExperts();
 
-  monthlyPlanList.push({
+  return {
     type: 'EVENT',
     title: meetingTitle,
     prefix: prefix,
@@ -1160,27 +1219,19 @@ function addCurrentEventToPlan(silent = false) {
     transFee: evTrans,
     experts: experts,
     agendaRows: JSON.parse(JSON.stringify(agendaItems))
-  });
-
-  renderCartTable();
-  if (!silent) {
-    alert(`✅ 已成功將「${meetingTitle}」加入本月清單！(目前共 ${monthlyPlanList.length} 場活動)`);
-    if (confirm('是否清空當前欄位，繼續輸入下一場活動？')) {
-      clearEventForm();
-    }
-  }
+  };
 }
 
-function addCurrentDetailingToPlan(silent = false) {
+function buildDetailingPlanFromCurrentForm() {
   const dtDate = document.getElementById('dtDate').value || '2026-11-25';
-  const dtVenue = document.getElementById('dtVenue').value || '餐廳';
-  const dtHospName = document.getElementById('dtHosp').value || '三軍總醫院附設民眾診療服務處';
-  const dtHospCode = document.getElementById('dtHospCode').value || '177160';
+  const dtVenue = document.getElementById('dtVenue').value.trim() || '彭湃海鮮餐廳';
+  const dtHospName = document.getElementById('dtHosp').value.trim() || '三軍總醫院附設民眾診療服務處';
+  const dtHospCode = document.getElementById('dtHospCode').value.trim() || '177160';
   const dtHcp = parseInt(document.getElementById('dtHcpCount').value) || 4;
   const dtNvs = parseInt(document.getElementById('dtNvsCount').value) || 1;
   const dtMeal = parseFloat(document.getElementById('dtMealFee').value) || 17500;
 
-  monthlyPlanList.push({
+  return {
     type: 'DETAILING',
     title: `Detailing (${dtVenue})`,
     date: dtDate,
@@ -1190,11 +1241,27 @@ function addCurrentDetailingToPlan(silent = false) {
     hcpCount: dtHcp,
     nvsCount: dtNvs,
     mealFee: dtMeal
-  });
+  };
+}
 
+function addCurrentEventToPlan(silent = false) {
+  const item = buildEventPlanFromCurrentForm();
+  monthlyPlanList.push(item);
   renderCartTable();
   if (!silent) {
-    alert(`✅ 已成功將「Detailing (${dtVenue})」加入本月清單！(目前共 ${monthlyPlanList.length} 場活動)`);
+    alert(`✅ 已成功將「${item.title}」加入本月清單！(目前共 ${monthlyPlanList.length} 場活動)`);
+    if (confirm('是否清空當前欄位，繼續輸入下一場活動？')) {
+      clearEventForm();
+    }
+  }
+}
+
+function addCurrentDetailingToPlan(silent = false) {
+  const item = buildDetailingPlanFromCurrentForm();
+  monthlyPlanList.push(item);
+  renderCartTable();
+  if (!silent) {
+    alert(`✅ 已成功將「${item.title}」加入本月清單！(目前共 ${monthlyPlanList.length} 場活動)`);
     if (confirm('是否清空當前欄位，繼續輸入下一場活動？')) {
       clearDetailingForm();
     }
@@ -1269,23 +1336,26 @@ function renderCartTable() {
 // 🌟 核心引擎：生成整月合併官方母檔 Excel (.xlsx) 🌟
 // ========================================================
 async function generateMergedOfficialExcel(btn) {
-  // 🌟 貼心智慧收集：若目前表單上有填寫 Event 或 Detailing 但未點擊加入清單，自動納入！ 🌟
-  const evVenue = document.getElementById('agVenue').value.trim();
-  const alreadyEv = monthlyPlanList.some(item => item.type === 'EVENT' && item.venue === evVenue);
-  if (evVenue && !alreadyEv) {
-    addCurrentEventToPlan(true);
-  }
+  syncAgendaFromDOM();
 
-  const dtVenue = document.getElementById('dtVenue').value.trim();
-  const dtMeal = parseFloat(document.getElementById('dtMealFee').value) || 0;
-  const alreadyDt = monthlyPlanList.some(item => item.type === 'DETAILING' && item.venue === dtVenue);
-  if (dtVenue && dtMeal > 0 && !alreadyDt) {
-    addCurrentDetailingToPlan(true);
-  }
+  const currentEvent = buildEventPlanFromCurrentForm();
+  const currentDetailing = buildDetailingPlanFromCurrentForm();
 
-  if (monthlyPlanList.length === 0) {
-    alert('⚠️ 您的本月費用規劃清單中目前沒有活動！請先將上方的 Event 或 Detailing 點擊「加入本月費用規劃清單」！');
-    return;
+  let exportPlanList = [];
+  if (monthlyPlanList.length > 0) {
+    exportPlanList = JSON.parse(JSON.stringify(monthlyPlanList));
+    const evIdx = exportPlanList.findIndex(item => item.type === 'EVENT');
+    if (evIdx !== -1) {
+      exportPlanList[evIdx] = currentEvent;
+    } else {
+      exportPlanList.unshift(currentEvent);
+    }
+    const hasDt = exportPlanList.some(item => item.type === 'DETAILING');
+    if (!hasDt) {
+      exportPlanList.push(currentDetailing);
+    }
+  } else {
+    exportPlanList = [currentEvent, currentDetailing];
   }
 
   const origBtnText = btn.innerHTML;
@@ -1308,7 +1378,10 @@ async function generateMergedOfficialExcel(btn) {
       }
     }
 
-    // 🌟 第二步：徹底移除母檔中的所有舊 Agenda 頁籤（包含 ﹝20261124﹞Agenda 、﹝20261204﹞Agenda (1) 等所有歷史殘留） 🌟
+    // 🌟 第二步：備份官方 Agenda 範本頁籤，然後徹底移除所有舊 Agenda 頁籤 🌟
+    const baseAgendaTpl = wb.Sheets['﹝20261204﹞Agenda (1)'] || wb.Sheets['﹝20261124﹞Agenda '] || wb.Sheets[wb.SheetNames.find(n => n && n.includes('Agenda'))];
+    const agendaTemplateCopy = baseAgendaTpl ? JSON.parse(JSON.stringify(baseAgendaTpl)) : null;
+
     const oldAgendaNames = wb.SheetNames.filter(n => n.includes('Agenda'));
     oldAgendaNames.forEach(n => {
       const sIdx = wb.SheetNames.indexOf(n);
@@ -1320,7 +1393,7 @@ async function generateMergedOfficialExcel(btn) {
     let curRow = 5;
     const selectedMonth = parseInt(document.getElementById('planMonth').value) || 11;
 
-    monthlyPlanList.forEach((act, actIdx) => {
+    exportPlanList.forEach((act, actIdx) => {
       const actNo = actIdx + 1;
       const dateClean = act.date.replace(/-/g, '');
       const month = selectedMonth;
@@ -1352,7 +1425,7 @@ async function generateMergedOfficialExcel(btn) {
 
       } else {
         // Event 餐費列
-        const avg = (act.hcpCount + act.nvsCount) > 0 ? (act.mealFee / (act.hcpCount + act.nvsCount)) : 0;
+        const avg = (act.hcpCount + act.nvsCount) > 0 ? Math.round(act.mealFee / (act.hcpCount + act.nvsCount)) : 0;
         wsAP[`B${curRow}`] = { t: 's', v: `${dateClean}_10000058576_Event - Food & Beverage` };
         wsAP[`C${curRow}`] = { t: 's', v: `${month}-42010261-${actNo}` };
         wsAP[`D${curRow}`] = { t: 's', v: '周書全' };
@@ -1433,7 +1506,7 @@ async function generateMergedOfficialExcel(btn) {
 
         // 🌟 為每一場 Event 動態建立排版精確且清晰的專屬 Agenda 頁籤 🌟
         const agSheetName = `﹝${dateClean}﹞Agenda`;
-        const wsAg = {};
+        let wsAg = agendaTemplateCopy ? JSON.parse(JSON.stringify(agendaTemplateCopy)) : {};
 
         // 設定欄寬 (Time: 16, Topic: 55, Speaker: 22, Moderator: 22)
         wsAg['!cols'] = [
@@ -1463,8 +1536,21 @@ async function generateMergedOfficialExcel(btn) {
           const rPos = 8 + rI;
           wsAg[`A${rPos}`] = { t: 's', v: rowItem.time || '' };
           wsAg[`B${rPos}`] = { t: 's', v: rowItem.topic || '' };
-          wsAg[`C${rPos}`] = { t: 's', v: rowItem.speaker ? `${rowItem.speaker} ${rowItem.spkHosp || ''}`.trim() : '' };
-          wsAg[`D${rPos}`] = { t: 's', v: rowItem.moderator || '' };
+
+          const isMergedRow = (rI === 0) || (rI === act.agendaRows.length - 1) || 
+                              (rowItem.topic && (rowItem.topic.includes('Reception') || rowItem.topic.includes('Discussion') || rowItem.topic.includes('Closing'))) ||
+                              (rowItem.moderator && rowItem.moderator.includes('ALL'));
+
+          if (isMergedRow) {
+            const mergedVal = rowItem.moderator || rowItem.speaker || 'ALL';
+            wsAg[`C${rPos}`] = { t: 's', v: mergedVal };
+            delete wsAg[`D${rPos}`];
+          } else {
+            const spkText = rowItem.speaker ? `${rowItem.speaker}醫師           ${rowItem.spkHosp || ''}`.trim() : '';
+            const modText = rowItem.moderator ? `${rowItem.moderator}`.trim() : '';
+            wsAg[`C${rPos}`] = { t: 's', v: spkText };
+            wsAg[`D${rPos}`] = { t: 's', v: modText };
+          }
         });
 
         // 諾華官方免責聲明與主辦標註
@@ -1476,8 +1562,8 @@ async function generateMergedOfficialExcel(btn) {
         // 設定資料範圍
         wsAg['!ref'] = `A1:D${legalPos + 4}`;
 
-        // 儲存格合併設定 (A1:D1 標題、A2:C2 副標、免責宣告)
-        wsAg['!merges'] = [
+        // 儲存格合併設定 (A1:D1 標題、A2:C2 副標、免責宣告，以及議程中各合併列)
+        const customMerges = [
           { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }, // A1:D1
           { s: { r: 1, c: 0 }, e: { r: 1, c: 2 } }, // A2:C2
           { s: { r: legalPos - 1, c: 0 }, e: { r: legalPos - 1, c: 3 } },
@@ -1485,7 +1571,19 @@ async function generateMergedOfficialExcel(btn) {
           { s: { r: legalPos + 2, c: 0 }, e: { r: legalPos + 3, c: 3 } }
         ];
 
-        // 附加此全新乾淨頁籤至活頁簿
+        act.agendaRows.forEach((rowItem, rI) => {
+          const rPos = 8 + rI;
+          const isMergedRow = (rI === 0) || (rI === act.agendaRows.length - 1) || 
+                              (rowItem.topic && (rowItem.topic.includes('Reception') || rowItem.topic.includes('Discussion') || rowItem.topic.includes('Closing'))) ||
+                              (rowItem.moderator && rowItem.moderator.includes('ALL'));
+          if (isMergedRow) {
+            customMerges.push({ s: { r: rPos - 1, c: 2 }, e: { r: rPos - 1, c: 3 } }); // C{rPos}:D{rPos}
+          }
+        });
+
+        wsAg['!merges'] = customMerges;
+
+        // 附加此全新乾淨且排版 100% 正確的頁籤至活頁簿
         wb.SheetNames.push(agSheetName);
         wb.Sheets[agSheetName] = wsAg;
       }
