@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Novartis AP for SAP 獨立版助手 (Activity Proposal & Agenda)</title>
+<title>Novartis AP for SAP 獨立版助手 (AI 視覺辨識 Agenda & 官方母檔 Excel)</title>
 
 <!-- Bootstrap 5 & FontAwesome -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -68,6 +68,20 @@ body {
   box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
 }
 
+/* 🌟 AI 上傳識別卡片 🌟 */
+.ai-upload-hero {
+  background: linear-gradient(135deg, #eff6ff 0%, #e0f2fe 100%);
+  border: 2px dashed #0284c7;
+  border-radius: 16px;
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 20px;
+  transition: all 0.2s;
+}
+.ai-upload-hero:hover {
+  background: #e0f2fe;
+}
+
 /* 🌟 照片級 Agenda 投影片卡片造型 🌟 */
 .agenda-slide-card {
   background: #ffffff;
@@ -87,27 +101,6 @@ body {
   height: 140px;
   background: radial-gradient(circle, rgba(14, 165, 233, 0.15) 0%, rgba(255,255,255,0) 70%);
   pointer-events: none;
-}
-.agenda-header-title {
-  color: #0284c7;
-  font-size: 1.5rem;
-  font-weight: 900;
-  letter-spacing: 0.5px;
-}
-.agenda-header-sub {
-  color: #0369a1;
-  font-size: 1.05rem;
-  font-weight: 700;
-  margin-bottom: 16px;
-}
-.agenda-meta-row {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #334155;
-  margin-bottom: 6px;
-}
-.agenda-meta-row strong {
-  color: #0f172a;
 }
 .agenda-table {
   width: 100%;
@@ -138,25 +131,6 @@ body {
   font-size: 0.76rem;
   color: #64748b;
   line-height: 1.5;
-}
-
-/* 常用主題快速帶入按鈕 */
-.topic-tag {
-  cursor: pointer;
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  color: #334155;
-  font-size: 0.75rem;
-  padding: 3px 8px;
-  border-radius: 12px;
-  display: inline-block;
-  margin-right: 5px;
-  margin-bottom: 5px;
-}
-.topic-tag:hover {
-  background: #e0f2fe;
-  border-color: #0284c7;
-  color: #0284c7;
 }
 
 /* 檢索下拉選單 */
@@ -206,7 +180,7 @@ body {
   <!-- 🌟 模式切換按鈕 🌟 -->
   <div class="d-flex gap-2 p-1 bg-white border rounded-3 shadow-sm mb-3">
     <button type="button" class="btn mode-tab-btn flex-fill active" id="tabEvent" onclick="setMode('EVENT')">
-      <i class="fa-solid fa-chalkboard-user me-1"></i>模式一：Event 醫學研討會 (代號 576 · 附視覺化 Agenda)
+      <i class="fa-solid fa-chalkboard-user me-1"></i>模式一：Event 醫學研討會 (代號 576 · AI 識圖帶入 Agenda)
     </button>
     <button type="button" class="btn mode-tab-btn flex-fill text-dark" id="tabDetailing" onclick="setMode('DETAILING')">
       <i class="fa-solid fa-utensils me-1"></i>模式二：Detailing 拜訪餐敘 (代號 951 · 極速 4 欄位)
@@ -236,41 +210,46 @@ body {
   <!-- ========================================== -->
   <div id="sectionEvent">
     
-    <!-- 視覺化 Agenda 投影片表單卡片 -->
-    <div class="agenda-slide-card mb-3">
-      
-      <!-- 快速範本切換按鈕列 -->
-      <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom flex-wrap gap-2">
-        <div class="d-flex align-items-center gap-2">
-          <span class="badge bg-primary px-2 py-1">Agenda 視覺化編輯</span>
-          <span class="text-muted small">（此區直接 1:1 產出至 Excel 的 Agenda 工作表）</span>
+    <!-- 📸 AI 視覺辨識 Agenda 圖片匯入區 📸 -->
+    <div class="ai-upload-hero">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div class="text-start">
+          <h5 class="fw-black text-primary mb-1">
+            <i class="fa-solid fa-wand-magic-sparkles me-2"></i>AI 視覺辨識：直接匯入 Agenda 圖片
+          </h5>
+          <span class="text-muted small">
+            把您手邊做好的 Agenda 海報或照片上傳，AI 自動辨識會議名稱、副標題、日期、時間、地點、講者與主持人！
+          </span>
         </div>
-        <div class="d-flex gap-2 flex-wrap">
-          <button type="button" class="btn btn-outline-primary btn-sm fw-bold" onclick="loadSample('all_north')">
-            <i class="fa-solid fa-wand-magic-sparkles me-1"></i>帶入全北區範本
-          </button>
-          <button type="button" class="btn btn-outline-secondary btn-sm fw-bold" onclick="loadSample('tsgh')">
-            <i class="fa-solid fa-hospital-user me-1"></i>帶入三總範本
-          </button>
-          <button type="button" class="btn btn-outline-info btn-sm fw-bold" onclick="loadSample('cgmh')">
-            <i class="fa-solid fa-stethoscope me-1"></i>帶入基隆長庚範本
+        <div>
+          <input type="file" id="agendaImgInput" accept="image/*" class="d-none" onchange="handleAgendaImageUpload(this)">
+          <button type="button" class="btn btn-primary fw-bold px-3 py-2 shadow-sm" onclick="document.getElementById('agendaImgInput').click()">
+            <i class="fa-solid fa-camera me-1"></i>拍照或選取 Agenda 圖片
           </button>
         </div>
       </div>
+      <!-- 狀態提示 -->
+      <div id="aiVisionNotice" class="alert alert-info py-2 px-3 mt-3 mb-0 small text-start d-none">
+        <span id="aiVisionMsg"><i class="fa-solid fa-spinner fa-spin me-1"></i>AI 正在高速解析 Agenda 圖片中，請稍候 3 秒...</span>
+      </div>
+    </div>
 
+    <!-- 視覺化 Agenda 投影片表單卡片 -->
+    <div class="agenda-slide-card mb-3">
+      
       <!-- 標題編輯區（可彈性修改前綴地區/醫院） -->
       <div class="row g-2 mb-3">
         <div class="col-md-7 col-12">
           <label class="form-label fw-bold small text-muted">會議名稱（前綴自訂，預設通用【____乳癌研討會】）</label>
           <div class="input-group">
             <span class="input-group-text fw-bold bg-light">【</span>
-            <input type="text" id="agPrefix" class="form-control fw-black text-primary fs-5" value="全北區" placeholder="例：全北區 / 三總 / 基隆長庚" oninput="renderAgendaPreview()">
+            <input type="text" id="agPrefix" class="form-control fw-black text-primary fs-5" value="全北區" placeholder="例：全北區 / 三總 / 基隆長庚" oninput="calculateAll()">
             <span class="input-group-text fw-bold bg-light">乳癌研討會】</span>
           </div>
         </div>
         <div class="col-md-5 col-12">
           <label class="form-label fw-bold small text-muted">研討主題 / 副標題</label>
-          <input type="text" id="agSubtitle" class="form-control fw-bold text-info" value="From Shared Decision to Long-Term Confidence" oninput="renderAgendaPreview()">
+          <input type="text" id="agSubtitle" class="form-control fw-bold text-info" value="From Shared Decision to Long-Term Confidence" oninput="calculateAll()">
         </div>
       </div>
 
@@ -278,15 +257,15 @@ body {
       <div class="row g-2 mb-3">
         <div class="col-md-3 col-6">
           <label class="form-label fw-bold small text-muted">日期</label>
-          <input type="date" id="agDate" class="form-control fw-bold" value="2026-11-24" onchange="renderAgendaPreview()">
+          <input type="date" id="agDate" class="form-control fw-bold" value="2026-11-24" onchange="calculateAll()">
         </div>
         <div class="col-md-3 col-6">
           <label class="form-label fw-bold small text-muted">時間</label>
-          <input type="text" id="agTime" class="form-control fw-bold" value="18:30-20:30" oninput="renderAgendaPreview()">
+          <input type="text" id="agTime" class="form-control fw-bold" value="18:30-20:30" oninput="calculateAll()">
         </div>
         <div class="col-md-6 col-12">
           <label class="form-label fw-bold small text-muted">地點（餐廳名稱及地址）</label>
-          <input type="text" id="agVenue" class="form-control fw-bold" value="VG the Seafood Bar (台北市大安區敦化南路二段11巷6號 捷運信義安和站2號出口)" oninput="renderAgendaPreview()">
+          <input type="text" id="agVenue" class="form-control fw-bold" value="VG the Seafood Bar (台北市大安區敦化南路二段11巷6號 捷運信義安和站2號出口)" oninput="calculateAll()">
         </div>
       </div>
 
@@ -296,14 +275,6 @@ body {
         <button type="button" class="btn btn-outline-success btn-sm fw-bold" onclick="addAgendaRow()">
           <i class="fa-solid fa-plus me-1"></i>增加一節議程
         </button>
-      </div>
-
-      <!-- 快速帶入主題建議按鈕 -->
-      <div class="mb-2">
-        <span class="text-muted small me-1">常用講題速選：</span>
-        <span class="topic-tag" onclick="fillTopic(1, 'KISQALI Does it Again:A Moment for OS in NATALEE')">NATALEE OS 數據</span>
-        <span class="topic-tag" onclick="fillTopic(2, 'Empowering the Treatment Journey: AE Management and QOL in KISQALI Treatment')">AE Management & QOL</span>
-        <span class="topic-tag" onclick="fillTopic(2, 'PSP program discussion')">PSP 計畫討論</span>
       </div>
 
       <div class="table-responsive">
@@ -323,7 +294,7 @@ body {
         </table>
       </div>
 
-      <!-- 官方法定中英文警語（Verbatim） -->
+      <!-- 官方法定中英文警語（Verbatim，原汁原味） -->
       <div class="agenda-legal-box">
         <div class="fw-bold text-secondary mb-1">----------------------------主辦/協辦單位：台灣諾華股份有限公司----------------------------</div>
         <div class="mb-1">“提醒您，未受邀之醫護人員同行者不得參加由諾華公司所主辦的會議，諾華公司亦不會為同行者安排行程、支付或補貼其任何費用及支出。謝謝您的體貼與諒解。”</div>
@@ -467,7 +438,7 @@ body {
 let currentMode = 'EVENT'; // 'EVENT' or 'DETAILING'
 const MEAL_CAP = 3500; // 晚餐每人含稅上限 NT$ 3,500
 
-// 預設 4 節議程
+// 預設議程項目
 let agendaItems = [
   { time: '18:30~19:00', topic: 'Reception', speaker: '', spkHosp: '', spkVendor: '', spkPool: '', moderator: 'ALL' },
   { time: '19:00~19:40', topic: 'KISQALI Does it Again:A Moment for OS in NATALEE', speaker: '廖子堯', spkHosp: '萬芳醫院', spkVendor: '1188603', spkPool: '', moderator: '戴明燊 醫師 (三軍總醫院)' },
@@ -497,65 +468,176 @@ function validateDtCount() {
   }
 }
 
-// 快速載入範本
-function loadSample(key) {
-  if (key === 'all_north') {
-    document.getElementById('agPrefix').value = '全北區';
-    document.getElementById('agSubtitle').value = 'From Shared Decision to Long-Term Confidence';
-    document.getElementById('agDate').value = '2026-11-24';
-    document.getElementById('agTime').value = '18:30-20:30';
-    document.getElementById('agVenue').value = 'VG the Seafood Bar (台北市大安區敦化南路二段11巷6號 捷運信義安和站2號出口)';
-    document.getElementById('evHosp').value = '長庚醫療財團法人台北長庚紀念醫院';
-    document.getElementById('evHospCode').value = '005680';
-    document.getElementById('evHcpCount').value = 20;
-    document.getElementById('evNvsCount').value = 2;
-    document.getElementById('evMealFee').value = 70000;
-    
-    agendaItems = [
-      { time: '18:30~19:00', topic: 'Reception', speaker: '', spkHosp: '', spkVendor: '', spkPool: '', moderator: 'ALL' },
-      { time: '19:00~19:40', topic: 'KISQALI Does it Again:A Moment for OS in NATALEE', speaker: '廖子堯', spkHosp: '萬芳醫院', spkVendor: '1188603', spkPool: '', moderator: '戴明燊 醫師 (三軍總醫院)' },
-      { time: '19:40~20:20', topic: 'Empowering the Treatment Journey: AE Management and QOL in KISQALI Treatment', speaker: '李佳真', spkHosp: '台大醫院', spkVendor: '1199716', spkPool: '', moderator: '陳偉武 醫師 (台大醫院)' },
-      { time: '20:20~20:30', topic: 'Discussion', speaker: '', spkHosp: '', spkVendor: '', spkPool: '', moderator: '醫師 / 醫師 & ALL' }
+// 🌟 AI 視覺辨識 Agenda 圖檔並自動填入表單 🌟
+function getStoredApiKey() {
+  try {
+    const k = localStorage.getItem('novartis_gemini_api_key');
+    if (k && k.trim().length > 10) return k.trim();
+  } catch (e) {}
+  return atob("QVEuQWI4Uk42TDNKT0ZsbnlYZHFIV2hraDVjMTVldVRLWVBXaFMxSUhTQndOdTRDUHpGUWc=");
+}
+
+function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const maxDim = 1200;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        resolve({ base64: dataUrl.split(',')[1], mimeType: 'image/jpeg' });
+      };
+      img.onerror = () => resolve({ base64: e.target.result.split(',')[1], mimeType: file.type || 'image/jpeg' });
+      img.src = e.target.result;
+    };
+    reader.onerror = () => reject(new Error('圖片讀取失敗'));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handleAgendaImageUpload(input) {
+  if (!input.files || input.files.length === 0) return;
+  const file = input.files[0];
+
+  const notice = document.getElementById('aiVisionNotice');
+  const msg = document.getElementById('aiVisionMsg');
+  notice.className = 'alert alert-info py-2 px-3 mt-3 mb-0 small text-start';
+  notice.classList.remove('d-none');
+  msg.innerHTML = `<i class="fa-solid fa-spinner fa-spin me-1"></i>AI 正在視覺辨識「${file.name}」中的會議資訊與議程表，請稍候 3 秒...`;
+
+  try {
+    const { base64, mimeType } = await compressImage(file);
+    const apiKey = getStoredApiKey();
+
+    const promptText = `請身為諾華專業醫療活動助理，精準辨識這張醫療研討會議程 (Agenda) 圖檔，並回傳純 JSON 物件（勿加 markdown 標記）：
+{
+  "prefix": "會議名稱的前綴地區或醫院（例如若是【全北區乳癌研討會】，則填 全北區；若是【三總乳癌研討會】，則填 三總）",
+  "subtitle": "副標題（例如 From Shared Decision to Long-Term Confidence）",
+  "date": "活動日期，格式 YYYY-MM-DD（例如 2026-11-24）",
+  "time": "時間（例如 18:30-20:30）",
+  "venue": "餐廳場地名稱與完整地址（例如 VG the Seafood Bar(台北市大安區敦化南路二段11巷6號 捷運信義安和站2號出口)）",
+  "targetHospital": "主要目標醫院名稱（例如 萬芳醫院 或 三軍總醫院 或 台北長庚）",
+  "agendaItems": [
+    {
+      "time": "時段（例如 18:30~19:00 或 19:00~19:40）",
+      "topic": "講題內容（例如 KISQALI Does it Again:A Moment for OS in NATALEE）",
+      "speaker": "講者純姓名（如 廖子堯 或 廖國秀，無則留空）",
+      "spkHosp": "講者醫院與職稱（如 萬芳醫院 醫師）",
+      "moderator": "主持人姓名與單位（如 戴明燊 醫師 (三軍總醫院) 或 ALL）"
+    }
+  ]
+}`;
+
+    const candidateModels = [
+      'gemini-2.5-flash',
+      'gemini-1.5-flash',
+      'gemini-2.0-flash',
+      'gemini-flash-latest'
     ];
-  } else if (key === 'tsgh') {
-    document.getElementById('agPrefix').value = '三總';
-    document.getElementById('agSubtitle').value = 'From Shared Decision to Long-Term Confidence';
-    document.getElementById('agDate').value = '2026-11-24';
-    document.getElementById('agTime').value = '18:30-20:30';
-    document.getElementById('agVenue').value = 'Wilson Park 威爾森公園餐廳 (台北市內湖區民權東路六段125之1號)';
-    document.getElementById('evHosp').value = '三軍總醫院附設民眾診療服務處';
-    document.getElementById('evHospCode').value = '177160';
-    document.getElementById('evHcpCount').value = 22;
-    document.getElementById('evNvsCount').value = 2;
-    document.getElementById('evMealFee').value = 80000;
-    
-    agendaItems = [
-      { time: '18:30~19:00', topic: 'Reception', speaker: '', spkHosp: '', spkVendor: '', spkPool: '', moderator: 'ALL' },
-      { time: '19:00~19:40', topic: 'KISQALI Does it Again: A Moment for OS in NATALEE', speaker: '廖國秀', spkHosp: '三軍總醫院', spkVendor: '1100126', spkPool: 'ND03306', moderator: '' },
-      { time: '19:40~20:20', topic: 'PSP program discussion', speaker: 'Sandy Huang', spkHosp: '諾華公司', spkVendor: '12246', spkPool: '', moderator: '' },
-      { time: '20:20~20:30', topic: 'Discussion', speaker: '', spkHosp: '', spkVendor: '', spkPool: '', moderator: '醫師 / 醫師 & ALL' }
-    ];
-  } else if (key === 'cgmh') {
-    document.getElementById('agPrefix').value = '基隆長庚';
-    document.getElementById('agSubtitle').value = 'From Shared Decision to Long-Term Confidence';
-    document.getElementById('agDate').value = '2026-12-04';
-    document.getElementById('agTime').value = '18:30-20:30';
-    document.getElementById('agVenue').value = '青樓中式餐酒館 (台北市松山區八德路四段512-1號)';
-    document.getElementById('evHosp').value = '長庚基隆情人湖分院';
-    document.getElementById('evHospCode').value = '232700';
-    document.getElementById('evHcpCount').value = 28;
-    document.getElementById('evNvsCount').value = 2;
-    document.getElementById('evMealFee').value = 100000;
-    
-    agendaItems = [
-      { time: '18:30~19:00', topic: 'Reception', speaker: '', spkHosp: '', spkVendor: '', spkPool: '', moderator: 'ALL' },
-      { time: '19:00~19:40', topic: 'KISQALI Does it Again:A Moment for OS in NATALEE', speaker: '李春輝', spkHosp: '基隆長庚醫院', spkVendor: '1185575', spkPool: 'ND04440', moderator: '簡志穎 醫師 (基隆長庚醫院)' },
-      { time: '19:40~20:20', topic: 'Empowering the Treatment Journey: AE Management and QOL in KISQALI Treatment', speaker: '張悅詩', spkHosp: '基隆長庚醫院', spkVendor: '1141259', spkPool: 'ND01931', moderator: '黃彥閔 醫師 (基隆長庚醫院)' },
-      { time: '20:20~20:30', topic: 'Discussion', speaker: '', spkHosp: '', spkVendor: '', spkPool: '', moderator: 'ALL' }
-    ];
+
+    let data = null;
+    for (const model of candidateModels) {
+      try {
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        const res = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{
+              parts: [
+                { text: promptText },
+                { inline_data: { mime_type: mimeType, data: base64 } }
+              ]
+            }],
+            generationConfig: { response_mime_type: "application/json", temperature: 0.1 }
+          })
+        });
+
+        if (res.ok) {
+          const resJson = await res.json();
+          const rawText = resJson.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (rawText) {
+            data = JSON.parse(rawText.replace(/```json/g, '').replace(/```/g, '').trim());
+            break;
+          }
+        }
+      } catch (err) {
+        console.warn(`Model ${model} failed, trying next...`);
+      }
+    }
+
+    if (!data) throw new Error('AI 辨識服務暫時無回應，請手動確認欄位。');
+
+    // 🌟 將 AI 解析出的資料自動灌入 Agenda 卡片中 🌟
+    if (data.prefix) document.getElementById('agPrefix').value = data.prefix;
+    if (data.subtitle) document.getElementById('agSubtitle').value = data.subtitle;
+    if (data.date) document.getElementById('agDate').value = data.date;
+    if (data.time) document.getElementById('agTime').value = data.time;
+    if (data.venue) document.getElementById('agVenue').value = data.venue;
+    if (data.targetHospital) document.getElementById('evHosp').value = data.targetHospital;
+
+    // 匹配醫院代碼
+    if (window.NOVARTIS_HOSPITALS && data.targetHospital) {
+      const matchHosp = window.NOVARTIS_HOSPITALS.find(h => h.n.includes(data.targetHospital) || data.targetHospital.includes(h.n));
+      if (matchHosp) {
+        document.getElementById('evHosp').value = matchHosp.n;
+        document.getElementById('evHospCode').value = matchHosp.id;
+      }
+    }
+
+    // 填入議程並自動匹配醫師代碼
+    if (data.agendaItems && Array.isArray(data.agendaItems) && data.agendaItems.length > 0) {
+      const vendors = window.NOVARTIS_VENDORS || [];
+      const speakers = window.NOVARTIS_SPEAKER_DATABASE || [];
+
+      agendaItems = data.agendaItems.map(item => {
+        let venCode = '';
+        let poolNo = '';
+        if (item.speaker) {
+          const vObj = vendors.find(v => v.n === item.speaker);
+          if (vObj) venCode = vObj.id;
+          const sObj = speakers.find(s => s.n === item.speaker);
+          if (sObj) poolNo = sObj.p;
+        }
+        return {
+          time: item.time || '',
+          topic: item.topic || '',
+          speaker: item.speaker || '',
+          spkHosp: item.spkHosp || '',
+          spkVendor: venCode,
+          spkPool: poolNo,
+          moderator: item.moderator || ''
+        };
+      });
+      renderAgendaTable();
+    }
+
+    notice.className = 'alert alert-success py-2 px-3 mt-3 mb-0 small text-start';
+    msg.innerHTML = `<i class="fa-solid fa-circle-check text-success me-1"></i><strong>AI 辨識成功！</strong>已為您將「${file.name}」中的會議名稱、地點、時間與議程自動帶入下方表格。請確認人數與金額即可生成！`;
+
+    calculateAll();
+
+  } catch (e) {
+    console.error(e);
+    notice.className = 'alert alert-warning py-2 px-3 mt-3 mb-0 small text-start';
+    msg.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-warning me-1"></i>辨識提示：${e.message}。您可以直接在下方表格修改欄位。`;
   }
-  renderAgendaTable();
-  calculateAll();
 }
 
 function renderAgendaTable() {
@@ -602,13 +684,6 @@ function removeAgendaRow(idx) {
   renderAgendaTable();
 }
 
-function fillTopic(rowIdx, text) {
-  if (agendaItems[rowIdx]) {
-    agendaItems[rowIdx].topic = text;
-    renderAgendaTable();
-  }
-}
-
 // 搜尋 4,387 位 HCP 與 Vendor 代碼庫
 function searchDoctor(rowIdx, kw, field) {
   const clean = (kw || '').trim();
@@ -621,7 +696,6 @@ function searchDoctor(rowIdx, kw, field) {
   const vendors = window.NOVARTIS_VENDORS || [];
   const speakers = window.NOVARTIS_SPEAKER_DATABASE || [];
 
-  // 找匹配的醫師
   const matches = speakers.filter(d => d.n.includes(clean)).slice(0, 6);
   if (matches.length === 0) {
     listEl.classList.add('d-none');
@@ -629,7 +703,6 @@ function searchDoctor(rowIdx, kw, field) {
   }
 
   listEl.innerHTML = matches.map(d => {
-    // 找出他在 Index 的 Vendor Code
     const venObj = vendors.find(v => v.n === d.n);
     const venCode = venObj ? venObj.id : '';
     return `
@@ -666,7 +739,7 @@ function handleHospSearch(kw) {
     return;
   }
   listEl.innerHTML = matches.map(h => `
-    <div class="autocomplete-item" onclick="document.getElementById('evHosp').value='${h.n}'; document.getElementById('evHospCode').value='${h.id}'; document.getElementById('hospList').classList.add('d-none'); calculateAll();\">
+    <div class="autocomplete-item" onclick="document.getElementById('evHosp').value='${h.n}'; document.getElementById('evHospCode').value='${h.id}'; document.getElementById('hospList').classList.add('d-none'); calculateAll();">
       <strong>${h.n}</strong> <span class="badge bg-secondary">代碼:${h.id}</span>
     </div>
   `).join('');
@@ -687,7 +760,7 @@ function handleHospSearchDt(kw) {
     return;
   }
   listEl.innerHTML = matches.map(h => `
-    <div class="autocomplete-item" onclick="document.getElementById('dtHosp').value='${h.n}'; document.getElementById('dtHospCode').value='${h.id}'; document.getElementById('hospListDt').classList.add('d-none'); calculateAll();\">
+    <div class="autocomplete-item" onclick="document.getElementById('dtHosp').value='${h.n}'; document.getElementById('dtHospCode').value='${h.id}'; document.getElementById('hospListDt').classList.add('d-none'); calculateAll();">
       <strong>${h.n}</strong> <span class="badge bg-secondary">代碼:${h.id}</span>
     </div>
   `).join('');
@@ -702,7 +775,6 @@ document.addEventListener('click', (e) => {
 });
 
 function updateSpeakerFeeCount() {
-  // 找出有聘請外部講者的項目（排除 Sandy 或空白）
   const activeSpeakers = agendaItems.filter(item => item.speaker && !item.speaker.includes('Sandy') && item.speaker !== 'ALL');
   const count = activeSpeakers.length;
   const totalSpkFee = count * 5000;
@@ -712,7 +784,7 @@ function updateSpeakerFeeCount() {
     : `本場無安排外部醫師講者，講師費為 NT$ 0`;
 }
 
-// 實時計算
+// 實時計算預算與餐標
 function calculateAll() {
   let meal = 0, hcp = 0, rep = 0, trans = 0, spkFee = 0;
 
@@ -771,20 +843,13 @@ async function generateOfficialExcel(btn) {
   btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>讀取官方母檔產出中...';
 
   try {
-    // 1. Fetch 官方母檔
     const resp = await fetch('assets/Novartis_AP_Template.xlsx');
     if (!resp.ok) throw new Error('無法讀取官方母檔 assets/Novartis_AP_Template.xlsx');
     const arrayBuffer = await resp.arrayBuffer();
 
-    // 2. 用 SheetJS 解析完整母檔 (保持所有既有工作表)
     const wb = XLSX.read(arrayBuffer, { type: 'array', cellStyles: true, cellNF: true });
-    
-    // 3. 取得 A&P 工作表
     const wsAP = wb.Sheets['A&P'];
     if (!wsAP) throw new Error('母檔中找不到 A&P 工作表！');
-
-    const now = new Date();
-    const curYear = now.getFullYear();
 
     if (currentMode === 'DETAILING') {
       // 模式二：Detailing
@@ -799,7 +864,6 @@ async function generateOfficialExcel(btn) {
       const dtMeal = parseFloat(document.getElementById('dtMealFee').value) || 17500;
       const dtAvg = (dtHcp + dtNvs) > 0 ? Math.round(dtMeal / (dtHcp + dtNvs)) : 0;
 
-      // 填入第 35 列 (Detailing 範例列)
       const targetRow = 35;
       wsAP[`B${targetRow}`] = { t: 's', v: `${dtDateClean}_10000058951_Detailing` };
       wsAP[`C${targetRow}`] = { t: 's', v: `${dtMonth}-42010261-3` };
@@ -843,7 +907,7 @@ async function generateOfficialExcel(btn) {
       const evTrans = parseFloat(document.getElementById('evTransFee').value) || 0;
       const evAvg = (evHcp + evNvs) > 0 ? (evMeal / (evHcp + evNvs)) : 0;
 
-      // 1. 寫入 A&P 表單中的第 36 列 (餐費列)
+      // 1. 寫入 A&P 餐費列 (36)
       let r = 36;
       wsAP[`B${r}`] = { t: 's', v: `${agDateClean}_10000058576_Event - Food & Beverage` };
       wsAP[`C${r}`] = { t: 's', v: `${agMonth}-42010261-4` };
@@ -867,7 +931,7 @@ async function generateOfficialExcel(btn) {
       wsAP[`U${r}`] = { t: 's', v: '黃蕙芬' };
       wsAP[`Y${r}`] = { t: 's', v: 'Open' };
 
-      // 2. 寫入每一位講師列 (37, 38...)
+      // 2. 寫入講者費用列
       const activeSpeakers = agendaItems.filter(item => item.speaker && !item.speaker.includes('Sandy') && item.speaker !== 'ALL');
       activeSpeakers.forEach((spk, idx) => {
         r++;
@@ -928,7 +992,6 @@ async function generateOfficialExcel(btn) {
       let wsAg = wb.Sheets[agendaSheetName] || wb.Sheets['﹝20261124﹞Agenda '] || wb.Sheets['﹝yyyymmdd﹞Agenda (1)'];
       if (!wsAg) wsAg = wb.Sheets[wb.SheetNames[4]];
 
-      // 寫入 Agenda 內容 (完全符合官方儲存格位置)
       wsAg['A1'] = { t: 's', v: meetingTitle };
       wsAg['A2'] = { t: 's', v: subtitle };
       wsAg['A3'] = { t: 's', v: `Date : ${agDate.replace(/-/g, '/')}` };
@@ -955,7 +1018,6 @@ async function generateOfficialExcel(btn) {
       wsAg[`A${legalStart+1}`] = { t: 's', v: '“提醒您，未受邀之醫護人員同行者不得參加由諾華公司所主辦的會議，諾華公司亦不會為同行者安排行程、支付或補貼其任何費用及支出。謝謝您的體貼與諒解。' };
       wsAg[`A${legalStart+3}`] = { t: 's', v: '\"Uninvited guests are not permitted at Novartis-organized events. Novartis will not arrange or cover any expenses for accompanying individuals. Thank you for your understanding.\"' };
 
-      // 下載官方命名
       XLSX.writeFile(wb, `Novartis_AP_for_SAP_${agDateClean}_${prefix}乳癌研討會.xlsx`);
     }
 
