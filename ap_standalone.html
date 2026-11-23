@@ -6,7 +6,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Novartis AP for SAP 獨立版助手 (月度活動清單合併 & AI 視覺議程)</title>
+<title>Novartis AP for SAP 獨立版助手 (多場活動整併 · 清空舊檔 · 官方母檔 Excel)</title>
 
 <!-- Bootstrap 5 & FontAwesome -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -73,7 +73,7 @@ body {
   background: linear-gradient(135deg, #eff6ff 0%, #e0f2fe 100%);
   border: 2px dashed #0284c7;
   border-radius: 16px;
-  padding: 20px;
+  padding: 18px 20px;
   text-align: center;
   margin-bottom: 20px;
   transition: all 0.2s;
@@ -183,6 +183,30 @@ body {
 
 <div class="container my-3" style="max-width: 1040px;">
 
+  <!-- 🌟 月度規劃控制台 (選擇月份 & 一鍵清空建立新預算) 🌟 -->
+  <div class="card border-0 shadow-sm p-3 rounded-3 mb-3 bg-white">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div class="d-flex align-items-center gap-2">
+        <span class="fw-bold text-dark"><i class="fa-solid fa-calendar-check text-primary me-1"></i>規劃月份：</span>
+        <select id="planMonth" class="form-select form-select-sm fw-bold border-primary text-primary" style="width: 130px;" onchange="updateMonthSelection()">
+          <option value="11" selected>2026年 11月</option>
+          <option value="12">2026年 12月</option>
+          <option value="1">2027年 1月</option>
+          <option value="2">2027年 2月</option>
+          <option value="3">2027年 3月</option>
+          <option value="4">2027年 4月</option>
+          <option value="5">2027年 5月</option>
+        </select>
+        <span class="text-muted small">（系統將自動編配 Item No.，如 <span id="itemNoPreview" class="fw-bold text-dark">11-42010261-X</span>）</span>
+      </div>
+      <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-danger btn-sm fw-bold" onclick="resetToNewMonthBudget()">
+          <i class="fa-solid fa-rotate-left me-1"></i>清空舊檔建立新月預算
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- 🌟 模式切換按鈕 🌟 -->
   <div class="d-flex gap-2 p-1 bg-white border rounded-3 shadow-sm mb-3">
     <button type="button" class="btn mode-tab-btn flex-fill active" id="tabEvent" onclick="setMode('EVENT')">
@@ -205,7 +229,7 @@ body {
         </span>
       </div>
       <div class="text-end">
-        <span class="text-muted small d-block">當前活動總金額 (Current Event Total)</span>
+        <span class="text-muted small d-block">當前編輯場次預算 (Current Event Total)</span>
         <span class="fs-4 fw-black text-primary" id="totalBudgetDisp">NT$ 90,000</span>
       </div>
     </div>
@@ -353,9 +377,12 @@ body {
       </div>
 
       <!-- 加入月度清冊按鈕 -->
-      <div class="text-end mt-3">
+      <div class="d-flex justify-content-end gap-2 mt-3">
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearEventForm()">
+          <i class="fa-solid fa-eraser me-1"></i>清空重填本場
+        </button>
         <button type="button" class="btn btn-warning fw-bold px-3 py-2 shadow-sm text-dark" onclick="addCurrentEventToPlan()">
-          <i class="fa-solid fa-calendar-plus me-1"></i>加入本月費用規劃清單 (Add to Plan)
+          <i class="fa-solid fa-calendar-plus me-1"></i>加入本月費用規劃清單 (Add Event)
         </button>
       </div>
     </div>
@@ -414,14 +441,19 @@ body {
         </div>
       </div>
 
-      <div class="p-2 bg-light rounded-2 border small text-muted d-flex justify-content-between align-items-center flex-wrap">
+      <div class="p-2 bg-light rounded-2 border small text-muted d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div>
           <i class="fa-solid fa-circle-info me-1 text-primary"></i>
           Detailing 受款人自動綁定為 <strong>Sandy (Vendor Code: 12246)</strong>，報帳代號自動鎖定 <strong>10000058951 (951)</strong>。
         </div>
-        <button type="button" class="btn btn-success fw-bold btn-sm shadow-sm" onclick="addCurrentDetailingToPlan()">
-          <i class="fa-solid fa-plus me-1"></i>加入本月費用規劃清單
-        </button>
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearDetailingForm()">
+            <i class="fa-solid fa-eraser me-1"></i>清空重填
+          </button>
+          <button type="button" class="btn btn-success fw-bold btn-sm shadow-sm" onclick="addCurrentDetailingToPlan()">
+            <i class="fa-solid fa-plus me-1"></i>加入本月費用規劃清單 (Add Detailing)
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -435,7 +467,7 @@ body {
         <h6 class="fw-black mb-0 text-success fs-5">
           <i class="fa-solid fa-list-check me-2"></i>本月份費用規劃清單 (Monthly Plan Cart)
         </h6>
-        <span class="text-muted small">所有新增的 Detailing (951) 與 Event (576) 都會合併在同一份 Excel 裡</span>
+        <span class="text-muted small">所有新增的 Detailing (951) 與 Event (576) 都會自動合併在同一個官方母檔 Excel 裡</span>
       </div>
       <div class="d-flex gap-2 align-items-center">
         <span class="badge bg-success fs-6" id="cartCountBadge">0 場活動</span>
@@ -462,11 +494,21 @@ body {
         <tbody id="cartTbody">
           <tr>
             <td colspan="8" class="text-center text-muted py-3">
-              尚無加入活動。您可以填完上方資料後，點擊「加入本月費用規劃清單」，或直接在下方點擊下載當前活動！
+              尚無加入活動。您可以填完上方資料後點擊「加入本月費用規劃清單」！
             </td>
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- 月度預算總計摘要 -->
+    <div class="d-flex justify-content-between align-items-center mt-2 px-1 text-muted small flex-wrap">
+      <div>
+        規劃月份總場次：<strong id="cartSummaryActs" class="text-dark">0 場</strong>（含 Detailing 與 Event）
+      </div>
+      <div>
+        整月預算總計：<strong id="cartSummaryTotal" class="text-success fs-6">NT$ 0</strong>
+      </div>
     </div>
   </div>
 
@@ -477,14 +519,11 @@ body {
         <h6 class="fw-black mb-1 text-dark">
           <i class="fa-solid fa-file-excel text-success me-2"></i>產出 100% 諾華官方母檔 Excel (.xlsx)
         </h6>
-        <span class="text-secondary small">使用公司母檔範本，保留全部既有頁籤、公式與格式，無任何自行新增欄位或空格</span>
+        <span class="text-secondary small">⚡ 點擊下載時自動清空母檔中舊的 11 月歷史範例，填入本月全新規劃，無任何自行新增欄位或空格</span>
       </div>
       <div class="d-flex gap-2 flex-wrap">
         <button type="button" class="btn btn-success fw-bold px-4 py-2 shadow-sm" id="btnExportAllExcel" onclick="generateMergedOfficialExcel(this)">
           <i class="fa-solid fa-download me-1"></i>一鍵下載整月官方 Excel 檔 (.xlsx)
-        </button>
-        <button type="button" class="btn btn-outline-success fw-bold px-3 py-2 shadow-sm" onclick="generateSingleOfficialExcel(this)">
-          <i class="fa-solid fa-file-arrow-down me-1"></i>只下載當前活動
         </button>
         <button type="button" class="btn btn-primary fw-bold px-3 py-2 shadow-sm" onclick="openOutlookEmail()">
           <i class="fa-solid fa-paper-plane me-1"></i>Email 呈報主管與助理
@@ -526,6 +565,51 @@ function setMode(mode) {
   document.getElementById('tabDetailing').classList.toggle('active', mode === 'DETAILING');
   document.getElementById('sectionEvent').style.display = mode === 'EVENT' ? 'block' : 'none';
   document.getElementById('sectionDetailing').style.display = mode === 'DETAILING' ? 'block' : 'none';
+  calculateAll();
+}
+
+function updateMonthSelection() {
+  const m = document.getElementById('planMonth').value;
+  document.getElementById('itemNoPreview').textContent = `${m}-42010261-X`;
+}
+
+function resetToNewMonthBudget() {
+  if (confirm('確定要清空所有活動清單與輸入框，開始建立全新月份的預算嗎？')) {
+    monthlyPlanList = [];
+    renderCartTable();
+    clearEventForm();
+    clearDetailingForm();
+    alert('已成功清空！您可以開始填入新月份的第一場活動。');
+  }
+}
+
+function clearEventForm() {
+  document.getElementById('agPrefix').value = '';
+  document.getElementById('agSubtitle').value = 'From Shared Decision to Long-Term Confidence';
+  document.getElementById('agVenue').value = '';
+  document.getElementById('evHosp').value = '';
+  document.getElementById('evHospCode').value = '';
+  document.getElementById('evHcpCount').value = 15;
+  document.getElementById('evNvsCount').value = 2;
+  document.getElementById('evMealFee').value = '';
+  document.getElementById('evTransFee').value = 0;
+  agendaItems = [
+    { time: '18:30~19:00', topic: 'Reception', speaker: '', spkHosp: '', spkVendor: '', spkPool: '', moderator: 'ALL' },
+    { time: '19:00~19:40', topic: '', speaker: '', spkHosp: '', spkVendor: '', spkPool: '', moderator: '' },
+    { time: '19:40~20:20', topic: '', speaker: '', spkHosp: '', spkVendor: '', spkPool: '', moderator: '' },
+    { time: '20:20~20:30', topic: 'Discussion', speaker: '', spkHosp: '', spkVendor: '', spkPool: '', moderator: 'ALL' }
+  ];
+  renderAgendaTable();
+  calculateAll();
+}
+
+function clearDetailingForm() {
+  document.getElementById('dtVenue').value = '';
+  document.getElementById('dtHosp').value = '';
+  document.getElementById('dtHospCode').value = '';
+  document.getElementById('dtHcpCount').value = 4;
+  document.getElementById('dtNvsCount').value = 1;
+  document.getElementById('dtMealFee').value = '';
   calculateAll();
 }
 
@@ -965,10 +1049,10 @@ function calculateAll() {
 }
 
 // ========================================================
-// 🌟 本月費用規劃清單購物車 (Activity Plan Cart) 功能 🌟
+// 🌟 本月費用規劃清單 (Activity Cart) 功能 🌟
 // ========================================================
 function addCurrentEventToPlan() {
-  const prefix = document.getElementById('agPrefix').value || '全北區';
+  const prefix = document.getElementById('agPrefix').value.trim() || '全北區';
   const meetingTitle = `【${prefix}乳癌研討會】`;
   const subtitle = document.getElementById('agSubtitle').value || 'From Shared Decision to Long-Term Confidence';
   const agDate = document.getElementById('agDate').value || '2026-11-24';
@@ -1001,7 +1085,12 @@ function addCurrentEventToPlan() {
   });
 
   renderCartTable();
-  alert(`✅ 已將「${meetingTitle}」加入本月費用規劃清單！`);
+  alert(`✅ 已成功將「${meetingTitle}」加入本月清單！(目前共 ${monthlyPlanList.length} 場活動)`);
+  
+  // 自動提示清空，方便繼續 key 下一場
+  if (confirm('是否清空當前欄位，繼續輸入下一場活動？')) {
+    clearEventForm();
+  }
 }
 
 function addCurrentDetailingToPlan() {
@@ -1026,7 +1115,11 @@ function addCurrentDetailingToPlan() {
   });
 
   renderCartTable();
-  alert(`✅ 已將「Detailing 拜訪餐敘 (${dtVenue})」加入本月費用規劃清單！`);
+  alert(`✅ 已成功將「Detailing (${dtVenue})」加入本月清單！(目前共 ${monthlyPlanList.length} 場活動)`);
+
+  if (confirm('是否清空當前欄位，繼續輸入下一場活動？')) {
+    clearDetailingForm();
+  }
 }
 
 function removeCartItem(idx) {
@@ -1046,11 +1139,21 @@ function renderCartTable() {
   const countBadge = document.getElementById('cartCountBadge');
   countBadge.textContent = `${monthlyPlanList.length} 場活動`;
 
+  let grandTotal = 0;
+  monthlyPlanList.forEach(item => {
+    const isEv = item.type === 'EVENT';
+    const totalAmt = isEv ? (item.mealFee + item.transFee + (item.experts.length * 5000)) : item.mealFee;
+    grandTotal += totalAmt;
+  });
+
+  document.getElementById('cartSummaryActs').textContent = `${monthlyPlanList.length} 場`;
+  document.getElementById('cartSummaryTotal').textContent = `NT$ ${grandTotal.toLocaleString()}`;
+
   if (monthlyPlanList.length === 0) {
     tbody.innerHTML = `
       <tr>
         <td colspan="8" class="text-center text-muted py-3">
-          尚無加入活動。您可以填完上方資料後點擊「加入本月費用規劃清單」，或直接在下方點擊「只下載當前活動」！
+          尚無加入活動。您可以填完上方資料後點擊「加入本月費用規劃清單」！
         </td>
       </tr>
     `;
@@ -1088,12 +1191,12 @@ function renderCartTable() {
 // ========================================================
 async function generateMergedOfficialExcel(btn) {
   if (monthlyPlanList.length === 0) {
-    alert('⚠️ 您的本月費用規劃清單中目前沒有活動！請先將上方的 Event 或 Detailing 點擊「加入本月費用規劃清單」，或使用「只下載當前活動」按鈕。');
+    alert('⚠️ 您的本月費用規劃清單中目前沒有活動！請先將上方的 Event 或 Detailing 點擊「加入本月費用規劃清單」！');
     return;
   }
 
   const origBtnText = btn.innerHTML;
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>讀取官方母檔並整併產出中...';
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>正在清空舊檔並寫入本月全新規劃...';
 
   try {
     const resp = await fetch('assets/Novartis_AP_Template.xlsx');
@@ -1104,16 +1207,30 @@ async function generateMergedOfficialExcel(btn) {
     const wsAP = wb.Sheets['A&P'];
     if (!wsAP) throw new Error('母檔中找不到 A&P 工作表！');
 
-    // 從第 5 列開始依序寫入 (清除原有範例，填入真實規劃)
+    // 🌟 第一步：100% 清空母檔中舊的 11 月歷史範例列 (第 5 列到第 70 列) 🌟
+    for (let r = 5; r <= 70; r++) {
+      for (let c = 1; c <= 27; c++) {
+        const cellRef = XLSX.utils.encode_cell({ r: r - 1, c: c - 1 });
+        delete wsAP[cellRef];
+      }
+    }
+
+    // 🌟 第二步：移除母檔中的舊 Agenda 頁籤，只保留新月份規劃中的 Event Agenda 🌟
+    const oldAgendaNames = ['﹝20261124﹞Agenda ', '﹝20261204﹞Agenda (1)', '﹝yyyymmdd﹞Agenda (1)', '﹝yyyymmdd﹞Agenda (2)'];
+    // 找出標準 Agenda 樣板供複製
+    const agendaTemplateSheet = wb.Sheets['﹝20261124﹞Agenda '] || wb.Sheets['﹝yyyymmdd﹞Agenda (1)'];
+
+    // 🌟 第三步：從第 5 列開始依序乾淨寫入本月全新規劃 🌟
     let curRow = 5;
+    const selectedMonth = parseInt(document.getElementById('planMonth').value) || 11;
 
     monthlyPlanList.forEach((act, actIdx) => {
       const actNo = actIdx + 1;
       const dateClean = act.date.replace(/-/g, '');
-      const month = parseInt(act.date.split('-')[1]) || 11;
+      const month = selectedMonth;
 
       if (act.type === 'DETAILING') {
-        const avg = (act.hcpCount + act.nvsCount) > 0 ? (act.mealFee / (act.hcpCount + act.nvsCount)) : 0;
+        const avg = (act.hcpCount + act.nvsCount) > 0 ? Math.round(act.mealFee / (act.hcpCount + act.nvsCount)) : 0;
         wsAP[`B${curRow}`] = { t: 's', v: `${dateClean}_10000058951_Detailing` };
         wsAP[`C${curRow}`] = { t: 's', v: `${month}-42010261-${actNo}` };
         wsAP[`D${curRow}`] = { t: 's', v: '周書全' };
@@ -1163,7 +1280,7 @@ async function generateMergedOfficialExcel(btn) {
         wsAP[`Y${curRow}`] = { t: 's', v: 'Open' };
         curRow++;
 
-        // 🌟 每一位 Speaker 與 Moderator 都獨立生成一列 (帶入各自正確的醫院全稱、HP Code、Vendor Code、Speaker Pool No) 🌟
+        // 🌟 每一位 Speaker 與 Moderator 獨立列 (所屬醫院、HP Code、Vendor Code、Speaker Pool No) 🌟
         act.experts.forEach((exp, expIdx) => {
           const subId = `${actNo}-${expIdx + 1}`;
           wsAP[`B${curRow}`] = { t: 's', v: `${dateClean}_10000058576_Event - Speaker fee` };
@@ -1218,10 +1335,14 @@ async function generateMergedOfficialExcel(btn) {
           curRow++;
         }
 
-        // 寫入對應的 Agenda 工作表
+        // 🌟 為每一場 Event 動態建立專屬的 Agenda 頁籤 🌟
         const agSheetName = `﹝${dateClean}﹞Agenda`;
-        let wsAg = wb.Sheets[agSheetName] || wb.Sheets['﹝20261124﹞Agenda '] || wb.Sheets['﹝yyyymmdd﹞Agenda (1)'];
-        if (!wsAg) wsAg = wb.Sheets[wb.SheetNames[4]];
+        let wsAg = wb.Sheets[agSheetName];
+        if (!wsAg) {
+          // 複製樣板結構建立新頁籤
+          wsAg = JSON.parse(JSON.stringify(agendaTemplateSheet));
+          XLSX.utils.book_append_sheet(wb, wsAg, agSheetName);
+        }
 
         wsAg['A1'] = { t: 's', v: act.title };
         wsAg['A2'] = { t: 's', v: act.subtitle };
@@ -1251,8 +1372,8 @@ async function generateMergedOfficialExcel(btn) {
       }
     });
 
-    const nowClean = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    XLSX.writeFile(wb, `Novartis_AP_for_SAP_本月費用規劃_${nowClean}_黃蕙芬.xlsx`);
+    const fileName = `Novartis_AP_for_SAP_${selectedMonth}月份費用規劃_黃蕙芬.xlsx`;
+    XLSX.writeFile(wb, fileName);
 
     btn.innerHTML = '<i class="fa-solid fa-circle-check text-white me-1"></i>整月 Excel 已成功下載！';
     setTimeout(() => { btn.innerHTML = origBtnText; }, 3500);
@@ -1264,27 +1385,13 @@ async function generateMergedOfficialExcel(btn) {
   }
 }
 
-// 只下載當前填寫的單場活動
-function generateSingleOfficialExcel(btn) {
-  // 暫存當前購物車，將當前活動放入產出後復原
-  const backup = [...monthlyPlanList];
-  monthlyPlanList = [];
-  if (currentMode === 'EVENT') {
-    addCurrentEventToPlan();
-  } else {
-    addCurrentDetailingToPlan();
-  }
-  generateMergedOfficialExcel(btn);
-  monthlyPlanList = backup;
-  renderCartTable();
-}
-
 // 喚起 Outlook Email 呈報
 function openOutlookEmail() {
   const count = monthlyPlanList.length;
-  const subject = encodeURIComponent(`【AP for SAP 費用規劃清單呈報】共 ${count} 場活動 - 申請人: Sandy Huang`);
+  const m = document.getElementById('planMonth').value;
+  const subject = encodeURIComponent(`【AP for SAP ${m}月份費用規劃清單呈報】共 ${count} 場活動 - 申請人: Sandy Huang`);
   let body = `Dear Boss (周書全) & Assistant,\n\n`;
-  body += `請協助審核本月份之 SAP 費用規劃 (AP for SAP)，共計 ${count} 場活動：\n\n`;
+  body += `請協助審核 ${m} 月份之 SAP 費用規劃 (AP for SAP)，本月共計提報 ${count} 場活動：\n\n`;
 
   monthlyPlanList.forEach((item, idx) => {
     const isEv = item.type === 'EVENT';
@@ -1301,7 +1408,7 @@ function openOutlookEmail() {
     body += `\n`;
   });
 
-  body += `★ 官方母檔 Excel 已一鍵產出完畢，頁籤結構與公式 100% 吻合，謝謝！\n\n`;
+  body += `★ 官方母檔 Excel 已一鍵產出完畢，已清空歷史舊檔，頁籤結構與公式 100% 吻合，謝謝！\n\n`;
   body += `申請人：Sandy Huang (黃蕙芬) / 42010261\n資深客戶經理 (Senior KAM), Oncology`;
 
   window.open(`mailto:?subject=${subject}&body=${encodeURIComponent(body)}`, '_blank');
