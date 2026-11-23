@@ -1129,7 +1129,7 @@ function calculateAll() {
 // ========================================================
 // 🌟 本月費用規劃清單 (Activity Cart) 功能 🌟
 // ========================================================
-function addCurrentEventToPlan() {
+function addCurrentEventToPlan(silent = false) {
   const prefix = document.getElementById('agPrefix').value.trim() || '全北區';
   const meetingTitle = `【${prefix}乳癌研討會】`;
   const subtitle = document.getElementById('agSubtitle').value || 'From Shared Decision to Long-Term Confidence';
@@ -1163,15 +1163,15 @@ function addCurrentEventToPlan() {
   });
 
   renderCartTable();
-  alert(`✅ 已成功將「${meetingTitle}」加入本月清單！(目前共 ${monthlyPlanList.length} 場活動)`);
-  
-  // 自動提示清空，方便繼續 key 下一場
-  if (confirm('是否清空當前欄位，繼續輸入下一場活動？')) {
-    clearEventForm();
+  if (!silent) {
+    alert(`✅ 已成功將「${meetingTitle}」加入本月清單！(目前共 ${monthlyPlanList.length} 場活動)`);
+    if (confirm('是否清空當前欄位，繼續輸入下一場活動？')) {
+      clearEventForm();
+    }
   }
 }
 
-function addCurrentDetailingToPlan() {
+function addCurrentDetailingToPlan(silent = false) {
   const dtDate = document.getElementById('dtDate').value || '2026-11-25';
   const dtVenue = document.getElementById('dtVenue').value || '餐廳';
   const dtHospName = document.getElementById('dtHosp').value || '三軍總醫院附設民眾診療服務處';
@@ -1193,10 +1193,11 @@ function addCurrentDetailingToPlan() {
   });
 
   renderCartTable();
-  alert(`✅ 已成功將「Detailing (${dtVenue})」加入本月清單！(目前共 ${monthlyPlanList.length} 場活動)`);
-
-  if (confirm('是否清空當前欄位，繼續輸入下一場活動？')) {
-    clearDetailingForm();
+  if (!silent) {
+    alert(`✅ 已成功將「Detailing (${dtVenue})」加入本月清單！(目前共 ${monthlyPlanList.length} 場活動)`);
+    if (confirm('是否清空當前欄位，繼續輸入下一場活動？')) {
+      clearDetailingForm();
+    }
   }
 }
 
@@ -1268,13 +1269,27 @@ function renderCartTable() {
 // 🌟 核心引擎：生成整月合併官方母檔 Excel (.xlsx) 🌟
 // ========================================================
 async function generateMergedOfficialExcel(btn) {
+  // 🌟 貼心智慧收集：若目前表單上有填寫 Event 或 Detailing 但未點擊加入清單，自動納入！ 🌟
+  const evVenue = document.getElementById('agVenue').value.trim();
+  const alreadyEv = monthlyPlanList.some(item => item.type === 'EVENT' && item.venue === evVenue);
+  if (evVenue && !alreadyEv) {
+    addCurrentEventToPlan(true);
+  }
+
+  const dtVenue = document.getElementById('dtVenue').value.trim();
+  const dtMeal = parseFloat(document.getElementById('dtMealFee').value) || 0;
+  const alreadyDt = monthlyPlanList.some(item => item.type === 'DETAILING' && item.venue === dtVenue);
+  if (dtVenue && dtMeal > 0 && !alreadyDt) {
+    addCurrentDetailingToPlan(true);
+  }
+
   if (monthlyPlanList.length === 0) {
     alert('⚠️ 您的本月費用規劃清單中目前沒有活動！請先將上方的 Event 或 Detailing 點擊「加入本月費用規劃清單」！');
     return;
   }
 
   const origBtnText = btn.innerHTML;
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>正在清空舊檔並寫入本月全新規劃...';
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>正在徹底清空舊檔並寫入本月全新規劃...';
 
   try {
     const resp = await fetch('assets/Novartis_AP_Template.xlsx');
@@ -1293,10 +1308,13 @@ async function generateMergedOfficialExcel(btn) {
       }
     }
 
-    // 🌟 第二步：移除母檔中的舊 Agenda 頁籤，只保留新月份規劃中的 Event Agenda 🌟
-    const oldAgendaNames = ['﹝20261124﹞Agenda ', '﹝20261204﹞Agenda (1)', '﹝yyyymmdd﹞Agenda (1)', '﹝yyyymmdd﹞Agenda (2)'];
-    // 找出標準 Agenda 樣板供複製
-    const agendaTemplateSheet = wb.Sheets['﹝20261124﹞Agenda '] || wb.Sheets['﹝yyyymmdd﹞Agenda (1)'];
+    // 🌟 第二步：徹底移除母檔中的所有舊 Agenda 頁籤（包含 ﹝20261124﹞Agenda 、﹝20261204﹞Agenda (1) 等所有歷史殘留） 🌟
+    const oldAgendaNames = wb.SheetNames.filter(n => n.includes('Agenda'));
+    oldAgendaNames.forEach(n => {
+      const sIdx = wb.SheetNames.indexOf(n);
+      if (sIdx !== -1) wb.SheetNames.splice(sIdx, 1);
+      delete wb.Sheets[n];
+    });
 
     // 🌟 第三步：從第 5 列開始依序乾淨寫入本月全新規劃 🌟
     let curRow = 5;
@@ -1413,15 +1431,19 @@ async function generateMergedOfficialExcel(btn) {
           curRow++;
         }
 
-        // 🌟 為每一場 Event 動態建立專屬的 Agenda 頁籤 🌟
+        // 🌟 為每一場 Event 動態建立排版精確且清晰的專屬 Agenda 頁籤 🌟
         const agSheetName = `﹝${dateClean}﹞Agenda`;
-        let wsAg = wb.Sheets[agSheetName];
-        if (!wsAg) {
-          // 複製樣板結構建立新頁籤
-          wsAg = JSON.parse(JSON.stringify(agendaTemplateSheet));
-          XLSX.utils.book_append_sheet(wb, wsAg, agSheetName);
-        }
+        const wsAg = {};
 
+        // 設定欄寬 (Time: 16, Topic: 55, Speaker: 22, Moderator: 22)
+        wsAg['!cols'] = [
+          { wch: 16 },
+          { wch: 55 },
+          { wch: 22 },
+          { wch: 22 }
+        ];
+
+        // 標題與基本資訊
         wsAg['A1'] = { t: 's', v: act.title };
         wsAg['A2'] = { t: 's', v: act.subtitle };
         wsAg['A3'] = { t: 's', v: `Date : ${act.date.replace(/-/g, '/')}` };
@@ -1430,23 +1452,42 @@ async function generateMergedOfficialExcel(btn) {
         wsAg['A5'] = { t: 's', v: 'Time : ' };
         wsAg['B5'] = { t: 's', v: `${act.time} PM` };
 
+        // 表頭
         wsAg['A7'] = { t: 's', v: 'Time ' };
         wsAg['B7'] = { t: 's', v: 'Topic' };
         wsAg['C7'] = { t: 's', v: 'Speaker' };
         wsAg['D7'] = { t: 's', v: 'Moderator' };
 
+        // 議程明細內容逐列帶入
         act.agendaRows.forEach((rowItem, rI) => {
           const rPos = 8 + rI;
-          wsAg[`A${rPos}`] = { t: 's', v: rowItem.time };
-          wsAg[`B${rPos}`] = { t: 's', v: rowItem.topic };
-          wsAg[`C${rPos}`] = { t: 's', v: rowItem.speaker ? `${rowItem.speaker} 醫師 ${rowItem.spkHosp || ''}` : '' };
-          wsAg[`D${rPos}`] = { t: 's', v: rowItem.moderator };
+          wsAg[`A${rPos}`] = { t: 's', v: rowItem.time || '' };
+          wsAg[`B${rPos}`] = { t: 's', v: rowItem.topic || '' };
+          wsAg[`C${rPos}`] = { t: 's', v: rowItem.speaker ? `${rowItem.speaker} ${rowItem.spkHosp || ''}`.trim() : '' };
+          wsAg[`D${rPos}`] = { t: 's', v: rowItem.moderator || '' };
         });
 
+        // 諾華官方免責聲明與主辦標註
         const legalPos = 8 + act.agendaRows.length + 1;
         wsAg[`A${legalPos}`] = { t: 's', v: '----------------------------主辦/協辦單位：台灣諾華股份有限公司----------------------------' };
         wsAg[`A${legalPos+1}`] = { t: 's', v: '“提醒您，未受邀之醫護人員同行者不得參加由諾華公司所主辦的會議，諾華公司亦不會為同行者安排行程、支付或補貼其任何費用及支出。謝謝您的體貼與諒解。' };
         wsAg[`A${legalPos+3}`] = { t: 's', v: '\"Uninvited guests are not permitted at Novartis-organized events. Novartis will not arrange or cover any expenses for accompanying individuals. Thank you for your understanding.\"' };
+
+        // 設定資料範圍
+        wsAg['!ref'] = `A1:D${legalPos + 4}`;
+
+        // 儲存格合併設定 (A1:D1 標題、A2:C2 副標、免責宣告)
+        wsAg['!merges'] = [
+          { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }, // A1:D1
+          { s: { r: 1, c: 0 }, e: { r: 1, c: 2 } }, // A2:C2
+          { s: { r: legalPos - 1, c: 0 }, e: { r: legalPos - 1, c: 3 } },
+          { s: { r: legalPos, c: 0 }, e: { r: legalPos + 1, c: 3 } },
+          { s: { r: legalPos + 2, c: 0 }, e: { r: legalPos + 3, c: 3 } }
+        ];
+
+        // 附加此全新乾淨頁籤至活頁簿
+        wb.SheetNames.push(agSheetName);
+        wb.Sheets[agSheetName] = wsAg;
       }
     });
 
