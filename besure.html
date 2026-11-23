@@ -774,12 +774,12 @@ dd {
                 點選：<span class="choice-pill">Yes</span> ➡️ 搜尋醫師姓名勾選並點 <b>SAVE</b>
               </dd>
 
-              <dt>工時拆解 (固定標準 5,000 元模式 - 照著打)：</dt>
+              <dt>工時拆解 (最新合規規定：一律固定 1 小時 Service Time 模式 - 照著打)：</dt>
               <dd>
-                • <b>Service Time (演講/主持時間)</b>：輸入 <span class="choice-pill">00 Hours 40 Minutes</span><br>
-                • <b>Preparation Time (準備時間)</b>：輸入 <span class="choice-pill">00 Hours 20 Minutes</span><br>
-                • <b>Travel Time (交通時間 - 防紅字！)</b>：輸入 <span class="choice-pill-warning">00 Hours 00 Minutes</span><br>
-                • <b>Rate / Total Cost</b>：系統自動帶出 <span class="choice-pill">TWD 5,000.00</span>
+                • <b>Service Time (服務時間)</b>：輸入 <span class="choice-pill" style="font-weight: bold; color: #1e40af;">01 Hours 00 Minutes (固定1小時)</span><br>
+                • <b>Preparation Time (準備時間)</b>：輸入 <span class="choice-pill">00 Hours 00 Minutes</span>（一概不編列準備時間）<br>
+                • <b>Travel Time (交通時間)</b>：輸入 <span class="choice-pill-warning">00 Hours 00 Minutes</span>（一概不編列交通工時）<br>
+                • <b>Rate / Total Cost</b>：系統直接自動帶出 <span class="choice-pill" style="font-weight: bold; color: #16a34a;">TWD 5,000.00</span>
               </dd>
 
               <dt>Rationale for selection of the External Expert (遴選理由)</dt>
@@ -1080,9 +1080,9 @@ dd {
                 <b>解法</b>：輸入法在中文狀態打出全形數字，請切換至英文輸入法 (ENG) 重新輸入半形純數字 <code>5000</code> 或 <code>1</code>。
               </dd>
 
-              <dt>❌ 錯誤 2：Time for engagement cannot exceed 0h 0m</dt>
+              <dt>❌ 錯誤 2：工時紅字或 Time cannot exceed 0h 0m</dt>
               <dd>
-                <b>解法</b>：Travel Time 欄位請務必輸入 <code>00</code> Hours <code>00</code> Minutes，點 Save 即可過關。
+                <b>解法</b>：現在一概只有 <b>Service Time = 01 Hours 00 Minutes (1小時)</b>，Preparation Time 與 Travel Time 請務必輸入 <code>00</code> Hours <code>00</code> Minutes，系統便會直接帶出 5,000 元順利過關！
               </dd>
             </dl>
           </div>
@@ -1306,7 +1306,7 @@ async function triggerManualAnalysis() {
 【重要專家提取與排除規則 - 務必遵守】：
 1. 嚴格排除諾華內部同仁：議程中經常列有主辦單位、開場致詞、或負責 PSP（病人支持計畫）說明的公司同仁（凡機構標註「台灣諾華」、「台灣諾華股份有限公司」、「Novartis」或無外部醫院職稱之內部員工），絕對不可當作受聘外部專家！
 2. 全面提取所有外部專家醫師（包含 Speaker 演講者 與 Moderator/Chairman 座長/主持人）：
-   - 在醫學研討會中，Speaker（主講醫師）和 Moderator（座長/主持人）都是諾華依合規標準聘請的外部專家顧問 (HCP)，每位專家服務時間（演講或主持 40 分鐘 + 準備 20 分鐘）與酬金（固定 5,000 元）均相同，兩者都必須完整列出！
+   - 在醫學研討會中，Speaker（主講醫師）和 Moderator（座長/主持人）都是諾華依合規標準聘請的外部專家顧問 (HCP)，每位專家服務時間固定為 Service Time 1 小時（01h 00m，不拆分準備與交通）與酬金固定 5,000 元均相同，兩者都必須完整列出！
    - 請精準提取每一位外部醫師的：姓名 (name)、所屬醫院機構 (hospital)、科別 (dept)、角色 (role: "Speaker" 或 "Moderator")、在議程表上的具體演講或主持時段 (sessionTime，例如 "19:30-20:10" 或 "18:30-19:10" 或 "20:00-20:40")、以及對應的演講題目或主持內容 (topic)。
 
 請提取並以標準 JSON 回傳以下結構（不要包含任何額外說明，純 JSON）：
@@ -1516,7 +1516,7 @@ function calculateCustomBudget() {
   const moderatorCount = experts.filter(e => (e.role || '').toLowerCase().includes('mod') || (e.role || '').includes('座') || (e.role || '').includes('主')).length;
 
   let finText = `本場醫學研討會預估總費用為 TWD ${total.toLocaleString()} 元整，各項目預算拆解與合規說明如下：\n`;
-  finText += `1. 外部專家演講與主持酬金：聘請 ${totalExperts} 位外部臨床專家顧問（包含 ${speakerCount} 位主講醫師及 ${moderatorCount} 位座長/主持人），每位依公司法規標準編列 40 分鐘服務 + 20 分鐘準備（1小時），每位酬金 NT$ 5,000 元整，專家酬金小計 NT$ ${honoraria.toLocaleString()} 元。\n`;
+  finText += `1. 外部專家演講與主持酬金：聘請 ${totalExperts} 位外部臨床專家顧問（包含 ${speakerCount} 位主講醫師及 ${moderatorCount} 位座長/主持人），每位依公司最新合規標準固定編列 Service Time 服務 1 小時（01h 00m，不編列準備與交通工時），每位固定酬金 NT$ 5,000 元整，專家酬金小計 NT$ ${honoraria.toLocaleString()} 元。\n`;
   if (meal > 0) {
     finText += `2. 商務餐飲費用：預估與會人數共 ${attendees} 人於「${venue}」舉行商務討論餐會，餐費總額預算 NT$ ${meal.toLocaleString()} 元整。經核算平均每人餐費為 NT$ ${perPersonMeal.toLocaleString()} 元（含稅），完全符合台灣諾華餐飲合規上限（晚餐 NT$ 3,500 元/人/日含稅），絕無超標情事。\n`;
   } else {
@@ -1676,9 +1676,8 @@ function updateAllSteps() {
             <strong>講題/主持：</strong>${e.topic || '乳癌臨床實證討論'}
           </div>
           <div class="d-flex flex-wrap gap-1 mb-2 small">
-            <span class="badge bg-light text-dark border">演講/主持 00h 40m</span>
-            <span class="badge bg-light text-dark border">準備 00h 20m</span>
-            <span class="badge bg-light text-dark border">交通 00h 00m</span>
+            <span class="badge bg-success-subtle text-success-emphasis border border-success fw-bold"><i class="fa-solid fa-clock me-1"></i>Service Time: 01h 00m</span>
+            <span class="badge bg-light text-secondary border">無 Prep / 無 Travel</span>
           </div>
           <div class="p-2 bg-light rounded text-secondary small mb-2 border" id="expertRationaleText_${idx}" style="font-size: 0.85rem; line-height: 1.45; white-space: pre-line;">
             ${e.rationale}
