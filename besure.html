@@ -479,6 +479,10 @@ dd {
           <label class="form-label small fw-bold text-secondary mb-1">醫師所屬醫院</label>
           <input type="text" id="inpHospital" class="form-control form-control-sm" value="三軍總醫院" oninput="updateAllSteps()">
         </div>
+        <div class="col-md-3 col-6">
+          <label class="form-label small fw-bold text-primary mb-1"><i class="fa-solid fa-clock me-1"></i>演講/主持時段</label>
+          <input type="text" id="inpSessionTime" class="form-control form-control-sm border-primary" value="19:30-20:10" placeholder="例如 19:30-20:10" oninput="updateAllSteps()">
+        </div>
         <div class="col-md-4 col-12">
           <label class="form-label small fw-bold text-secondary mb-1">演講講題 (Topic)</label>
           <input type="text" id="inpTopic" class="form-control form-control-sm" value="KISQALI Does it Again: A Moment for OS in NATALEE" oninput="updateAllSteps()">
@@ -1096,6 +1100,7 @@ window.detectedExperts = [
     hospital: "三軍總醫院",
     dept: "乳房外科",
     role: "Speaker",
+    sessionTime: "19:30-20:10",
     topic: "KISQALI Does it Again: A Moment for OS in NATALEE"
   }
 ];
@@ -1236,7 +1241,7 @@ async function triggerManualAnalysis() {
 1. 嚴格排除諾華內部同仁：議程中經常列有主辦單位、開場致詞、或負責 PSP（病人支持計畫）說明的公司同仁（凡機構標註「台灣諾華」、「台灣諾華股份有限公司」、「Novartis」或無外部醫院職稱之內部員工），絕對不可當作受聘外部專家！
 2. 全面提取所有外部專家醫師（包含 Speaker 演講者 與 Moderator/Chairman 座長/主持人）：
    - 在醫學研討會中，Speaker（主講醫師）和 Moderator（座長/主持人）都是諾華依合規標準聘請的外部專家顧問 (HCP)，每位專家服務時間（演講或主持 40 分鐘 + 準備 20 分鐘）與酬金（固定 5,000 元）均相同，兩者都必須完整列出！
-   - 請提取每一位外部醫師的：姓名 (name)、所屬醫院機構 (hospital)、科別 (dept)、角色 (role: "Speaker" 或 "Moderator")、以及對應的演講題目或主持時段 (topic)。
+   - 請精準提取每一位外部醫師的：姓名 (name)、所屬醫院機構 (hospital)、科別 (dept)、角色 (role: "Speaker" 或 "Moderator")、在議程表上的具體演講或主持時段 (sessionTime，例如 "19:30-20:10" 或 "18:30-19:10" 或 "20:00-20:40")、以及對應的演講題目或主持內容 (topic)。
 
 請提取並以標準 JSON 回傳以下結構（不要包含任何額外說明，純 JSON）：
 {
@@ -1250,6 +1255,7 @@ async function triggerManualAnalysis() {
       "hospital": "醫師所屬醫院 (例如 三軍總醫院，不可填諾華)",
       "dept": "科別 (例如 一般外科/乳房外科/血液腫瘤科)",
       "role": "Speaker 或 Moderator",
+      "sessionTime": "該位醫師在議程中的具體演講/主持時段 (例如 19:30-20:10 或 18:30-19:10)",
       "topic": "演講題目 (若為 Moderator 則填主持時段或研討會主題)"
     }
   ]
@@ -1316,13 +1322,17 @@ async function triggerManualAnalysis() {
     if (parsed.venue) document.getElementById("inpVenue").value = parsed.venue;
 
     if (parsed.experts && Array.isArray(parsed.experts) && parsed.experts.length > 0) {
-      window.detectedExperts = parsed.experts;
+      window.detectedExperts = parsed.experts.map(e => ({
+        ...e,
+        sessionTime: e.sessionTime || e.time || ""
+      }));
     } else if (parsed.doctor) {
       window.detectedExperts = [{
         name: parsed.doctor,
         hospital: parsed.hospital || "外部醫院",
         dept: parsed.dept || "乳房外科",
         role: "Speaker",
+        sessionTime: parsed.sessionTime || parsed.time || "19:30-20:10",
         topic: parsed.topic || parsed.eventName || ""
       }];
     }
@@ -1333,6 +1343,7 @@ async function triggerManualAnalysis() {
       if (document.getElementById("inpDoctor")) document.getElementById("inpDoctor").value = first.name || "";
       if (document.getElementById("inpHospital")) document.getElementById("inpHospital").value = first.hospital || "";
       if (document.getElementById("inpTopic")) document.getElementById("inpTopic").value = first.topic || "";
+      if (document.getElementById("inpSessionTime")) document.getElementById("inpSessionTime").value = first.sessionTime || "";
     }
 
     const expCount = window.detectedExperts ? window.detectedExperts.length : 1;
@@ -1350,7 +1361,7 @@ async function triggerManualAnalysis() {
     if (chipsEl && window.detectedExperts) {
       chipsEl.innerHTML = window.detectedExperts.map(e => `
         <span class="badge ${e.role === 'Moderator' ? 'bg-primary' : 'bg-warning text-dark'} px-2 py-1 fs-6">
-          ${e.role === 'Moderator' ? '🧑‍⚖️ Moderator 座長' : '🎤 Speaker 講者'}: ${e.name} 醫師 (${e.hospital || ''}) · 固定 NT$ 5,000
+          ${e.role === 'Moderator' ? '🧑‍⚖️ Moderator 座長' : '🎤 Speaker 講者'}: ${e.name} 醫師 (${e.hospital || ''}${e.sessionTime ? ` · ⏰ ${e.sessionTime}` : ''}) · 固定 NT$ 5,000
         </span>
       `).join('');
     }
@@ -1460,9 +1471,11 @@ function updateAllSteps() {
     const manualDoc = document.getElementById("inpDoctor") ? document.getElementById("inpDoctor").value.trim() : "";
     const manualHosp = document.getElementById("inpHospital") ? document.getElementById("inpHospital").value.trim() : "";
     const manualTopic = document.getElementById("inpTopic") ? document.getElementById("inpTopic").value.trim() : "";
+    const manualTime = document.getElementById("inpSessionTime") ? document.getElementById("inpSessionTime").value.trim() : "";
     if (manualDoc) window.detectedExperts[0].name = manualDoc;
     if (manualHosp) window.detectedExperts[0].hospital = manualHosp;
     if (manualTopic) window.detectedExperts[0].topic = manualTopic;
+    if (manualTime) window.detectedExperts[0].sessionTime = manualTime;
   }
 
   const experts = (window.detectedExperts && window.detectedExperts.length > 0) 
@@ -1472,6 +1485,7 @@ function updateAllSteps() {
         hospital: document.getElementById("inpHospital").value.trim() || "三軍總醫院",
         dept: "乳房外科",
         role: "Speaker",
+        sessionTime: document.getElementById("inpSessionTime") ? document.getElementById("inpSessionTime").value.trim() : "19:30-20:10",
         topic: document.getElementById("inpTopic").value.trim() || "KISQALI Does it Again: A Moment for OS in NATALEE"
       }];
 
@@ -1497,22 +1511,23 @@ function updateAllSteps() {
     countBadgeEl.textContent = `本場共 ${totalExperts} 位外部專家（${speakerCount} 講者 + ${moderatorCount} 座長 · 每位固定 NT$ 5,000）`;
   }
 
-  // 產生每位專家的獨立理由文字
+  // 產生每位專家的獨立理由文字 (自動將議程演講/主持時段精準嵌入)
   experts.forEach(e => {
+    const timePhrase = (e.sessionTime && e.sessionTime.trim()) ? `特別邀請於議程時段【${e.sessionTime.trim()}】` : `特別邀請`;
     if (e.role === 'Moderator') {
-      e.rationale = `受邀專家${e.name}醫師為${e.hospital || primaryHospital}${e.dept || '乳房外科'}資深臨床權威，具備主持大型醫學研討會之豐富經驗。特別邀請擔任本次會議座長（Moderator），主持臨床個案討論與多專科問答環節，引導醫療團隊針對早期乳癌最新治療策略與病友照護深入交流。`;
+      e.rationale = `受邀專家${e.name}醫師為${e.hospital || primaryHospital}${e.dept || '乳房外科'}資深臨床權威，具備主持大型醫學研討會之豐富經驗。${timePhrase}擔任本次會議座長（Moderator），主持臨床個案討論與多專科問答環節，引導醫療團隊針對早期乳癌最新治療策略與病友照護深入交流。`;
     } else {
-      e.rationale = `受邀專家${e.name}醫師具備${e.hospital || primaryHospital}${e.dept || '乳房外科'}豐富實證診療經驗，其專業領域與本次研討會主題「${e.topic || eventName}」高度契合。特別邀請擔任演講講者，針對最新臨床試驗數據（NATALEE OS）與臨床照護經驗進行專業學術分享與交流。`;
+      e.rationale = `受邀專家${e.name}醫師具備${e.hospital || primaryHospital}${e.dept || '乳房外科'}豐富實證診療經驗，其專業領域與本次研討會主題「${e.topic || eventName}」高度契合。${timePhrase}擔任演講講者，針對最新臨床試驗數據（NATALEE OS）與臨床照護經驗進行專業學術分享與交流。`;
     }
   });
 
-  // 合併理由
+  // 合併理由 (亦自動帶入各醫師時段)
   if (totalExperts === 1) {
     document.getElementById("launchDocRationale").textContent = experts[0].rationale;
   } else {
     document.getElementById("launchDocRationale").textContent = 
       `本次學術研討會共聘請 ${totalExperts} 位外部臨床專家顧問（包含 ${speakerCount} 位主講講者及 ${moderatorCount} 位座長主持人）：` +
-      experts.map(e => `【${e.name}】醫師（${e.hospital || ''}${e.dept || ''}，擔任 ${e.role === 'Moderator' ? '座長主持' : '主講'}「${e.topic || 'NATALEE 臨床討論'}」）`).join('、') +
+      experts.map(e => `【${e.name}】醫師（${e.hospital || ''}${e.dept || ''}，於時段【${e.sessionTime || '指定議程時段'}】擔任 ${e.role === 'Moderator' ? '座長主持' : '主講'}「${e.topic || 'NATALEE 臨床討論'}」）`).join('、') +
       `。各受邀專家皆具備乳癌領域豐富臨床診療與學術主持經驗，其專業與本次研討會議題高度契合，特邀進行專業學術分享、跨科別個案交流與臨床討論引領。`;
   }
 
@@ -1531,6 +1546,13 @@ function updateAllSteps() {
           <div class="fw-bold fs-6 text-dark mb-1">
             ${e.name} 醫師 <span class="text-secondary small fw-normal">(${e.hospital || ''} ${e.dept || ''})</span>
           </div>
+          ${e.sessionTime ? `
+          <div class="mb-2">
+            <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-2 py-1 fw-bold">
+              <i class="fa-solid fa-clock me-1"></i>演講/主持時段：${e.sessionTime}
+            </span>
+          </div>
+          ` : ''}
           <div class="text-muted small mb-2 text-truncate" title="${e.topic || ''}">
             <strong>講題/主持：</strong>${e.topic || '乳癌臨床實證討論'}
           </div>
