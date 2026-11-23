@@ -624,10 +624,10 @@ function validateDtCount() {
 // 🌟 自動深度解析醫師資訊 (姓名、所屬醫院、HP Code、Vendor Code、Speaker Pool No) 🌟
 function resolveDoctorDeep(rawText) {
   if (!rawText) return null;
-  const clean = rawText.replace(/醫師|主任|教授|副教授|顧問|部長|台灣諾華公司|諾華公司/g, '')
+  const clean = rawText.replace(/醫師|主任|教授|副教授|顧問|部長|台灣諾華公司|諾華公司|Novartis/gi, '')
                        .replace(/\([^)]*\)/g, '')
                        .replace(/（[^）]*）/g, '')
-                       .replace(/萬芳醫院|三軍總醫院|台大醫院|基隆長庚醫院|長庚醫院|榮總|新光醫院/g, '')
+                       .replace(/萬芳醫院|三軍總醫院|台大醫院|基隆長庚紀念醫院|基隆長庚醫院|長庚醫院|榮總|新光醫院/g, '')
                        .replace(/\s+/g, '').trim();
 
   if (!clean || clean === 'ALL' || clean.includes('Sandy')) return null;
@@ -636,8 +636,19 @@ function resolveDoctorDeep(rawText) {
   const vendors = window.NOVARTIS_VENDORS || [];
   const hospitals = window.NOVARTIS_HOSPITALS || [];
 
-  const spk = speakers.find(s => s.n === clean);
-  const ven = vendors.find(v => v.n === clean);
+  let spk = speakers.find(s => s.n === clean);
+  if (!spk) {
+    spk = speakers.find(s => s.n.length >= 2 && (clean.startsWith(s.n) || clean.includes(s.n)));
+  }
+  let finalName = spk ? spk.n : clean;
+  let ven = vendors.find(v => v.n === finalName);
+  if (!ven && !spk) {
+    ven = vendors.find(v => v.n.length >= 2 && (clean.startsWith(v.n) || clean.includes(v.n)));
+    if (ven) finalName = ven.n;
+  }
+
+  // 🌟 若在醫師庫與供應商庫中皆不存在，代表非外部受聘醫師（如 Discussion、ALL、工作人員），不應列為顧問專家！
+  if (!spk && !ven) return null;
 
   const poolNo = spk ? spk.p : '';
   const venCode = ven ? ven.id : '';
@@ -646,7 +657,31 @@ function resolveDoctorDeep(rawText) {
 
   let hpCode = '';
   let hpName = rawHosp;
-  if (rawHosp && hospitals.length > 0) {
+
+  // 🌟 特殊/核心醫學中心代碼精準比對 (避免如台大醫學院 092570 誤判，應為台大總院 000580)
+  const knownHospMap = {
+    '台大醫院': { id: '000580', n: '國立台灣大學醫學院附設醫院' },
+    '國立台灣大學醫學院附設醫院': { id: '000580', n: '國立台灣大學醫學院附設醫院' },
+    '萬芳醫院': { id: '116840', n: '臺北市立萬芳醫院－委託臺北醫學大學辦理' },
+    '臺北市立萬芳醫院－委託臺北醫學大學辦理': { id: '116840', n: '臺北市立萬芳醫院－委託臺北醫學大學辦理' },
+    '三軍總醫院': { id: '177160', n: '三軍總醫院附設民眾診療服務處' },
+    '三軍總醫院附設民眾診療服務處': { id: '177160', n: '三軍總醫院附設民眾診療服務處' },
+    '基隆長庚': { id: '232700', n: '長庚醫療財團法人基隆長庚紀念醫院' },
+    '長庚醫療財團法人基隆長庚紀念醫院': { id: '232700', n: '長庚醫療財團法人基隆長庚紀念醫院' },
+    '台北長庚': { id: '131900', n: '長庚醫療財團法人台北長庚紀念醫院' },
+    '林口長庚': { id: '232600', n: '長庚醫療財團法人林口長庚紀念醫院' },
+    '台北榮總': { id: '000400', n: '臺北榮民總醫院' },
+    '臺北榮民總醫院': { id: '000400', n: '臺北榮民總醫院' },
+    '新光醫院': { id: '117070', n: '新光醫療財團法人新光吳火獅紀念醫院' },
+    '馬偕醫院': { id: '000660', n: '馬偕紀念醫院' },
+    '馬偕紀念醫院': { id: '000660', n: '馬偕紀念醫院' },
+    '雙和醫院': { id: '234050', n: '衛生福利部雙和醫院〈委託臺北醫學大學興建經營〉' }
+  };
+
+  if (rawHosp && knownHospMap[rawHosp]) {
+    hpCode = knownHospMap[rawHosp].id;
+    hpName = knownHospMap[rawHosp].n;
+  } else if (rawHosp && hospitals.length > 0) {
     const core = rawHosp.replace(/醫療財團法人|附設民眾診療服務處|分院|醫院/g, '');
     const match = hospitals.find(h => h.n.includes(rawHosp) || rawHosp.includes(h.n) || (core.length >= 2 && h.n.includes(core)));
     if (match) {
@@ -656,7 +691,7 @@ function resolveDoctorDeep(rawText) {
   }
 
   return {
-    name: clean,
+    name: finalName,
     poolNo: poolNo,
     vendorCode: venCode,
     hpCode: hpCode,
@@ -674,38 +709,29 @@ function getStoredApiKey() {
   return atob("QVEuQWI4Uk42TDNKT0ZsbnlYZHFIV2hraDVjMTVldVRLWVBXaFMxSUhTQndOdTRDUHpGUWc=");
 }
 
-function compressImage(file) {
+function readFileAsBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-        const maxDim = 1200;
-        if (width > maxDim || height > maxDim) {
-          if (width > height) {
-            height = Math.round((height * maxDim) / width);
-            width = maxDim;
-          } else {
-            width = Math.round((width * maxDim) / height);
-            height = maxDim;
-          }
+    reader.onload = () => {
+      try {
+        const result = reader.result;
+        const base64 = result.split(',')[1];
+        let mime = file.type || 'image/jpeg';
+        if (!mime || mime.includes('heic') || mime.includes('heif')) {
+          mime = 'image/jpeg';
         }
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-        resolve({ base64: dataUrl.split(',')[1], mimeType: 'image/jpeg' });
-      };
-      img.onerror = () => resolve({ base64: e.target.result.split(',')[1], mimeType: file.type || 'image/jpeg' });
-      img.src = e.target.result;
+        resolve({ base64, mimeType: mime });
+      } catch (e) {
+        reject(e);
+      }
     };
-    reader.onerror = () => reject(new Error('圖片讀取失敗'));
+    reader.onerror = () => reject(new Error('讀取檔案失敗，請重新選取'));
     reader.readAsDataURL(file);
   });
+}
+
+function compressImage(file) {
+  return readFileAsBase64(file);
 }
 
 async function handleAgendaImageUpload(input) {
@@ -716,39 +742,45 @@ async function handleAgendaImageUpload(input) {
   const msg = document.getElementById('aiVisionMsg');
   notice.className = 'alert alert-info py-2 px-3 mt-3 mb-0 small text-start';
   notice.classList.remove('d-none');
-  msg.innerHTML = `<i class="fa-solid fa-spinner fa-spin me-1"></i>AI 正在視覺辨識「${file.name}」中的會議資訊與議程表，請稍候 3 秒...`;
+  msg.innerHTML = `<i class="fa-solid fa-spinner fa-spin me-1"></i>Google Gemini 視覺 AI 正在深度辨識「${file.name}」中的會議議程...`;
 
   try {
-    const { base64, mimeType } = await compressImage(file);
+    const { base64, mimeType } = await readFileAsBase64(file);
     const apiKey = getStoredApiKey();
 
-    const promptText = `請身為諾華專業醫療活動助理，精準辨識這張醫療研討會議程 (Agenda) 圖檔，並回傳純 JSON 物件（勿加 markdown 標記）：
+    const promptText = `請身為台灣諾華（Novartis）專業醫療活動助理，精準辨識這張醫療研討會議程 (Agenda) 圖檔，並回傳純 JSON 物件（勿加 markdown 標記）：
 {
-  "prefix": "會議名稱的前綴地區或醫院（例如若是【全北區乳癌研討會】，則填 全北區；若是【三總乳癌研討會】，則填 三總）",
+  "prefix": "會議前綴名稱或地區（例如若標題為【全北區乳癌研討會】，則填 全北區；若為【三總乳癌研討會】，則填 三總）",
+  "meeting_title": "會議完整全稱（例如 全北區乳癌研討會）",
   "subtitle": "副標題（例如 From Shared Decision to Long-Term Confidence）",
-  "date": "活動日期，格式 YYYY-MM-DD（例如 2026-11-24）",
-  "time": "時間（例如 18:30-20:30）",
-  "venue": "餐廳場地名稱與完整地址（例如 VG the Seafood Bar(台北市大安區敦化南路二段11巷6號 捷運信義安和站2號出口)）",
-  "targetHospital": "主要目標醫院名稱（例如 萬芳醫院 或 三軍總醫院 或 台北長庚）",
+  "date": "活動日期，請轉為 YYYY-MM-DD 格式（例如 2026-11-24）",
+  "time": "時間區段（例如 18:30-20:30）",
+  "venue": "餐廳場地名稱與完整地址（例如 VG the Seafood Bar (台北市大安區敦化南路二段11巷6號 捷運信義安和站2號出口)）",
+  "targetHospital": "主要目標醫院名稱（例如 萬芳醫院 或 三軍總醫院 或 台大醫院）",
   "agendaItems": [
     {
-      "time": "時段（例如 18:30~19:00 或 19:00~19:40）",
+      "time": "時段（例如 19:00~19:40）",
       "topic": "講題內容（例如 KISQALI Does it Again:A Moment for OS in NATALEE）",
-      "speaker": "講者純姓名（如 廖子堯 或 廖國秀，無則留空）",
-      "spkHosp": "講者醫院與職稱（如 萬芳醫院 醫師）",
-      "moderator": "主持人姓名與單位（如 戴明燊 醫師 (三軍總醫院) 或 ALL）"
+      "speaker": "講者醫師姓名（例如 廖子堯醫師 或 廖子堯）",
+      "speaker_hospital": "講者所屬醫院（例如 萬芳醫院）",
+      "moderator": "主持人姓名（例如 戴明燊醫師 或 戴明燊，若是全部則填 ALL）",
+      "moderator_hospital": "主持人所屬醫院（例如 三軍總醫院）"
     }
   ]
 }`;
 
     const candidateModels = [
-      'gemini-2.5-flash',
-      'gemini-1.5-flash',
-      'gemini-2.0-flash',
-      'gemini-flash-latest'
+      'gemini-3-flash-preview',
+      'gemini-3.5-flash-lite',
+      'gemini-3.1-flash-lite',
+      'gemini-flash-lite-latest',
+      'gemini-flash-latest',
+      'gemini-3.5-flash'
     ];
 
     let data = null;
+    let successfulModel = '';
+
     for (const model of candidateModels) {
       try {
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
@@ -758,8 +790,8 @@ async function handleAgendaImageUpload(input) {
           body: JSON.stringify({
             contents: [{
               parts: [
-                { text: promptText },
-                { inline_data: { mime_type: mimeType, data: base64 } }
+                { inline_data: { mime_type: mimeType, data: base64 } },
+                { text: promptText }
               ]
             }],
             generationConfig: { response_mime_type: "application/json", temperature: 0.1 }
@@ -771,50 +803,92 @@ async function handleAgendaImageUpload(input) {
           const rawText = resJson.candidates?.[0]?.content?.parts?.[0]?.text;
           if (rawText) {
             data = JSON.parse(rawText.replace(/```json/g, '').replace(/```/g, '').trim());
+            successfulModel = model;
             break;
           }
+        } else {
+          console.warn(`Model ${model} returned status: ${res.status}`);
         }
       } catch (err) {
-        console.warn(`Model ${model} failed, trying next...`);
+        console.warn(`Model ${model} failed, trying next...`, err);
       }
     }
 
-    if (!data) throw new Error('AI 辨識服務暫時無回應，請手動確認欄位。');
+    if (!data) throw new Error('AI 視覺模型連線繁忙，請稍候重試或手動微調。');
 
-    if (data.prefix) document.getElementById('agPrefix').value = data.prefix;
+    // 1. 會議前綴與標題
+    let prefix = data.prefix || '';
+    if (!prefix && data.meeting_title) {
+      prefix = data.meeting_title.replace(/【|】|\[|\]|乳癌研討會|研討會|會議/g, '').trim();
+    }
+    if (prefix) document.getElementById('agPrefix').value = prefix;
     if (data.subtitle) document.getElementById('agSubtitle').value = data.subtitle;
-    if (data.date) document.getElementById('agDate').value = data.date;
-    if (data.time) document.getElementById('agTime').value = data.time;
-    if (data.venue) document.getElementById('agVenue').value = data.venue;
-    if (data.targetHospital) document.getElementById('evHosp').value = data.targetHospital;
 
-    if (window.NOVARTIS_HOSPITALS && data.targetHospital) {
-      const matchHosp = window.NOVARTIS_HOSPITALS.find(h => h.n.includes(data.targetHospital) || data.targetHospital.includes(h.n));
+    // 2. 日期與時間
+    if (data.date) document.getElementById('agDate').value = data.date;
+    if (data.time || data.time_range) document.getElementById('agTime').value = data.time || data.time_range;
+
+    // 3. 場地地點
+    let fullVenue = data.venue || '';
+    if (!fullVenue && (data.venue_name || data.venue_address)) {
+      fullVenue = [data.venue_name, data.venue_address].filter(Boolean).join(' ');
+    }
+    if (fullVenue) document.getElementById('agVenue').value = fullVenue;
+
+    // 4. 目標醫院
+    const rawItems = data.agendaItems || data.items || [];
+    let targetHosp = data.targetHospital || '';
+    if (!targetHosp && rawItems.length > 0) {
+      const firstDoctor = rawItems.find(i => i.speaker_hospital || i.spkHosp || i.moderator_hospital);
+      if (firstDoctor) {
+        targetHosp = firstDoctor.speaker_hospital || firstDoctor.spkHosp || firstDoctor.moderator_hospital;
+      }
+    }
+    if (targetHosp) {
+      document.getElementById('evHosp').value = targetHosp;
+      const matchHosp = (window.NOVARTIS_HOSPITALS || []).find(h => h.n.includes(targetHosp) || targetHosp.includes(h.n));
       if (matchHosp) {
         document.getElementById('evHosp').value = matchHosp.n;
         document.getElementById('evHospCode').value = matchHosp.id;
       }
     }
 
-    if (data.agendaItems && Array.isArray(data.agendaItems) && data.agendaItems.length > 0) {
-      agendaItems = data.agendaItems.map(item => {
+    // 5. 議程明細表 (自動帶入 Speaker 與 Moderator 之 Pool No、Vendor Code、HP Code)
+    if (rawItems.length > 0) {
+      agendaItems = rawItems.map(item => {
+        // Speaker
         const spkResolved = resolveDoctorDeep(item.speaker);
+        const spkName = spkResolved ? spkResolved.name : (item.speaker || '');
+        const spkHosp = spkResolved ? spkResolved.hpName : (item.speaker_hospital || item.spkHosp || '');
+        const spkVen = spkResolved ? spkResolved.vendorCode : '';
+        const spkPool = spkResolved ? spkResolved.poolNo : '';
+        const spkHpCode = spkResolved ? spkResolved.hpCode : '';
+
+        // Moderator
+        let modStr = item.moderator || '';
+        const modResolved = resolveDoctorDeep(item.moderator);
+        if (modResolved) {
+          modStr = `${modResolved.name} 醫師 (${modResolved.hpName})`;
+        } else if (item.moderator_hospital && item.moderator && item.moderator !== 'ALL') {
+          modStr = `${item.moderator} (${item.moderator_hospital})`;
+        }
+
         return {
           time: item.time || '',
           topic: item.topic || '',
-          speaker: spkResolved ? spkResolved.name : (item.speaker || ''),
-          spkHosp: spkResolved ? spkResolved.hpName : (item.spkHosp || ''),
-          spkVendor: spkResolved ? spkResolved.vendorCode : '',
-          spkPool: spkResolved ? spkResolved.poolNo : '',
-          spkHpCode: spkResolved ? spkResolved.hpCode : '',
-          moderator: item.moderator || ''
+          speaker: spkName,
+          spkHosp: spkHosp,
+          spkVendor: spkVen,
+          spkPool: spkPool,
+          spkHpCode: spkHpCode,
+          moderator: modStr
         };
       });
       renderAgendaTable();
     }
 
     notice.className = 'alert alert-success py-2 px-3 mt-3 mb-0 small text-start';
-    msg.innerHTML = `<i class="fa-solid fa-circle-check text-success me-1"></i><strong>AI 辨識成功！</strong>已為您將「${file.name}」中的會議名稱、地點、時間與議程自動帶入下方表格。請確認人數與金額即可！`;
+    msg.innerHTML = `<i class="fa-solid fa-circle-check text-success me-1"></i><strong>Gemini 視覺 AI 辨識成功！</strong>已為您將「${file.name}」中的會議名稱、地點、時間、講者與主持人自動帶入下方表格。請確認人數與金額即可！`;
 
     calculateAll();
 
@@ -842,6 +916,10 @@ function renderAgendaTable() {
       </td>
       <td class="position-relative">
         <input type="text" class="form-control form-control-sm fw-bold" value="${item.moderator}" placeholder="主持人姓名 / ALL" oninput="searchDoctor(${idx}, this.value, 'moderator')">
+        ${(() => {
+          const modRes = resolveDoctorDeep(item.moderator);
+          return modRes ? `<small class="text-muted d-block" style="font-size:0.75rem;">${modRes.hpName || ''} ${modRes.vendorCode ? '· SAP:' + modRes.vendorCode : ''} ${modRes.poolNo ? '· ' + modRes.poolNo : ''}</small>` : '';
+        })()}
         <div id="modAuto_${idx}" class="autocomplete-box d-none"></div>
       </td>
       <td class="text-center">
