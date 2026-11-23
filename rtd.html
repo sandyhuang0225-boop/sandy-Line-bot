@@ -192,8 +192,11 @@
         <i class="fa-solid fa-list-check me-1"></i>簽到名冊 (<span id="topAttendeeCount">5</span>人)
       </a>
       <!-- 🌟 Sandy 的一鍵列印簽到表按鈕 🌟 -->
+      <a href="1124_三總乳癌研討會_簽到表.pdf" download="1124_三總乳癌研討會_簽到表.pdf" class="btn btn-danger text-white fw-bold shadow-sm me-1" target="_blank">
+        <i class="fa-solid fa-file-pdf me-1"></i>下載 7-11 ibon 列印 PDF
+      </a>
       <button type="button" class="btn btn-warning text-dark fw-black shadow-sm" onclick="printSignInSheet()">
-        <i class="fa-solid fa-print me-1"></i>一鍵列印簽到表
+        <i class="fa-solid fa-print me-1"></i>本機列印
       </button>
     </div>
   </div>
@@ -657,9 +660,15 @@
         <button type="button" class="btn btn-outline-secondary btn-sm" onclick="exportCsvSignInSheet()">
           <i class="fa-solid fa-file-csv me-1"></i>下載 CSV 檔
         </button>
-        <!-- 🌟 核心按鈕：一鍵列印簽到表 🌟 -->
+        <!-- 🌟 核心按鈕：下載 7-11 ibon PDF 與本機列印 🌟 -->
+        <a href="1124_三總乳癌研討會_簽到表.pdf" download="1124_三總乳癌研討會_簽到表.pdf" class="btn btn-danger fw-bold px-3 py-2 shadow-sm text-white" target="_blank">
+          <i class="fa-solid fa-file-pdf me-1"></i>下載 7-11 ibon 專用 PDF
+        </a>
+        <a href="1124_三總乳癌研討會_簽到表.png" download="1124_三總乳癌研討會_簽到表.png" class="btn btn-success fw-bold px-3 py-2 shadow-sm text-white" target="_blank">
+          <i class="fa-solid fa-image me-1"></i>下載 ibon 圖片檔 (手機傳 LINE 秒印)
+        </a>
         <button type="button" class="btn btn-primary fw-bold px-3 py-2 shadow-sm" onclick="printSignInSheet()">
-          <i class="fa-solid fa-print me-1"></i>一鍵列印簽到表
+          <i class="fa-solid fa-print me-1"></i>本機直接列印
         </button>
       </div>
     </div>
@@ -1151,10 +1160,17 @@ function renderSignInTable() {
   tbody.innerHTML = html;
 }
 
-// 🌟 一鍵列印簽到表 🌟
+// 🌟 一鍵列印簽到表 (支援彈出獨立乾淨 A4 列印頁與 PDF 下載) 🌟
 function printSignInSheet() {
   renderSignInTable();
-  window.print();
+  // 優先開啟獨立純淨 A4 列印頁，解決手機與各瀏覽器阻擋 print 彈窗問題
+  const printWindow = window.open('print_signin.html', '_blank');
+  if (printWindow) {
+    printWindow.focus();
+  } else {
+    // 若被瀏覽器阻擋彈跳視窗，直接呼叫本機列印
+    window.print();
+  }
 }
 
 // 送出報名表單 (自動同步至 Google 試算表與 Sandy LINE)
