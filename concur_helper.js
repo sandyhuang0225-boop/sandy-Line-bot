@@ -257,27 +257,33 @@ function copyAllConcurTextSummary(eventTitle, concurList, btnEl) {
   });
 }
 
-// 發送 Concur 報帳名冊至 Sandy 公務信箱
+// 發送 Concur 報帳名冊至 Sandy 公務信箱 (附帶網頁版一鍵加速工具連結)
 function sendConcurEmail(eventTitle, concurList) {
   if (!concurList || concurList.length === 0) {
     alert('目前尚無與會人員資料！');
     return;
   }
 
-  const subject = encodeURIComponent(`【Concur 報帳名冊】${eventTitle || 'RTD 醫學會議'} (共 ${concurList.length} 位與會者)`);
+  const launchpadUrl = "https://sandyhuang0225-boop.github.io/sandy-Line-bot/concur.html";
+  const subject = encodeURIComponent(`【Concur 報帳專用名冊】${eventTitle || 'RTD 醫學會議'} (共 ${concurList.length} 位與會者)`);
   
-  let bodyText = `Sandy 姐您好，\n\n此為【${eventTitle || 'RTD 醫學會議'}】之 SAP Concur 報帳專用與會者名冊資料：\n\n`;
-  bodyText += `與會人數：共 ${concurList.length} 位\n\n`;
+  let bodyText = `Sandy 姐您好，\n\n`;
+  bodyText += `👉 點此開啟【SAP Concur 報帳一鍵加速器】(網頁版一鍵秒複製各欄位)：\n`;
+  bodyText += `${launchpadUrl}\n\n`;
+  bodyText += `在電腦瀏覽器中打開上方專屬連結，即可直接在網頁上一鍵點擊複製每一位醫師的【姓、名、服務機構、英文城市、Pool No】秒貼入 SAP Concur 系統！\n\n`;
+  bodyText += `=========================================================\n`;
+  bodyText += `以下為【${eventTitle || 'RTD 醫學會議'}】與會人員 Concur 備份存查清單 (共 ${concurList.length} 位)：\n`;
+  bodyText += `=========================================================\n\n`;
 
   concurList.forEach(item => {
-    bodyText += `No.${item.index} | ${item.rawName} | 類型: ${item.attendeeType}\n`;
-    bodyText += `  - Last Name: ${item.lastName}\n`;
-    bodyText += `  - First Name: ${item.firstName}\n`;
-    bodyText += `  - Company: ${item.hospital}\n`;
-    bodyText += `  - City: ${item.cityEn}\n`;
-    bodyText += `  - Title: ${item.dept} ${item.title}\n`;
-    if (item.hcpPoolNo) bodyText += `  - HCP Pool No: ${item.hcpPoolNo}\n`;
-    if (item.oncoreId) bodyText += `  - Oncore ID: ${item.oncoreId}\n`;
+    bodyText += `[No.${item.index}] ${item.rawName} (${item.attendeeType})\n`;
+    bodyText += `  • Last Name (姓): ${item.lastName}\n`;
+    bodyText += `  • First Name (名): ${item.firstName}\n`;
+    bodyText += `  • Company (醫院): ${item.hospital}\n`;
+    bodyText += `  • City (英文城市): ${item.cityEn}\n`;
+    bodyText += `  • 職稱/科別: ${item.dept} ${item.title}\n`;
+    if (item.hcpPoolNo) bodyText += `  • Speaker Pool No: ${item.hcpPoolNo}\n`;
+    if (item.oncoreId) bodyText += `  • Oncore ID: ${item.oncoreId}\n`;
     bodyText += `\n`;
   });
 

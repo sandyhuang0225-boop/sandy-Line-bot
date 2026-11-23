@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SAP Concur 報帳專用名冊一鍵加速器 (Novartis RTD Expense Launchpad)</title>
+
+<!-- Bootstrap 5 & FontAwesome -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --novartis-navy: #042742;
+  --novartis-blue: #0b497a;
+  --novartis-sky: #0284c7;
+  --novartis-orange: #eb6a0a;
+  --novartis-gold: #f59e0b;
+  --ink: #0f172a;
+  --muted: #475569;
+  --edge: #cbd5e1;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background-color: #f8fafc;
+  color: var(--ink);
+  font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", sans-serif;
+  padding-bottom: 90px;
+}
+.header-bar {
+  background: linear-gradient(135deg, var(--novartis-navy) 0%, var(--novartis-blue) 100%);
+  color: white;
+  padding: 14px 20px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+.brand-badge {
+  background-color: var(--novartis-orange);
+  color: white;
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+.gold-badge {
+  background-color: var(--novartis-gold);
+  color: #1e293b;
+  font-size: 0.78rem;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 800;
+}
+
+/* 🚀 核心控制發射台卡片 */
+.launchpad-card {
+  background: linear-gradient(180deg, #ffffff 0%, #fffdf5 100%);
+  border: 2px solid #f59e0b;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.12);
+  padding: 22px;
+  margin-top: 20px;
+  margin-bottom: 25px;
+}
+.launchpad-header {
+  border-bottom: 2px solid #fed7aa;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* 資料表卡片 */
+.table-card {
+  background: #ffffff;
+  border: 1px solid var(--edge);
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+  padding: 20px;
+  margin-bottom: 25px;
+}
+
+/* 複製小按鈕樣式 */
+.btn-copy-mini {
+  padding: 2px 7px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 5px;
+  transition: all 0.15s ease-in-out;
+  cursor: pointer !important;
+}
+.btn-copy-mini:hover {
+  transform: translateY(-1px);
+}
+
+.copy-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+/* 指引步驟卡片 */
+.guide-box {
+  background: #f0f9ff;
+  border-left: 4px solid var(--novartis-sky);
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  margin-bottom: 20px;
+  font-size: 0.88rem;
+}
+</style>
+</head>
+<body>
+
+<!-- 頂部導覽列 -->
+<header class="header-bar">
+  <div class="container d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <img src="assets/novartis_logo.png" alt="Novartis" style="height: 28px; background: white; padding: 3px 8px; border-radius: 4px;">
+      <span class="gold-badge">Concur 報帳專用</span>
+      <h5 class="mb-0 fw-bold d-none d-sm-inline">SAP Concur 報帳一鍵加速器</h5>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <a href="rtd.html" class="btn btn-outline-light btn-sm fw-bold">
+        <i class="fa-solid fa-arrow-left me-1"></i>返回 11/24 RTD 報名系統
+      </a>
+      <a href="besure.html" class="btn btn-warning text-dark btn-sm fw-bold">
+        <i class="fa-solid fa-file-signature me-1"></i>BeSure II 智慧助理
+      </a>
+    </div>
+  </div>
+</header>
+
+<div class="container my-3" style="max-width: 1100px;">
+
+  <!-- 🚀 Concur 核心發射台 🚀 -->
+  <div class="launchpad-card">
+    <div class="launchpad-header">
+      <div>
+        <h4 class="mb-1 text-dark fw-black d-flex align-items-center gap-2">
+          <i class="fa-solid fa-receipt text-warning fs-3"></i>
+          <span>SAP Concur 與會人員 (Attendees) 快速填表發射台</span>
+        </h4>
+        <div class="text-secondary small">
+          專為台灣諾華 Oncology 團隊報帳核銷設計 · 自動拆分姓名、中英城市轉換、比對 4,387 位 HCP 資料庫
+        </div>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <button type="button" class="btn btn-success fw-bold shadow-sm" onclick="handleCopyTsv(this)">
+          <i class="fa-solid fa-file-excel me-1"></i>一鍵複製 Concur TSV (直貼 Excel)
+        </button>
+        <button type="button" class="btn btn-outline-dark fw-bold shadow-sm" onclick="handleCopySummary(this)">
+          <i class="fa-solid fa-copy me-1"></i>複製 LINE/備忘錄清單
+        </button>
+        <button type="button" class="btn btn-primary fw-bold shadow-sm" onclick="handleSendEmail()">
+          <i class="fa-solid fa-envelope me-1"></i>寄至 Sandy 公務信箱
+        </button>
+      </div>
+    </div>
+
+    <!-- 活動基本資訊橫幅 -->
+    <div class="row g-2 p-3 bg-white rounded-3 border mb-3 small align-items-center">
+      <div class="col-md-5 col-12">
+        <strong>活動名稱：</strong><span id="dispEventTitle" class="fw-bold text-primary">三總乳癌討論會 - From Shared Decision to Long-Term Confidence</span>
+      </div>
+      <div class="col-md-3 col-6">
+        <strong>日期時間：</strong><span id="dispEventDateTime">2026/11/24 (二) 18:30-20:30</span>
+      </div>
+      <div class="col-md-4 col-6 text-md-end">
+        <span class="badge bg-primary fs-6 px-3 py-2">
+          與會總人數：<span id="statTotalCount">17</span> 位
+        </span>
+      </div>
+    </div>
+
+    <!-- 填表使用秘訣提示 -->
+    <div class="guide-box">
+      <strong>💡 Concur 填表秘訣：</strong>在 SAP Concur 報銷頁面新增與會者（Add Attendee）時，
+      直接在下方名冊點擊每位醫師的 <span class="badge bg-secondary">複製</span> 按鈕，
+      即可秒貼 <strong>Last Name (姓)</strong>、<strong>First Name (名)</strong>、<strong>Company (醫院)</strong>、<strong>City (英文城市)</strong>！
+      若需一次整批匯入或存底，點擊右上角「<strong>一鍵複製 Concur TSV</strong>」貼入 Excel 試算表即可！
+    </div>
+
+    <!-- 搜尋與篩選列 -->
+    <div class="row g-2 align-items-center mb-3">
+      <div class="col-md-6 col-12">
+        <div class="input-group">
+          <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+          <input type="text" id="searchInput" class="form-control border-start-0" placeholder="搜尋醫師姓名、醫院機構、科別或 Pool No..." oninput="handleSearch(this.value)">
+        </div>
+      </div>
+      <div class="col-md-6 col-12 text-md-end text-muted small">
+        <span id="filterResultLabel">顯示全部 17 位與會名冊</span>
+        <button type="button" class="btn btn-sm btn-link text-primary p-0 ms-2" onclick="refreshList()">
+          <i class="fa-solid fa-arrows-rotate me-1"></i>重新同步最新名冊
+        </button>
+      </div>
+    </div>
+
+    <!-- 🌟 Concur 報帳專用資料對照表格 🌟 -->
+    <div class="table-responsive small bg-white border rounded-3 shadow-sm">
+      <table class="table table-hover table-bordered align-middle mb-0">
+        <thead class="table-light text-center">
+          <tr>
+            <th style="width: 45px;">No.</th>
+            <th style="width: 140px;">Attendee Type</th>
+            <th style="width: 120px;">Last Name (姓)</th>
+            <th style="width: 120px;">First Name (名)</th>
+            <th>Company (服務機構)</th>
+            <th style="width: 135px;">City (Concur英文)</th>
+            <th>科別 / 職稱</th>
+            <th style="width: 140px;">Novartis HCP ID</th>
+            <th style="width: 75px;" class="text-center">整列</th>
+          </tr>
+        </thead>
+        <tbody id="concurTableBody">
+          <!-- 動態載入 -->
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- 底部快速發射固定列 -->
+<nav class="navbar fixed-bottom bg-white border-top shadow-lg py-2">
+  <div class="container d-flex justify-content-between align-items-center flex-wrap gap-2" style="max-width: 1100px;">
+    <div class="d-flex align-items-center gap-2 small">
+      <span class="badge bg-warning text-dark fw-bold">Concur Launchpad</span>
+      <span class="text-muted d-none d-md-inline">台灣諾華專用 · 已準備好 17 位與會者 Concur 報帳資料</span>
+    </div>
+    <div class="d-flex gap-2">
+      <button type="button" class="btn btn-success btn-sm fw-bold shadow-sm" onclick="handleCopyTsv(this)">
+        <i class="fa-solid fa-file-excel me-1"></i>複製 Excel 格式
+      </button>
+      <button type="button" class="btn btn-outline-primary btn-sm fw-bold shadow-sm" onclick="handleSendEmail()">
+        <i class="fa-solid fa-envelope me-1"></i>寄至公務信箱
+      </button>
+      <a href="1124_TSGH_SignIn_Sheet_3pages.pdf" class="btn btn-danger btn-sm fw-bold shadow-sm" target="_blank">
+        <i class="fa-solid fa-file-pdf me-1"></i>下載 3 頁簽到表 PDF
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- 引用諾華 4,387 位官方 HCP 資料庫與 Concur 引擎 -->
+<script src="speaker_db.js"></script>
+<script src="concur_helper.js"></script>
+
+<script>
+// 預設 11/24 三總乳癌研討會 17 位名單基底
+const DEFAULT_ATTENDEES_1124 = [
+  { id: 1, name: '廖國秀', city: '台北市', hospital: '三軍總醫院', dept: '乳房外科', title: '醫師' },
+  { id: 2, name: '洪志杰', city: '台北市', hospital: '三軍總醫院', dept: '一般外科', title: '醫師' },
+  { id: 3, name: '汪沂潔', city: '台北市', hospital: '三軍總醫院', dept: '一般外科', title: '醫師' },
+  { id: 4, name: '徐國峯', city: '台北市', hospital: '三軍總醫院', dept: '乳房外科', title: '醫師' },
+  { id: 5, name: '方楷賀', city: '台北市', hospital: '三軍總醫院', dept: '一般外科', title: '醫師' },
+  { id: 6, name: '潘欣梅', city: '台北市', hospital: '三軍總醫院', dept: '一般外科', title: '醫師' },
+  { id: 7, name: '周邦彥', city: '台北市', hospital: '三軍總醫院', dept: '一般外科', title: '醫師' },
+  { id: 8, name: '朱雅萱', city: '台北市', hospital: '三軍總醫院', dept: '乳房外科', title: '護理師' },
+  { id: 9, name: '陳佳沂', city: '台北市', hospital: '三軍總醫院', dept: '一般外科', title: '醫師' },
+  { id: 10, name: '陳欣怡', city: '台北市', hospital: '三軍總醫院', dept: '一般外科', title: '護理師' },
+  { id: 11, name: '吳文堯', city: '台北市', hospital: '三軍總醫院', dept: '乳房外科', title: '護理師' },
+  { id: 12, name: '余泓均', city: '台北市', hospital: '三軍總醫院', dept: '一般外科', title: '醫師' },
+  { id: 13, name: '張聿凱', city: '台北市', hospital: '三軍總醫院', dept: '一般外科', title: '醫師' },
+  { id: 14, name: '邱雅勤', city: '台北市', hospital: '三軍總醫院', dept: '一般外科', title: '醫師' },
+  { id: 15, name: '張濬麒', city: '台北市', hospital: '三軍總醫院', dept: '一般外科', title: '醫師' },
+  { id: 16, name: '張書維', city: '台北市', hospital: '三軍總醫院', dept: '一般外科', title: '醫師' },
+  { id: 17, name: 'Sandy Huang', city: '台北市', hospital: '台灣諾華股份有限公司', dept: '腫瘤醫學部', title: '台灣諾華' }
+];
+
+let rawAttendees = [];
+let processedConcurList = [];
+let currentEventTitle = "三總乳癌討論會 - From Shared Decision to Long-Term Confidence";
+
+// 初始化
+document.addEventListener('DOMContentLoaded', () => {
+  loadEventData();
+  renderConcurList();
+});
+
+// 載入當前場次名單 (支援 localStorage 與通用版 eventsDb)
+function loadEventData() {
+  try {
+    // 1. 優先嘗試讀取專屬 print event
+    const printEventRaw = localStorage.getItem('current_print_event');
+    if (printEventRaw) {
+      const parsed = JSON.parse(printEventRaw);
+      if (parsed && Array.isArray(parsed.attendees) && parsed.attendees.length > 0) {
+        rawAttendees = parsed.attendees;
+        if (parsed.eventInfo && parsed.eventInfo.title) {
+          currentEventTitle = parsed.eventInfo.title;
+        }
+        applyEventHeader(parsed.eventInfo);
+        return;
+      }
+    }
+
+    // 2. 嘗試讀取 rtd.html 本地儲存
+    const rtdRaw = localStorage.getItem('novartis_rtd_attendees_20261124');
+    if (rtdRaw) {
+      const parsed = JSON.parse(rtdRaw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        rawAttendees = parsed;
+        return;
+      }
+    }
+  } catch (e) {
+    console.log("讀取本地儲存例外，使用預設 1124 名單:", e);
+  }
+
+  // 3. 預設使用 11/24 真實 17 位名冊
+  rawAttendees = DEFAULT_ATTENDEES_1124;
+}
+
+function applyEventHeader(info) {
+  if (!info) return;
+  if (info.title) document.getElementById('dispEventTitle').textContent = info.title;
+  if (info.date || info.time) {
+    document.getElementById('dispEventDateTime').textContent = `${info.date || ''} ${info.time || ''}`;
+  }
+}
+
+// 渲染 Concur 名冊表格
+function renderConcurList(filterKeyword = '') {
+  processedConcurList = processAttendeesForConcur(rawAttendees);
+  const tbody = document.getElementById('concurTableBody');
+  document.getElementById('statTotalCount').textContent = processedConcurList.length;
+
+  const kw = (filterKeyword || '').trim().toLowerCase();
+  const displayList = kw 
+    ? processedConcurList.filter(item => 
+        item.rawName.toLowerCase().includes(kw) ||
+        item.hospital.toLowerCase().includes(kw) ||
+        item.dept.toLowerCase().includes(kw) ||
+        item.cityEn.toLowerCase().includes(kw) ||
+        (item.hcpPoolNo && item.hcpPoolNo.toLowerCase().includes(kw))
+      )
+    : processedConcurList;
+
+  document.getElementById('filterResultLabel').textContent = kw 
+    ? `搜尋「${filterKeyword}」找到 ${displayList.length} 位與會者`
+    : `顯示全部 ${displayList.length} 位與會名冊`;
+
+  if (displayList.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-4">無符合搜尋條件之人員</td></tr>';
+    return;
+  }
+
+  let html = '';
+  displayList.forEach(item => {
+    const isNovartis = item.attendeeType.includes('Novartis');
+    const badgeType = isNovartis 
+      ? '<span class="badge bg-secondary">Internal (Novartis)</span>'
+      : '<span class="badge bg-primary">HCP</span>';
+
+    const hcpBadge = item.hcpPoolNo 
+      ? `<div class="d-flex align-items-center justify-content-between gap-1">
+          <span class="badge bg-success-subtle text-success border border-success fw-bold">${item.hcpPoolNo}</span>
+          <button type="button" class="btn btn-sm btn-outline-secondary btn-copy-mini" onclick="copyFieldVal('${item.hcpPoolNo}', this, 'PoolNo')">
+            <i class="fa-regular fa-copy"></i>
+          </button>
+        </div>`
+      : '<span class="text-muted small">-</span>';
+
+    const rowTsv = `${item.attendeeType}\t${item.lastName}\t${item.firstName}\t${item.hospital}\t${item.cityEn}\t${item.dept} ${item.title}\t${item.hcpPoolNo || '-'}`;
+
+    html += `
+      <tr>
+        <td class="text-center fw-bold text-muted">${item.index}</td>
+        <td class="text-center">${badgeType}</td>
+        <td>
+          <div class="d-flex align-items-center justify-content-between gap-1">
+            <span class="fw-bold text-primary fs-6">${item.lastName}</span>
+            <button type="button" class="btn btn-outline-secondary btn-copy-mini" onclick="copyFieldVal('${item.lastName}', this, '姓')" title="複製姓氏">
+              <i class="fa-regular fa-copy"></i>
+            </button>
+          </div>
+        </td>
+        <td>
+          <div class="d-flex align-items-center justify-content-between gap-1">
+            <span class="fw-bold text-dark fs-6">${item.firstName}</span>
+            <button type="button" class="btn btn-outline-secondary btn-copy-mini" onclick="copyFieldVal('${item.firstName}', this, '名')" title="複製名字">
+              <i class="fa-regular fa-copy"></i>
+            </button>
+          </div>
+        </td>
+        <td>
+          <div class="d-flex align-items-center justify-content-between gap-1">
+            <span>${item.hospital}</span>
+            <button type="button" class="btn btn-outline-secondary btn-copy-mini" onclick="copyFieldVal('${item.hospital}', this, '機構')" title="複製機構">
+              <i class="fa-regular fa-copy"></i>
+            </button>
+          </div>
+        </td>
+        <td>
+          <div class="d-flex align-items-center justify-content-between gap-1">
+            <span class="badge bg-info-subtle text-info-emphasis border border-info fw-bold">${item.cityEn}</span>
+            <button type="button" class="btn btn-outline-secondary btn-copy-mini" onclick="copyFieldVal('${item.cityEn}', this, '城市')" title="複製英文城市代碼">
+              <i class="fa-regular fa-copy"></i>
+            </button>
+          </div>
+        </td>
+        <td class="small text-muted">${item.dept} ${item.title}</td>
+        <td>${hcpBadge}</td>
+        <td class="text-center">
+          <button type="button" class="btn btn-sm btn-outline-dark btn-copy-mini" onclick="copyFieldVal('${encodeURIComponent(rowTsv)}', this, '整列', true)" title="複製整列 TSV 格式">
+            <i class="fa-solid fa-table-cells"></i>
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+}
+
+// 支援單列 TSV 解碼複製
+function copyRowVal(encStr, btnEl) {
+  const text = decodeURIComponent(encStr);
+  copyFieldVal(text, btnEl, '整列');
+}
+
+// 搜尋過濾
+function handleSearch(val) {
+  renderConcurList(val);
+}
+
+// 重新同步最新名冊
+function refreshList() {
+  loadEventData();
+  renderConcurList();
+  alert('已重新同步最新出席名冊！');
+}
+
+// 頂部全域動作
+function handleCopyTsv(btn) {
+  copyAllConcurTsv(processedConcurList, btn);
+}
+
+function handleCopySummary(btn) {
+  copyAllConcurTextSummary(currentEventTitle, processedConcurList, btn);
+}
+
+function handleSendEmail() {
+  const launchpadUrl = "https://sandyhuang0225-boop.github.io/sandy-Line-bot/concur.html";
+  
+  const subject = encodeURIComponent(`【Concur 報帳專用名冊】${currentEventTitle} (共 ${processedConcurList.length} 位)`);
+  
+  let bodyText = `Sandy 姐您好，\n\n`;
+  bodyText += `👉 點此開啟【Concur 報帳一鍵加速器】(網頁版一鍵秒複製各欄位)：\n`;
+  bodyText += `${launchpadUrl}\n\n`;
+  bodyText += `=========================================================\n`;
+  bodyText += `在電腦瀏覽器中打開上方連結，即可在網頁上一鍵點擊複製每一位醫師的【姓、名、機構、英文城市、Pool No】貼入 SAP Concur 系統！\n`;
+  bodyText += `=========================================================\n\n`;
+  bodyText += `【會議基本資訊】\n`;
+  bodyText += `活動名稱：${currentEventTitle}\n`;
+  bodyText += `出席總人數：共 ${processedConcurList.length} 位\n\n`;
+  bodyText += `【出席人員 Concur 欄位對照總表】\n`;
+
+  processedConcurList.forEach(item => {
+    bodyText += `[No.${item.index}] ${item.rawName} (${item.attendeeType})\n`;
+    bodyText += `  • Last Name (姓): ${item.lastName}\n`;
+    bodyText += `  • First Name (名): ${item.firstName}\n`;
+    bodyText += `  • Company (醫院): ${item.hospital}\n`;
+    bodyText += `  • City (英文城市): ${item.cityEn}\n`;
+    bodyText += `  • 職稱/科別: ${item.dept} ${item.title}\n`;
+    if (item.hcpPoolNo) bodyText += `  • Speaker Pool No: ${item.hcpPoolNo}\n`;
+    if (item.oncoreId) bodyText += `  • Oncore ID: ${item.oncoreId}\n`;
+    bodyText += `\n`;
+  });
+
+  bodyText += `\n此信件由台灣諾華 RTD 智慧報名與報帳加速系統自動生成。`;
+
+  const mailtoUrl = `mailto:sandy.huang@novartis.com?subject=${subject}&body=${encodeURIComponent(bodyText)}`;
+  window.open(mailtoUrl, '_blank');
+}
+</script>
+
+</body>
+</html>
