@@ -2199,24 +2199,9 @@ def api_rtd_register():
             except Exception as append_err:
                 print(f"⚠️ 寫入工作表失敗: {append_err}")
 
-        # LINE 即時推播通知 Sandy
-        try:
-            line_msg = (
-                f"🎉 【三總 RTD 新醫師報名】\n"
-                f"━━━━━━━━━━━━━━━\n"
-                f"👤 醫師姓名：{name} ({title})\n"
-                f"🏥 服務機構：{hospital}\n"
-                f"🩺 科別單位：{dept}\n"
-                f"🥩 精選主餐：{main_dish}\n"
-                f"🍷 佐餐飲品：{drink}\n"
-                f"{('⚠️ 飲食備註：' + diet_notes + chr(10)) if diet_notes else ''}"
-                f"⏰ 登記時間：{now_str}\n"
-                f"━━━━━━━━━━━━━━━\n"
-                f"📊 Google 試算表第 {next_no} 位已成功登錄！"
-            )
-            line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(text=line_msg))
-        except Exception as err:
-            print(f"⚠️ LINE 通知推送失敗: {err}")
+        # 依 Sandy 指示停用：避免租賃管家與公司 RTD 業務混淆，報名名冊由線上系統與 Google 試算表直接查看
+        # 不再發送 LINE 推播小卡至 Sandy 的宅安心管理
+        pass
 
         resp = jsonify({'status': 'ok', 'message': '報名成功且已同步 Google 試算表！', 'id': next_no})
         resp.headers['Access-Control-Allow-Origin'] = '*'
@@ -2610,24 +2595,9 @@ def api_meeting_register():
                 except Exception as e_ded:
                     print(f"寫入專屬分頁失敗 ({dedicated_tab_name}):", e_ded)
 
-        # LINE 推播通知 Sandy
-        try:
-            line_msg = (
-                f"🎉 【{event_title} 新醫師報名】\n"
-                f"━━━━━━━━━━━━━━━\n"
-                f"👤 醫師姓名：{name} ({title})\n"
-                f"🏥 服務機構：{hospital}\n"
-                f"🩺 科別單位：{dept}\n"
-                f"🍽️ 用餐選擇：{meal_choice}\n"
-                f"{('🍷 佐餐飲品：' + drink + chr(10)) if drink else ''}"
-                f"{('⚠️ 飲食備註：' + diet_notes + chr(10)) if diet_notes else ''}"
-                f"⏰ 登記時間：{now_str}\n"
-                f"━━━━━━━━━━━━━━━\n"
-                f"📊 專屬分頁【{dedicated_tab_name}】已同步存入！"
-            )
-            line_bot_api.push_message(MY_LINE_USER_ID, TextSendMessage(text=line_msg))
-        except Exception as err:
-            print(f"⚠️ LINE 通知推送失敗: {err}")
+        # 依 Sandy 指示停用：避免租賃管家與公司 RTD 業務混淆，報名名冊由線上系統與 Google 試算表直接查看
+        # 不再發送 LINE 推播小卡至 Sandy 的宅安心管理
+        pass
 
         resp = jsonify({'status': 'ok', 'message': '報名成功且已同步 Google 試算表！', 'id': next_no})
         resp.headers['Access-Control-Allow-Origin'] = '*'
