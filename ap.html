@@ -1,0 +1,771 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AP for SAP 活動提案與預算小助手 (Novartis Activity Proposal)</title>
+
+<!-- Bootstrap 5 & FontAwesome -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+<!-- SheetJS (xlsx.full.min.js) 純前端極速生成原生 Excel 檔 -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<style>
+:root {
+  --novartis-navy: #042742;
+  --novartis-blue: #0b497a;
+  --novartis-sky: #0284c7;
+  --novartis-orange: #eb6a0a;
+  --novartis-gold: #f59e0b;
+  --novartis-green: #10b981;
+  --ink: #0f172a;
+  --muted: #475569;
+  --edge: #cbd5e1;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background-color: #f1f5f9;
+  color: var(--ink);
+  font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft JhengHei", sans-serif;
+  padding-bottom: 90px;
+}
+.header-bar {
+  background: linear-gradient(135deg, var(--novartis-navy) 0%, var(--novartis-blue) 100%);
+  color: white;
+  padding: 14px 20px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+.brand-badge {
+  background-color: var(--novartis-orange);
+  color: white;
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+.gold-badge {
+  background-color: var(--novartis-gold);
+  color: #1e293b;
+  font-size: 0.78rem;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 800;
+}
+
+/* 核心卡片 */
+.hero-card {
+  background: #ffffff;
+  border: 1px solid var(--edge);
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+  padding: 24px;
+  margin-top: 20px;
+  margin-bottom: 25px;
+}
+
+/* 模式選擇 Tab */
+.mode-switch-btn {
+  padding: 12px 18px;
+  font-weight: 700;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+}
+.mode-switch-btn.active {
+  background: #0284c7 !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+}
+
+/* 即時合規儀表板 */
+.compliance-panel {
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 24px;
+  transition: all 0.3s;
+}
+.compliance-panel.pass {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 2px solid #22c55e;
+}
+.compliance-panel.warning {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border: 2px solid #ef4444;
+}
+
+/* 自動補全下拉 */
+.autocomplete-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1.5px solid #0284c7;
+  border-radius: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 1050;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
+.autocomplete-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f5f9;
+}
+.autocomplete-item:hover {
+  background: #e0f2fe;
+}
+</style>
+</head>
+<body>
+
+<!-- 頂部導覽列 -->
+<header class="header-bar">
+  <div class="container d-flex align-items-center justify-content-between flex-wrap gap-2" style="max-width: 1000px;">
+    <div class="d-flex align-items-center gap-2">
+      <img src="assets/novartis_logo.png" alt="Novartis" style="height: 28px; background: white; padding: 3px 8px; border-radius: 4px;">
+      <span class="gold-badge">AP for SAP 專用</span>
+      <h5 class="mb-0 fw-bold d-none d-sm-inline">活動提案與預算小助手</h5>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <a href="besure.html" class="btn btn-outline-light btn-sm fw-bold">
+        <i class="fa-solid fa-file-signature me-1"></i>BeSure II 助理
+      </a>
+      <a href="rtd.html" class="btn btn-warning text-dark btn-sm fw-bold">
+        <i class="fa-solid fa-list-check me-1"></i>RTD 報名簽到
+      </a>
+      <a href="concur.html" class="btn btn-outline-light btn-sm fw-bold">
+        <i class="fa-solid fa-receipt me-1"></i>Concur 加速器
+      </a>
+    </div>
+  </div>
+</header>
+
+<div class="container my-3" style="max-width: 1000px;">
+
+  <!-- 模式切換器 -->
+  <div class="d-flex gap-2 p-1 bg-white border rounded-3 shadow-sm mb-3">
+    <button type="button" class="btn mode-switch-btn flex-fill active" id="btnModeRtd" onclick="switchMode('RTD')">
+      <i class="fa-solid fa-users-rectangle me-1"></i>模式一：RTD (醫學研討會)
+    </button>
+    <button type="button" class="btn mode-switch-btn flex-fill text-dark" id="btnModeMeal" onclick="switchMode('MEAL')">
+      <i class="fa-solid fa-utensils me-1"></i>模式二：Meal with Doctor (醫師餐敘)
+    </button>
+  </div>
+
+  <!-- 🌟 即時合規餐標防呆儀表板 🌟 -->
+  <div class="compliance-panel pass" id="compliancePanel">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+      <div>
+        <span class="badge bg-success px-3 py-2 fs-6 fw-bold" id="badgeCompliance">
+          <i class="fa-solid fa-circle-check me-1"></i>符合公司餐標 (PASSED)
+        </span>
+        <span class="ms-2 fw-bold text-dark" id="txtComplianceDetails">
+          平均每人餐費 NT$ 1,294 (餐標上限 NT$ 1,500 / 人)
+        </span>
+      </div>
+      <div class="text-end">
+        <span class="text-muted small d-block">活動總預算 (Total Budget)</span>
+        <span class="fs-4 fw-black text-primary" id="dispTotalBudget">NT$ 27,000</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 核心輸入表單卡片 -->
+  <div class="hero-card">
+    
+    <!-- 頂端操作列：快速帶入範本 -->
+    <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom flex-wrap gap-2">
+      <h5 class="fw-bold mb-0 text-dark" id="formHeaderTitle">
+        <i class="fa-solid fa-file-invoice-dollar text-primary me-2"></i>RTD 研討會預算與提案表 (AP for SAP)
+      </h5>
+      <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-primary btn-sm fw-bold" onclick="presetSampleData()">
+          <i class="fa-solid fa-wand-magic-sparkles me-1"></i>一鍵帶入範本資料
+        </button>
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearForm()">
+          <i class="fa-solid fa-trash-can me-1"></i>清空表單
+        </button>
+      </div>
+    </div>
+
+    <form id="apForm" onsubmit="event.preventDefault();">
+      
+      <!-- 第一區塊：活動基本資訊 -->
+      <h6 class="fw-bold text-secondary mb-3"><i class="fa-regular fa-calendar-days me-1"></i>一、活動基本資訊</h6>
+      <div class="row g-3 mb-4">
+        <div class="col-md-8 col-12">
+          <label class="form-label fw-bold small">活動名稱 / 研討主題 <span class="text-danger">*</span></label>
+          <input type="text" id="evTitle" class="form-control" placeholder="例：三總乳癌討論會 - From Shared Decision to Long-Term Confidence" oninput="calculateBudget()">
+        </div>
+        <div class="col-md-4 col-12">
+          <label class="form-label fw-bold small">主要產品 / 專案</label>
+          <input type="text" id="evProduct" class="form-control" value="Kisqali (潔愛麗)" oninput="calculateBudget()">
+        </div>
+        <div class="col-md-4 col-6">
+          <label class="form-label fw-bold small">活動日期 <span class="text-danger">*</span></label>
+          <input type="date" id="evDate" class="form-control" onchange="calculateBudget()">
+        </div>
+        <div class="col-md-4 col-6">
+          <label class="form-label fw-bold small">活動時間</label>
+          <input type="text" id="evTime" class="form-control" value="18:30 - 20:30" oninput="calculateBudget()">
+        </div>
+        <div class="col-md-4 col-12">
+          <label class="form-label fw-bold small">目標醫院與科別</label>
+          <input type="text" id="evTarget" class="form-control" placeholder="例：三軍總醫院 乳房外科" oninput="calculateBudget()">
+        </div>
+        <div class="col-12">
+          <label class="form-label fw-bold small">地點 / 餐廳名稱及地址 <span class="text-danger">*</span></label>
+          <input type="text" id="evVenue" class="form-control" placeholder="例：Wilson Park 威爾森公園餐廳（台北市內湖區民權東路六段125之1號）" oninput="calculateBudget()">
+        </div>
+      </div>
+
+      <!-- 第二區塊：預算與費用明細 (三大項次) -->
+      <h6 class="fw-bold text-secondary mb-3"><i class="fa-solid fa-coins me-1"></i>二、費用明細與餐標檢核</h6>
+      
+      <!-- 項次 1：餐費與人數 -->
+      <div class="p-3 bg-light rounded-3 border mb-3">
+        <div class="row g-3 align-items-center">
+          <div class="col-md-4 col-12">
+            <label class="form-label fw-bold small text-primary">
+              <i class="fa-solid fa-utensils me-1"></i>1. RTD 餐費總額 (NT$) <span class="text-danger">*</span>
+            </label>
+            <input type="number" id="feeMeal" class="form-control fw-bold fs-5 text-primary" placeholder="0" oninput="calculateBudget()">
+          </div>
+          <div class="col-md-3 col-6">
+            <label class="form-label fw-bold small">預估醫師/HCP人數 <span class="text-danger">*</span></label>
+            <input type="number" id="countHcp" class="form-control fw-bold" min="1" max="100" oninput="calculateBudget()">
+            <div id="hcpLimitHint" class="text-muted small" style="font-size: 0.75rem;"></div>
+          </div>
+          <div class="col-md-3 col-6">
+            <label class="form-label fw-bold small">諾華代表出席人數 <span class="text-danger">*</span></label>
+            <input type="number" id="countRep" class="form-control fw-bold" min="1" max="10" oninput="calculateBudget()">
+            <div id="repLimitHint" class="text-muted small" style="font-size: 0.75rem;"></div>
+          </div>
+          <div class="col-md-2 col-12 text-md-end">
+            <span class="text-muted small d-block">平均每人餐費</span>
+            <span class="fw-black fs-5 text-dark" id="dispAvgMeal">NT$ 0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 項次 2：講師費用 (僅 RTD 模式顯示) -->
+      <div class="p-3 bg-light rounded-3 border mb-3" id="speakerSection">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <label class="form-label fw-bold small text-primary mb-0">
+            <i class="fa-solid fa-microphone me-1"></i>2. 講師費用 (Speaker Fee)
+          </label>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="chkHasSpeaker" checked onchange="toggleSpeakerInputs(this.checked)">
+            <label class="form-check-label small fw-bold" for="chkHasSpeaker">有安排講師</label>
+          </div>
+        </div>
+
+        <div id="speakerInputsContainer">
+          <div class="row g-3">
+            <div class="col-md-4 col-12 position-relative">
+              <label class="form-label fw-bold small">講師姓名 (輸入自動檢索4,387位名冊)</label>
+              <input type="text" id="spkName" class="form-control" placeholder="輸入姓名，如：廖國秀" autocomplete="off" oninput="handleSpeakerAutocomplete(this.value)">
+              <div id="speakerAutoList" class="autocomplete-list d-none"></div>
+            </div>
+            <div class="col-md-4 col-6">
+              <label class="form-label fw-bold small">Speaker Pool Number</label>
+              <input type="text" id="spkPoolNo" class="form-control bg-white fw-bold text-success" placeholder="如 ND03306" oninput="calculateBudget()">
+            </div>
+            <div class="col-md-4 col-6">
+              <label class="form-label fw-bold small">服務機構與科別</label>
+              <input type="text" id="spkHospital" class="form-control" placeholder="如 三軍總醫院 乳房外科" oninput="calculateBudget()">
+            </div>
+            <div class="col-md-4 col-6">
+              <label class="form-label fw-bold small">演講時數 (Service Time)</label>
+              <input type="text" id="spkHours" class="form-control" value="01h 00m (固定 1 小時)" readonly>
+            </div>
+            <div class="col-md-4 col-6">
+              <label class="form-label fw-bold small">講師費金額 (NT$)</label>
+              <input type="number" id="feeSpeaker" class="form-control fw-bold text-success fs-5" value="5000" oninput="calculateBudget()">
+            </div>
+            <div class="col-md-4 col-12">
+              <label class="form-label fw-bold small">講題內容</label>
+              <input type="text" id="spkTopic" class="form-control" placeholder="例：KISQALI Does it Again: A Moment for OS" oninput="calculateBudget()">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 項次 3：交通費 (僅 RTD 模式顯示) -->
+      <div class="p-3 bg-light rounded-3 border mb-4" id="transportSection">
+        <div class="row g-3 align-items-center">
+          <div class="col-md-4 col-12">
+            <label class="form-label fw-bold small text-primary">
+              <i class="fa-solid fa-train-subway me-1"></i>3. 交通費 / 車資 (Transportation Fee)
+            </label>
+            <input type="number" id="feeTransport" class="form-control fw-bold text-secondary fs-5" value="0" placeholder="0" oninput="calculateBudget()">
+          </div>
+          <div class="col-md-8 col-12">
+            <label class="form-label fw-bold small">交通備註說明 (如：高鐵北高來回、計程車核銷)</label>
+            <input type="text" id="transportNotes" class="form-control" placeholder="無交通費可留空" oninput="calculateBudget()">
+          </div>
+        </div>
+      </div>
+
+      <!-- 申請人資訊 -->
+      <div class="row g-2 pt-2 border-top small text-muted align-items-center">
+        <div class="col-md-6 col-12">
+          <strong>申請人：</strong><span>Sandy Huang (黃蕙芬) / Senior KAM, Oncology</span>
+        </div>
+        <div class="col-md-6 col-12 text-md-end">
+          <strong>餐標上限規定：</strong><span>每人 NT$ 1,500 (超標系統將自動警示)</span>
+        </div>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- 🌟 底部功能發射台：生成 Excel 與 Email 🌟 -->
+  <div class="card border-0 shadow-lg p-3 rounded-4 bg-white">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+      <div>
+        <h6 class="fw-black mb-1 text-dark">
+          <i class="fa-solid fa-paper-plane text-primary me-2"></i>一鍵產出與簽呈發送
+        </h6>
+        <span class="text-secondary small">手機直接下載 Excel (.xlsx)，或一鍵喚起 Outlook 呈報老闆與助理</span>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <button type="button" class="btn btn-success fw-bold px-3 py-2 shadow-sm" onclick="exportApExcel(this)">
+          <i class="fa-solid fa-file-excel me-1"></i>一鍵生成 AP for SAP Excel (.xlsx)
+        </button>
+        <button type="button" class="btn btn-primary fw-bold px-3 py-2 shadow-sm" onclick="sendApEmail()">
+          <i class="fa-solid fa-envelope me-1"></i>Email 呈報老闆與助理
+        </button>
+        <button type="button" class="btn btn-outline-dark fw-bold px-3 py-2 shadow-sm" onclick="copyApSummaryText(this)">
+          <i class="fa-solid fa-copy me-1"></i>複製 LINE 呈報文字
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- 引用 4,387 位官方 HCP 資料庫 -->
+<script src="speaker_db.js"></script>
+
+<script>
+let currentMode = 'RTD'; // 'RTD' or 'MEAL'
+const MEAL_CAP = 1500; // 每人餐標上限 NT$ 1,500
+
+document.addEventListener('DOMContentLoaded', () => {
+  // 預設日期為明天
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  document.getElementById('evDate').value = tomorrow.toISOString().slice(0, 10);
+  
+  presetSampleData();
+});
+
+// 切換模式：RTD vs Meal with Doctor
+function switchMode(mode) {
+  currentMode = mode;
+  const btnRtd = document.getElementById('btnModeRtd');
+  const btnMeal = document.getElementById('btnModeMeal');
+  const spkSec = document.getElementById('speakerSection');
+  const trSec = document.getElementById('transportSection');
+  const formTitle = document.getElementById('formHeaderTitle');
+  const hcpHint = document.getElementById('hcpLimitHint');
+  const repHint = document.getElementById('repLimitHint');
+
+  if (mode === 'RTD') {
+    btnRtd.classList.add('active');
+    btnMeal.classList.remove('active');
+    spkSec.style.display = 'block';
+    trSec.style.display = 'block';
+    formTitle.innerHTML = '<i class="fa-solid fa-users-rectangle text-primary me-2"></i>RTD 醫學研討會預算與提案表 (AP for SAP)';
+    hcpHint.textContent = '人數無上限（通常 10 ~ 25 位）';
+    repHint.textContent = '通常 1 ~ 2 位代表出席';
+  } else {
+    btnMeal.classList.add('active');
+    btnRtd.classList.remove('active');
+    spkSec.style.display = 'none';
+    trSec.style.display = 'none';
+    formTitle.innerHTML = '<i class="fa-solid fa-utensils text-primary me-2"></i>Meal with Doctor 醫師餐敘提案表 (AP for SAP)';
+    hcpHint.innerHTML = '<span class="text-danger fw-bold">規定最多 4 位醫師</span>';
+    repHint.innerHTML = '<span class="text-danger fw-bold">規定 1 至 2 位代表</span>';
+    
+    // 防呆調整人數
+    if (parseInt(document.getElementById('countHcp').value) > 4) {
+      document.getElementById('countHcp').value = 4;
+    }
+  }
+  calculateBudget();
+}
+
+// 預設帶入三總 RTD 範本
+function presetSampleData() {
+  if (currentMode === 'RTD') {
+    document.getElementById('evTitle').value = "三總乳癌討論會 - From Shared Decision to Long-Term Confidence";
+    document.getElementById('evProduct').value = "Kisqali (潔愛麗)";
+    document.getElementById('evDate').value = "2026-11-24";
+    document.getElementById('evTime').value = "18:30 - 20:30";
+    document.getElementById('evTarget').value = "三軍總醫院 乳房外科 / 一般外科";
+    document.getElementById('evVenue').value = "Wilson Park 威爾森公園餐廳（台北市內湖區民權東路六段125之1號）";
+    
+    document.getElementById('feeMeal').value = 22000;
+    document.getElementById('countHcp').value = 16;
+    document.getElementById('countRep').value = 1;
+
+    document.getElementById('chkHasSpeaker').checked = true;
+    toggleSpeakerInputs(true);
+    document.getElementById('spkName').value = "廖國秀";
+    document.getElementById('spkPoolNo').value = "ND03306";
+    document.getElementById('spkHospital').value = "三軍總醫院 乳房外科";
+    document.getElementById('feeSpeaker').value = 5000;
+    document.getElementById('spkTopic').value = "KISQALI Does it Again: A Moment for OS in NATALEE";
+
+    document.getElementById('feeTransport').value = 0;
+    document.getElementById('transportNotes').value = "";
+  } else {
+    document.getElementById('evTitle').value = "三總乳癌臨床治療方針餐敘雙向交流";
+    document.getElementById('evProduct').value = "Kisqali (潔愛麗)";
+    document.getElementById('evDate').value = "2026-11-24";
+    document.getElementById('evTime').value = "12:30 - 14:00";
+    document.getElementById('evTarget').value = "三軍總醫院 乳房外科";
+    document.getElementById('evVenue').value = "采采食茶 Cha Cha Thé";
+    
+    document.getElementById('feeMeal').value = 6000;
+    document.getElementById('countHcp').value = 3;
+    document.getElementById('countRep').value = 1;
+  }
+
+  calculateBudget();
+}
+
+function clearForm() {
+  document.getElementById('evTitle').value = '';
+  document.getElementById('feeMeal').value = '';
+  document.getElementById('countHcp').value = '';
+  document.getElementById('countRep').value = 1;
+  document.getElementById('spkName').value = '';
+  document.getElementById('spkPoolNo').value = '';
+  document.getElementById('spkHospital').value = '';
+  document.getElementById('feeTransport').value = 0;
+  calculateBudget();
+}
+
+function toggleSpeakerInputs(show) {
+  document.getElementById('speakerInputsContainer').style.display = show ? 'block' : 'none';
+  if (!show) {
+    document.getElementById('feeSpeaker').value = 0;
+  } else {
+    document.getElementById('feeSpeaker').value = 5000;
+  }
+  calculateBudget();
+}
+
+// 實時計算預算與餐標檢核
+function calculateBudget() {
+  const meal = parseFloat(document.getElementById('feeMeal').value) || 0;
+  let hcp = parseInt(document.getElementById('countHcp').value) || 0;
+  let rep = parseInt(document.getElementById('countRep').value) || 0;
+
+  // Meal with Doctor 模式防呆
+  if (currentMode === 'MEAL') {
+    if (hcp > 4) {
+      alert("⚠️ 提醒您：Meal with Doctor 規定醫師上限最多 4 位！系統已自動為您調為 4 位。若有更多醫師請切換至 RTD 研討會模式。");
+      hcp = 4;
+      document.getElementById('countHcp').value = 4;
+    }
+    if (rep > 2) {
+      alert("⚠️ 提醒您：Meal with Doctor 規定代表上限為 1～2 位！系統已自動為您調為 2 位。");
+      rep = 2;
+      document.getElementById('countRep').value = 2;
+    }
+  }
+
+  const totalHeadcount = hcp + rep;
+  const avgMeal = totalHeadcount > 0 ? Math.round(meal / totalHeadcount) : 0;
+  document.getElementById('dispAvgMeal').textContent = `NT$ ${avgMeal.toLocaleString()}`;
+
+  let spkFee = 0;
+  let trFee = 0;
+
+  if (currentMode === 'RTD') {
+    if (document.getElementById('chkHasSpeaker').checked) {
+      spkFee = parseFloat(document.getElementById('feeSpeaker').value) || 0;
+    }
+    trFee = parseFloat(document.getElementById('feeTransport').value) || 0;
+  }
+
+  const totalBudget = meal + spkFee + trFee;
+  document.getElementById('dispTotalBudget').textContent = `NT$ ${totalBudget.toLocaleString()}`;
+
+  // 餐標合規檢核判定
+  const panel = document.getElementById('compliancePanel');
+  const badge = document.getElementById('badgeCompliance');
+  const txt = document.getElementById('txtComplianceDetails');
+
+  if (totalHeadcount === 0 || meal === 0) {
+    panel.className = 'compliance-panel pass';
+    badge.className = 'badge bg-secondary px-3 py-2 fs-6 fw-bold';
+    badge.innerHTML = '<i class="fa-solid fa-calculator me-1"></i>請輸入人數與餐費';
+    txt.textContent = '待計算每人餐標';
+    return;
+  }
+
+  if (avgMeal <= MEAL_CAP) {
+    panel.className = 'compliance-panel pass';
+    badge.className = 'badge bg-success px-3 py-2 fs-6 fw-bold';
+    badge.innerHTML = '<i class="fa-solid fa-circle-check me-1"></i>符合公司餐標 (PASSED)';
+    const balance = MEAL_CAP - avgMeal;
+    txt.innerHTML = `平均每人餐費 <strong>NT$ ${avgMeal.toLocaleString()}</strong>（餐標上限 NT$ 1,500，尚有餘額 $${balance}/人 ✅）`;
+  } else {
+    panel.className = 'compliance-panel warning';
+    badge.className = 'badge bg-danger px-3 py-2 fs-6 fw-bold';
+    badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i>超出公司餐標 (OVER BUDGET)';
+    const over = avgMeal - MEAL_CAP;
+    txt.innerHTML = `平均每人餐費 <strong>NT$ ${avgMeal.toLocaleString()}</strong>（已超出上限 $${over}/人 ⚠️ 請調降餐費或增補人數）`;
+  }
+}
+
+// 搜尋 4,387 位 HCP 資料庫自動推薦
+function handleSpeakerAutocomplete(kw) {
+  const listEl = document.getElementById('speakerAutoList');
+  const clean = (kw || '').trim();
+  if (clean.length < 2 || typeof window.NOVARTIS_SPEAKER_DATABASE === 'undefined') {
+    listEl.classList.add('d-none');
+    return;
+  }
+
+  const db = window.NOVARTIS_SPEAKER_DATABASE;
+  const matches = db.filter(d => d.n.includes(clean)).slice(0, 8);
+
+  if (matches.length === 0) {
+    listEl.classList.add('d-none');
+    return;
+  }
+
+  listEl.innerHTML = matches.map(d => `
+    <div class="autocomplete-item" onclick="selectSpeaker('${d.n}', '${d.p}', '${d.h} ${d.d}')">
+      <strong>${d.n}</strong> <span class="badge bg-success">${d.p}</span>
+      <small class="text-muted d-block">${d.h} · ${d.d}</small>
+    </div>
+  `).join('');
+
+  listEl.classList.remove('d-none');
+}
+
+function selectSpeaker(name, poolNo, hospital) {
+  document.getElementById('spkName').value = name;
+  document.getElementById('spkPoolNo').value = poolNo;
+  document.getElementById('spkHospital').value = hospital;
+  document.getElementById('speakerAutoList').classList.add('d-none');
+  calculateBudget();
+}
+
+// 點擊空白處關閉下拉
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#speakerInputsContainer')) {
+    const listEl = document.getElementById('speakerAutoList');
+    if (listEl) listEl.classList.add('d-none');
+  }
+});
+
+// 🌟 一鍵生成標準 AP for SAP Excel 檔案 (.xlsx) 🌟
+function exportApExcel(btn) {
+  if (typeof XLSX === 'undefined') {
+    alert('Excel 生成庫載入中，請稍候重試！');
+    return;
+  }
+
+  const title = document.getElementById('evTitle').value || '醫學活動提案';
+  const product = document.getElementById('evProduct').value || 'Kisqali';
+  const date = document.getElementById('evDate').value || '';
+  const time = document.getElementById('evTime').value || '';
+  const target = document.getElementById('evTarget').value || '';
+  const venue = document.getElementById('evVenue').value || '';
+
+  const meal = parseFloat(document.getElementById('feeMeal').value) || 0;
+  const hcp = parseInt(document.getElementById('countHcp').value) || 0;
+  const rep = parseInt(document.getElementById('countRep').value) || 0;
+  const totalHeadcount = hcp + rep;
+  const avgMeal = totalHeadcount > 0 ? Math.round(meal / totalHeadcount) : 0;
+  const passStatus = avgMeal <= MEAL_CAP ? "PASSED (符合餐標)" : "OVER_BUDGET (超標)";
+
+  const hasSpeaker = currentMode === 'RTD' && document.getElementById('chkHasSpeaker').checked;
+  const spkName = hasSpeaker ? document.getElementById('spkName').value : '-';
+  const spkPoolNo = hasSpeaker ? document.getElementById('spkPoolNo').value : '-';
+  const spkHosp = hasSpeaker ? document.getElementById('spkHospital').value : '-';
+  const spkTopic = hasSpeaker ? document.getElementById('spkTopic').value : '-';
+  const spkFee = hasSpeaker ? (parseFloat(document.getElementById('feeSpeaker').value) || 0) : 0;
+  const trFee = currentMode === 'RTD' ? (parseFloat(document.getElementById('feeTransport').value) || 0) : 0;
+  const trNotes = currentMode === 'RTD' ? document.getElementById('transportNotes').value : '';
+
+  const totalBudget = meal + spkFee + trFee;
+
+  // 組裝 Excel 試算表陣列
+  const wsData = [
+    ["台灣諾華股份有限公司 (Novartis Taiwan) - AP for SAP 活動提案與預算申請表", ""],
+    ["", ""],
+    ["【一、提案摘要】", ""],
+    ["活動類型", currentMode === 'RTD' ? "RTD (Round Table Discussion 醫學研討會)" : "Meal with Doctor (醫師餐敘)"],
+    ["活動主題/名稱", title],
+    ["主要推廣產品", product],
+    ["活動日期", date],
+    ["活動時間", time],
+    ["活動地點/餐廳", venue],
+    ["目標醫院/科別", target],
+    ["申請人", "Sandy Huang (黃蕙芬) / Senior KAM, Oncology"],
+    ["申請日期", new Date().toLocaleDateString('zh-TW')],
+    ["", ""],
+    ["【二、預算明細表 (Budget Breakdown)】", ""],
+    ["費用項次", "金額 (NT$)", "備註/說明"],
+    ["1. 活動餐費 (F&B / Meal)", meal, `預計出席 ${totalHeadcount} 人 (醫師 ${hcp} 位 + 代表 ${rep} 位)`],
+    ["2. 講師費用 (Speaker Fee)", spkFee, hasSpeaker ? `講師: ${spkName} (${spkPoolNo}) / 時數: 1h` : "無邀請講者"],
+    ["3. 交通費 (Transportation)", trFee, trNotes || "無交通費"],
+    ["★ 活動總預算 (Total Budget)", totalBudget, "依公司標準核銷"],
+    ["", ""],
+    ["【三、合規餐標檢核 (Meal Cap Compliance Check)】", ""],
+    ["預估出席醫師人數", hcp, currentMode === 'MEAL' ? "合規限制：最多 4 位" : ""],
+    ["諾華代表出席人數", rep, currentMode === 'MEAL' ? "合規限制：1 ~ 2 位" : ""],
+    ["總出席人數", totalHeadcount, ""],
+    ["平均每人餐費 (NT$)", avgMeal, `計算公式：總餐費 / 總人數`],
+    ["公司餐標上限 (Cap)", MEAL_CAP, "標準上限 NT$ 1,500 / 人"],
+    ["餐標審查結果", passStatus, avgMeal <= MEAL_CAP ? "符合內部法規規範 ✅" : "超出餐標，需額外簽核 ⚠️"],
+    ["", ""]
+  ];
+
+  if (hasSpeaker) {
+    wsData.push(
+      ["【四、講者聘請明細 (Speaker Details)】", ""],
+      ["講師姓名", spkName],
+      ["Speaker Pool Number", spkPoolNo],
+      ["講師機構與職稱", spkHosp],
+      ["演講時數 (Service Time)", "01h 00m (固定 1 小時)"],
+      ["講課主題", spkTopic],
+      ["講師費總額 (NT$)", spkFee]
+    );
+  }
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  // 設定欄寬
+  ws['!cols'] = [
+    { wch: 30 },
+    { wch: 35 },
+    { wch: 35 }
+  ];
+
+  XLSX.utils.book_append_sheet(wb, ws, "AP_for_SAP_提案表");
+
+  const cleanTitle = title.replace(/[\\/:*?"<>|]/g, '_').slice(0, 25);
+  const fileName = `Novartis_AP_for_SAP_${currentMode}_${date}_${cleanTitle}.xlsx`;
+  XLSX.writeFile(wb, fileName);
+
+  if (btn) {
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-circle-check text-white me-1"></i>Excel 已成功下載！';
+    setTimeout(() => { btn.innerHTML = orig; }, 3500);
+  }
+}
+
+// 🌟 一鍵喚起 Email 寄送呈報老闆與助理 🌟
+function sendApEmail() {
+  const title = document.getElementById('evTitle').value || '醫學活動提案';
+  const date = document.getElementById('evDate').value || '';
+  const time = document.getElementById('evTime').value || '';
+  const venue = document.getElementById('evVenue').value || '';
+  const meal = parseFloat(document.getElementById('feeMeal').value) || 0;
+  const hcp = parseInt(document.getElementById('countHcp').value) || 0;
+  const rep = parseInt(document.getElementById('countRep').value) || 0;
+  const totalHeadcount = hcp + rep;
+  const avgMeal = totalHeadcount > 0 ? Math.round(meal / totalHeadcount) : 0;
+  const hasSpeaker = currentMode === 'RTD' && document.getElementById('chkHasSpeaker').checked;
+  const spkName = hasSpeaker ? document.getElementById('spkName').value : '';
+  const spkPoolNo = hasSpeaker ? document.getElementById('spkPoolNo').value : '';
+  const spkFee = hasSpeaker ? (parseFloat(document.getElementById('feeSpeaker').value) || 0) : 0;
+  const trFee = currentMode === 'RTD' ? (parseFloat(document.getElementById('feeTransport').value) || 0) : 0;
+  const totalBudget = meal + spkFee + trFee;
+
+  const subject = encodeURIComponent(`【AP for SAP 預算申請】${title} (${currentMode}) - 申請人: Sandy Huang`);
+
+  let body = `Dear Boss & Assistant,\n\n`;
+  body += `請協助審核並建立以下活動之 SAP 預算案 (AP for SAP)：\n\n`;
+  body += `【活動基本資訊】\n`;
+  body += `• 活動類型：${currentMode === 'RTD' ? 'RTD (醫學研討會)' : 'Meal with Doctor (醫師餐敘)'}\n`;
+  body += `• 活動名稱：${title}\n`;
+  body += `• 日期時間：${date} ${time}\n`;
+  body += `• 活動地點：${venue}\n\n`;
+  body += `【預算明細與餐標檢核】\n`;
+  body += `1. 活動餐費 (F&B)：NT$ ${meal.toLocaleString()}\n`;
+  body += `   - 預估出席人數：醫師 ${hcp} 位 + 諾華代表 ${rep} 位 = 共 ${totalHeadcount} 位\n`;
+  body += `   - 平均每人餐費：NT$ ${avgMeal.toLocaleString()} / 人 (公司餐標上限 NT$ 1,500)\n`;
+  body += `   - 餐標檢核結果：【${avgMeal <= MEAL_CAP ? '符合公司餐標 ✅ PASSED' : '超出公司餐標 ⚠️ OVER_BUDGET'}】\n`;
+  
+  if (hasSpeaker) {
+    body += `2. 講師費用 (Speaker Fee)：NT$ ${spkFee.toLocaleString()}\n`;
+    body += `   - 講師姓名：${spkName}\n`;
+    body += `   - Speaker Pool No：${spkPoolNo}\n`;
+    body += `   - 演講時數：01h 00m\n`;
+  }
+
+  if (trFee > 0) {
+    body += `3. 交通費用 (Travel Fee)：NT$ ${trFee.toLocaleString()}\n`;
+  }
+
+  body += `\n★ 活動總預算 (Total Budget)：NT$ ${totalBudget.toLocaleString()}\n\n`;
+  body += `隨函已產出標準 AP for SAP Excel 表格可供建案核銷，謝謝！\n\n`;
+  body += `申請人：Sandy Huang (黃蕙芬) / Senior KAM, Oncology`;
+
+  window.open(`mailto:?subject=${subject}&body=${encodeURIComponent(body)}`, '_blank');
+}
+
+// 複製 LINE 呈報文字
+function copyApSummaryText(btn) {
+  const title = document.getElementById('evTitle').value || '醫學活動提案';
+  const date = document.getElementById('evDate').value || '';
+  const meal = parseFloat(document.getElementById('feeMeal').value) || 0;
+  const hcp = parseInt(document.getElementById('countHcp').value) || 0;
+  const rep = parseInt(document.getElementById('countRep').value) || 0;
+  const totalHeadcount = hcp + rep;
+  const avgMeal = totalHeadcount > 0 ? Math.round(meal / totalHeadcount) : 0;
+  const hasSpeaker = currentMode === 'RTD' && document.getElementById('chkHasSpeaker').checked;
+  const spkName = hasSpeaker ? document.getElementById('spkName').value : '';
+  const spkPoolNo = hasSpeaker ? document.getElementById('spkPoolNo').value : '';
+  const spkFee = hasSpeaker ? (parseFloat(document.getElementById('feeSpeaker').value) || 0) : 0;
+  const trFee = currentMode === 'RTD' ? (parseFloat(document.getElementById('feeTransport').value) || 0) : 0;
+  const totalBudget = meal + spkFee + trFee;
+
+  let text = `【AP for SAP 預算申請呈報】\n`;
+  text += `活動：${title} (${currentMode})\n`;
+  text += `日期：${date}\n`;
+  text += `總人數：${totalHeadcount} 人 (醫師 ${hcp} + 代表 ${rep})\n`;
+  text += `餐費：$${meal.toLocaleString()} (平均每人 $${avgMeal} / 餐標上限 $1,500 ${avgMeal <= MEAL_CAP ? '✅' : '⚠️'})\n`;
+  if (hasSpeaker) text += `講師：${spkName} (${spkPoolNo}) $${spkFee.toLocaleString()}\n`;
+  if (trFee > 0) text += `交通：$${trFee.toLocaleString()}\n`;
+  text += `★ 總預算：NT$ ${totalBudget.toLocaleString()}\n`;
+  text += `申請人：Sandy Huang`;
+
+  navigator.clipboard.writeText(text).then(() => {
+    if (btn) {
+      const orig = btn.innerHTML;
+      btn.innerHTML = '<i class="fa-solid fa-check text-success me-1"></i>已複製呈報文字！';
+      setTimeout(() => { btn.innerHTML = orig; }, 3000);
+    }
+  });
+}
+</script>
+
+</body>
+</html>
