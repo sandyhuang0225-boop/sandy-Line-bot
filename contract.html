@@ -248,7 +248,7 @@
                 <i class="fa-solid fa-signature me-1"></i>✍️ 體驗線上電子簽署 (雙方手寫蓋章)
             </button>
             <button type="button" class="btn btn-warning fw-bold" style="font-size: 1rem; padding: 8px 16px;" onclick="downloadDocuSignPDF()">
-                <i class="fa-solid fa-file-pdf me-1"></i>下載 DocuSign 專用 PDF (完整12頁)
+                <i class="fa-solid fa-file-pdf me-1"></i>下載 DocuSign 專用 PDF (完整11頁)
             </button>
             <button class="btn btn-outline-light btn-sm" onclick="window.print()">
                 <i class="fa-solid fa-print me-1"></i>列印
@@ -356,7 +356,7 @@
             <div class="d-flex align-items-center justify-content-between">
                 <div>
                     <i class="fa-solid fa-circle-check text-success fs-5 me-2"></i>
-                    <strong id="fileNoticeText">Agenda 上傳成功！資料已全自動填入下方 12 頁正式合約中。</strong>
+                    <strong id="fileNoticeText">Agenda 上傳成功！資料已全自動填入下方 11 頁正式合約中。</strong>
                 </div>
                 <button class="btn btn-sm btn-outline-success fw-bold" onclick="resetToBlank()">
                     清空重試
@@ -368,9 +368,9 @@
         <div id="pdfProgressBox" class="alert alert-warning border-warning py-2 px-3 mb-3 shadow-sm" style="display: none;">
             <div class="d-flex align-items-center justify-content-between mb-1">
                 <span id="pdfStatusText" class="fw-bold text-dark small">
-                    <i class="fa-solid fa-spinner fa-spin me-2 text-warning"></i>正在逐頁生成 12 頁 DocuSign 標準 PDF...
+                    <i class="fa-solid fa-spinner fa-spin me-2 text-warning"></i>正在逐頁生成 11 頁 DocuSign 標準 PDF...
                 </span>
-                <span id="pdfPageBadge" class="badge bg-dark">第 1 / 12 頁</span>
+                <span id="pdfPageBadge" class="badge bg-dark">第 1 / 11 頁</span>
             </div>
             <div class="progress" style="height: 8px;">
                 <div id="pdfProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-warning" style="width: 10%"></div>
@@ -391,7 +391,7 @@
                 <div class="col-12"><strong>📍 會議地點：</strong><span id="sumVenue"></span></div>
                 <div class="col-12"><strong>🎤 簡報講題：</strong><span id="sumTopic" class="text-primary fw-bold"></span></div>
                 <div class="col-md-6 col-12"><strong>💰 顧問費用：</strong><span class="text-success fw-bold">新台幣 5,000 元整</span> (固定)</div>
-                <div class="col-md-6 col-12"><strong>✍️ 諾華主管：</strong><span class="text-success fw-bold">周書權 (區域業務經理)</span> (固定)</div>
+                <div class="col-md-6 col-12"><strong>✍️ 諾華主管：</strong><span class="text-success fw-bold">周書全 Wesley Chou (區域業務經理)</span> (固定)</div>
             </div>
         </div>
     </div>
@@ -452,7 +452,7 @@
                         <div class="col-md-3 col-6">
                             <label class="form-label small fw-bold text-success mb-1"><i class="fa-solid fa-lock me-1"></i>諾華代表 (固定)</label>
                             <div class="input-group input-group-sm">
-                                <input type="text" id="inputMgrName" class="form-control bg-white text-success fw-bold" value="周書權" oninput="updateContract()">
+                                <input type="text" id="inputMgrName" class="form-control bg-white text-success fw-bold" value="周書全" oninput="updateContract()">
                                 <input type="text" id="inputMgrTitle" class="form-control bg-white text-success fw-bold" value="區域業務經理" oninput="updateContract()">
                             </div>
                         </div>
@@ -463,7 +463,7 @@
     </div>
 </div>
 
-<!-- ==================== 正式合約預覽 (共 12 頁，DocuSign 標準版面) ==================== -->
+<!-- ==================== 正式合約預覽 (共 11 頁，DocuSign 標準版面) ==================== -->
 <!-- 🌟 多位醫師切換選擇區 (置頂於合約正上方，支援 Speaker 講者與 Moderator 座長，切換一目了然) -->
     <div id="multiDoctorSection" class="card border-2 border-primary shadow mb-3" style="display: none;">
         <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between flex-wrap gap-2 py-2 px-3">
@@ -482,12 +482,12 @@
             <div class="d-flex flex-wrap gap-2 mb-2" id="doctorTabButtons"></div>
             <!-- 目前檢視中醫師提示條 -->
             <div id="currentViewingNotice" class="alert alert-info py-2 px-3 mb-0 fw-bold text-primary" style="font-size: 1.05rem;">
-                📄 目前正在檢視：【第 1 位顧問醫師】之專屬 12 頁正式合約
+                📄 目前正在檢視：【第 1 位顧問醫師】之專屬 11 頁正式合約
             </div>
         </div>
     </div>
 
-    <!-- 完整 12 頁合約主容器 -->
+    <!-- 完整 11 頁合約主容器 -->
     <div id="contractFullDoc">
 
     <!-- PAGE 1 -->
@@ -586,10 +586,9 @@
             諾華將擁有該等錄音/錄影之所有著作權。錄音/錄影將被保存及使用五年；未經您事前書面同意，不會被分享或被使用於非本合約目的所列之範圍。於上述期間屆滿後，諾華將停止使用並以安全的方式銷毀或封存該等錄音/錄影。
         </p>
 
-        <p class="fw-bold mb-1">5. 顧問同意向美國聯邦醫療保險和聯邦醫療補助服務中心辦理申報（僅適用美國合格醫事人員或美國教學醫院）</p>
-        <p class="ps-3 mb-0">
-            (a) 若您具有得於美國任何一州從事醫療業務之有效執照（無論您是否居住於該州或主要於該州執業）或正在申請該等執照（下稱「美國醫事人員」）或您為美國教學醫院（以美國聯邦醫療保險和聯邦醫療補助服務中心（U.S. Centers of Medicare and Medicaid Services，下稱「CMS」）認定為準），您瞭解並同意，諾華得處理您的個人資料及/或與本合約服務及本合約活動相關之個人資料。具體而言，諾華得將該等個人資料移轉至 CMS（一美國政府機關）。該等個人資料可能係由您直接提供或由第三方處取得。
-        </p>
+        <div style="margin-top: 100px;" class="text-center text-muted">
+            （以下為簽署頁）
+        </div>
 
         <div class="contract-page-footer">
             <span>Ver/Date: 5 November 2026</span>
@@ -597,30 +596,7 @@
         </div>
     </div>
 
-    <!-- PAGE 4 -->
-    <div class="contract-page">
-        <p class="ps-3 mb-2">
-            (b) 若您為美國醫事人員或美國教學醫院（以 CMS 認定為準），您確認並同意：<br>
-            (i) 諾華將處理（具體而言，將移轉予 CMS）您的個人資料及您依據本合約履行本合約服務之相關個人資料，包括但不限於您的姓名、居住或營業（依情況適用）之城市及州、您的專業、國家供應商識別碼（National Provider Identifier，NPI），依據本合約履行本合約服務之性質，及與本合約相關之任何及所有款項、費用報銷或其他非金錢有價物之移轉（下稱「顧問資料」）；及<br>
-            (ii) 諾華移轉予 CMS 之顧問資料將不再由諾華控制，並將由 CMS 依據美國醫師陽光支付法案（U.S. Physicians’ Payment Sunshine Act）及其規範公開揭露。一旦顧問資料被移轉予 CMS，諾華不能保證亦不再對該等顧問資料之隱私權及資料保護負責。
-        </p>
-
-        <p class="mt-4 mb-3">若您是本條定義之美國醫事人員，您必須提供以下資訊：</p>
-        <p class="ps-3 mb-2">執照號碼：______________________________</p>
-        <p class="ps-3 mb-2">核發執照國家：______________________________</p>
-        <p class="ps-3 mb-4">國家供應商識別碼（NPI）號碼（如有）：______________________________</p>
-
-        <div style="margin-top: 80px;" class="text-center text-muted">
-            （以下為簽署頁）
-        </div>
-
-        <div class="contract-page-footer">
-            <span>Ver/Date: 5 November 2026</span>
-            <span>Page 4</span>
-        </div>
-    </div>
-
-    <!-- PAGE 5 (簽署頁 - DocuSign 重點放置標籤處) -->
+    <!-- PAGE 4 (簽署頁 - DocuSign 重點放置標籤處) -->
     <div class="contract-page">
         <table class="signature-table">
             <tr>
@@ -651,7 +627,7 @@
                     <div class="fw-bold mb-2">台灣諾華股份有限公司</div>
                     <div class="row">
                         <div class="col-6">
-                            <p class="mb-2">姓名：<span class="fixed-field mgr-name signature-line">周書權</span></p>
+                            <p class="mb-2">姓名：<span class="fixed-field mgr-name signature-line">周書全</span></p>
                             <p class="mb-2">職稱：<span class="fixed-field mgr-title signature-line">區域業務經理</span></p>
                         </div>
                         <div class="col-6">
@@ -672,11 +648,11 @@
         </div>
         <div class="contract-page-footer">
             <span>Ver/Date: 5 November 2026</span>
-            <span>Page 5</span>
+            <span>Page 4</span>
         </div>
     </div>
 
-    <!-- PAGE 6 -->
+    <!-- PAGE 5 -->
     <div class="contract-page">
         <div class="contract-header" style="text-align: center; margin-bottom: 20px;">一般條款及條件</div>
         <div class="row">
@@ -729,11 +705,11 @@
 
         <div class="contract-page-footer">
             <span>Ver/Date: 5 November 2026</span>
-            <span>Page 6</span>
+            <span>Page 5</span>
         </div>
     </div>
 
-    <!-- PAGE 7 -->
+    <!-- PAGE 6 -->
     <div class="contract-page">
         <div class="row">
             <div class="col-md-6 pe-md-3" style="border-right: 1px solid #e2e8f0;">
@@ -768,11 +744,11 @@
 
         <div class="contract-page-footer">
             <span>Ver/Date: 5 November 2026</span>
-            <span>Page 7</span>
+            <span>Page 6</span>
         </div>
     </div>
 
-    <!-- PAGE 8 -->
+    <!-- PAGE 7 -->
     <div class="contract-page">
         <div class="row">
             <div class="col-md-6 pe-md-3" style="border-right: 1px solid #e2e8f0;">
@@ -806,11 +782,11 @@
 
         <div class="contract-page-footer">
             <span>Ver/Date: 5 November 2026</span>
-            <span>Page 8</span>
+            <span>Page 7</span>
         </div>
     </div>
 
-    <!-- PAGE 9 -->
+    <!-- PAGE 8 -->
     <div class="contract-page">
         <div class="row">
             <div class="col-md-6 pe-md-3" style="border-right: 1px solid #e2e8f0;">
@@ -850,11 +826,11 @@
 
         <div class="contract-page-footer">
             <span>Ver/Date: 5 November 2026</span>
-            <span>Page 9</span>
+            <span>Page 8</span>
         </div>
     </div>
 
-    <!-- PAGE 10 -->
+    <!-- PAGE 9 -->
     <div class="contract-page">
         <div class="row">
             <div class="col-md-6 pe-md-3" style="border-right: 1px solid #e2e8f0;">
@@ -890,11 +866,11 @@
 
         <div class="contract-page-footer">
             <span>Ver/Date: 5 November 2026</span>
-            <span>Page 10</span>
+            <span>Page 9</span>
         </div>
     </div>
 
-    <!-- PAGE 11 -->
+    <!-- PAGE 10 -->
     <div class="contract-page">
         <div class="contract-header" style="text-align: center; margin-bottom: 20px;">附件一：諾華講師法規遵循注意事項</div>
         
@@ -949,11 +925,11 @@
 
         <div class="contract-page-footer">
             <span>Ver/Date: 5 November 2026</span>
-            <span>Page 11</span>
+            <span>Page 10</span>
         </div>
     </div>
 
-    <!-- PAGE 12 -->
+    <!-- PAGE 11 -->
     <div class="contract-page">
         <p class="fw-bold mb-1">6. 諾華同仁對於講師執行狀況之觀察及檢視</p>
         <p class="ps-3 mb-2">
@@ -967,7 +943,7 @@
 
         <div class="contract-page-footer">
             <span>Ver/Date: 5 November 2026</span>
-            <span>Page 12</span>
+            <span>Page 11</span>
         </div>
     </div>
 
@@ -1262,7 +1238,7 @@ async function processUserUpload(source, typeLabel) {
 1. 找出所有需要簽署顧問/講者服務合約的外部醫師（不管是 1 位、2 位還是 4 位，請全部抓出）。
 2. ★ 絕對規則：務必排除 Novartis 台灣諾華內部同仁（特別是 Sandy Huang 或任何分享 PSP 專案、公司介紹的員工），絕不可列為顧問！
 3. 每位顧問的合約費用預設固定為「新台幣 5,000 元整」。
-4. 諾華代表主管固定為「周書權」與「區域業務經理」。
+4. 諾華代表主管固定為「周書全」與「區域業務經理」。
 5. 日期請統一轉換為合約格式（例如「民國 115 年 11 月 24 日」或包含西元年）。
 6. 會議地點包含餐廳/飯店名稱與地址。
 
@@ -1513,7 +1489,7 @@ function selectDoctor(index) {
     if (notice) {
         const total = currentEventData.doctors.length;
         const roleName = (doc.role || '').toLowerCase().includes('moderator') ? '座長' : '講者';
-        notice.innerHTML = `📄 目前正在檢視：【第 ${index + 1}/${total} 位 - ${doc.doctor_name} 醫師（${roleName}）】之專屬 12 頁正式顧問合約`;
+        notice.innerHTML = `📄 目前正在檢視：【第 ${index + 1}/${total} 位 - ${doc.doctor_name} 醫師（${roleName}）】之專屬 11 頁正式顧問合約`;
     }
     document.getElementById('inputDoctor').value = doc.doctor_name || '';
     document.getElementById('inputHospital').value = doc.hospital || '';
@@ -1525,7 +1501,7 @@ function selectDoctor(index) {
     document.getElementById('inputVenue').value = currentEventData.event_venue || '';
     document.getElementById('inputTopic').value = doc.event_topic || currentEventData.event_name || '';
     document.getElementById('inputFee').value = doc.fee_total || '新台幣 5,000 元整';
-    document.getElementById('inputMgrName').value = '周書權';
+    document.getElementById('inputMgrName').value = '周書全';
     document.getElementById('inputMgrTitle').value = '區域業務經理';
 
     updateContract();
@@ -1537,14 +1513,14 @@ function selectDoctor(index) {
     });
 }
 
-// 📦 批次依序下載全部醫師的 12 頁 DocuSign PDF
+// 📦 批次依序下載全部醫師的 11 頁 DocuSign PDF
 async function downloadAllDoctorsPDF() {
     if (!currentEventData || !currentEventData.doctors || currentEventData.doctors.length === 0) {
         alert("尚未載入多位醫師名單！");
         return;
     }
     const totalDocs = currentEventData.doctors.length;
-    if (!confirm(`即將依序生成並下載全部 ${totalDocs} 位醫師的專屬 12 頁 DocuSign PDF 合約，是否開始？`)) {
+    if (!confirm(`即將依序生成並下載全部 ${totalDocs} 位醫師的專屬 11 頁 DocuSign PDF 合約，是否開始？`)) {
         return;
     }
 
@@ -1584,7 +1560,7 @@ function togglePasteArea() {
 
 
 
-// 🚀 核心升級：12 頁逐頁精準轉檔 (徹底告別空白頁與記憶體溢出)
+// 🚀 核心升級：11 頁逐頁精準轉檔 (徹底告別空白頁與記憶體溢出)
 async function downloadDocuSignPDF() {
     const pages = document.querySelectorAll('.contract-page');
     const docName = document.getElementById('inputDoctor').value || 'DocuSign';
@@ -1648,7 +1624,7 @@ async function downloadDocuSignPDF() {
         // 完成儲存
         pdf.save(`諾華顧問服務合約_${docName}_DocuSign.pdf`);
         
-        statusText.innerHTML = '<i class="fa-solid fa-circle-check text-success me-2"></i>12 頁 DocuSign 專用 PDF 已成功生成下載！';
+        statusText.innerHTML = '<i class="fa-solid fa-circle-check text-success me-2"></i>11 頁 DocuSign 專用 PDF 已成功生成下載！';
         setTimeout(() => {
             progressBox.style.display = 'none';
         }, 3000);
@@ -1787,7 +1763,7 @@ function openEsignModal() {
 
     const docName = document.getElementById('inputDoctor').value || '顧問醫師';
     document.getElementById('stepSigner1Name').textContent = `① 顧問：${docName}`;
-    document.getElementById('stepSigner2Name').textContent = `② 主管：周書權 經理`;
+    document.getElementById('stepSigner2Name').textContent = `② 主管：周書全 經理`;
     
     updateEsignModalStep(1);
 
@@ -1830,7 +1806,7 @@ function updateEsignModalStep(step) {
         ind2.style.backgroundColor = '#0284c7';
         ind2.style.color = 'white';
 
-        title.innerHTML = `<span class="badge bg-warning text-dark me-1">第二簽署人</span> 👔 <strong>周書權 區域業務經理</strong>（台灣諾華簽約代表）`;
+        title.innerHTML = `<span class="badge bg-warning text-dark me-1">第二簽署人</span> 👔 <strong>周書全 區域業務經理</strong>（台灣諾華簽約代表）`;
         btn.className = 'btn btn-primary btn-lg w-100 py-3 fw-bold fs-5 shadow-sm';
         btn.innerHTML = `<i class="fa-solid fa-file-signature me-2"></i>完成主管核簽，產生正式防偽合約！🎉`;
     }
@@ -1859,7 +1835,7 @@ async function confirmCurrentSigner() {
 }
 
 async function applySignaturesToContract() {
-    // 1. 壓印顧問簽名至第 5 頁
+    // 1. 壓印顧問簽名至第 4 頁
     const docSlot = document.getElementById('sigDocSlot');
     const docDateSlot = document.getElementById('sigDocDateSlot');
     if (docSlot && doctorSignatureImg) {
@@ -1870,7 +1846,7 @@ async function applySignaturesToContract() {
     const formattedDate = `民國 ${rocYear} 年 ${today.getMonth() + 1} 月 ${today.getDate()} 日`;
     if (docDateSlot) docDateSlot.textContent = formattedDate;
 
-    // 2. 壓印諾華主管簽名至第 5 頁
+    // 2. 壓印諾華主管簽名至第 4 頁
     const mgrSlot = document.getElementById('sigMgrSlot');
     const mgrDateSlot = document.getElementById('sigMgrDateSlot');
     if (mgrSlot && managerSignatureImg) {
@@ -1884,7 +1860,7 @@ async function applySignaturesToContract() {
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-    // 4. 顯示第 5 頁防偽邊角認證條
+    // 4. 顯示第 4 頁防偽邊角認證條
     const banner = document.getElementById('sigAuditBanner');
     if (banner) {
         document.getElementById('auditDocId').textContent = `NVS-${today.getFullYear()}${(today.getMonth() + 1).toString().padStart(2, '0')}-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -1894,13 +1870,13 @@ async function applySignaturesToContract() {
         banner.style.display = 'block';
     }
 
-    // 5. 滾動至第 5 頁簽署成果展示
+    // 5. 滾動至第 4 頁簽署成果展示
     setTimeout(() => {
-        const page5 = banner ? banner.closest('.contract-page') : null;
-        if (page5) page5.scrollIntoView({ behavior: 'smooth' });
+        const page4 = banner ? banner.closest('.contract-page') : null;
+        if (page4) page4.scrollIntoView({ behavior: 'smooth' });
     }, 400);
 
-    alert(`🎉 恭喜！線上電子簽署圓滿完成！\n\n1. 顧問醫師與諾華主管之手寫真實筆跡已精確蓋章在第 5 頁。\n2. 已加蓋台灣《電子簽章法》SHA-256 防偽驗證戳記與時間/IP。\n3. 您現在點擊上方【下載 DocuSign 專用 PDF】，即可產出帶有真實簽名之正式契約！`);
+    alert(`🎉 恭喜！線上電子簽署圓滿完成！\n\n1. 顧問醫師與諾華主管之手寫真實筆跡已精確蓋章在第 4 頁。\n2. 已加蓋台灣《電子簽章法》SHA-256 防偽驗證戳記與時間/IP。\n3. 您現在點擊上方【下載 DocuSign 專用 PDF】，即可產出帶有真實簽名之正式契約！`);
 }
 
 // ==================== 手機主畫面分享功能 (LINE 傳送與複製網址) ====================
