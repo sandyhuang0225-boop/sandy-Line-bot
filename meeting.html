@@ -2249,16 +2249,37 @@ function renderAttendeesAndTally() {
       if (thMealEl) thMealEl.textContent = '用餐型態 / 備註';
     } else if (ev.mealMode === 'SET') {
       const counts = {};
+      const drinkCounts = {};
       const dessertCounts = {};
+      const appetizerCounts = {};
+
       list.forEach(a => {
         const meal = (a && a.mealChoice ? String(a.mealChoice) : '');
-        const dish = meal.split(' (')[0] || '未指定';
+        const dish = meal.split(' (')[0] || '未指定主餐';
         counts[dish] = (counts[dish] || 0) + 1;
 
+        // 飲品解析 (優先讀取 a.drink，其次解析 mealChoice 中的 飲品:)
+        let drinkVal = (a && a.drink ? String(a.drink).trim() : '');
+        if (!drinkVal) {
+          const drMatch = meal.match(/飲品:\s*([^/)]+)/);
+          if (drMatch && drMatch[1]) drinkVal = drMatch[1].trim();
+        }
+        if (drinkVal) {
+          drinkCounts[drinkVal] = (drinkCounts[drinkVal] || 0) + 1;
+        }
+
+        // 甜點解析
         const dMatch = meal.match(/甜點:\s*([^/)]+)/);
         if (dMatch && dMatch[1]) {
           const d = dMatch[1].trim();
           dessertCounts[d] = (dessertCounts[d] || 0) + 1;
+        }
+
+        // 前菜解析
+        const appMatch = meal.match(/前菜:\s*([^/)]+)/);
+        if (appMatch && appMatch[1]) {
+          const ap = appMatch[1].trim();
+          appetizerCounts[ap] = (appetizerCounts[ap] || 0) + 1;
         }
       });
 
@@ -2272,26 +2293,51 @@ function renderAttendeesAndTally() {
         ${Object.entries(counts).map(([name, count]) => `
           <div class="col-md-3 col-6">
             <div class="p-3 bg-light border rounded-3">
-              <span class="text-secondary small fw-bold d-block text-truncate" title="${name}">主餐: ${name}</span>
+              <span class="text-secondary small fw-bold d-block text-truncate" title="${name}">🥩 主餐: ${name}</span>
               <span class="fs-2 fw-black text-primary">${count}</span> 份
             </div>
           </div>
         `).join('')}
       `;
 
+      // 飲品統計卡片
+      if (Object.keys(drinkCounts).length > 0) {
+        tallyHtml += Object.entries(drinkCounts).map(([name, count]) => `
+          <div class="col-md-3 col-6">
+            <div class="p-3 bg-light border rounded-3 border-info-subtle">
+              <span class="text-info-emphasis small fw-bold d-block text-truncate" title="${name}">🍷 飲品: ${name}</span>
+              <span class="fs-2 fw-black text-info">${count}</span> 杯
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // 甜點統計卡片
       if (Object.keys(dessertCounts).length > 0) {
         tallyHtml += Object.entries(dessertCounts).map(([name, count]) => `
           <div class="col-md-3 col-6">
             <div class="p-3 bg-light border rounded-3 border-danger-subtle">
-              <span class="text-danger small fw-bold d-block text-truncate" title="${name}">甜點: ${name}</span>
+              <span class="text-danger small fw-bold d-block text-truncate" title="${name}">🍰 甜點: ${name}</span>
               <span class="fs-2 fw-black text-danger">${count}</span> 份
             </div>
           </div>
         `).join('');
       }
 
+      // 前菜統計卡片
+      if (Object.keys(appetizerCounts).length > 0) {
+        tallyHtml += Object.entries(appetizerCounts).map(([name, count]) => `
+          <div class="col-md-3 col-6">
+            <div class="p-3 bg-light border rounded-3 border-success-subtle">
+              <span class="text-success small fw-bold d-block text-truncate" title="${name}">🥗 前菜: ${name}</span>
+              <span class="fs-2 fw-black text-success">${count}</span> 份
+            </div>
+          </div>
+        `).join('');
+      }
+
       tallyCardsRow.innerHTML = tallyHtml;
-      if (thMealEl) thMealEl.textContent = '餐點自選明細';
+      if (thMealEl) thMealEl.textContent = '餐點與飲品自選明細';
     } else {
       tallyCardsRow.innerHTML = `
         <div class="col-12">
@@ -2644,24 +2690,8 @@ function deleteAttendee(id) {
 }
 
 function injectCurrentEventSample() {
-  const ev = eventsDb[currentEventId];
-  if (!ev) return;
-
-  if (ev.mealMode === 'TABLE') {
-    ev.attendees = [
-      { id: 1, name: '廖國秀', city: '台北市', hospital: '三軍總醫院', dept: '乳房外科', title: '醫師', mealChoice: '桌菜出席', dietNotes: '' },
-      { id: 2, name: '陳德全', city: '台北市', hospital: '三軍總醫院', dept: '乳房外科', title: '醫師', mealChoice: '桌菜出席', dietNotes: '' },
-      { id: 3, name: '林芳如', city: '台北市', hospital: '三軍總醫院', dept: '護理部', title: '護理師', mealChoice: '桌菜出席', dietNotes: '全素 / 素食' },
-      { id: 4, name: '張凱鈞', city: '台北市', hospital: '三軍總醫院', dept: '藥劑部', title: '藥師', mealChoice: '桌菜出席', dietNotes: '不吃牛肉' },
-      { id: 5, name: 'Sandy Huang', city: '台北市', hospital: '台灣諾華股份有限公司', dept: '腫瘤醫學部', title: '台灣諾華', mealChoice: '桌菜出席', dietNotes: '' }
-    ];
-  } else {
-    ev.attendees = [
-      { id: 1, name: '廖國秀', city: '台北市', hospital: '三軍總醫院', dept: '乳房外科', title: '醫師', mealChoice: '嫩煎菲力牛排 (紅白酒)', dietNotes: '' },
-      { id: 2, name: 'Sandy Huang', city: '台北市', hospital: '台灣諾華股份有限公司', dept: '腫瘤醫學部', title: '台灣諾華', mealChoice: '蟹黃海鮮燉飯 (氣泡飲)', dietNotes: '' }
-    ];
-  }
-  saveEventsDb();
+  console.log('示範名單注入功能已停用，系統全面採用 Google 試算表即時真實名冊');
+}
   renderAttendeesAndTally();
   syncLiveAttendeesFromServer();
 }
@@ -2685,21 +2715,56 @@ function copyRestaurantSummary(btn) {
 ${diets.length > 0 ? `⚠️ 特殊飲食/素食/忌口名單：\n${diets.join('\n')}\n\n` : ''}麻煩餐廳協助安排席位，謝謝！`;
   } else {
     const mainCounts = {};
+    const drinkCounts = {};
     const dessertCounts = {};
-    list.forEach(a => {
+    const appetizerCounts = {};
+    const attendeeDetails = [];
+
+    list.forEach((a, idx) => {
       const meal = (a && a.mealChoice) ? String(a.mealChoice) : '';
       const main = meal.split(' (')[0] || '特選主餐';
       mainCounts[main] = (mainCounts[main] || 0) + 1;
+
+      // 飲品解析
+      let drinkVal = (a && a.drink ? String(a.drink).trim() : '');
+      if (!drinkVal) {
+        const drMatch = meal.match(/飲品:\s*([^/)]+)/);
+        if (drMatch && drMatch[1]) drinkVal = drMatch[1].trim();
+      }
+      if (drinkVal) {
+        drinkCounts[drinkVal] = (drinkCounts[drinkVal] || 0) + 1;
+      }
+
+      // 甜點解析
       const dMatch = meal.match(/甜點:\s*([^/)]+)/);
       if (dMatch && dMatch[1]) {
         const d = dMatch[1].trim();
         dessertCounts[d] = (dessertCounts[d] || 0) + 1;
       }
+
+      // 前菜解析
+      const appMatch = meal.match(/前菜:\s*([^/)]+)/);
+      if (appMatch && appMatch[1]) {
+        const ap = appMatch[1].trim();
+        appetizerCounts[ap] = (appetizerCounts[ap] || 0) + 1;
+      }
+
+      // 個人點餐對照
+      const parts = [`主餐: ${main}`];
+      if (drinkVal) parts.push(`飲品: ${drinkVal}`);
+      if (dMatch && dMatch[1]) parts.push(`甜點: ${dMatch[1].trim()}`);
+      attendeeDetails.push(`${idx + 1}. ${a.name} (${a.hospital || ''} ${a.dept || ''} ${a.title || ''}) ➔ ${parts.join(' ｜ ')}`);
     });
 
-    let details = '🍽️ 主餐點單統計：\n' + Object.entries(mainCounts).map(([m, c]) => `  - ${m}: ${c} 份`).join('\n');
+    let details = '🥩 精選主餐統計：\n' + Object.entries(mainCounts).map(([m, c]) => `  - ${m}：${c} 份`).join('\n');
+    if (Object.keys(drinkCounts).length > 0) {
+      details += '\n\n🍷 佐餐飲品統計：\n' + Object.entries(drinkCounts).map(([d, c]) => `  - ${d}：${c} 杯`).join('\n');
+    }
     if (Object.keys(dessertCounts).length > 0) {
-      details += '\n\n🍰 甜點點單統計：\n' + Object.entries(dessertCounts).map(([d, c]) => `  - ${d}: ${c} 份`).join('\n');
+      details += '\n\n🍰 甜點點單統計：\n' + Object.entries(dessertCounts).map(([d, c]) => `  - ${d}：${c} 份`).join('\n');
+    }
+    if (Object.keys(appetizerCounts).length > 0) {
+      details += '\n\n🥗 前菜點單統計：\n' + Object.entries(appetizerCounts).map(([ap, c]) => `  - ${ap}：${c} 份`).join('\n');
     }
 
     msg = 
@@ -2710,7 +2775,10 @@ ${diets.length > 0 ? `⚠️ 特殊飲食/素食/忌口名單：\n${diets.join('
 
 ${details}
 
-${diets.length > 0 ? `⚠️ 特殊飲食備註：\n${diets.join('\n')}\n\n` : ''}麻煩餐廳協助備餐，謝謝！`;
+${diets.length > 0 ? `⚠️ 特殊飲食備註：\n${diets.join('\n')}\n\n` : ''}📋 與會貴賓點餐對照名冊：
+${attendeeDetails.join('\n')}
+
+麻煩餐廳協助備餐與安排座位，謝謝！`;
   }
 
   navigator.clipboard.writeText(msg).then(() => {
