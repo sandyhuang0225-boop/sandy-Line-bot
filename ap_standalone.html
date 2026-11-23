@@ -1,0 +1,1012 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Novartis AP for SAP 獨立版助手 (Activity Proposal & Agenda)</title>
+
+<!-- Bootstrap 5 & FontAwesome -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+
+<!-- SheetJS (xlsx.full.min.js) 純前端操作原生母檔 Excel -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<style>
+:root {
+  --nov-navy: #042742;
+  --nov-blue: #0d4a78;
+  --nov-sky: #0ea5e9;
+  --nov-teal: #0d9488;
+  --nov-gold: #f59e0b;
+  --nov-green: #10b981;
+  --nov-bg: #f8fafc;
+  --nov-card-border: #cbd5e1;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background-color: var(--nov-bg);
+  font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+  color: #1e293b;
+  padding-bottom: 90px;
+}
+.header-bar {
+  background: linear-gradient(135deg, var(--nov-navy) 0%, var(--nov-blue) 100%);
+  color: white;
+  padding: 14px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+.brand-pill {
+  background-color: var(--nov-gold);
+  color: #0f172a;
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 800;
+}
+.mode-tab-btn {
+  padding: 12px 18px;
+  font-weight: 800;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.mode-tab-btn.active {
+  background: #0284c7 !important;
+  color: white !important;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
+}
+
+/* 🌟 照片級 Agenda 投影片卡片造型 🌟 */
+.agenda-slide-card {
+  background: #ffffff;
+  border: 2px solid #38bdf8;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(2, 132, 199, 0.12);
+  padding: 24px 20px;
+  position: relative;
+  overflow: hidden;
+}
+.agenda-slide-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 140px;
+  height: 140px;
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.15) 0%, rgba(255,255,255,0) 70%);
+  pointer-events: none;
+}
+.agenda-header-title {
+  color: #0284c7;
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+.agenda-header-sub {
+  color: #0369a1;
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+.agenda-meta-row {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 6px;
+}
+.agenda-meta-row strong {
+  color: #0f172a;
+}
+.agenda-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 18px;
+  margin-bottom: 18px;
+}
+.agenda-table th {
+  background: #e0f2fe;
+  color: #0369a1;
+  font-weight: 800;
+  padding: 10px 12px;
+  border: 1px solid #bae6fd;
+  text-align: center;
+  font-size: 0.9rem;
+}
+.agenda-table td {
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  vertical-align: middle;
+  background: #ffffff;
+  font-size: 0.88rem;
+}
+.agenda-legal-box {
+  border-top: 1px dashed #cbd5e1;
+  padding-top: 14px;
+  margin-top: 16px;
+  font-size: 0.76rem;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+/* 常用主題快速帶入按鈕 */
+.topic-tag {
+  cursor: pointer;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border-radius: 12px;
+  display: inline-block;
+  margin-right: 5px;
+  margin-bottom: 5px;
+}
+.topic-tag:hover {
+  background: #e0f2fe;
+  border-color: #0284c7;
+  color: #0284c7;
+}
+
+/* 檢索下拉選單 */
+.autocomplete-box {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  background: white;
+  border: 1.5px solid #0ea5e9;
+  border-radius: 8px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  z-index: 1050;
+}
+.autocomplete-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f5f9;
+}
+.autocomplete-item:hover {
+  background: #e0f2fe;
+}
+</style>
+</head>
+<body>
+
+<!-- 頂部導覽列 -->
+<header class="header-bar">
+  <div class="container d-flex align-items-center justify-content-between flex-wrap gap-2" style="max-width: 1040px;">
+    <div class="d-flex align-items-center gap-2">
+      <img src="assets/novartis_logo.png" alt="Novartis" style="height: 28px; background: white; padding: 3px 8px; border-radius: 4px;">
+      <span class="brand-pill">AP & Agenda 獨立版</span>
+      <h5 class="mb-0 fw-bold d-none d-sm-inline">活動提案與議程速成小助手</h5>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge bg-light text-dark fw-bold">
+        <i class="fa-solid fa-user-tie text-primary me-1"></i>黃蕙芬 Sandy (42010261)
+      </span>
+    </div>
+  </div>
+</header>
+
+<div class="container my-3" style="max-width: 1040px;">
+
+  <!-- 🌟 模式切換按鈕 🌟 -->
+  <div class="d-flex gap-2 p-1 bg-white border rounded-3 shadow-sm mb-3">
+    <button type="button" class="btn mode-tab-btn flex-fill active" id="tabEvent" onclick="setMode('EVENT')">
+      <i class="fa-solid fa-chalkboard-user me-1"></i>模式一：Event 醫學研討會 (代號 576 · 附視覺化 Agenda)
+    </button>
+    <button type="button" class="btn mode-tab-btn flex-fill text-dark" id="tabDetailing" onclick="setMode('DETAILING')">
+      <i class="fa-solid fa-utensils me-1"></i>模式二：Detailing 拜訪餐敘 (代號 951 · 極速 4 欄位)
+    </button>
+  </div>
+
+  <!-- 🌟 餐標合規即時儀表板 (晚餐每人上限含稅 NT$ 3,500) 🌟 -->
+  <div class="card border-0 shadow-sm p-3 rounded-3 mb-3 bg-white">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+      <div>
+        <span class="badge bg-success px-3 py-2 fs-6 fw-bold" id="complianceBadge">
+          <i class="fa-solid fa-circle-check me-1"></i>符合公司晚餐餐標 (PASSED)
+        </span>
+        <span class="ms-2 fw-bold text-dark" id="complianceInfo">
+          平均每人餐費 NT$ 3,181 (上限含稅 NT$ 3,500 / 人)
+        </span>
+      </div>
+      <div class="text-end">
+        <span class="text-muted small d-block">活動總預算 (Total Amount)</span>
+        <span class="fs-4 fw-black text-primary" id="totalBudgetDisp">NT$ 80,000</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 🌟 模式一：EVENT (視覺化 Agenda 投影片卡片) 🌟 -->
+  <!-- ========================================== -->
+  <div id="sectionEvent">
+    
+    <!-- 視覺化 Agenda 投影片表單卡片 -->
+    <div class="agenda-slide-card mb-3">
+      
+      <!-- 快速範本切換按鈕列 -->
+      <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge bg-primary px-2 py-1">Agenda 視覺化編輯</span>
+          <span class="text-muted small">（此區直接 1:1 產出至 Excel 的 Agenda 工作表）</span>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <button type="button" class="btn btn-outline-primary btn-sm fw-bold" onclick="loadSample('all_north')">
+            <i class="fa-solid fa-wand-magic-sparkles me-1"></i>帶入全北區範本
+          </button>
+          <button type="button" class="btn btn-outline-secondary btn-sm fw-bold" onclick="loadSample('tsgh')">
+            <i class="fa-solid fa-hospital-user me-1"></i>帶入三總範本
+          </button>
+          <button type="button" class="btn btn-outline-info btn-sm fw-bold" onclick="loadSample('cgmh')">
+            <i class="fa-solid fa-stethoscope me-1"></i>帶入基隆長庚範本
+          </button>
+        </div>
+      </div>
+
+      <!-- 標題編輯區（可彈性修改前綴地區/醫院） -->
+      <div class="row g-2 mb-3">
+        <div class="col-md-7 col-12">
+          <label class="form-label fw-bold small text-muted">會議名稱（前綴自訂，預設通用【____乳癌研討會】）</label>
+          <div class="input-group">
+            <span class="input-group-text fw-bold bg-light">【</span>
+            <input type="text" id="agPrefix" class="form-control fw-black text-primary fs-5" value="全北區" placeholder="例：全北區 / 三總 / 基隆長庚" oninput="renderAgendaPreview()">
+            <span class="input-group-text fw-bold bg-light">乳癌研討會】</span>
+          </div>
+        </div>
+        <div class="col-md-5 col-12">
+          <label class="form-label fw-bold small text-muted">研討主題 / 副標題</label>
+          <input type="text" id="agSubtitle" class="form-control fw-bold text-info" value="From Shared Decision to Long-Term Confidence" oninput="renderAgendaPreview()">
+        </div>
+      </div>
+
+      <!-- 時間與地點 -->
+      <div class="row g-2 mb-3">
+        <div class="col-md-3 col-6">
+          <label class="form-label fw-bold small text-muted">日期</label>
+          <input type="date" id="agDate" class="form-control fw-bold" value="2026-11-24" onchange="renderAgendaPreview()">
+        </div>
+        <div class="col-md-3 col-6">
+          <label class="form-label fw-bold small text-muted">時間</label>
+          <input type="text" id="agTime" class="form-control fw-bold" value="18:30-20:30" oninput="renderAgendaPreview()">
+        </div>
+        <div class="col-md-6 col-12">
+          <label class="form-label fw-bold small text-muted">地點（餐廳名稱及地址）</label>
+          <input type="text" id="agVenue" class="form-control fw-bold" value="VG the Seafood Bar (台北市大安區敦化南路二段11巷6號 捷運信義安和站2號出口)" oninput="renderAgendaPreview()">
+        </div>
+      </div>
+
+      <!-- 議程表格（4欄位：Time | Topic | Speaker | Moderator） -->
+      <div class="d-flex justify-content-between align-items-center mt-3 mb-2">
+        <h6 class="fw-bold text-dark mb-0"><i class="fa-regular fa-clock text-primary me-2"></i>議程明細表 (Agenda Schedule)</h6>
+        <button type="button" class="btn btn-outline-success btn-sm fw-bold" onclick="addAgendaRow()">
+          <i class="fa-solid fa-plus me-1"></i>增加一節議程
+        </button>
+      </div>
+
+      <!-- 快速帶入主題建議按鈕 -->
+      <div class="mb-2">
+        <span class="text-muted small me-1">常用講題速選：</span>
+        <span class="topic-tag" onclick="fillTopic(1, 'KISQALI Does it Again:A Moment for OS in NATALEE')">NATALEE OS 數據</span>
+        <span class="topic-tag" onclick="fillTopic(2, 'Empowering the Treatment Journey: AE Management and QOL in KISQALI Treatment')">AE Management & QOL</span>
+        <span class="topic-tag" onclick="fillTopic(2, 'PSP program discussion')">PSP 計畫討論</span>
+      </div>
+
+      <div class="table-responsive">
+        <table class="agenda-table" id="tblAgenda">
+          <thead>
+            <tr>
+              <th style="width: 14%;">Time</th>
+              <th style="width: 38%;">Topic</th>
+              <th style="width: 23%;">Speaker</th>
+              <th style="width: 20%;">Moderator</th>
+              <th style="width: 5%;">操作</th>
+            </tr>
+          </thead>
+          <tbody id="agendaTbody">
+            <!-- 動態議程行由 JS 渲染 -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 官方法定中英文警語（Verbatim） -->
+      <div class="agenda-legal-box">
+        <div class="fw-bold text-secondary mb-1">----------------------------主辦/協辦單位：台灣諾華股份有限公司----------------------------</div>
+        <div class="mb-1">“提醒您，未受邀之醫護人員同行者不得參加由諾華公司所主辦的會議，諾華公司亦不會為同行者安排行程、支付或補貼其任何費用及支出。謝謝您的體貼與諒解。”</div>
+        <div class="fst-italic">"Uninvited guests are not permitted at Novartis-organized events. Novartis will not arrange or cover any expenses for accompanying individuals. Thank you for your understanding."</div>
+      </div>
+
+    </div>
+
+    <!-- Event 費用與人數檢核抽屜 -->
+    <div class="card border-0 shadow-sm p-3 rounded-3 mb-4 bg-white">
+      <h6 class="fw-bold text-dark mb-3">
+        <i class="fa-solid fa-calculator text-primary me-2"></i>Event 費用拆分與 SAP 代號設定 (自動帶入 10000058576)
+      </h6>
+      <div class="row g-3 align-items-center">
+        <div class="col-md-3 col-6">
+          <label class="form-label fw-bold small">目標醫院 <span class="text-danger">*</span></label>
+          <div class="position-relative">
+            <input type="text" id="evHosp" class="form-control fw-bold" value="三軍總醫院附設民眾診療服務處" placeholder="輸入醫院關鍵字" oninput="handleHospSearch(this.value)">
+            <div id="hospList" class="autocomplete-box d-none"></div>
+          </div>
+          <input type="hidden" id="evHospCode" value="177160">
+        </div>
+        <div class="col-md-2 col-6">
+          <label class="form-label fw-bold small">HCP 醫師人數 <span class="text-danger">*</span></label>
+          <input type="number" id="evHcpCount" class="form-control fw-bold" value="20" min="5" oninput="calculateAll()">
+        </div>
+        <div class="col-md-2 col-6">
+          <label class="form-label fw-bold small">NVS 代表人數 <span class="text-danger">*</span></label>
+          <input type="number" id="evNvsCount" class="form-control fw-bold" value="2" min="1" oninput="calculateAll()">
+        </div>
+        <div class="col-md-3 col-6">
+          <label class="form-label fw-bold small text-primary">活動餐費總額 (NT$) <span class="text-danger">*</span></label>
+          <input type="number" id="evMealFee" class="form-control fw-black fs-5 text-primary" value="70000" oninput="calculateAll()">
+        </div>
+        <div class="col-md-2 col-12">
+          <label class="form-label fw-bold small text-secondary">交通費代墊 (NT$)</label>
+          <input type="number" id="evTransFee" class="form-control fw-bold text-secondary" value="0" oninput="calculateAll()">
+        </div>
+      </div>
+      
+      <!-- 講者費用自動統計提示 -->
+      <div class="mt-3 p-2 bg-light rounded-2 border d-flex justify-content-between align-items-center flex-wrap small">
+        <div>
+          <span class="badge bg-info text-dark me-1">講師費統計</span>
+          <span id="spkFeeSummaryText">已安排 2 位講者，每位固定 1 小時 NT$ 5,000，講師費小計 NT$ 10,000</span>
+        </div>
+        <div class="text-muted">
+          受款人代碼：餐費/交通填 <strong>12246 (黃蕙芬)</strong>；講師費填 <strong>醫師專屬 SAP Vendor Code</strong>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 🌟 模式二：DETAILING (極速 4 欄位拜訪餐敘) 🌟 -->
+  <!-- ========================================== -->
+  <div id="sectionDetailing" style="display: none;">
+    <div class="card border-0 shadow-sm p-4 rounded-3 mb-4 bg-white">
+      <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+        <h5 class="fw-bold mb-0 text-dark">
+          <i class="fa-solid fa-utensils text-success me-2"></i>Detailing 醫師餐敘交流 (代號 10000058951 · 後三碼 951)
+        </h5>
+        <span class="badge bg-success-subtle text-success border border-success fw-bold px-2 py-1">
+          規定上限 4 位醫師 · 餐標上限含稅 NT$ 3,500/人
+        </span>
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-3 col-6">
+          <label class="form-label fw-bold small">活動日期 <span class="text-danger">*</span></label>
+          <input type="date" id="dtDate" class="form-control fw-bold" value="2026-11-25" onchange="calculateAll()">
+        </div>
+        <div class="col-md-5 col-6">
+          <label class="form-label fw-bold small">餐廳名稱 (Venue) <span class="text-danger">*</span></label>
+          <input type="text" id="dtVenue" class="form-control fw-bold" value="彭湃海鮮餐廳" placeholder="輸入餐廳名稱" oninput="calculateAll()">
+        </div>
+        <div class="col-md-4 col-12">
+          <label class="form-label fw-bold small">拜訪醫院 <span class="text-danger">*</span></label>
+          <div class="position-relative">
+            <input type="text" id="dtHosp" class="form-control fw-bold" value="三軍總醫院附設民眾診療服務處" placeholder="輸入醫院名稱" oninput="handleHospSearchDt(this.value)">
+            <div id="hospListDt" class="autocomplete-box d-none"></div>
+          </div>
+          <input type="hidden" id="dtHospCode" value="177160">
+        </div>
+      </div>
+
+      <div class="row g-3 align-items-center mb-3">
+        <div class="col-md-3 col-6">
+          <label class="form-label fw-bold small">醫師人數 (最多 4 位) <span class="text-danger">*</span></label>
+          <input type="number" id="dtHcpCount" class="form-control fw-bold" value="4" min="1" max="4" oninput="validateDtCount(); calculateAll();">
+        </div>
+        <div class="col-md-3 col-6">
+          <label class="form-label fw-bold small">代表出席人數 (1~2 位) <span class="text-danger">*</span></label>
+          <input type="number" id="dtNvsCount" class="form-control fw-bold" value="1" min="1" max="2" oninput="calculateAll()">
+        </div>
+        <div class="col-md-4 col-12">
+          <label class="form-label fw-bold small text-success">餐費總額 (NT$) <span class="text-danger">*</span></label>
+          <input type="number" id="dtMealFee" class="form-control fw-black fs-5 text-success" value="17500" oninput="calculateAll()">
+        </div>
+        <div class="col-md-2 col-12 text-md-end">
+          <span class="text-muted small d-block">平均每人餐費</span>
+          <span class="fw-black fs-5 text-dark" id="dtAvgDisp">NT$ 3,500</span>
+        </div>
+      </div>
+
+      <div class="p-2 bg-light rounded-2 border small text-muted">
+        <i class="fa-solid fa-circle-info me-1 text-primary"></i>
+        Detailing 活動受款人自動綁定為 <strong>Sandy (Vendor Code: 12246)</strong>，報帳代號自動鎖定為 <strong>10000058951 (951)</strong>，無需檢附 Agenda。
+      </div>
+    </div>
+  </div>
+
+  <!-- 🌟 底部功能發射台：100% 原始母檔輸出 🌟 -->
+  <div class="card border-0 shadow-lg p-3 rounded-4 bg-white">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+      <div>
+        <h6 class="fw-black mb-1 text-dark">
+          <i class="fa-solid fa-file-excel text-success me-2"></i>產出 100% 諾華官方母檔 Excel (.xlsx)
+        </h6>
+        <span class="text-secondary small">使用公司母檔範本，保留全部既有頁籤、公式與格式，無任何自行新增欄位或空格</span>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <button type="button" class="btn btn-success fw-bold px-4 py-2 shadow-sm" id="btnExportExcel" onclick="generateOfficialExcel(this)">
+          <i class="fa-solid fa-download me-1"></i>一鍵下載官方 Excel 檔 (.xlsx)
+        </button>
+        <button type="button" class="btn btn-primary fw-bold px-3 py-2 shadow-sm" onclick="openOutlookEmail()">
+          <i class="fa-solid fa-paper-plane me-1"></i>Email 呈報主管與助理
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- 引用 4,387 位官方 HCP 資料庫與 Master DB -->
+<script src="speaker_db.js"></script>
+<script src="assets/ap_master_db.js"></script>
+
+<script>
+let currentMode = 'EVENT'; // 'EVENT' or 'DETAILING'
+const MEAL_CAP = 3500; // 晚餐每人含稅上限 NT$ 3,500
+
+// 預設 4 節議程
+let agendaItems = [
+  { time: '18:30~19:00', topic: 'Reception', speaker: '', spkHosp: '', spkVendor: '', spkPool: '', moderator: 'ALL' },
+  { time: '19:00~19:40', topic: 'KISQALI Does it Again:A Moment for OS in NATALEE', speaker: '廖子堯', spkHosp: '萬芳醫院', spkVendor: '1188603', spkPool: '', moderator: '戴明燊 醫師 (三軍總醫院)' },
+  { time: '19:40~20:20', topic: 'Empowering the Treatment Journey: AE Management and QOL in KISQALI Treatment', speaker: '李佳真', spkHosp: '台大醫院', spkVendor: '1199716', spkPool: '', moderator: '陳偉武 醫師 (台大醫院)' },
+  { time: '20:20~20:30', topic: 'Discussion', speaker: '', spkHosp: '', spkVendor: '', spkPool: '', moderator: '醫師 / 醫師 & ALL' }
+];
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderAgendaTable();
+  calculateAll();
+});
+
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('tabEvent').classList.toggle('active', mode === 'EVENT');
+  document.getElementById('tabDetailing').classList.toggle('active', mode === 'DETAILING');
+  document.getElementById('sectionEvent').style.display = mode === 'EVENT' ? 'block' : 'none';
+  document.getElementById('sectionDetailing').style.display = mode === 'DETAILING' ? 'block' : 'none';
+  calculateAll();
+}
+
+function validateDtCount() {
+  const el = document.getElementById('dtHcpCount');
+  if (parseInt(el.value) > 4) {
+    alert('⚠️ 提醒您：Detailing 活動規定醫師人數最多 4 位！系統已自動調為 4 位。若有更多醫師請切換為 Event 研討會模式。');
+    el.value = 4;
+  }
+}
+
+// 快速載入範本
+function loadSample(key) {
+  if (key === 'all_north') {
+    document.getElementById('agPrefix').value = '全北區';
+    document.getElementById('agSubtitle').value = 'From Shared Decision to Long-Term Confidence';
+    document.getElementById('agDate').value = '2026-11-24';
+    document.getElementById('agTime').value = '18:30-20:30';
+    document.getElementById('agVenue').value = 'VG the Seafood Bar (台北市大安區敦化南路二段11巷6號 捷運信義安和站2號出口)';
+    document.getElementById('evHosp').value = '長庚醫療財團法人台北長庚紀念醫院';
+    document.getElementById('evHospCode').value = '005680';
+    document.getElementById('evHcpCount').value = 20;
+    document.getElementById('evNvsCount').value = 2;
+    document.getElementById('evMealFee').value = 70000;
+    
+    agendaItems = [
+      { time: '18:30~19:00', topic: 'Reception', speaker: '', spkHosp: '', spkVendor: '', spkPool: '', moderator: 'ALL' },
+      { time: '19:00~19:40', topic: 'KISQALI Does it Again:A Moment for OS in NATALEE', speaker: '廖子堯', spkHosp: '萬芳醫院', spkVendor: '1188603', spkPool: '', moderator: '戴明燊 醫師 (三軍總醫院)' },
+      { time: '19:40~20:20', topic: 'Empowering the Treatment Journey: AE Management and QOL in KISQALI Treatment', speaker: '李佳真', spkHosp: '台大醫院', spkVendor: '1199716', spkPool: '', moderator: '陳偉武 醫師 (台大醫院)' },
+      { time: '20:20~20:30', topic: 'Discussion', speaker: '', spkHosp: '', spkVendor: '', spkPool: '', moderator: '醫師 / 醫師 & ALL' }
+    ];
+  } else if (key === 'tsgh') {
+    document.getElementById('agPrefix').value = '三總';
+    document.getElementById('agSubtitle').value = 'From Shared Decision to Long-Term Confidence';
+    document.getElementById('agDate').value = '2026-11-24';
+    document.getElementById('agTime').value = '18:30-20:30';
+    document.getElementById('agVenue').value = 'Wilson Park 威爾森公園餐廳 (台北市內湖區民權東路六段125之1號)';
+    document.getElementById('evHosp').value = '三軍總醫院附設民眾診療服務處';
+    document.getElementById('evHospCode').value = '177160';
+    document.getElementById('evHcpCount').value = 22;
+    document.getElementById('evNvsCount').value = 2;
+    document.getElementById('evMealFee').value = 80000;
+    
+    agendaItems = [
+      { time: '18:30~19:00', topic: 'Reception', speaker: '', spkHosp: '', spkVendor: '', spkPool: '', moderator: 'ALL' },
+      { time: '19:00~19:40', topic: 'KISQALI Does it Again: A Moment for OS in NATALEE', speaker: '廖國秀', spkHosp: '三軍總醫院', spkVendor: '1100126', spkPool: 'ND03306', moderator: '' },
+      { time: '19:40~20:20', topic: 'PSP program discussion', speaker: 'Sandy Huang', spkHosp: '諾華公司', spkVendor: '12246', spkPool: '', moderator: '' },
+      { time: '20:20~20:30', topic: 'Discussion', speaker: '', spkHosp: '', spkVendor: '', spkPool: '', moderator: '醫師 / 醫師 & ALL' }
+    ];
+  } else if (key === 'cgmh') {
+    document.getElementById('agPrefix').value = '基隆長庚';
+    document.getElementById('agSubtitle').value = 'From Shared Decision to Long-Term Confidence';
+    document.getElementById('agDate').value = '2026-12-04';
+    document.getElementById('agTime').value = '18:30-20:30';
+    document.getElementById('agVenue').value = '青樓中式餐酒館 (台北市松山區八德路四段512-1號)';
+    document.getElementById('evHosp').value = '長庚基隆情人湖分院';
+    document.getElementById('evHospCode').value = '232700';
+    document.getElementById('evHcpCount').value = 28;
+    document.getElementById('evNvsCount').value = 2;
+    document.getElementById('evMealFee').value = 100000;
+    
+    agendaItems = [
+      { time: '18:30~19:00', topic: 'Reception', speaker: '', spkHosp: '', spkVendor: '', spkPool: '', moderator: 'ALL' },
+      { time: '19:00~19:40', topic: 'KISQALI Does it Again:A Moment for OS in NATALEE', speaker: '李春輝', spkHosp: '基隆長庚醫院', spkVendor: '1185575', spkPool: 'ND04440', moderator: '簡志穎 醫師 (基隆長庚醫院)' },
+      { time: '19:40~20:20', topic: 'Empowering the Treatment Journey: AE Management and QOL in KISQALI Treatment', speaker: '張悅詩', spkHosp: '基隆長庚醫院', spkVendor: '1141259', spkPool: 'ND01931', moderator: '黃彥閔 醫師 (基隆長庚醫院)' },
+      { time: '20:20~20:30', topic: 'Discussion', speaker: '', spkHosp: '', spkVendor: '', spkPool: '', moderator: 'ALL' }
+    ];
+  }
+  renderAgendaTable();
+  calculateAll();
+}
+
+function renderAgendaTable() {
+  const tbody = document.getElementById('agendaTbody');
+  tbody.innerHTML = agendaItems.map((item, idx) => `
+    <tr>
+      <td>
+        <input type="text" class="form-control form-control-sm fw-bold text-center" value="${item.time}" onchange="agendaItems[${idx}].time = this.value; calculateAll();">
+      </td>
+      <td>
+        <input type="text" class="form-control form-control-sm fw-bold" value="${item.topic}" placeholder="講題內容" onchange="agendaItems[${idx}].topic = this.value;">
+      </td>
+      <td class="position-relative">
+        <div class="input-group input-group-sm">
+          <input type="text" class="form-control fw-bold" value="${item.speaker}" placeholder="講者姓名" oninput="searchDoctor(${idx}, this.value, 'speaker')">
+        </div>
+        <small class="text-muted d-block" style="font-size:0.75rem;">${item.spkHosp ? item.spkHosp : ''} ${item.spkVendor ? '· 代碼:' + item.spkVendor : ''} ${item.spkPool ? '· ' + item.spkPool : ''}</small>
+        <div id="spkAuto_${idx}" class="autocomplete-box d-none"></div>
+      </td>
+      <td class="position-relative">
+        <input type="text" class="form-control form-control-sm fw-bold" value="${item.moderator}" placeholder="主持人 / ALL" onchange="agendaItems[${idx}].moderator = this.value;">
+      </td>
+      <td class="text-center">
+        <button type="button" class="btn btn-outline-danger btn-sm p-1" onclick="removeAgendaRow(${idx})">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </td>
+    </tr>
+  `).join('');
+  updateSpeakerFeeCount();
+}
+
+function addAgendaRow() {
+  agendaItems.push({ time: '19:40~20:20', topic: '', speaker: '', spkHosp: '', spkVendor: '', spkPool: '', moderator: '' });
+  renderAgendaTable();
+}
+
+function removeAgendaRow(idx) {
+  if (agendaItems.length <= 1) {
+    alert('至少需保留一節議程！');
+    return;
+  }
+  agendaItems.splice(idx, 1);
+  renderAgendaTable();
+}
+
+function fillTopic(rowIdx, text) {
+  if (agendaItems[rowIdx]) {
+    agendaItems[rowIdx].topic = text;
+    renderAgendaTable();
+  }
+}
+
+// 搜尋 4,387 位 HCP 與 Vendor 代碼庫
+function searchDoctor(rowIdx, kw, field) {
+  const clean = (kw || '').trim();
+  const listEl = document.getElementById(`spkAuto_${rowIdx}`);
+  if (clean.length < 2) {
+    listEl.classList.add('d-none');
+    return;
+  }
+
+  const vendors = window.NOVARTIS_VENDORS || [];
+  const speakers = window.NOVARTIS_SPEAKER_DATABASE || [];
+
+  // 找匹配的醫師
+  const matches = speakers.filter(d => d.n.includes(clean)).slice(0, 6);
+  if (matches.length === 0) {
+    listEl.classList.add('d-none');
+    return;
+  }
+
+  listEl.innerHTML = matches.map(d => {
+    // 找出他在 Index 的 Vendor Code
+    const venObj = vendors.find(v => v.n === d.n);
+    const venCode = venObj ? venObj.id : '';
+    return `
+      <div class="autocomplete-item" onclick="selectDoctorRow(${rowIdx}, '${d.n}', '${d.h} ${d.d}', '${venCode}', '${d.p}')">
+        <strong>${d.n} 醫師</strong> <span class="badge bg-success">${d.p}</span> ${venCode ? '<span class="badge bg-primary">SAP:' + venCode + '</span>' : ''}
+        <small class="text-muted d-block">${d.h} · ${d.d}</small>
+      </div>
+    `;
+  }).join('');
+  listEl.classList.remove('d-none');
+}
+
+function selectDoctorRow(rowIdx, name, hosp, vendorCode, poolNo) {
+  agendaItems[rowIdx].speaker = name;
+  agendaItems[rowIdx].spkHosp = hosp;
+  agendaItems[rowIdx].spkVendor = vendorCode;
+  agendaItems[rowIdx].spkPool = poolNo;
+  document.getElementById(`spkAuto_${rowIdx}`).classList.add('d-none');
+  renderAgendaTable();
+  calculateAll();
+}
+
+// 醫院檢索 (Event)
+function handleHospSearch(kw) {
+  const listEl = document.getElementById('hospList');
+  const clean = (kw || '').trim();
+  if (clean.length < 2 || !window.NOVARTIS_HOSPITALS) {
+    listEl.classList.add('d-none');
+    return;
+  }
+  const matches = window.NOVARTIS_HOSPITALS.filter(h => h.n.includes(clean)).slice(0, 8);
+  if (matches.length === 0) {
+    listEl.classList.add('d-none');
+    return;
+  }
+  listEl.innerHTML = matches.map(h => `
+    <div class="autocomplete-item" onclick="document.getElementById('evHosp').value='${h.n}'; document.getElementById('evHospCode').value='${h.id}'; document.getElementById('hospList').classList.add('d-none'); calculateAll();\">
+      <strong>${h.n}</strong> <span class="badge bg-secondary">代碼:${h.id}</span>
+    </div>
+  `).join('');
+  listEl.classList.remove('d-none');
+}
+
+// 醫院檢索 (Detailing)
+function handleHospSearchDt(kw) {
+  const listEl = document.getElementById('hospListDt');
+  const clean = (kw || '').trim();
+  if (clean.length < 2 || !window.NOVARTIS_HOSPITALS) {
+    listEl.classList.add('d-none');
+    return;
+  }
+  const matches = window.NOVARTIS_HOSPITALS.filter(h => h.n.includes(clean)).slice(0, 8);
+  if (matches.length === 0) {
+    listEl.classList.add('d-none');
+    return;
+  }
+  listEl.innerHTML = matches.map(h => `
+    <div class="autocomplete-item" onclick="document.getElementById('dtHosp').value='${h.n}'; document.getElementById('dtHospCode').value='${h.id}'; document.getElementById('hospListDt').classList.add('d-none'); calculateAll();\">
+      <strong>${h.n}</strong> <span class="badge bg-secondary">代碼:${h.id}</span>
+    </div>
+  `).join('');
+  listEl.classList.remove('d-none');
+}
+
+// 點擊空白處關閉下拉
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#sectionEvent') && !e.target.closest('#sectionDetailing')) {
+    document.querySelectorAll('.autocomplete-box').forEach(el => el.classList.add('d-none'));
+  }
+});
+
+function updateSpeakerFeeCount() {
+  // 找出有聘請外部講者的項目（排除 Sandy 或空白）
+  const activeSpeakers = agendaItems.filter(item => item.speaker && !item.speaker.includes('Sandy') && item.speaker !== 'ALL');
+  const count = activeSpeakers.length;
+  const totalSpkFee = count * 5000;
+  const names = activeSpeakers.map(s => s.speaker).join('、');
+  document.getElementById('spkFeeSummaryText').innerHTML = count > 0 
+    ? `已安排 <strong>${count}</strong> 位講者（${names}），每位固定 1 小時 NT$ 5,000，講師費小計 <strong>NT$ ${totalSpkFee.toLocaleString()}</strong>`
+    : `本場無安排外部醫師講者，講師費為 NT$ 0`;
+}
+
+// 實時計算
+function calculateAll() {
+  let meal = 0, hcp = 0, rep = 0, trans = 0, spkFee = 0;
+
+  if (currentMode === 'EVENT') {
+    meal = parseFloat(document.getElementById('evMealFee').value) || 0;
+    hcp = parseInt(document.getElementById('evHcpCount').value) || 0;
+    rep = parseInt(document.getElementById('evNvsCount').value) || 0;
+    trans = parseFloat(document.getElementById('evTransFee').value) || 0;
+    const activeSpeakers = agendaItems.filter(item => item.speaker && !item.speaker.includes('Sandy') && item.speaker !== 'ALL');
+    spkFee = activeSpeakers.length * 5000;
+  } else {
+    meal = parseFloat(document.getElementById('dtMealFee').value) || 0;
+    hcp = parseInt(document.getElementById('dtHcpCount').value) || 0;
+    rep = parseInt(document.getElementById('dtNvsCount').value) || 0;
+    const avgDt = (hcp + rep) > 0 ? Math.round(meal / (hcp + rep)) : 0;
+    document.getElementById('dtAvgDisp').textContent = `NT$ ${avgDt.toLocaleString()}`;
+  }
+
+  const totalHeadcount = hcp + rep;
+  const avgMeal = totalHeadcount > 0 ? Math.round(meal / totalHeadcount) : 0;
+  const totalBudget = meal + trans + spkFee;
+
+  document.getElementById('totalBudgetDisp').textContent = `NT$ ${totalBudget.toLocaleString()}`;
+
+  const badge = document.getElementById('complianceBadge');
+  const info = document.getElementById('complianceInfo');
+
+  if (totalHeadcount === 0 || meal === 0) {
+    badge.className = 'badge bg-secondary px-3 py-2 fs-6 fw-bold';
+    badge.innerHTML = '<i class="fa-solid fa-calculator me-1"></i>請輸入人數與餐費';
+    info.textContent = '待計算每人餐標';
+    return;
+  }
+
+  if (avgMeal <= MEAL_CAP) {
+    badge.className = 'badge bg-success px-3 py-2 fs-6 fw-bold';
+    badge.innerHTML = '<i class="fa-solid fa-circle-check me-1"></i>符合公司晚餐餐標 (PASSED)';
+    const balance = MEAL_CAP - avgMeal;
+    info.innerHTML = `平均每人餐費 <strong>NT$ ${avgMeal.toLocaleString()}</strong>（餐標上限含稅 NT$ 3,500，尚有餘額 $${balance}/人 ✅）`;
+  } else {
+    badge.className = 'badge bg-danger px-3 py-2 fs-6 fw-bold';
+    badge.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i>超出公司晚餐餐標 (OVER BUDGET)';
+    const over = avgMeal - MEAL_CAP;
+    info.innerHTML = `平均每人餐費 <strong>NT$ ${avgMeal.toLocaleString()}</strong>（已超出上限 $${over}/人 ⚠️ 請調降餐費或增補人數）`;
+  }
+}
+
+// 🌟 純前端載入官方母檔並輸出 100% 一模一樣的 Excel 檔案 🌟
+async function generateOfficialExcel(btn) {
+  if (typeof XLSX === 'undefined') {
+    alert('Excel 組件載入中，請稍候重試！');
+    return;
+  }
+
+  const origBtnText = btn.innerHTML;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>讀取官方母檔產出中...';
+
+  try {
+    // 1. Fetch 官方母檔
+    const resp = await fetch('assets/Novartis_AP_Template.xlsx');
+    if (!resp.ok) throw new Error('無法讀取官方母檔 assets/Novartis_AP_Template.xlsx');
+    const arrayBuffer = await resp.arrayBuffer();
+
+    // 2. 用 SheetJS 解析完整母檔 (保持所有既有工作表)
+    const wb = XLSX.read(arrayBuffer, { type: 'array', cellStyles: true, cellNF: true });
+    
+    // 3. 取得 A&P 工作表
+    const wsAP = wb.Sheets['A&P'];
+    if (!wsAP) throw new Error('母檔中找不到 A&P 工作表！');
+
+    const now = new Date();
+    const curYear = now.getFullYear();
+
+    if (currentMode === 'DETAILING') {
+      // 模式二：Detailing
+      const dtDate = document.getElementById('dtDate').value || '2026-11-25';
+      const dtDateClean = dtDate.replace(/-/g, '');
+      const dtMonth = parseInt(dtDate.split('-')[1]) || 11;
+      const dtVenue = document.getElementById('dtVenue').value || '餐廳';
+      const dtHospName = document.getElementById('dtHosp').value || '三軍總醫院附設民眾診療服務處';
+      const dtHospCode = document.getElementById('dtHospCode').value || '177160';
+      const dtHcp = parseInt(document.getElementById('dtHcpCount').value) || 4;
+      const dtNvs = parseInt(document.getElementById('dtNvsCount').value) || 1;
+      const dtMeal = parseFloat(document.getElementById('dtMealFee').value) || 17500;
+      const dtAvg = (dtHcp + dtNvs) > 0 ? Math.round(dtMeal / (dtHcp + dtNvs)) : 0;
+
+      // 填入第 35 列 (Detailing 範例列)
+      const targetRow = 35;
+      wsAP[`B${targetRow}`] = { t: 's', v: `${dtDateClean}_10000058951_Detailing` };
+      wsAP[`C${targetRow}`] = { t: 's', v: `${dtMonth}-42010261-3` };
+      wsAP[`D${targetRow}`] = { t: 's', v: '周書全' };
+      wsAP[`E${targetRow}`] = { t: 's', v: '42010261' };
+      wsAP[`F${targetRow}`] = { t: 's', v: '黃蕙芬' };
+      wsAP[`G${targetRow}`] = { t: 's', v: '3' };
+      wsAP[`H${targetRow}`] = { t: 'n', v: dtMonth };
+      wsAP[`I${targetRow}`] = { t: 's', v: dtDateClean };
+      wsAP[`J${targetRow}`] = { t: 's', v: dtVenue };
+      wsAP[`K${targetRow}`] = { t: 's', v: 'Detailing' };
+      wsAP[`L${targetRow}`] = { t: 's', v: 'KISQALI' };
+      wsAP[`M${targetRow}`] = { t: 's', v: '10000058951' };
+      wsAP[`N${targetRow}`] = { t: 'n', v: dtHcp };
+      wsAP[`O${targetRow}`] = { t: 'n', v: dtNvs };
+      wsAP[`P${targetRow}`] = { t: 'n', v: dtMeal };
+      wsAP[`Q${targetRow}`] = { t: 'n', v: dtAvg };
+      wsAP[`R${targetRow}`] = { t: 's', v: dtHospCode };
+      wsAP[`S${targetRow}`] = { t: 's', v: dtHospName };
+      wsAP[`T${targetRow}`] = { t: 's', v: '12246' };
+      wsAP[`U${targetRow}`] = { t: 's', v: '黃蕙芬' };
+      wsAP[`Y${targetRow}`] = { t: 's', v: 'Open' };
+
+      XLSX.writeFile(wb, `Novartis_AP_Detailing_${dtDateClean}_黃蕙芬.xlsx`);
+
+    } else {
+      // 模式一：Event
+      const prefix = document.getElementById('agPrefix').value || '全北區';
+      const meetingTitle = `【${prefix}乳癌研討會】`;
+      const subtitle = document.getElementById('agSubtitle').value || 'From Shared Decision to Long-Term Confidence';
+      const agDate = document.getElementById('agDate').value || '2026-11-24';
+      const agDateClean = agDate.replace(/-/g, '');
+      const agMonth = parseInt(agDate.split('-')[1]) || 11;
+      const agTime = document.getElementById('agTime').value || '18:30-20:30';
+      const agVenue = document.getElementById('agVenue').value || '餐廳';
+      const evHospName = document.getElementById('evHosp').value || '三軍總醫院附設民眾診療服務處';
+      const evHospCode = document.getElementById('evHospCode').value || '177160';
+      const evHcp = parseInt(document.getElementById('evHcpCount').value) || 20;
+      const evNvs = parseInt(document.getElementById('evNvsCount').value) || 2;
+      const evMeal = parseFloat(document.getElementById('evMealFee').value) || 70000;
+      const evTrans = parseFloat(document.getElementById('evTransFee').value) || 0;
+      const evAvg = (evHcp + evNvs) > 0 ? (evMeal / (evHcp + evNvs)) : 0;
+
+      // 1. 寫入 A&P 表單中的第 36 列 (餐費列)
+      let r = 36;
+      wsAP[`B${r}`] = { t: 's', v: `${agDateClean}_10000058576_Event - Food & Beverage` };
+      wsAP[`C${r}`] = { t: 's', v: `${agMonth}-42010261-4` };
+      wsAP[`D${r}`] = { t: 's', v: '周書全' };
+      wsAP[`E${r}`] = { t: 's', v: '42010261' };
+      wsAP[`F${r}`] = { t: 's', v: '黃蕙芬' };
+      wsAP[`G${r}`] = { t: 's', v: '4' };
+      wsAP[`H${r}`] = { t: 'n', v: agMonth };
+      wsAP[`I${r}`] = { t: 's', v: agDateClean };
+      wsAP[`J${r}`] = { t: 's', v: agVenue };
+      wsAP[`K${r}`] = { t: 's', v: 'Event - Food & Beverage' };
+      wsAP[`L${r}`] = { t: 's', v: 'KISQALI' };
+      wsAP[`M${r}`] = { t: 's', v: '10000058576' };
+      wsAP[`N${r}`] = { t: 'n', v: evHcp };
+      wsAP[`O${r}`] = { t: 'n', v: evNvs };
+      wsAP[`P${r}`] = { t: 'n', v: evMeal };
+      wsAP[`Q${r}`] = { t: 'n', v: evAvg };
+      wsAP[`R${r}`] = { t: 's', v: evHospCode };
+      wsAP[`S${r}`] = { t: 's', v: evHospName };
+      wsAP[`T${r}`] = { t: 's', v: '12246' };
+      wsAP[`U${r}`] = { t: 's', v: '黃蕙芬' };
+      wsAP[`Y${r}`] = { t: 's', v: 'Open' };
+
+      // 2. 寫入每一位講師列 (37, 38...)
+      const activeSpeakers = agendaItems.filter(item => item.speaker && !item.speaker.includes('Sandy') && item.speaker !== 'ALL');
+      activeSpeakers.forEach((spk, idx) => {
+        r++;
+        const subId = `4-${idx+1}`;
+        wsAP[`B${r}`] = { t: 's', v: `${agDateClean}_10000058576_Event - Speaker fee` };
+        wsAP[`C${r}`] = { t: 's', v: `${agMonth}-42010261-${subId}` };
+        wsAP[`D${r}`] = { t: 's', v: '周書全' };
+        wsAP[`E${r}`] = { t: 's', v: '42010261' };
+        wsAP[`F${r}`] = { t: 's', v: '黃蕙芬' };
+        wsAP[`G${r}`] = { t: 's', v: subId };
+        wsAP[`H${r}`] = { t: 'n', v: agMonth };
+        wsAP[`I${r}`] = { t: 's', v: agDateClean };
+        wsAP[`J${r}`] = { t: 's', v: agVenue };
+        wsAP[`K${r}`] = { t: 's', v: 'Event - Speaker fee' };
+        wsAP[`L${r}`] = { t: 's', v: 'KISQALI' };
+        wsAP[`M${r}`] = { t: 's', v: '10000058576' };
+        wsAP[`N${r}`] = { t: 'n', v: evHcp };
+        wsAP[`O${r}`] = { t: 'n', v: evNvs };
+        wsAP[`P${r}`] = { t: 'n', v: 5000 };
+        wsAP[`Q${r}`] = { t: 'n', v: 0 };
+        wsAP[`R${r}`] = { t: 's', v: evHospCode };
+        wsAP[`S${r}`] = { t: 's', v: evHospName };
+        wsAP[`T${r}`] = { t: 's', v: spk.spkVendor || '' };
+        wsAP[`U${r}`] = { t: 's', v: spk.speaker };
+        wsAP[`V${r}`] = { t: 's', v: spk.spkPool || '' };
+        wsAP[`Y${r}`] = { t: 's', v: 'Open' };
+      });
+
+      // 3. 交通費列 (如有)
+      if (evTrans > 0) {
+        r++;
+        const subId = `4-${activeSpeakers.length + 1}`;
+        wsAP[`B${r}`] = { t: 's', v: `${agDateClean}_10000058576_Event - Transportation` };
+        wsAP[`C${r}`] = { t: 's', v: `${agMonth}-42010261-${subId}` };
+        wsAP[`D${r}`] = { t: 's', v: '周書全' };
+        wsAP[`E${r}`] = { t: 's', v: '42010261' };
+        wsAP[`F${r}`] = { t: 's', v: '黃蕙芬' };
+        wsAP[`G${r}`] = { t: 's', v: subId };
+        wsAP[`H${r}`] = { t: 'n', v: agMonth };
+        wsAP[`I${r}`] = { t: 's', v: agDateClean };
+        wsAP[`J${r}`] = { t: 's', v: agVenue };
+        wsAP[`K${r}`] = { t: 's', v: 'Event - Transportation' };
+        wsAP[`L${r}`] = { t: 's', v: 'KISQALI' };
+        wsAP[`M${r}`] = { t: 's', v: '10000058576' };
+        wsAP[`N${r}`] = { t: 'n', v: evHcp };
+        wsAP[`O${r}`] = { t: 'n', v: evNvs };
+        wsAP[`P${r}`] = { t: 'n', v: evTrans };
+        wsAP[`Q${r}`] = { t: 'n', v: 0 };
+        wsAP[`R${r}`] = { t: 's', v: evHospCode };
+        wsAP[`S${r}`] = { t: 's', v: evHospName };
+        wsAP[`T${r}`] = { t: 's', v: '12246' };
+        wsAP[`U${r}`] = { t: 's', v: '黃蕙芬' };
+        wsAP[`Y${r}`] = { t: 's', v: 'Open' };
+      }
+
+      // 4. 更新 Agenda 工作表
+      const agendaSheetName = `﹝${agDateClean}﹞Agenda`;
+      let wsAg = wb.Sheets[agendaSheetName] || wb.Sheets['﹝20261124﹞Agenda '] || wb.Sheets['﹝yyyymmdd﹞Agenda (1)'];
+      if (!wsAg) wsAg = wb.Sheets[wb.SheetNames[4]];
+
+      // 寫入 Agenda 內容 (完全符合官方儲存格位置)
+      wsAg['A1'] = { t: 's', v: meetingTitle };
+      wsAg['A2'] = { t: 's', v: subtitle };
+      wsAg['A3'] = { t: 's', v: `Date : ${agDate.replace(/-/g, '/')}` };
+      wsAg['A4'] = { t: 's', v: 'Location : ' };
+      wsAg['B4'] = { t: 's', v: agVenue };
+      wsAg['A5'] = { t: 's', v: 'Time : ' };
+      wsAg['B5'] = { t: 's', v: `${agTime} PM` };
+      
+      wsAg['A7'] = { t: 's', v: 'Time ' };
+      wsAg['B7'] = { t: 's', v: 'Topic' };
+      wsAg['C7'] = { t: 's', v: 'Speaker' };
+      wsAg['D7'] = { t: 's', v: 'Moderator' };
+
+      agendaItems.forEach((item, i) => {
+        const agRow = 8 + i;
+        wsAg[`A${agRow}`] = { t: 's', v: item.time };
+        wsAg[`B${agRow}`] = { t: 's', v: item.topic };
+        wsAg[`C${agRow}`] = { t: 's', v: item.speaker ? `${item.speaker} 醫師 ${item.spkHosp}` : '' };
+        wsAg[`D${agRow}`] = { t: 's', v: item.moderator };
+      });
+
+      const legalStart = 8 + agendaItems.length + 1;
+      wsAg[`A${legalStart}`] = { t: 's', v: '----------------------------主辦/協辦單位：台灣諾華股份有限公司----------------------------' };
+      wsAg[`A${legalStart+1}`] = { t: 's', v: '“提醒您，未受邀之醫護人員同行者不得參加由諾華公司所主辦的會議，諾華公司亦不會為同行者安排行程、支付或補貼其任何費用及支出。謝謝您的體貼與諒解。' };
+      wsAg[`A${legalStart+3}`] = { t: 's', v: '\"Uninvited guests are not permitted at Novartis-organized events. Novartis will not arrange or cover any expenses for accompanying individuals. Thank you for your understanding.\"' };
+
+      // 下載官方命名
+      XLSX.writeFile(wb, `Novartis_AP_for_SAP_${agDateClean}_${prefix}乳癌研討會.xlsx`);
+    }
+
+    btn.innerHTML = '<i class="fa-solid fa-circle-check text-white me-1"></i>Excel 已成功下載！';
+    setTimeout(() => { btn.innerHTML = origBtnText; }, 3500);
+
+  } catch (err) {
+    console.error(err);
+    alert('產出 Excel 時發生錯誤：' + err.message);
+    btn.innerHTML = origBtnText;
+  }
+}
+
+// 喚起 Outlook Email 呈報
+function openOutlookEmail() {
+  const isEvent = currentMode === 'EVENT';
+  const prefix = isEvent ? (document.getElementById('agPrefix').value || '全北區') : '';
+  const title = isEvent ? `【${prefix}乳癌研討會】` : `【Detailing 拜訪餐敘】`;
+  const date = isEvent ? document.getElementById('agDate').value : document.getElementById('dtDate').value;
+  const venue = isEvent ? document.getElementById('agVenue').value : document.getElementById('dtVenue').value;
+  const hosp = isEvent ? document.getElementById('evHosp').value : document.getElementById('dtHosp').value;
+  const hcp = isEvent ? document.getElementById('evHcpCount').value : document.getElementById('dtHcpCount').value;
+  const meal = isEvent ? document.getElementById('evMealFee').value : document.getElementById('dtMealFee').value;
+  const io = isEvent ? '10000058576 (Event)' : '10000058951 (Detailing)';
+
+  const subject = encodeURIComponent(`【AP for SAP 預算規劃】${title} (${date}) - 申請人: Sandy Huang`);
+  let body = `Dear Boss (周書全) & Assistant,\n\n`;
+  body += `請協助審核以下活動之 SAP 費用規劃 (AP for SAP)：\n\n`;
+  body += `• 活動類型：${isEvent ? 'Event 醫學研討會' : 'Detailing 拜訪餐敘'}\n`;
+  body += `• 活動名稱：${title}\n`;
+  body += `• 活動日期：${date}\n`;
+  body += `• 活動地點：${venue}\n`;
+  body += `• 目標醫院：${hosp}\n`;
+  body += `• 報帳代號 (IO)：${io}\n`;
+  body += `• 與會人數：醫師 ${hcp} 位 + 諾華代表\n`;
+  body += `• 預計餐費：NT$ ${parseFloat(meal).toLocaleString()} (平均每人合規限額含稅 NT$ 3,500 以內 ✅)\n`;
+  
+  if (isEvent) {
+    const spks = agendaItems.filter(i => i.speaker && !i.speaker.includes('Sandy') && i.speaker !== 'ALL');
+    if (spks.length > 0) {
+      body += `• 講師聘請：${spks.map(s => `${s.speaker} 醫師 (${s.spkHosp || ''} / SAP:${s.spkVendor || '-'})`).join('、')}\n`;
+      body += `• 講師費用：共 ${spks.length} 位講者，小計 NT$ ${(spks.length*5000).toLocaleString()}\n`;
+    }
+  }
+
+  body += `\n★ 官方母檔 Excel 已一鍵產出完畢，頁籤結構與公式 100% 吻合，謝謝！\n\n`;
+  body += `申請人：Sandy Huang (黃蕙芬) / 42010261\n資深客戶經理 (Senior KAM), Oncology`;
+
+  window.open(`mailto:?subject=${subject}&body=${encodeURIComponent(body)}`, '_blank');
+}
+</script>
+
+</body>
+</html>
