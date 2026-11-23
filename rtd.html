@@ -1041,13 +1041,19 @@ function renderAll() {
   document.getElementById('statRiceCount').textContent = rice;
   document.getElementById('statPorkCount').textContent = pork;
 
-  // 即時計算飲品總數
-  let wine = 0, soda = 0, tea = 0;
+  // 即時計算飲品總數 (嚴格優先判定「氣泡飲」，防止「無酒精氣泡飲」誤中「酒」字)
+  let wine = 0, soda = 0, tea = 0, coffee = 0;
   attendees.forEach(a => {
     const d = (a.drink || '').trim();
-    if (d.includes('酒')) wine++;
-    else if (d.includes('氣泡')) soda++;
-    else if (d.includes('茶')) tea++;
+    if (d.includes('氣泡')) {
+      soda++;
+    } else if (d.includes('紅白酒') || d.includes('紅酒') || d.includes('白酒')) {
+      wine++;
+    } else if (d.includes('茶') || d.includes('伯爵')) {
+      tea++;
+    } else if (d.includes('咖啡')) {
+      coffee++;
+    }
   });
   if (document.getElementById('statWineCount')) document.getElementById('statWineCount').textContent = wine;
   if (document.getElementById('statSodaCount')) document.getElementById('statSodaCount').textContent = soda;
@@ -1265,10 +1271,10 @@ function copyRestaurantSummary(btn) {
 
     // 2. 飲品精確統計 (依實際登記品項，不硬編品項名稱)
     let d = (a.drink || '未指定飲品').trim();
-    if (d.includes('紅白酒') || d.includes('紅酒') || d.includes('白酒')) {
-      d = '獨家單杯紅白酒';
-    } else if (d.includes('氣泡')) {
+    if (d.includes('氣泡')) {
       d = '無酒精氣泡飲';
+    } else if (d.includes('紅白酒') || d.includes('紅酒') || d.includes('白酒')) {
+      d = '獨家單杯紅白酒';
     } else if (d.includes('伯爵') || d.includes('茶')) {
       d = '獅王伯爵茶';
     } else if (d.includes('咖啡')) {
