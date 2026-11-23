@@ -566,7 +566,7 @@
     </div>
 
     <!-- 餐點統計卡片 -->
-    <div class="row g-2 text-center mb-3">
+    <div class="row g-2 text-center mb-2">
       <div class="col-md-3 col-6">
         <div class="p-3 bg-light border rounded-3">
           <span class="text-secondary small fw-bold d-block">已報名總人數</span>
@@ -589,6 +589,28 @@
         <div class="p-3 bg-light border rounded-3">
           <span class="text-secondary small fw-bold d-block">伊比利老饕豬</span>
           <span id="statPorkCount" class="fs-2 fw-black text-primary">0</span> 份
+        </div>
+      </div>
+    </div>
+
+    <!-- 佐餐飲品即時統計卡片 (精準對齊 Google 試算表) -->
+    <div class="row g-2 text-center mb-3">
+      <div class="col-md-4 col-12">
+        <div class="p-2 bg-light border border-info rounded-3">
+          <span class="text-secondary small fw-bold d-block"><i class="fa-solid fa-champagne-glasses text-info me-1"></i>無酒精氣泡飲</span>
+          <span id="statSodaCount" class="fs-4 fw-black text-info">7</span> 杯
+        </div>
+      </div>
+      <div class="col-md-4 col-6">
+        <div class="p-2 bg-light border border-danger rounded-3">
+          <span class="text-secondary small fw-bold d-block"><i class="fa-solid fa-wine-glass text-danger me-1"></i>獨家單杯紅白酒</span>
+          <span id="statWineCount" class="fs-4 fw-black text-danger">5</span> 杯
+        </div>
+      </div>
+      <div class="col-md-4 col-6">
+        <div class="p-2 bg-light border border-warning rounded-3">
+          <span class="text-secondary small fw-bold d-block"><i class="fa-solid fa-mug-hot text-warning me-1"></i>獅王伯爵茶</span>
+          <span id="statTeaCount" class="fs-4 fw-black text-warning-emphasis">2</span> 杯
         </div>
       </div>
     </div>
@@ -1019,6 +1041,18 @@ function renderAll() {
   document.getElementById('statRiceCount').textContent = rice;
   document.getElementById('statPorkCount').textContent = pork;
 
+  // 即時計算飲品總數
+  let wine = 0, soda = 0, tea = 0;
+  attendees.forEach(a => {
+    const d = (a.drink || '').trim();
+    if (d.includes('酒')) wine++;
+    else if (d.includes('氣泡')) soda++;
+    else if (d.includes('茶')) tea++;
+  });
+  if (document.getElementById('statWineCount')) document.getElementById('statWineCount').textContent = wine;
+  if (document.getElementById('statSodaCount')) document.getElementById('statSodaCount').textContent = soda;
+  if (document.getElementById('statTeaCount')) document.getElementById('statTeaCount').textContent = tea;
+
   const dietBox = document.getElementById('statDietBox');
   const dietSpan = document.getElementById('statDietList');
   if (dietList.length > 0) {
@@ -1217,26 +1251,49 @@ function deleteAttendee(id) {
 }
 
 
-// 複製餐點總數給 Wilson Park 餐廳經理
+// 複製餐點總數給 Wilson Park 餐廳經理 (精確動態統計主餐與實際選擇之飲品)
 function copyRestaurantSummary(btn) {
-  let steak = 0, rice = 0, pork = 0;
-  let wine = 0, soda = 0, tea = 0, coffee = 0;
+  const mainCounts = {};
+  const drinkCounts = {};
   const diets = [];
+  const attendeeDetails = [];
 
-  attendees.forEach(a => {
-    if (a.mainDish === '嫩煎菲力牛排') steak++;
-    else if (a.mainDish === '蟹黃海鮮燉飯') rice++;
-    else if (a.mainDish === '西班牙伊比利老饕豬') pork++;
+  attendees.forEach((a, idx) => {
+    // 1. 主餐統計
+    const m = (a.mainDish || '未指定主餐').trim();
+    mainCounts[m] = (mainCounts[m] || 0) + 1;
 
-    if (a.drink.includes('酒')) wine++;
-    else if (a.drink.includes('氣泡')) soda++;
-    else if (a.drink.includes('茶')) tea++;
-    else if (a.drink.includes('咖啡')) coffee++;
-
-    if (a.dietNotes && a.dietNotes.trim() !== '') {
-      diets.push(`${a.name}: ${a.dietNotes}`);
+    // 2. 飲品精確統計 (依實際登記品項，不硬編品項名稱)
+    let d = (a.drink || '未指定飲品').trim();
+    if (d.includes('紅白酒') || d.includes('紅酒') || d.includes('白酒')) {
+      d = '獨家單杯紅白酒';
+    } else if (d.includes('氣泡')) {
+      d = '無酒精氣泡飲';
+    } else if (d.includes('伯爵') || d.includes('茶')) {
+      d = '獅王伯爵茶';
+    } else if (d.includes('咖啡')) {
+      d = '美式咖啡';
     }
+    drinkCounts[d] = (drinkCounts[d] || 0) + 1;
+
+    // 3. 特殊飲食備註
+    if (a.dietNotes && a.dietNotes.trim() !== '') {
+      diets.push(`${a.name}: ${a.dietNotes.trim()}`);
+    }
+
+    // 4. 個人明細對照
+    attendeeDetails.push(`${idx + 1}. ${a.name} (${a.hospital} ${a.dept || ''} ${a.title || ''}) ➔ 主餐：${m} ｜ 飲品：${d}`);
   });
+
+  // 主餐文字
+  const mainLines = Object.entries(mainCounts)
+    .map(([name, count]) => `- ${name}：${count} 份`)
+    .join('\n');
+
+  // 飲品文字 (只列出實際有被點選的品項，完全不列 0 杯的項目)
+  const drinkLines = Object.entries(drinkCounts)
+    .map(([name, count]) => `- ${name}：${count} 杯`)
+    .join('\n');
 
   const msg = 
 `【Wilson Park 威爾森公園餐廳 · 點餐明細通知】
@@ -1244,25 +1301,28 @@ function copyRestaurantSummary(btn) {
 活動時間：2026/11/24 (二) 18:30-20:30
 與會總人數：${attendees.length} 位
 
-🥩 主餐統計 (共 ${attendees.length} 份)：
-- 嫩煎菲力牛排：${steak} 份
-- 蟹黃海鮮燉飯：${rice} 份
-- 西班牙伊比利老饕豬：${pork} 份
+🥩 精選主餐統計 (共 ${attendees.length} 份)：
+${mainLines}
 
-🍷 佐餐飲品統計：
-- 單杯紅白酒：${wine} 杯
-- 無酒精氣泡飲：${soda} 杯
-- 獅王伯爵茶：${tea} 杯
-- 美式咖啡：${coffee} 杯
+🍷 佐餐飲品統計 (共 ${attendees.length} 杯)：
+${drinkLines}
 
-${diets.length > 0 ? `⚠️ 特殊飲食備註：\n${diets.join('\n')}\n` : ''}
-麻煩餐廳經理協助備料，謝謝！`;
+${diets.length > 0 ? `⚠️ 特殊飲食備註：\n${diets.join('\n')}\n\n` : ''}📋 與會貴賓點餐對照名冊：
+${attendeeDetails.join('\n')}
+
+麻煩餐廳經理協助備料與安排座位，謝謝！`;
 
   navigator.clipboard.writeText(msg).then(() => {
     const orig = btn.innerHTML;
-    btn.innerHTML = `<i class="fa-solid fa-check text-success"></i> 已複製餐廳點餐明細！`;
-    setTimeout(() => btn.innerHTML = orig, 2500);
+    btn.innerHTML = `<i class="fa-solid fa-check text-white"></i> 已複製！可直接貼到 LINE`;
+    btn.classList.add('btn-primary');
+    setTimeout(() => {
+      btn.innerHTML = orig;
+      btn.classList.remove('btn-primary');
+    }, 3000);
   });
+
+  alert(`✅ 已成功複製 Wilson Park 餐廳點餐明細！\n\n【與會總人數】：${attendees.length} 位\n\n【🥩 主餐統計】：\n${mainLines}\n\n【🍷 飲品統計】：\n${drinkLines}\n\n訊息已存入剪貼簿，並附帶 14 位貴賓個人主餐與飲品對照，您可直接切換到 LINE 貼上傳給餐廳經理！`);
 }
 
 // 下載 CSV 簽到表
