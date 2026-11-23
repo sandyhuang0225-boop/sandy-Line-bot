@@ -837,8 +837,11 @@
           活動當天現場簽名報到即可享用主廚精緻特餐。
         </p>
         <div class="d-flex flex-column gap-2">
-          <button type="button" class="btn btn-primary fw-bold py-2 shadow-sm" data-bs-dismiss="modal">
-            <i class="fa-solid fa-check me-1"></i>確認完成
+          <button type="button" id="btnLineNotify" class="btn btn-success fw-bold py-2 shadow-sm" onclick="sendLineConfirmation()">
+            <i class="fa-brands fa-line me-1 fs-5"></i> 點此透過 LINE 回覆主辦人 Sandy
+          </button>
+          <button type="button" class="btn btn-outline-secondary fw-bold py-2" data-bs-dismiss="modal">
+            完成關閉
           </button>
         </div>
       </div>
