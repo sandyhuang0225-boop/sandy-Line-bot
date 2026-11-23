@@ -556,11 +556,11 @@
         <i class="fa-solid fa-chart-pie text-warning me-2"></i>Wilson Park 餐廳點餐統計與與會清單
       </h4>
       <div class="d-flex gap-2">
-        <button type="button" class="btn btn-sm btn-outline-success fw-bold" onclick="copyRestaurantSummary(this)">
+        <button type="button" class="btn btn-sm btn-success fw-bold shadow-sm" onclick="copyRestaurantSummary(this)">
           <i class="fa-brands fa-line me-1"></i>複製點餐總數給餐廳
         </button>
-        <button type="button" class="btn btn-sm btn-outline-primary" onclick="injectSampleAttendees()">
-          <i class="fa-solid fa-vial me-1"></i>載入示範名單 (含諾華同仁)
+        <button type="button" class="btn btn-sm btn-outline-primary fw-bold" onclick="syncLiveAttendeesFromServer(this)" title="立即從 Google 試算表拉取最新報名與點餐名單">
+          <i class="fa-solid fa-arrows-rotate me-1 text-primary"></i>同步 Google 試算表最新名單
         </button>
       </div>
     </div>
@@ -915,19 +915,47 @@ function shareToLineDirect() {
   window.open(lineShareUrl, '_blank');
 }
 
-// 載入名單 (自動向 Google Sheet 雲端同步最新資料)
+// 雲端真實名冊基底 (同步自 Google 試算表真實資料，杜絕 Demo 覆蓋)
+const REAL_ATTENDEES_1124 = [
+  { id: 1, name: 'Sandy huang', city: '台北市', hospital: '台灣諾華股份有限公司', dept: '腫瘤醫學部', title: '台灣諾華', mainDish: '嫩煎菲力牛排', drink: '無酒精氣泡飲', dietNotes: '', time: '10:19' },
+  { id: 2, name: '廖國秀', city: '台北市', hospital: '三軍總醫院', dept: '乳房外科', title: '醫師', mainDish: '嫩煎菲力牛排', drink: '獨家單杯紅白酒', dietNotes: '', time: '10:21' },
+  { id: 3, name: '洪志杰', city: '台北市', hospital: '三軍總醫院', dept: '一般外科', title: '醫師', mainDish: '嫩煎菲力牛排', drink: '無酒精氣泡飲', dietNotes: '', time: '10:22' },
+  { id: 4, name: '汪沂潔', city: '台北市', hospital: '三軍總醫院', dept: '一般外科', title: '醫師', mainDish: '嫩煎菲力牛排', drink: '無酒精氣泡飲', dietNotes: '', time: '10:22' },
+  { id: 5, name: '徐國峯', city: '台北市', hospital: '三軍總醫院', dept: '乳房外科', title: '醫師', mainDish: '西班牙伊比利老饕豬', drink: '無酒精氣泡飲', dietNotes: '', time: '10:46' },
+  { id: 6, name: '方楷賀', city: '台北市', hospital: '三軍總醫院', dept: '一般外科', title: '醫師', mainDish: '嫩煎菲力牛排', drink: '獨家單杯紅白酒', dietNotes: '', time: '12:52' },
+  { id: 7, name: '潘欣梅', city: '台北市', hospital: '三軍總醫院', dept: '一般外科', title: '醫師', mainDish: '嫩煎菲力牛排', drink: '獅王伯爵茶', dietNotes: '', time: '13:01' },
+  { id: 8, name: '周邦彥', city: '台北市', hospital: '三軍總醫院', dept: '一般外科', title: '醫師', mainDish: '嫩煎菲力牛排', drink: '無酒精氣泡飲', dietNotes: '', time: '13:14' },
+  { id: 9, name: '朱雅萱', city: '台北市', hospital: '三軍總醫院', dept: '乳房外科', title: '護理師', mainDish: '西班牙伊比利老饕豬', drink: '無酒精氣泡飲', dietNotes: '', time: '14:08' },
+  { id: 10, name: '陳佳沂', city: '台北市', hospital: '三軍總醫院', dept: '一般外科', title: '醫師', mainDish: '蟹黃海鮮燉飯', drink: '獅王伯爵茶', dietNotes: '', time: '14:16' },
+  { id: 11, name: '陳欣怡', city: '台北市', hospital: '三軍總醫院', dept: '一般外科', title: '護理師', mainDish: '嫩煎菲力牛排', drink: '無酒精氣泡飲', dietNotes: '', time: '02:36' },
+  { id: 12, name: '吳文堯', city: '台北市', hospital: '三軍總醫院', dept: '乳房外科', title: '護理師', mainDish: '嫩煎菲力牛排', drink: '獨家單杯紅白酒', dietNotes: '', time: '02:45' },
+  { id: 13, name: '余泓均', city: '台北市', hospital: '三軍總醫院', dept: '一般外科', title: '醫師', mainDish: '嫩煎菲力牛排', drink: '獨家單杯紅白酒', dietNotes: '', time: '03:37' },
+  { id: 14, name: '張聿凱', city: '台北市', hospital: '三軍總醫院', dept: '一般外科', title: '醫師', mainDish: '嫩煎菲力牛排', drink: '獨家單杯紅白酒', dietNotes: '', time: '00:24' }
+];
+
+// 載入名單 (自動向 Google Sheet 雲端同步最新資料，並自動清理示範資料)
 function loadAttendees() {
   const raw = localStorage.getItem(STORAGE_KEY);
+  let needReset = false;
   if (raw) {
     try {
       attendees = JSON.parse(raw);
+      // 偵測是否殘留舊示範資料 (如陳德全、王敏慧)
+      if (attendees.some(a => a.name === '陳德全' || a.name === '王敏慧') || attendees.length <= 6) {
+        needReset = true;
+      }
     } catch (e) {
-      attendees = [];
+      needReset = true;
     }
   } else {
-    attendees = [];
+    needReset = true;
+  }
+
+  if (needReset) {
+    attendees = JSON.parse(JSON.stringify(REAL_ATTENDEES_1124));
     saveAttendees();
   }
+
   renderAll();
 
   // 自動向雲端 Google 試算表拉取跨裝置名單
@@ -1188,19 +1216,6 @@ function deleteAttendee(id) {
   .catch(e => console.log('刪除請求:', e));
 }
 
-// 載入示範名單 (包含三總醫師團隊與台灣諾華同仁)
-function injectSampleAttendees() {
-  attendees = [
-    { id: 1, name: '廖國秀', city: '台北市', hospital: '三軍總醫院', dept: '乳房外科', title: '醫師', mainDish: '嫩煎菲力牛排', drink: '獨家單杯紅白酒', dietNotes: '' },
-    { id: 2, name: '陳德全', city: '台北市', hospital: '三軍總醫院', dept: '乳房外科', title: '醫師', mainDish: '西班牙伊比利老饕豬', drink: '無酒精氣泡飲', dietNotes: '' },
-    { id: 3, name: '林芳如', city: '台北市', hospital: '三軍總醫院', dept: '護理部', title: '護理師', mainDish: '蟹黃海鮮燉飯', drink: '獅王伯爵茶', dietNotes: '不吃牛肉' },
-    { id: 4, name: '張凱鈞', city: '台北市', hospital: '三軍總醫院', dept: '藥劑部', title: '藥師', mainDish: '嫩煎菲力牛排', drink: '美式咖啡', dietNotes: '' },
-    { id: 5, name: '王敏慧', city: '台北市', hospital: '三軍總醫院', dept: '血液腫瘤科', title: '醫師', mainDish: '蟹黃海鮮燉飯', drink: '獨家單杯紅白酒', dietNotes: '' },
-    { id: 6, name: 'Sandy Huang', city: '台北市', hospital: '台灣諾華股份有限公司', dept: '腫瘤醫學部', title: '台灣諾華', mainDish: '蟹黃海鮮燉飯', drink: '無酒精氣泡飲', dietNotes: '' }
-  ];
-  saveAttendees();
-  renderAll();
-}
 
 // 複製餐點總數給 Wilson Park 餐廳經理
 function copyRestaurantSummary(btn) {
