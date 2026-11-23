@@ -1104,30 +1104,57 @@ function lookupSpeakerPool(name, hospital) {
   if (!name || !name.trim()) return null;
 
   const cleanName = name.replace(/醫師|主任|教授|院長|副院長|總藥師|藥師|個管師|護理師/g, '').trim();
-  const candidates = window.NOVARTIS_SPEAKER_DATABASE.filter(d => d.n === cleanName);
-  if (candidates.length === 0) return null;
-  if (candidates.length === 1) return candidates[0];
-
-  // 多位同名醫師，依醫院模糊對照
-  if (hospital && hospital.trim()) {
-    const rawHosp = hospital.trim();
-    // 依關鍵字精確比對
-    for (const c of candidates) {
-      if (c.h && (c.h.includes(rawHosp) || rawHosp.includes(c.h))) {
-        return c;
+  
+  // 1. 精確姓名比對
+  const exact = window.NOVARTIS_SPEAKER_DATABASE.filter(d => d.n === cleanName);
+  if (exact.length === 1) return exact[0];
+  if (exact.length > 1) {
+    if (hospital && hospital.trim()) {
+      const rawHosp = hospital.trim();
+      for (const c of exact) {
+        if (c.h && (c.h.includes(rawHosp) || rawHosp.includes(c.h))) {
+          return c;
+        }
       }
-    }
-    // 特殊醫院簡稱模糊比對
-    const hospKeywords = ['台大', '臺大', '北榮', '中榮', '高榮', '高醫', '成大', '長庚', '三總', '三軍總醫院', '彰基', '奇美', '慈濟', '新光', '國泰', '雙和', '亞東', '童綜合', '秀傳', '義大', '馬偕', '敏盛', '門諾', '聖保祿', '若瑟', '耕莘'];
-    for (const kw of hospKeywords) {
-      if (rawHosp.includes(kw)) {
-        for (const c of candidates) {
-          if (c.h && c.h.includes(kw)) return c;
+      const hospKeywords = ['台大', '臺大', '北榮', '中榮', '高榮', '高醫', '成大', '長庚', '三總', '三軍總醫院', '彰基', '奇美', '慈濟', '新光', '國泰', '雙和', '亞東', '童綜合', '秀傳', '義大', '馬偕', '敏盛', '門諾', '聖保祿', '若瑟', '耕莘'];
+      for (const kw of hospKeywords) {
+        if (rawHosp.includes(kw)) {
+          for (const c of exact) {
+            if (c.h && c.h.includes(kw)) return c;
+          }
         }
       }
     }
+    return exact[0];
   }
-  return candidates[0];
+
+  // 2. 智慧容錯模糊比對 (解決 AI 視覺辨識生僻字、同音字或形近字，例如「戴明榮」vs「戴明燊」)
+  if (cleanName.length >= 2 && hospital && hospital.trim()) {
+    const rawHosp = hospital.trim().replace(/台灣|臺灣|醫療財團法人|附設|民眾診療服務處|醫院/g, '');
+    const fuzzyCandidates = [];
+    
+    for (const c of window.NOVARTIS_SPEAKER_DATABASE) {
+      const c_hosp = c.h || '';
+      const h_match = (rawHosp && c_hosp.includes(rawHosp)) || c_hosp.includes(hospital.trim()) || hospital.trim().includes(c_hosp);
+      if (h_match) {
+        if (cleanName.length === 3 && c.n.length === 3) {
+          // 前兩字相同 (如 戴明榮 vs 戴明燊)，或前後字相同
+          if (cleanName.slice(0, 2) === c.n.slice(0, 2) || 
+              cleanName.slice(1) === c.n.slice(1) || 
+              (cleanName[0] === c.n[0] && cleanName[2] === c.n[2])) {
+            fuzzyCandidates.push(c);
+          }
+        } else if (cleanName.length === 2 && c.n.length === 2) {
+          if (cleanName[0] === c.n[0]) fuzzyCandidates.push(c);
+        }
+      }
+    }
+    if (fuzzyCandidates.length === 1) {
+      return fuzzyCandidates[0];
+    }
+  }
+
+  return null;
 }
 
 
@@ -1363,8 +1390,10 @@ async function triggerManualAnalysis() {
     if (parsed.experts && Array.isArray(parsed.experts) && parsed.experts.length > 0) {
       window.detectedExperts = parsed.experts.map(e => {
         const match = lookupSpeakerPool(e.name, e.hospital || parsed.hospital || "");
+        const realName = (match && match.n) ? match.n : e.name;
         return {
           ...e,
+          name: realName,
           sessionTime: e.sessionTime || e.time || "",
           speakerNumber: (match && match.p) ? match.p : ""
         };
@@ -1565,11 +1594,15 @@ function updateAllSteps() {
     const timeStr = (e.sessionTime && e.sessionTime.trim()) ? e.sessionTime.trim() : (isMod ? '18:30-19:10' : '19:30-20:10');
     const roleTitle = isMod ? '主持' : '演講';
 
-    // 自動比對 4,300+ 專家資料庫取得 Speaker Pool / Phone Number
+    // 自動比對 4,300+ 專家資料庫取得 Speaker Pool / Phone Number (支援形近字/錯別字自動校正)
     if (!e.speakerNumber || !e.speakerNumber.trim()) {
       const match = lookupSpeakerPool(e.name, e.hospital || primaryHospital);
       if (match && match.p) {
         e.speakerNumber = match.p;
+        if (match.n && match.n !== e.name) {
+          console.log(`自動校正醫師姓名：從「${e.name}」校正為「${match.n}」`);
+          e.name = match.n;
+        }
         if (!e.dept && match.d) e.dept = match.d;
         if (!e.hospital && match.h) e.hospital = match.h;
       }
