@@ -140,6 +140,10 @@
         width: 100% !important;
         max-width: 100% !important;
       }
+      .page-break-after {
+        page-break-after: always !important;
+        break-after: page !important;
+      }
       .signin-sheet-table {
         width: 100% !important;
         border-collapse: collapse !important;
@@ -653,8 +657,8 @@
     <!-- 頂端操作按鈕 (列印時自動隱藏) -->
     <div class="d-flex justify-content-between align-items-center mb-3 no-print flex-wrap gap-2 pb-2 border-bottom">
       <div>
-        <span class="badge bg-primary px-2 py-1 me-1">諾華制式 A4 簽到表</span>
-        <span class="small text-muted">姓名與職稱已自動帶入，現場直接親筆簽名</span>
+        <span class="badge bg-primary px-2 py-1 me-1">諾華制式 A4 簽到表（全套 3 頁）</span>
+        <span class="small text-muted">共 3 頁（第 1 頁已報名名冊 + 第 2、3 頁全空白現場加簽備用頁，容量達 60 人）</span>
       </div>
       <div class="d-flex gap-2">
         <button type="button" class="btn btn-outline-secondary btn-sm" onclick="exportCsvSignInSheet()">
@@ -1140,9 +1144,9 @@ function renderSignInTable() {
     `;
   });
 
-  // 自動補充至少 6 行空白簽到列，確保整體簽到表飽滿整齊供現場候補/補簽
-  const blankRows = Math.max(6, 14 - attendees.length);
-  for (let i = 0; i < blankRows; i++) {
+  // 第 1 頁補足到 20 列
+  const p1BlankRows = Math.max(3, 20 - attendees.length);
+  for (let i = 0; i < p1BlankRows; i++) {
     const rowNo = attendees.length + i + 1;
     html += `
       <tr>
@@ -1150,12 +1154,68 @@ function renderSignInTable() {
         <td class="text-center"></td>
         <td></td>
         <td></td>
-        <td style="font-size: 0.78rem; line-height: 1.4;">
+        <td style="font-size: 0.75rem; line-height: 1.3;">
           □ 醫師 &nbsp; □ 護理師 &nbsp; □ 藥師<br>
           □ 其他HCP: ____________
         </td>
         <td></td>
-        <td style="background: #ffffff; min-height: 38px;"></td>
+        <td style="background: #ffffff; min-height: 36px;"></td>
+      </tr>
+    `;
+  }
+
+  // 🌟 第 2 頁：完全空白現場候補/加簽備用頁 (項次 21～40，共 20 列) 🌟
+  html += `
+    <tr class="page-break-after" style="border: none !important;">
+      <td colspan="7" style="border: none !important; height: 1px; padding: 0;"></td>
+    </tr>
+    <tr class="table-primary text-center fw-bold">
+      <td colspan="7" style="background: #e0f2fe; color: #0369a1; padding: 8px; font-size: 0.95rem;">
+        📄 第 2 頁 · 現場候補 / 臨時出席加簽備用頁 (項次 21 ～ 40)
+      </td>
+    </tr>
+  `;
+  for (let i = 21; i <= 40; i++) {
+    html += `
+      <tr>
+        <td class="text-center text-muted">${i}</td>
+        <td class="text-center"></td>
+        <td></td>
+        <td></td>
+        <td style="font-size: 0.75rem; line-height: 1.3;">
+          □ 醫師 &nbsp; □ 護理師 &nbsp; □ 藥師<br>
+          □ 其他HCP: ____________
+        </td>
+        <td></td>
+        <td style="background: #ffffff; min-height: 36px;"></td>
+      </tr>
+    `;
+  }
+
+  // 🌟 第 3 頁：完全空白現場候補/加簽備用頁 (項次 41～60，共 20 列) 🌟
+  html += `
+    <tr class="page-break-after" style="border: none !important;">
+      <td colspan="7" style="border: none !important; height: 1px; padding: 0;"></td>
+    </tr>
+    <tr class="table-primary text-center fw-bold">
+      <td colspan="7" style="background: #e0f2fe; color: #0369a1; padding: 8px; font-size: 0.95rem;">
+        📄 第 3 頁 · 現場候補 / 臨時出席加簽備用頁 (項次 41 ～ 60)
+      </td>
+    </tr>
+  `;
+  for (let i = 41; i <= 60; i++) {
+    html += `
+      <tr>
+        <td class="text-center text-muted">${i}</td>
+        <td class="text-center"></td>
+        <td></td>
+        <td></td>
+        <td style="font-size: 0.75rem; line-height: 1.3;">
+          □ 醫師 &nbsp; □ 護理師 &nbsp; □ 藥師<br>
+          □ 其他HCP: ____________
+        </td>
+        <td></td>
+        <td style="background: #ffffff; min-height: 36px;"></td>
       </tr>
     `;
   }
