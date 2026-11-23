@@ -391,7 +391,7 @@
                 <div class="col-12"><strong>📍 會議地點：</strong><span id="sumVenue"></span></div>
                 <div class="col-12"><strong>🎤 簡報講題：</strong><span id="sumTopic" class="text-primary fw-bold"></span></div>
                 <div class="col-md-6 col-12"><strong>💰 顧問費用：</strong><span class="text-success fw-bold">新台幣 5,000 元整</span> (固定)</div>
-                <div class="col-md-6 col-12"><strong>✍️ 諾華主管：</strong><span class="text-success fw-bold">周書全 Wesley Chou (區域業務經理)</span> (固定)</div>
+                <div class="col-md-6 col-12"><strong>✍️ 諾華主管：</strong><span class="text-success fw-bold">周書全 (Wesley Chou) (區域業務經理)</span> (固定)</div>
             </div>
         </div>
     </div>
@@ -452,7 +452,7 @@
                         <div class="col-md-3 col-6">
                             <label class="form-label small fw-bold text-success mb-1"><i class="fa-solid fa-lock me-1"></i>諾華代表 (固定)</label>
                             <div class="input-group input-group-sm">
-                                <input type="text" id="inputMgrName" class="form-control bg-white text-success fw-bold" value="周書全" oninput="updateContract()">
+                                <input type="text" id="inputMgrName" class="form-control bg-white text-success fw-bold" value="周書全 (Wesley Chou)" oninput="updateContract()">
                                 <input type="text" id="inputMgrTitle" class="form-control bg-white text-success fw-bold" value="區域業務經理" oninput="updateContract()">
                             </div>
                         </div>
@@ -627,7 +627,7 @@
                     <div class="fw-bold mb-2">台灣諾華股份有限公司</div>
                     <div class="row">
                         <div class="col-6">
-                            <p class="mb-2">姓名：<span class="fixed-field mgr-name signature-line">周書全</span></p>
+                            <p class="mb-2">姓名：<span class="fixed-field mgr-name signature-line">周書全 (Wesley Chou)</span></p>
                             <p class="mb-2">職稱：<span class="fixed-field mgr-title signature-line">區域業務經理</span></p>
                         </div>
                         <div class="col-6">
@@ -1238,7 +1238,7 @@ async function processUserUpload(source, typeLabel) {
 1. 找出所有需要簽署顧問/講者服務合約的外部醫師（不管是 1 位、2 位還是 4 位，請全部抓出）。
 2. ★ 絕對規則：務必排除 Novartis 台灣諾華內部同仁（特別是 Sandy Huang 或任何分享 PSP 專案、公司介紹的員工），絕不可列為顧問！
 3. 每位顧問的合約費用預設固定為「新台幣 5,000 元整」。
-4. 諾華代表主管固定為「周書全」與「區域業務經理」。
+4. 諾華代表主管固定為「周書全 (Wesley Chou)」與「區域業務經理」。
 5. 日期請統一轉換為合約格式（例如「民國 115 年 11 月 24 日」或包含西元年）。
 6. 會議地點包含餐廳/飯店名稱與地址。
 
@@ -1501,7 +1501,7 @@ function selectDoctor(index) {
     document.getElementById('inputVenue').value = currentEventData.event_venue || '';
     document.getElementById('inputTopic').value = doc.event_topic || currentEventData.event_name || '';
     document.getElementById('inputFee').value = doc.fee_total || '新台幣 5,000 元整';
-    document.getElementById('inputMgrName').value = '周書全';
+    document.getElementById('inputMgrName').value = '周書全 (Wesley Chou)';
     document.getElementById('inputMgrTitle').value = '區域業務經理';
 
     updateContract();
@@ -1763,7 +1763,7 @@ function openEsignModal() {
 
     const docName = document.getElementById('inputDoctor').value || '顧問醫師';
     document.getElementById('stepSigner1Name').textContent = `① 顧問：${docName}`;
-    document.getElementById('stepSigner2Name').textContent = `② 主管：周書全 經理`;
+    document.getElementById('stepSigner2Name').textContent = `② 主管：周書全 (Wesley Chou) 經理`;
     
     updateEsignModalStep(1);
 
@@ -1806,7 +1806,7 @@ function updateEsignModalStep(step) {
         ind2.style.backgroundColor = '#0284c7';
         ind2.style.color = 'white';
 
-        title.innerHTML = `<span class="badge bg-warning text-dark me-1">第二簽署人</span> 👔 <strong>周書全 區域業務經理</strong>（台灣諾華簽約代表）`;
+        title.innerHTML = `<span class="badge bg-warning text-dark me-1">第二簽署人</span> 👔 <strong>周書全 (Wesley Chou) 區域業務經理</strong>（台灣諾華簽約代表）`;
         btn.className = 'btn btn-primary btn-lg w-100 py-3 fw-bold fs-5 shadow-sm';
         btn.innerHTML = `<i class="fa-solid fa-file-signature me-2"></i>完成主管核簽，產生正式防偽合約！🎉`;
     }
