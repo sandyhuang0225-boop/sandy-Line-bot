@@ -1012,25 +1012,51 @@
       return atob("QVEuQWI4Uk42TDNKT0ZsbnlYZHFIV2hraDVjMTVldVRLWVBXaFMxSUhTQndOdTRDUHpGUWc=");
     }
 
-    function readFileAsBase64(file) {
+    function compressImageBeforeUpload(file) {
       return new Promise((resolve, reject) => {
+        if (file.type === 'application/pdf') {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const base64 = reader.result.split(',')[1];
+            resolve({ base64, mimeType: 'application/pdf' });
+          };
+          reader.onerror = () => reject(new Error('PDF 讀取失敗'));
+          reader.readAsDataURL(file);
+          return;
+        }
+
         const reader = new FileReader();
-        reader.onload = () => {
-          try {
-            const result = reader.result;
-            const base64 = result.split(',')[1];
-            let mime = file.type;
-            if (!mime || mime === 'application/octet-stream') {
-              if (file.name.toLowerCase().endsWith('.pdf')) mime = 'application/pdf';
-              else if (file.name.toLowerCase().endsWith('.png')) mime = 'image/png';
-              else mime = 'image/jpeg';
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            const maxDim = 1200; // 壓縮至 1200px 寬高，秒速上傳辨識防止 503 逾時
+            if (width > maxDim || height > maxDim) {
+              if (width > height) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+              } else {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+              }
             }
-            resolve({ base64, mimeType: mime });
-          } catch (e) {
-            reject(e);
-          }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+            const base64 = dataUrl.split(',')[1];
+            resolve({ base64, mimeType: 'image/jpeg' });
+          };
+          img.onerror = () => {
+            const base64 = e.target.result.split(',')[1];
+            resolve({ base64, mimeType: file.type || 'image/jpeg' });
+          };
+          img.src = e.target.result;
         };
-        reader.onerror = () => reject(new Error('讀取檔案失敗'));
+        reader.onerror = () => reject(new Error('檔案讀取失敗'));
         reader.readAsDataURL(file);
       });
     }
@@ -1053,14 +1079,17 @@
 
       const btn = document.getElementById(`btnAi_${evIdx}`);
       const msg = document.getElementById(`aiMsg_${evIdx}`);
-      const origText = btn.innerHTML;
-      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin me-2"></i>Gemini 視覺 AI 深度辨識中...`;
-      btn.style.backgroundColor = '#d97706';
-      msg.classList.remove('d-none');
-      msg.innerHTML = `<i class="fa-solid fa-spinner fa-spin me-1 text-primary"></i>正在全速解析「${file.name}」中的會議名稱、時間、地點、講者與主持人...`;
+      if (btn) {
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin me-2"></i>Gemini 視覺 AI 深度辨識中...`;
+        btn.style.backgroundColor = '#d97706';
+      }
+      if (msg) {
+        msg.classList.remove('d-none');
+        msg.innerHTML = `<i class="fa-solid fa-spinner fa-spin me-1 text-primary"></i>正在全速解析「${file.name}」中的會議名稱、時間、地點、講者與主持人...`;
+      }
 
       try {
-        const { base64, mimeType } = await readFileAsBase64(file);
+        const { base64, mimeType } = await compressImageBeforeUpload(file);
         const apiKey = getStoredApiKey();
 
         const promptText = `請身為台灣諾華（Novartis）專業醫療活動助理，精準辨識這份醫療研討會議程 (Agenda) 圖檔或PDF，並回傳純 JSON 物件（勿加 markdown 標記）：
@@ -1085,21 +1114,23 @@
 }`;
 
         const candidateModels = [
-          'gemini-3.5-flash-lite',
-          'gemini-3.5-flash',
-          'gemini-flash-lite-latest',
-          'gemini-3.1-flash-lite',
           'gemini-3-flash-preview',
-          'gemini-flash-latest'
+          'gemini-2.5-flash',
+          'gemini-flash-latest',
+          'gemini-3.5-flash',
+          'gemini-3.5-flash-lite'
         ];
 
         let data = null;
         for (const model of candidateModels) {
           try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 12000);
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
             const res = await fetch(apiUrl, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
+              signal: controller.signal,
               body: JSON.stringify({
                 contents: [{
                   parts: [
@@ -1110,6 +1141,7 @@
                 generationConfig: { response_mime_type: "application/json", temperature: 0.1 }
               })
             });
+            clearTimeout(timeoutId);
 
             if (res.ok) {
               const resJson = await res.json();
@@ -1120,7 +1152,7 @@
               }
             }
           } catch (err) {
-            console.warn(`Model ${model} failed, trying next...`);
+            console.warn(`Model ${model} failed or timed out, trying next...`);
           }
         }
 
@@ -1161,14 +1193,31 @@
         renderAllEvents();
         updateAllCalculations();
 
-        msg.innerHTML = `<i class="fa-solid fa-circle-check text-success me-1"></i>第 ${evIdx + 1} 場 Agenda 辨識成功！會議、時間、地點、講者已全數帶入！`;
+        // 重新獲取渲染後的 DOM 元素以正確顯示提示與檔案名
+        const newMsg = document.getElementById(`aiMsg_${evIdx}`);
+        if (newMsg) {
+          newMsg.classList.remove('d-none');
+          newMsg.innerHTML = `<i class="fa-solid fa-circle-check text-success me-1"></i>第 ${evIdx + 1} 場 Agenda 辨識成功！會議、時間、地點、講者已全數帶入！`;
+        }
+        const notice = document.getElementById(`fileNotice_${evIdx}`);
+        if (notice && file) {
+          notice.innerHTML = `<i class="fa-solid fa-circle-check me-1"></i>已選取：<strong>${file.name}</strong> (辨識完成)`;
+          notice.classList.remove('d-none');
+        }
 
       } catch (err) {
         console.error(err);
-        msg.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-danger me-1"></i>提示：${err.message}`;
+        const curMsg = document.getElementById(`aiMsg_${evIdx}`) || msg;
+        if (curMsg) {
+          curMsg.classList.remove('d-none');
+          curMsg.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-danger me-1"></i>提示：${err.message}`;
+        }
       } finally {
-        btn.innerHTML = `👉【點此立即辨識第 ${evIdx + 1} 場 Agenda 檔案】`;
-        btn.style.backgroundColor = '#16a34a';
+        const freshBtn = document.getElementById(`btnAi_${evIdx}`);
+        if (freshBtn) {
+          freshBtn.innerHTML = `👉【點此立即辨識第 ${evIdx + 1} 場 Agenda 檔案】`;
+          freshBtn.style.backgroundColor = '#16a34a';
+        }
       }
     }
 
