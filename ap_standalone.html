@@ -1591,7 +1591,7 @@
         wsAP['!ref'] = `A1:AA${Math.max(curRow, 70)}`;
 
         // 9. 下載檔案
-        const fileName = `Novartis_AP_for_SAP_${selectedMonth}月份費用規劃_黃蕙芬.xlsx`;
+        const fileName = `Novartis_AP4SAP_Sandy_${selectedMonth}月份.xlsx`;
         XLSX.writeFile(wb, fileName);
 
         alert(`🎉 恭喜！已成功產出全月母檔「${fileName}」！\n已為您完整寫入 ${activeEvents.length} 場 Event (含各自獨立 A4 Agenda) + ${activeDetailings.length} 場 Detailing，格式 100% 吻合！`);
