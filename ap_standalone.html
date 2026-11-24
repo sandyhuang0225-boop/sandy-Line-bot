@@ -1082,6 +1082,7 @@
 
         let curRow = 5;
         let actNo = 1;
+        let totalAmountP = 0;
         const selectedMonth = parseInt(document.getElementById('planMonth').value) || 12;
 
         // 3. 依序寫入所有啟用的 Event
@@ -1091,6 +1092,7 @@
           const avg = (ev.hcpCount + ev.nvsCount) > 0 ? Math.round(ev.mealFee / (ev.hcpCount + ev.nvsCount)) : 0;
 
           // (1) Event - Food & Beverage 列
+          wsAP[`A${curRow}`] = { t: 's', v: '' };
           wsAP[`B${curRow}`] = { t: 's', v: `${dateClean}_10000058576_Event - Food & Beverage` };
           wsAP[`C${curRow}`] = { t: 's', v: `${month}-42010261-${actNo}` };
           wsAP[`D${curRow}`] = { t: 's', v: '周書全' };
@@ -1112,12 +1114,14 @@
           wsAP[`T${curRow}`] = { t: 's', v: '12246' };
           wsAP[`U${curRow}`] = { t: 's', v: '黃蕙芬' };
           wsAP[`Y${curRow}`] = { t: 's', v: 'Open' };
+          totalAmountP += (ev.mealFee || 0);
           curRow++;
 
           // (2) 每一位受聘 Speaker 與 Moderator 獨立列 (所屬醫院、HP Code、Vendor Code、Pool No)
           const experts = getEventExperts(ev);
           experts.forEach((exp, expIdx) => {
             const subId = `${actNo}-${expIdx + 1}`;
+            wsAP[`A${curRow}`] = { t: 's', v: '' };
             wsAP[`B${curRow}`] = { t: 's', v: `${dateClean}_10000058576_Event - Speaker fee` };
             wsAP[`C${curRow}`] = { t: 's', v: `${month}-42010261-${subId}` };
             wsAP[`D${curRow}`] = { t: 's', v: '周書全' };
@@ -1140,12 +1144,14 @@
             wsAP[`U${curRow}`] = { t: 's', v: exp.name };
             wsAP[`V${curRow}`] = { t: 's', v: exp.poolNo || '' };
             wsAP[`Y${curRow}`] = { t: 's', v: 'Open' };
+            totalAmountP += 5000;
             curRow++;
           });
 
           // (3) Event - Transportation 交通費 (金龍旅行社 1126226)
           if (ev.transFee > 0) {
             const subId = `${actNo}-${experts.length + 1}`;
+            wsAP[`A${curRow}`] = { t: 's', v: '' };
             wsAP[`B${curRow}`] = { t: 's', v: `${dateClean}_10000058576_Event - Transportation` };
             wsAP[`C${curRow}`] = { t: 's', v: `${month}-42010261-${subId}` };
             wsAP[`D${curRow}`] = { t: 's', v: '周書全' };
@@ -1167,6 +1173,7 @@
             wsAP[`T${curRow}`] = { t: 's', v: '1126226' };
             wsAP[`U${curRow}`] = { t: 's', v: '金龍永盛旅行社股份有限公司' };
             wsAP[`Y${curRow}`] = { t: 's', v: 'Open' };
+            totalAmountP += (ev.transFee || 0);
             curRow++;
           }
 
@@ -1299,6 +1306,7 @@
           const month = selectedMonth;
           const avg = (dt.hcpCount + dt.nvsCount) > 0 ? Math.round(dt.mealFee / (dt.hcpCount + dt.nvsCount)) : 0;
 
+          wsAP[`A${curRow}`] = { t: 's', v: '' };
           wsAP[`B${curRow}`] = { t: 's', v: `${dateClean}_10000058951_Detailing` };
           wsAP[`C${curRow}`] = { t: 's', v: `${month}-42010261-${actNo}` };
           wsAP[`D${curRow}`] = { t: 's', v: '周書全' };
@@ -1320,11 +1328,30 @@
           wsAP[`T${curRow}`] = { t: 's', v: '12246' };
           wsAP[`U${curRow}`] = { t: 's', v: '黃蕙芬' };
           wsAP[`Y${curRow}`] = { t: 's', v: 'Open' };
+          totalAmountP += (dt.mealFee || 0);
           curRow++;
           actNo++;
         });
 
-        // 5. 下載檔案
+        // 5. 更新 A&P 表頭加總公式與快取金額 (確保開啟時總金額與各活動完全吻合)
+        wsAP['P3'] = { t: 'n', f: 'SUBTOTAL(9,$P$5:$P$8797)', v: totalAmountP };
+        wsAP['X3'] = { t: 'n', f: 'SUBTOTAL(9,$X$5:$X$8797)', v: 0 };
+        wsAP['P2'] = { t: 'n', f: 'P3-X3', v: totalAmountP };
+        wsAP['X2'] = { t: 'n', f: 'X3-R3', v: 0 };
+
+        // 6. 100% 解除所有列的隱藏屬性 (確保從第 5 列到最後一列在 Excel 中全部直接展開顯示)
+        wsAP['!rows'] = [];
+        for (let r = 0; r <= Math.max(curRow + 10, 70); r++) {
+          wsAP['!rows'][r] = { hidden: false };
+        }
+
+        // 7. 更新 AutoFilter 篩選範圍至最新列數，並清除可能遺留的舊條件
+        wsAP['!autofilter'] = { ref: `A4:AA${Math.max(curRow, 70)}` };
+
+        // 8. 確保 Sheet 總邊界涵蓋所有寫入列
+        wsAP['!ref'] = `A1:AA${Math.max(curRow, 70)}`;
+
+        // 9. 下載檔案
         const fileName = `Novartis_AP_for_SAP_${selectedMonth}月份費用規劃_黃蕙芬.xlsx`;
         XLSX.writeFile(wb, fileName);
 
