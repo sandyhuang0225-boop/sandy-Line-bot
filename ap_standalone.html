@@ -1041,6 +1041,30 @@
 
     // 🌟 一鍵生成整月官方 Excel 母檔 (全部導出) 🌟
     async function generateMultiSlotExcel(btn) {
+      // 🌟 Step 0: 即時從網頁 DOM 欄位採集最新輸入內容，防止遺漏未觸發 oninput 的數據 🌟
+      events.forEach((ev, evIdx) => {
+        const toggleEl = document.getElementById(`evToggle_${evIdx}`);
+        if (toggleEl) ev.enabled = toggleEl.checked;
+
+        const hospEl = document.querySelector(`#eventCard_${evIdx} input[placeholder*="國泰綜合醫院汐止分院"]`);
+        if (hospEl && hospEl.value.trim()) ev.hospName = hospEl.value.trim();
+
+        const tbody = document.getElementById(`agendaTbody_${evIdx}`);
+        if (tbody) {
+          const trs = tbody.querySelectorAll('tr');
+          trs.forEach((tr, rI) => {
+            const inputs = tr.querySelectorAll('input[type="text"]');
+            if (inputs.length >= 4) {
+              if (!ev.agendaRows[rI]) ev.agendaRows[rI] = {};
+              if (inputs[0].value.trim()) ev.agendaRows[rI].time = inputs[0].value.trim();
+              if (inputs[1].value.trim()) ev.agendaRows[rI].topic = inputs[1].value.trim();
+              if (inputs[2].value.trim()) ev.agendaRows[rI].speaker = inputs[2].value.trim();
+              ev.agendaRows[rI].moderator = inputs[3].value.trim();
+            }
+          });
+        }
+      });
+
       const activeEvents = events.filter(e => e.enabled);
       const activeDetailings = detailings.filter(d => d.enabled);
 
@@ -1226,46 +1250,111 @@
             { s: { r: 1, c: 0 }, e: { r: 1, c: 2 } }  // A2:C2
           ];
 
+          // 設定每列高度 45pt，確保醫師與醫院名稱兩行完整呈現、不被壓縮
+          if (!wsAg['!rows']) wsAg['!rows'] = [];
+          for (let r = 0; r <= 35; r++) {
+            if (r >= 7 && r < 7 + ev.agendaRows.length) {
+              wsAg['!rows'][r] = { hpt: 45, hpx: 45, hidden: false };
+            } else if (!wsAg['!rows'][r]) {
+              wsAg['!rows'][r] = { hidden: false };
+            }
+          }
+
           ev.agendaRows.forEach((rowItem, rI) => {
             const rPos = 8 + rI;
             const rIdx = 7 + rI; // 0-indexed
             wsAg[`A${rPos}`] = { t: 's', v: rowItem.time || '' };
             wsAg[`B${rPos}`] = { t: 's', v: rowItem.topic || '' };
 
-            const topicStr = (rowItem.topic || '').toLowerCase();
+            const topicStr = (rowItem.topic || '').trim();
             const spkRaw = (rowItem.speaker || '').trim();
             const modRaw = (rowItem.moderator || '').trim();
 
-            const isMergedRow = (rI === 0 && (topicStr.includes('reception') || !rowItem.speaker)) ||
-                                (topicStr.includes('reception') || topicStr.includes('discussion') || topicStr.includes('closing') || topicStr.includes('討論') || topicStr.includes('交流')) ||
-                                (modRaw.includes('ALL') || spkRaw.includes('ALL'));
+            // 🌟 1. 優先判斷是否為 Sandy Huang (PSP Program / 諾華專案) 🌟
+            const isPSP = spkRaw.toLowerCase().includes('sandy') || 
+                          topicStr.toLowerCase().includes('psp') || 
+                          spkRaw.includes('諾華') || 
+                          (rowItem.spkHosp && rowItem.spkHosp.includes('諾華'));
 
-            if (isMergedRow) {
+            // 🌟 2. 判斷是否為無個別醫師講者的純接待/綜合討論/閉會交流列 (Reception / ALL) 🌟
+            const isGenericDisc = (topicStr.toLowerCase().includes('reception') || 
+                                   topicStr.toLowerCase().includes('discussion') || 
+                                   topicStr.toLowerCase().includes('closing') || 
+                                   topicStr === '討論' || topicStr === '綜合討論' || topicStr === '交流') && 
+                                  (!spkRaw || spkRaw === 'ALL');
+
+            const isAllRow = (modRaw === 'ALL' || spkRaw === 'ALL') && !spkRaw;
+
+            const isMergedRow = !isPSP && (isGenericDisc || isAllRow || (rI === 0 && !spkRaw));
+
+            if (isPSP) {
+              // 諾華官方格式：Sandy Huang 與 台灣諾華股份有限公司 (自動換行顯示)
+              const pspText = 'Sandy Huang           台灣諾華股份有限公司';
+              wsAg[`C${rPos}`] = { t: 's', v: pspText };
+              delete wsAg[`D${rPos}`];
+              agendaMerges.push({ s: { r: rIdx, c: 2 }, e: { r: rIdx, c: 3 } });
+            } else if (isMergedRow) {
               const mergedVal = modRaw || spkRaw || 'ALL';
               wsAg[`C${rPos}`] = { t: 's', v: mergedVal };
               delete wsAg[`D${rPos}`];
               agendaMerges.push({ s: { r: rIdx, c: 2 }, e: { r: rIdx, c: 3 } });
-            } else if (topicStr.includes('psp') || spkRaw.toLowerCase().includes('sandy') || spkRaw.includes('諾華')) {
-              wsAg[`C${rPos}`] = { t: 's', v: 'Sandy Huang           台灣諾華股份有限公司' };
-              delete wsAg[`D${rPos}`];
-              agendaMerges.push({ s: { r: rIdx, c: 2 }, e: { r: rIdx, c: 3 } });
             } else {
+              // 🌟 3. 醫學研討會正式講者 (醫師/主任/教授 + 所屬醫院) 🌟
               let spkText = '';
               if (spkRaw) {
                 const res = resolveDoctorDeep(spkRaw);
-                const dName = res ? res.name : cleanDoctorName(spkRaw);
-                let title = res ? res.title : (spkRaw.includes('主任') ? '主任' : '醫師');
-                let hosp = res && res.hpName ? res.hpName : (rowItem.spkHosp || ev.hospName || '');
-                spkText = `${dName}${title}           ${hosp}`.trim();
+                let dName = res ? res.name : cleanDoctorName(spkRaw);
+                if (!dName) dName = spkRaw.replace(/醫師|主任|教授|副教授/g, '').trim();
+
+                let title = '醫師';
+                if (spkRaw.includes('主任')) title = '主任';
+                else if (spkRaw.includes('教授')) title = '教授';
+                else if (spkRaw.includes('副教授')) title = '副教授';
+                else if (res && res.title) title = res.title;
+
+                let hosp = '';
+                if (res && res.hpName) {
+                  hosp = res.hpName;
+                } else if (rowItem.spkHosp && rowItem.spkHosp.trim()) {
+                  hosp = rowItem.spkHosp.trim();
+                } else {
+                  const embeddedHosp = resolveHospital(spkRaw);
+                  hosp = embeddedHosp ? embeddedHosp.n : (ev.hospName || '');
+                }
+
+                if (hosp) {
+                  spkText = `${dName}${title}           ${hosp}`.trim();
+                } else {
+                  spkText = `${dName}${title}`;
+                }
               }
 
+              // 🌟 4. 座長/主持人 🌟
               let modText = '';
               if (modRaw && !modRaw.includes('ALL')) {
                 const resM = resolveDoctorDeep(modRaw);
-                const mName = resM ? resM.name : cleanDoctorName(modRaw);
-                let title = resM ? resM.title : (modRaw.includes('主任') ? '主任' : '醫師');
-                let hosp = resM && resM.hpName ? resM.hpName : ev.hospName || '';
-                modText = `${mName}${title}     ${hosp}`.trim();
+                let mName = resM ? resM.name : cleanDoctorName(modRaw);
+                if (!mName) mName = modRaw.replace(/醫師|主任|教授|副教授/g, '').trim();
+
+                let titleM = '醫師';
+                if (modRaw.includes('主任')) titleM = '主任';
+                else if (modRaw.includes('教授')) titleM = '教授';
+                else if (modRaw.includes('副教授')) titleM = '副教授';
+                else if (resM && resM.title) titleM = resM.title;
+
+                let modHosp = '';
+                if (resM && resM.hpName) {
+                  modHosp = resM.hpName;
+                } else {
+                  const embeddedModHosp = resolveHospital(modRaw);
+                  modHosp = embeddedModHosp ? embeddedModHosp.n : (ev.hospName || '');
+                }
+
+                if (modHosp) {
+                  modText = `${mName}${titleM}     ${modHosp}`.trim();
+                } else {
+                  modText = `${mName}${titleM}`;
+                }
               }
 
               wsAg[`C${rPos}`] = { t: 's', v: spkText };
