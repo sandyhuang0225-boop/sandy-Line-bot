@@ -574,8 +574,25 @@ function setMode(mode) {
 }
 
 function updateMonthSelection() {
-  const m = document.getElementById('planMonth').value;
+  const m = parseInt(document.getElementById('planMonth').value) || 12;
+  const mmStr = m < 10 ? `0${m}` : `${m}`;
   document.getElementById('itemNoPreview').textContent = `${m}-42010261-X`;
+
+  // 自動將活動日期與 Detailing 日期的月份同步更新
+  const agDateInput = document.getElementById('agDate');
+  if (agDateInput && agDateInput.value) {
+    const parts = agDateInput.value.split('-');
+    if (parts.length === 3) {
+      agDateInput.value = `${parts[0]}-${mmStr}-${parts[2]}`;
+    }
+  }
+  const dtDateInput = document.getElementById('dtDate');
+  if (dtDateInput && dtDateInput.value) {
+    const parts = dtDateInput.value.split('-');
+    if (parts.length === 3) {
+      dtDateInput.value = `${parts[0]}-${mmStr}-${parts[2]}`;
+    }
+  }
 }
 
 function resetToNewMonthBudget() {
@@ -640,19 +657,122 @@ function cleanDoctorName(rawText) {
 }
 
 // 🌟 自動深度解析醫師資訊 (姓名、所屬醫院、HP Code、Vendor Code、Speaker Pool No) 🌟
+// 🌟 醫院名稱與代碼權威智慧解析器 (支援全台醫學中心/區域醫院/常見簡稱別名) 🌟
+function resolveHospital(rawText) {
+  if (!rawText) return null;
+  const str = rawText.toString().trim();
+  if (!str) return null;
+
+  // 1. 常見別名精確字典 (優先權最高)
+  const aliasMap = {
+    '汐止國泰': { id: '223340', n: '國泰綜合醫院汐止分院' },
+    '國泰汐止': { id: '223340', n: '國泰綜合醫院汐止分院' },
+    '汐止國泰分院': { id: '223340', n: '國泰綜合醫院汐止分院' },
+    '汐止國泰醫院': { id: '223340', n: '國泰綜合醫院汐止分院' },
+    '國泰綜合醫院汐止分院': { id: '223340', n: '國泰綜合醫院汐止分院' },
+    '國泰醫院': { id: '5590', n: '國泰醫療財團法人國泰綜合醫院' },
+    '國泰總院': { id: '5590', n: '國泰醫療財團法人國泰綜合醫院' },
+    '國泰綜合醫院': { id: '5590', n: '國泰醫療財團法人國泰綜合醫院' },
+    '國泰醫療財團法人國泰綜合醫院': { id: '5590', n: '國泰醫療財團法人國泰綜合醫院' },
+
+    '三總': { id: '177160', n: '三軍總醫院附設民眾診療服務處' },
+    '三軍總醫院': { id: '177160', n: '三軍總醫院附設民眾診療服務處' },
+    '三總內湖': { id: '177160', n: '三軍總醫院附設民眾診療服務處' },
+    '內湖三總': { id: '177160', n: '三軍總醫院附設民眾診療服務處' },
+    '三軍總醫院附設民眾診療服務處': { id: '177160', n: '三軍總醫院附設民眾診療服務處' },
+
+    '台大': { id: '000580', n: '國立台灣大學醫學院附設醫院' },
+    '台大醫院': { id: '000580', n: '國立台灣大學醫學院附設醫院' },
+    '台大總院': { id: '000580', n: '國立台灣大學醫學院附設醫院' },
+    '國立台灣大學醫學院附設醫院': { id: '000580', n: '國立台灣大學醫學院附設醫院' },
+
+    '萬芳': { id: '116840', n: '臺北市立萬芳醫院－委託臺北醫學大學辦理' },
+    '萬芳醫院': { id: '116840', n: '臺北市立萬芳醫院－委託臺北醫學大學辦理' },
+    '臺北市立萬芳醫院－委託臺北醫學大學辦理': { id: '116840', n: '臺北市立萬芳醫院－委託臺北醫學大學辦理' },
+
+    '基隆長庚': { id: '232700', n: '長庚醫療財團法人基隆長庚紀念醫院' },
+    '基隆長庚醫院': { id: '232700', n: '長庚醫療財團法人基隆長庚紀念醫院' },
+    '基隆長庚紀念醫院': { id: '232700', n: '長庚醫療財團法人基隆長庚紀念醫院' },
+    '長庚醫療財團法人基隆長庚紀念醫院': { id: '232700', n: '長庚醫療財團法人基隆長庚紀念醫院' },
+
+    '台北長庚': { id: '131900', n: '長庚醫療財團法人台北長庚紀念醫院' },
+    '台北長庚醫院': { id: '131900', n: '長庚醫療財團法人台北長庚紀念醫院' },
+    '長庚醫療財團法人台北長庚紀念醫院': { id: '131900', n: '長庚醫療財團法人台北長庚紀念醫院' },
+
+    '林口長庚': { id: '232600', n: '長庚醫療財團法人林口長庚紀念醫院' },
+    '林口長庚醫院': { id: '232600', n: '長庚醫療財團法人林口長庚紀念醫院' },
+    '長庚醫療財團法人林口長庚紀念醫院': { id: '232600', n: '長庚醫療財團法人林口長庚紀念醫院' },
+
+    '台北榮總': { id: '000400', n: '臺北榮民總醫院' },
+    '臺北榮總': { id: '000400', n: '臺北榮民總醫院' },
+    '北榮': { id: '000400', n: '臺北榮民總醫院' },
+    '榮總': { id: '000400', n: '臺北榮民總醫院' },
+    '臺北榮民總醫院': { id: '000400', n: '臺北榮民總醫院' },
+
+    '新光': { id: '117070', n: '新光醫療財團法人新光吳火獅紀念醫院' },
+    '新光醫院': { id: '117070', n: '新光醫療財團法人新光吳火獅紀念醫院' },
+    '新光醫療財團法人新光吳火獅紀念醫院': { id: '117070', n: '新光醫療財團法人新光吳火獅紀念醫院' },
+
+    '馬偕': { id: '000660', n: '馬偕紀念醫院' },
+    '馬偕醫院': { id: '000660', n: '馬偕紀念醫院' },
+    '馬偕紀念醫院': { id: '000660', n: '馬偕紀念醫院' },
+    '淡水馬偕': { id: '076320', n: '馬偕紀念醫院淡水院區' },
+
+    '雙和': { id: '234050', n: '衛生福利部雙和醫院〈委託臺北醫學大學興建經營〉' },
+    '雙和醫院': { id: '234050', n: '衛生福利部雙和醫院〈委託臺北醫學大學興建經營〉' },
+
+    '土城': { id: '331330', n: '新北市立土城醫院（委託長庚醫療財團法人興建經營）' },
+    '土城醫院': { id: '331330', n: '新北市立土城醫院（委託長庚醫療財團法人興建經營）' },
+
+    '亞東': { id: '015070', n: '醫療財團法人徐元智先生醫藥基金會亞東紀念醫院' },
+    '亞東醫院': { id: '015070', n: '醫療財團法人徐元智先生醫藥基金會亞東紀念醫院' }
+  };
+
+  if (aliasMap[str]) return aliasMap[str];
+
+  for (const [k, v] of Object.entries(aliasMap)) {
+    if (str.includes(k) || k.includes(str)) {
+      return v;
+    }
+  }
+
+  // 2. 從官方 NOVARTIS_HOSPITALS 庫比對
+  const hospitals = window.NOVARTIS_HOSPITALS || [];
+  if (hospitals.length > 0) {
+    const byId = hospitals.find(h => h.id === str);
+    if (byId) return { id: byId.id, n: byId.n };
+
+    const cleanStr = str.replace(/醫療財團法人|附設民眾診療服務處|紀念醫院|分院|醫院|門診部|診所/g, '').trim();
+    if (cleanStr.length >= 2) {
+      const match = hospitals.find(h => h.n.includes(str) || str.includes(h.n) || (h.n.includes(cleanStr) && !h.n.includes('失效')));
+      if (match) return { id: match.id, n: match.n };
+    }
+  }
+
+  return null;
+}
+
+// 🌟 自動深度解析醫師資訊 (姓名、職稱、所屬醫院、HP Code、Vendor Code、Speaker Pool No) 🌟
 function resolveDoctorDeep(rawText) {
   if (!rawText) return null;
-  const clean = rawText.replace(/醫師|主任|教授|副教授|顧問|部長|台灣諾華公司|諾華公司|Novartis/gi, '')
-                       .replace(/\([^)]*\)/g, '')
-                       .replace(/（[^）]*）/g, '')
-                       .replace(/萬芳醫院|三軍總醫院|台大醫院|基隆長庚紀念醫院|基隆長庚醫院|基隆長庚|台北長庚|林口長庚|長庚醫院|臺北榮民總醫院|台北榮總|榮總|新光吳火獅紀念醫院|新光醫院|馬偕紀念醫院|馬偕醫院|雙和醫院|彰化基督教醫院|三總|北榮|中榮|高榮|成大|高醫/g, '')
-                       .replace(/\s+/g, '').trim();
+  const rawStr = rawText.toString().trim();
+  
+  // 職稱判斷
+  let title = '醫師';
+  if (rawStr.includes('主任')) title = '主任';
+  else if (rawStr.includes('教授')) title = '教授';
+  else if (rawStr.includes('副教授')) title = '副教授';
+
+  const clean = rawStr.replace(/醫師|主任|教授|副教授|顧問|部長|台灣諾華公司|諾華公司|Novartis/gi, '')
+                      .replace(/\([^)]*\)/g, '')
+                      .replace(/（[^）]*）/g, '')
+                      .replace(/萬芳醫院|三軍總醫院|台大醫院|基隆長庚紀念醫院|基隆長庚醫院|基隆長庚|台北長庚|林口長庚|長庚醫院|臺北榮民總醫院|台北榮總|榮總|新光吳火獅紀念醫院|新光醫院|馬偕紀念醫院|馬偕醫院|雙和醫院|彰化基督教醫院|三總|北榮|中榮|高榮|成大|高醫|汐止國泰|國泰醫院|國泰綜合醫院汐止分院/g, '')
+                      .replace(/\s+/g, '').trim();
 
   if (!clean || clean === 'ALL' || clean.includes('ALL') || clean.includes('Sandy') || clean.includes('Discussion') || clean.includes('Reception')) return null;
 
   const speakers = window.NOVARTIS_SPEAKER_DATABASE || [];
   const vendors = window.NOVARTIS_VENDORS || [];
-  const hospitals = window.NOVARTIS_HOSPITALS || [];
 
   let spk = speakers.find(s => s.n === clean);
   if (!spk) {
@@ -665,7 +785,7 @@ function resolveDoctorDeep(rawText) {
     if (ven) finalName = ven.n;
   }
 
-  // 🌟 若在醫師庫與供應商庫中皆不存在，代表非外部受聘醫師（如 Discussion、ALL、工作人員），不應列為顧問專家！
+  // 若在醫師庫與供應商庫中皆不存在，非外部顧問專家
   if (!spk && !ven) return null;
 
   const poolNo = spk ? spk.p : '';
@@ -676,40 +796,15 @@ function resolveDoctorDeep(rawText) {
   let hpCode = '';
   let hpName = rawHosp;
 
-  // 🌟 特殊/核心醫學中心代碼精準比對 (避免如台大醫學院 092570 誤判，應為台大總院 000580)
-  const knownHospMap = {
-    '台大醫院': { id: '000580', n: '國立台灣大學醫學院附設醫院' },
-    '國立台灣大學醫學院附設醫院': { id: '000580', n: '國立台灣大學醫學院附設醫院' },
-    '萬芳醫院': { id: '116840', n: '臺北市立萬芳醫院－委託臺北醫學大學辦理' },
-    '臺北市立萬芳醫院－委託臺北醫學大學辦理': { id: '116840', n: '臺北市立萬芳醫院－委託臺北醫學大學辦理' },
-    '三軍總醫院': { id: '177160', n: '三軍總醫院附設民眾診療服務處' },
-    '三軍總醫院附設民眾診療服務處': { id: '177160', n: '三軍總醫院附設民眾診療服務處' },
-    '基隆長庚': { id: '232700', n: '長庚醫療財團法人基隆長庚紀念醫院' },
-    '長庚醫療財團法人基隆長庚紀念醫院': { id: '232700', n: '長庚醫療財團法人基隆長庚紀念醫院' },
-    '台北長庚': { id: '131900', n: '長庚醫療財團法人台北長庚紀念醫院' },
-    '林口長庚': { id: '232600', n: '長庚醫療財團法人林口長庚紀念醫院' },
-    '台北榮總': { id: '000400', n: '臺北榮民總醫院' },
-    '臺北榮民總醫院': { id: '000400', n: '臺北榮民總醫院' },
-    '新光醫院': { id: '117070', n: '新光醫療財團法人新光吳火獅紀念醫院' },
-    '馬偕醫院': { id: '000660', n: '馬偕紀念醫院' },
-    '馬偕紀念醫院': { id: '000660', n: '馬偕紀念醫院' },
-    '雙和醫院': { id: '234050', n: '衛生福利部雙和醫院〈委託臺北醫學大學興建經營〉' }
-  };
-
-  if (rawHosp && knownHospMap[rawHosp]) {
-    hpCode = knownHospMap[rawHosp].id;
-    hpName = knownHospMap[rawHosp].n;
-  } else if (rawHosp && hospitals.length > 0) {
-    const core = rawHosp.replace(/醫療財團法人|附設民眾診療服務處|分院|醫院/g, '');
-    const match = hospitals.find(h => h.n.includes(rawHosp) || rawHosp.includes(h.n) || (core.length >= 2 && h.n.includes(core)));
-    if (match) {
-      hpCode = match.id;
-      hpName = match.n;
-    }
+  const hospResolved = resolveHospital(rawHosp);
+  if (hospResolved) {
+    hpCode = hospResolved.id;
+    hpName = hospResolved.n;
   }
 
   return {
     name: finalName,
+    title: title,
     poolNo: poolNo,
     vendorCode: venCode,
     hpCode: hpCode,
@@ -842,8 +937,21 @@ async function handleAgendaImageUpload(input) {
     if (prefix) document.getElementById('agPrefix').value = prefix;
     if (data.subtitle) document.getElementById('agSubtitle').value = data.subtitle;
 
-    // 2. 日期與時間
-    if (data.date) document.getElementById('agDate').value = data.date;
+    // 2. 日期與時間 (自動切換月份預算下拉選單)
+    if (data.date) {
+      document.getElementById('agDate').value = data.date;
+      const parts = data.date.split('-');
+      if (parts.length >= 2) {
+        const detectedMonth = parseInt(parts[1]);
+        if (detectedMonth >= 1 && detectedMonth <= 12) {
+          const planMonthSelect = document.getElementById('planMonth');
+          if (planMonthSelect) {
+            planMonthSelect.value = detectedMonth;
+            updateMonthSelection();
+          }
+        }
+      }
+    }
     if (data.time || data.time_range) document.getElementById('agTime').value = data.time || data.time_range;
 
     // 3. 場地地點
@@ -853,7 +961,7 @@ async function handleAgendaImageUpload(input) {
     }
     if (fullVenue) document.getElementById('agVenue').value = fullVenue;
 
-    // 4. 目標醫院
+    // 4. 目標醫院 (精準解析別名與代碼)
     const rawItems = data.agendaItems || data.items || [];
     let targetHosp = data.targetHospital || '';
     if (!targetHosp && rawItems.length > 0) {
@@ -862,43 +970,67 @@ async function handleAgendaImageUpload(input) {
         targetHosp = firstDoctor.speaker_hospital || firstDoctor.spkHosp || firstDoctor.moderator_hospital;
       }
     }
-    if (targetHosp) {
+    let finalEvHosp = resolveHospital(targetHosp) || resolveHospital(prefix);
+    if (finalEvHosp) {
+      document.getElementById('evHosp').value = finalEvHosp.n;
+      document.getElementById('evHospCode').value = finalEvHosp.id;
+    } else if (targetHosp) {
       document.getElementById('evHosp').value = targetHosp;
-      const matchHosp = (window.NOVARTIS_HOSPITALS || []).find(h => h.n.includes(targetHosp) || targetHosp.includes(h.n));
-      if (matchHosp) {
-        document.getElementById('evHosp').value = matchHosp.n;
-        document.getElementById('evHospCode').value = matchHosp.id;
-      }
     }
 
-    // 5. 議程明細表 (自動帶入 Speaker 與 Moderator 之 Pool No、Vendor Code、HP Code)
+    // 5. 議程明細表 (自動帶入 Speaker 與 Moderator 之職稱、醫院全銜、Pool No、Vendor Code、HP Code)
     if (rawItems.length > 0) {
       agendaItems = rawItems.map(item => {
-        // Speaker
+        const topicLower = (item.topic || '').toLowerCase();
+        const speakerLower = (item.speaker || '').toLowerCase();
+
+        // 🌟 判斷是否為 PSP Program 或 台灣諾華員工 (Sandy Huang) 🌟
+        const isNovartisStaff = topicLower.includes('psp') || speakerLower.includes('sandy') || speakerLower.includes('諾華') || (item.speaker && item.speaker.includes('Sandy'));
+        if (isNovartisStaff) {
+          return {
+            time: item.time || '',
+            topic: item.topic || 'PSP Program 討論',
+            speaker: 'Sandy Huang',
+            spkTitle: '',
+            spkHosp: '台灣諾華股份有限公司',
+            spkVendor: '',
+            spkPool: '',
+            spkHpCode: '',
+            isInternal: true,
+            moderator: ''
+          };
+        }
+
+        // 外部醫師講者
         const spkResolved = resolveDoctorDeep(item.speaker);
         const spkName = spkResolved ? spkResolved.name : cleanDoctorName(item.speaker || '');
-        const spkHosp = spkResolved ? spkResolved.hpName : (item.speaker_hospital || item.spkHosp || '');
+        const spkTitle = spkResolved ? spkResolved.title : (item.speaker && item.speaker.includes('主任') ? '主任' : '醫師');
+        let spkHosp = spkResolved ? spkResolved.hpName : (item.speaker_hospital || item.spkHosp || '');
+        if (!spkHosp && finalEvHosp) spkHosp = finalEvHosp.n;
         const spkVen = spkResolved ? spkResolved.vendorCode : '';
         const spkPool = spkResolved ? spkResolved.poolNo : '';
-        const spkHpCode = spkResolved ? spkResolved.hpCode : '';
+        const spkHpCode = spkResolved ? spkResolved.hpCode : (finalEvHosp ? finalEvHosp.id : '');
 
-        // Moderator
+        // Moderator 主持人
         let modStr = item.moderator || '';
         const modResolved = resolveDoctorDeep(item.moderator);
         if (modResolved) {
-          modStr = `${modResolved.name} 醫師 (${modResolved.hpName})`;
+          modStr = `${modResolved.name} ${modResolved.title} (${modResolved.hpName})`;
         } else if (item.moderator_hospital && item.moderator && !item.moderator.includes('ALL')) {
-          modStr = `${cleanDoctorName(item.moderator)} 醫師 (${item.moderator_hospital})`;
+          const mTitle = item.moderator.includes('主任') ? '主任' : '醫師';
+          modStr = `${cleanDoctorName(item.moderator)} ${mTitle} (${item.moderator_hospital})`;
         }
 
         return {
           time: item.time || '',
           topic: item.topic || '',
           speaker: spkName,
+          spkTitle: spkTitle,
           spkHosp: spkHosp,
           spkVendor: spkVen,
           spkPool: spkPool,
           spkHpCode: spkHpCode,
+          isInternal: false,
           moderator: modStr
         };
       });
@@ -1195,13 +1327,24 @@ function buildEventPlanFromCurrentForm() {
   const agDate = document.getElementById('agDate').value || '2026-11-24';
   const agTime = document.getElementById('agTime').value || '18:30-20:30';
   const agVenue = document.getElementById('agVenue').value.trim() || 'VG the Seafood Bar';
-  const evHospName = document.getElementById('evHosp').value.trim() || '三軍總醫院附設民眾診療服務處';
-  const evHospCode = document.getElementById('evHospCode').value.trim() || '177160';
+  let evHospName = document.getElementById('evHosp').value.trim();
+  let evHospCode = document.getElementById('evHospCode').value.trim();
   const evHcp = parseInt(document.getElementById('evHcpCount').value) || 20;
   const evNvs = parseInt(document.getElementById('evNvsCount').value) || 2;
-  const evMeal = parseFloat(document.getElementById('evMealFee').value) || 70000;
+  const evMeal = parseFloat(document.getElementById('evMealFee').value) || 7000;
   const evTrans = parseFloat(document.getElementById('evTransFee').value) || 3000;
   const experts = getActiveExperts();
+
+  // 🌟 自動解析與補強醫院代碼與全銜 (避免三總 177160 覆蓋汐止國泰等問題) 🌟
+  let hospResolved = resolveHospital(evHospName) || resolveHospital(prefix);
+  if (!hospResolved && experts.length > 0 && experts[0].hpCode) {
+    hospResolved = { id: experts[0].hpCode, n: experts[0].hpName };
+  } else if (hospResolved && (!evHospCode || evHospCode === '177160' && !evHospName.includes('三總'))) {
+    evHospCode = hospResolved.id;
+    evHospName = hospResolved.n;
+  }
+  if (!evHospName) evHospName = hospResolved ? hospResolved.n : '國泰綜合醫院汐止分院';
+  if (!evHospCode) evHospCode = hospResolved ? hospResolved.id : '223340';
 
   return {
     type: 'EVENT',
@@ -1225,11 +1368,17 @@ function buildEventPlanFromCurrentForm() {
 function buildDetailingPlanFromCurrentForm() {
   const dtDate = document.getElementById('dtDate').value || '2026-11-25';
   const dtVenue = document.getElementById('dtVenue').value.trim() || '彭湃海鮮餐廳';
-  const dtHospName = document.getElementById('dtHosp').value.trim() || '三軍總醫院附設民眾診療服務處';
-  const dtHospCode = document.getElementById('dtHospCode').value.trim() || '177160';
+  let dtHospName = document.getElementById('dtHosp').value.trim() || '三軍總醫院附設民眾診療服務處';
+  let dtHospCode = document.getElementById('dtHospCode').value.trim() || '177160';
   const dtHcp = parseInt(document.getElementById('dtHcpCount').value) || 4;
   const dtNvs = parseInt(document.getElementById('dtNvsCount').value) || 1;
   const dtMeal = parseFloat(document.getElementById('dtMealFee').value) || 17500;
+
+  const hospObj = resolveHospital(dtHospName);
+  if (hospObj) {
+    dtHospName = hospObj.n;
+    dtHospCode = hospObj.id;
+  }
 
   return {
     type: 'DETAILING',
@@ -1335,7 +1484,7 @@ function renderCartTable() {
 // ========================================================
 // 🌟 核心引擎：生成整月合併官方母檔 Excel (.xlsx) 🌟
 // ========================================================
-async function generateMergedOfficialExcel(btn) {
+async async function generateMergedOfficialExcel(btn) {
   syncAgendaFromDOM();
 
   const currentEvent = buildEventPlanFromCurrentForm();
@@ -1350,8 +1499,11 @@ async function generateMergedOfficialExcel(btn) {
     } else {
       exportPlanList.unshift(currentEvent);
     }
-    const hasDt = exportPlanList.some(item => item.type === 'DETAILING');
-    if (!hasDt) {
+    // 🌟 同步更新第一筆 Detailing，確保當前畫面上編輯的 Detailing 完整導出 🌟
+    const dtIdx = exportPlanList.findIndex(item => item.type === 'DETAILING');
+    if (dtIdx !== -1) {
+      exportPlanList[dtIdx] = currentDetailing;
+    } else {
       exportPlanList.push(currentDetailing);
     }
   } else {
@@ -1370,7 +1522,7 @@ async function generateMergedOfficialExcel(btn) {
     const wsAP = wb.Sheets['A&P'];
     if (!wsAP) throw new Error('母檔中找不到 A&P 工作表！');
 
-    // 🌟 第一步：100% 清空母檔中舊的 11 月歷史範例列 (第 5 列到第 70 列) 🌟
+    // 🌟 第一步：100% 清空母檔中舊的歷史範例列 (第 5 列到第 70 列) 🌟
     for (let r = 5; r <= 70; r++) {
       for (let c = 1; c <= 27; c++) {
         const cellRef = XLSX.utils.encode_cell({ r: r - 1, c: c - 1 });
@@ -1391,7 +1543,7 @@ async function generateMergedOfficialExcel(btn) {
 
     // 🌟 第三步：從第 5 列開始依序乾淨寫入本月全新規劃 🌟
     let curRow = 5;
-    const selectedMonth = parseInt(document.getElementById('planMonth').value) || 11;
+    const selectedMonth = parseInt(document.getElementById('planMonth').value) || 12;
 
     exportPlanList.forEach((act, actIdx) => {
       const actNo = actIdx + 1;
@@ -1424,7 +1576,7 @@ async function generateMergedOfficialExcel(btn) {
         curRow++;
 
       } else {
-        // Event 餐費列
+        // Event 餐費列 (HP Code 與 HP Name 精確對應)
         const avg = (act.hcpCount + act.nvsCount) > 0 ? Math.round(act.mealFee / (act.hcpCount + act.nvsCount)) : 0;
         wsAP[`B${curRow}`] = { t: 's', v: `${dateClean}_10000058576_Event - Food & Beverage` };
         wsAP[`C${curRow}`] = { t: 's', v: `${month}-42010261-${actNo}` };
@@ -1449,7 +1601,7 @@ async function generateMergedOfficialExcel(btn) {
         wsAP[`Y${curRow}`] = { t: 's', v: 'Open' };
         curRow++;
 
-        // 🌟 每一位 Speaker 與 Moderator 獨立列 (所屬醫院、HP Code、Vendor Code、Speaker Pool No) 🌟
+        // 🌟 每一位外部受聘 Speaker 與 Moderator 獨立列 (所屬醫院、HP Code、Vendor Code、Speaker Pool No) 🌟
         act.experts.forEach((exp, expIdx) => {
           const subId = `${actNo}-${expIdx + 1}`;
           wsAP[`B${curRow}`] = { t: 's', v: `${dateClean}_10000058576_Event - Speaker fee` };
@@ -1504,17 +1656,31 @@ async function generateMergedOfficialExcel(btn) {
           curRow++;
         }
 
-        // 🌟 為每一場 Event 動態建立排版精確且清晰的專屬 Agenda 頁籤 🌟
+        // 🌟 為每一場 Event 動態建立排版精確且完全符合 A4 格式的專屬 Agenda 頁籤 🌟
         const agSheetName = `﹝${dateClean}﹞Agenda`;
         let wsAg = agendaTemplateCopy ? JSON.parse(JSON.stringify(agendaTemplateCopy)) : {};
 
-        // 設定欄寬 (Time: 16, Topic: 55, Speaker: 22, Moderator: 22)
+        // 🌟 徹底清空範本中舊有的列 (第 8 列到第 35 列全部刪除，避免舊內容殘留) 🌟
+        for (let r = 8; r <= 35; r++) {
+          ['A', 'B', 'C', 'D'].forEach(col => {
+            delete wsAg[`${col}${r}`];
+          });
+        }
+
+        // 🌟 嚴格鎖定 A4 寬度與列印設定，絕不向右溢出 🌟
         wsAg['!cols'] = [
+          { wch: 15.2 },
+          { wch: 48 },
           { wch: 16 },
-          { wch: 55 },
-          { wch: 22 },
-          { wch: 22 }
+          { wch: 16 }
         ];
+
+        wsAg['!pageSetup'] = {
+          orientation: 'portrait',
+          paperSize: 9, // A4
+          fitToWidth: 1,
+          fitToHeight: 1
+        };
 
         // 標題與基本資訊
         wsAg['A1'] = { t: 's', v: act.title };
@@ -1523,7 +1689,7 @@ async function generateMergedOfficialExcel(btn) {
         wsAg['A4'] = { t: 's', v: 'Location : ' };
         wsAg['B4'] = { t: 's', v: act.venue };
         wsAg['A5'] = { t: 's', v: 'Time : ' };
-        wsAg['B5'] = { t: 's', v: `${act.time} PM` };
+        wsAg['B5'] = { t: 's', v: act.time.includes('PM') || act.time.includes('AM') ? act.time : `${act.time} PM` };
 
         // 表頭
         wsAg['A7'] = { t: 's', v: 'Time ' };
@@ -1531,59 +1697,89 @@ async function generateMergedOfficialExcel(btn) {
         wsAg['C7'] = { t: 's', v: 'Speaker' };
         wsAg['D7'] = { t: 's', v: 'Moderator' };
 
+        const agendaMerges = [
+          { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }, // A1:D1
+          { s: { r: 1, c: 0 }, e: { r: 1, c: 2 } }  // A2:C2
+        ];
+
         // 議程明細內容逐列帶入
         act.agendaRows.forEach((rowItem, rI) => {
           const rPos = 8 + rI;
+          const rIdx = 7 + rI; // 0-indexed
           wsAg[`A${rPos}`] = { t: 's', v: rowItem.time || '' };
           wsAg[`B${rPos}`] = { t: 's', v: rowItem.topic || '' };
 
-          const isMergedRow = (rI === 0) || (rI === act.agendaRows.length - 1) || 
-                              (rowItem.topic && (rowItem.topic.includes('Reception') || rowItem.topic.includes('Discussion') || rowItem.topic.includes('Closing'))) ||
-                              (rowItem.moderator && rowItem.moderator.includes('ALL'));
+          const topicStr = (rowItem.topic || '').toLowerCase();
+          const spkRaw = (rowItem.speaker || '').trim();
+          const modRaw = (rowItem.moderator || '').trim();
+
+          const isMergedRow = (rI === 0 && (topicStr.includes('reception') || !rowItem.speaker)) ||
+                              (topicStr.includes('reception') || topicStr.includes('discussion') || topicStr.includes('closing') || topicStr.includes('討論') || topicStr.includes('交流')) ||
+                              (modRaw.includes('ALL') || spkRaw.includes('ALL'));
 
           if (isMergedRow) {
-            const mergedVal = rowItem.moderator || rowItem.speaker || 'ALL';
+            const mergedVal = modRaw || spkRaw || 'ALL';
             wsAg[`C${rPos}`] = { t: 's', v: mergedVal };
             delete wsAg[`D${rPos}`];
+            agendaMerges.push({ s: { r: rIdx, c: 2 }, e: { r: rIdx, c: 3 } }); // C:D merged!
+          } else if (topicStr.includes('psp') || spkRaw.toLowerCase().includes('sandy') || spkRaw.includes('諾華')) {
+            // 🌟 台灣諾華 Sandy Huang 演講 PSP Program 🌟
+            wsAg[`C${rPos}`] = { t: 's', v: 'Sandy Huang           台灣諾華股份有限公司' };
+            if (modRaw && !modRaw.includes('ALL')) {
+              wsAg[`D${rPos}`] = { t: 's', v: modRaw };
+            } else {
+              delete wsAg[`D${rPos}`];
+              agendaMerges.push({ s: { r: rIdx, c: 2 }, e: { r: rIdx, c: 3 } });
+            }
           } else {
-            const spkText = rowItem.speaker ? `${rowItem.speaker}醫師           ${rowItem.spkHosp || ''}`.trim() : '';
-            const modText = rowItem.moderator ? `${rowItem.moderator}`.trim() : '';
+            // 外部醫師講者：格式為「姓名職稱           醫院全銜」
+            let spkText = '';
+            if (spkRaw) {
+              const res = resolveDoctorDeep(spkRaw);
+              const dName = res ? res.name : cleanDoctorName(spkRaw);
+              let title = res ? res.title : (spkRaw.includes('主任') ? '主任' : '醫師');
+              let hosp = res && res.hpName ? res.hpName : (rowItem.spkHosp || act.hospName || '');
+              spkText = `${dName}${title}           ${hosp}`.trim();
+            }
+
+            // 主持人：格式為「姓名職稱     醫院全銜」
+            let modText = '';
+            if (modRaw && !modRaw.includes('ALL')) {
+              const resM = resolveDoctorDeep(modRaw);
+              const mName = resM ? resM.name : cleanDoctorName(modRaw);
+              let title = resM ? resM.title : (modRaw.includes('主任') ? '主任' : '醫師');
+              let hosp = resM && resM.hpName ? resM.hpName : act.hospName || '';
+              modText = `${mName}${title}     ${hosp}`.trim();
+            }
+
             wsAg[`C${rPos}`] = { t: 's', v: spkText };
-            wsAg[`D${rPos}`] = { t: 's', v: modText };
+            if (modText) {
+              wsAg[`D${rPos}`] = { t: 's', v: modText };
+            } else {
+              delete wsAg[`D${rPos}`];
+              // 若無主持人，合併 C:D 讓講者資訊更舒展美觀
+              agendaMerges.push({ s: { r: rIdx, c: 2 }, e: { r: rIdx, c: 3 } });
+            }
           }
         });
 
-        // 諾華官方免責聲明與主辦標註
-        const legalPos = 8 + act.agendaRows.length + 1;
-        wsAg[`A${legalPos}`] = { t: 's', v: '----------------------------主辦/協辦單位：台灣諾華股份有限公司----------------------------' };
-        wsAg[`A${legalPos+1}`] = { t: 's', v: '“提醒您，未受邀之醫護人員同行者不得參加由諾華公司所主辦的會議，諾華公司亦不會為同行者安排行程、支付或補貼其任何費用及支出。謝謝您的體貼與諒解。' };
-        wsAg[`A${legalPos+3}`] = { t: 's', v: '\"Uninvited guests are not permitted at Novartis-organized events. Novartis will not arrange or cover any expenses for accompanying individuals. Thank you for your understanding.\"' };
+        // 諾華官方免責聲明與主辦標註 (動態跟在最後一個 session 下方)
+        const legalPos = 8 + act.agendaRows.length + 1; // 1-indexed row number
+        const legalIdx = legalPos - 1; // 0-indexed
 
-        // 設定資料範圍
+        wsAg[`A${legalPos}`] = { t: 's', v: '----------------------------主辦/協辦單位：台灣諾華股份有限公司----------------------------' };
+        agendaMerges.push({ s: { r: legalIdx, c: 0 }, e: { r: legalIdx, c: 3 } }); // A:D
+
+        wsAg[`A${legalPos+1}`] = { t: 's', v: '“提醒您，未受邀之醫護人員同行者不得參加由諾華公司所主辦的會議，諾華公司亦不會為同行者安排行程、支付或補貼其任何費用及支出。謝謝您的體貼與諒解。' };
+        agendaMerges.push({ s: { r: legalIdx + 1, c: 0 }, e: { r: legalIdx + 2, c: 3 } }); // A:D, 2 rows
+
+        wsAg[`A${legalPos+3}`] = { t: 's', v: '"Uninvited guests are not permitted at Novartis-organized events. Novartis will not arrange or cover any expenses for accompanying individuals. Thank you for your understanding."' };
+        agendaMerges.push({ s: { r: legalIdx + 3, c: 0 }, e: { r: legalIdx + 4, c: 3 } }); // A:D, 2 rows
+
+        wsAg['!merges'] = agendaMerges;
         wsAg['!ref'] = `A1:D${legalPos + 4}`;
 
-        // 儲存格合併設定 (A1:D1 標題、A2:C2 副標、免責宣告，以及議程中各合併列)
-        const customMerges = [
-          { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }, // A1:D1
-          { s: { r: 1, c: 0 }, e: { r: 1, c: 2 } }, // A2:C2
-          { s: { r: legalPos - 1, c: 0 }, e: { r: legalPos - 1, c: 3 } },
-          { s: { r: legalPos, c: 0 }, e: { r: legalPos + 1, c: 3 } },
-          { s: { r: legalPos + 2, c: 0 }, e: { r: legalPos + 3, c: 3 } }
-        ];
-
-        act.agendaRows.forEach((rowItem, rI) => {
-          const rPos = 8 + rI;
-          const isMergedRow = (rI === 0) || (rI === act.agendaRows.length - 1) || 
-                              (rowItem.topic && (rowItem.topic.includes('Reception') || rowItem.topic.includes('Discussion') || rowItem.topic.includes('Closing'))) ||
-                              (rowItem.moderator && rowItem.moderator.includes('ALL'));
-          if (isMergedRow) {
-            customMerges.push({ s: { r: rPos - 1, c: 2 }, e: { r: rPos - 1, c: 3 } }); // C{rPos}:D{rPos}
-          }
-        });
-
-        wsAg['!merges'] = customMerges;
-
-        // 附加此全新乾淨且排版 100% 正確的頁籤至活頁簿
+        // 加入工作表
         wb.SheetNames.push(agSheetName);
         wb.Sheets[agSheetName] = wsAg;
       }
