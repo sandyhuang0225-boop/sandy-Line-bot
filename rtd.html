@@ -2,6 +2,16 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="utf-8">
+  <script>
+    // 🌟 智慧無縫導向：自動將訪客引導至最新正式報名系統 meeting.html 🌟
+    (function() {
+      var query = window.location.search || '';
+      if (!query.includes('e=')) {
+        query = (query ? query + '&' : '?') + 'e=event_1204_1317';
+      }
+      window.location.replace('meeting.html' + query);
+    })();
+  </script>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -227,22 +237,22 @@
   <div class="custom-card border-primary border-2 hide-on-print" style="background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);">
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2 pb-2 border-bottom">
       <span class="badge bg-primary px-3 py-2 fs-6">
-        <i class="fa-solid fa-ribbon me-1"></i>三總乳癌討論會
+        <i class="fa-solid fa-ribbon me-1"></i>基隆長庚乳癌研討會
       </span>
       <span class="text-secondary small fw-bold">
         主辦單位：台灣諾華股份有限公司 (Novartis Taiwan)
       </span>
     </div>
-    <h3 class="fw-bold text-dark mb-2">From Shared Decision to Long-Term Confidence</h3>
+    <h3 class="fw-bold text-dark mb-2">基隆長庚乳癌研討會 From Shared Decision to Long-Term Confidence</h3>
     <div class="row g-2 small text-dark mt-1">
       <div class="col-md-4 col-12">
-        <strong><i class="fa-regular fa-calendar-days text-primary me-1"></i>會議日期：</strong>2026 年 11 月 24 日（星期二）
+        <strong><i class="fa-regular fa-calendar-days text-primary me-1"></i>會議日期：</strong>2026 年 12 月 4 日（星期五）
       </div>
       <div class="col-md-3 col-12">
         <strong><i class="fa-regular fa-clock text-primary me-1"></i>會議時間：</strong>18:30 - 20:30
       </div>
       <div class="col-md-5 col-12">
-        <strong><i class="fa-solid fa-location-dot text-danger me-1"></i>會議地點：</strong>Wilson Park 威爾森公園餐廳（台北市內湖區民權東路六段125之1號）
+        <strong><i class="fa-solid fa-location-dot text-danger me-1"></i>會議地點：</strong>青樓中式餐酒館（台北市松山區八德路四段512-1號）
       </div>
     </div>
     <div class="alert alert-warning py-2 px-3 mb-0 mt-3 small fw-bold d-flex align-items-center">
@@ -262,8 +272,8 @@
           </h5>
           <span class="badge bg-primary-subtle text-primary border border-primary small">點圖可放大看</span>
         </div>
-        <div class="preview-img-box text-center p-2 mb-2" onclick="openImageModal('assets/rtt_agenda.jpg', '三總乳癌討論會 正式議程')">
-          <img src="assets/rtt_agenda.jpg" alt="三總乳癌討論會 議程" class="img-fluid rounded" style="max-height: 240px; object-fit: contain;">
+        <div class="preview-img-box text-center p-2 mb-2" onclick="openImageModal('assets/cgmh_1204_agenda.jpg', '基隆長庚乳癌研討會 正式議程')">
+          <img src="assets/cgmh_1204_agenda.jpg" alt="基隆長庚乳癌研討會 議程" class="img-fluid rounded" style="max-height: 240px; object-fit: contain;">
         </div>
         <div class="table-responsive small">
           <table class="table table-sm table-striped mb-0">
@@ -309,8 +319,8 @@
           </h5>
           <span class="badge bg-success-subtle text-success border border-success small">點圖可放大看</span>
         </div>
-        <div class="preview-img-box text-center p-2 mb-2" onclick="openImageModal('assets/rtt_menu.jpg', 'Wilson Park 餐廳特製菜單')">
-          <img src="assets/rtt_menu.jpg" alt="Wilson Park 菜單" class="img-fluid rounded" style="max-height: 240px; object-fit: contain;">
+        <div class="preview-img-box text-center p-2 mb-2" onclick="openImageModal('assets/cgmh_1204_menu.jpg', '青樓中式餐酒館 尊榮晚宴菜單')">
+          <img src="assets/cgmh_1204_menu.jpg" alt="青樓中式餐酒館 菜單" class="img-fluid rounded" style="max-height: 240px; object-fit: contain;">
         </div>
         <div class="p-2 bg-light rounded border small">
           <div class="row g-1 text-secondary">
@@ -1000,7 +1010,7 @@ const API_BASE = 'https://sandy-line-bot.onrender.com/api/rtd';
 
 // 複製醫師專屬報名網址 (解決加入主畫面後找不到網址問題)
 function copyDoctorRegistrationLink(btn) {
-  const url = 'https://sandyhuang0225-boop.github.io/sandy-Line-bot/rtd.html';
+  const url = 'https://sandyhuang0225-boop.github.io/sandy-Line-bot/meeting.html?e=event_1204_1317';
   navigator.clipboard.writeText(url).then(() => {
     const orig = btn.innerHTML;
     btn.innerHTML = '<i class="fa-solid fa-check text-white me-1"></i>已複製報名網址！';
@@ -1017,8 +1027,8 @@ function copyDoctorRegistrationLink(btn) {
 
 // 直接開啟 LINE 分享邀請
 function shareToLineDirect() {
-  const url = 'https://sandyhuang0225-boop.github.io/sandy-Line-bot/rtd.html';
-  const text = `您好！誠摯邀請您出席【11/24 (二) 三總乳癌討論會：From Shared Decision to Long-Term Confidence】。\n\n敬請點擊以下專屬連結確認出席並點選主廚特餐（菲力牛排/海鮮燉飯/伊比利老饕豬）：\n👉 ${url}\n\n期待您的蒞臨！`;
+  const url = 'https://sandyhuang0225-boop.github.io/sandy-Line-bot/meeting.html?e=event_1204_1317';
+  const text = `您好！誠摯邀請您出席【12/4 (五) 基隆長庚乳癌研討會：From Shared Decision to Long-Term Confidence】。\n\n敬請點擊以下專屬連結確認出席（地點：青樓中式餐酒館）：\n👉 ${url}\n\n期待您的蒞臨！`;
   const lineShareUrl = `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
   window.open(lineShareUrl, '_blank');
 }

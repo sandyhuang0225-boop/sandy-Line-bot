@@ -956,14 +956,14 @@ const DEFAULT_EVENTS = {
     time: '18:30-20:30',
     venue: '青樓中式餐酒館（台北市松山區八德路四段512-1號）',
     mealMode: 'TABLE',
-    agendaImgUrl: 'assets/rtt_agenda.jpg',
+    agendaImgUrl: 'assets/cgmh_1204_agenda.jpg',
     agendaLines: [
       { time: '18:30~19:00', topic: 'Reception 接待與報到', speaker: 'ALL' },
       { time: '19:00~19:40', topic: 'KISQALI Does it Again: A Moment for OS in NATALEE', speaker: '主講人：李春輝醫師（基隆長庚）/ 座長：簡志穎醫師（基隆長庚）' },
       { time: '19:40~20:20', topic: 'Empowering the Treatment Journey: AE Management and QOL in KISQALI Treatment', speaker: '主講人：張悅詩醫師（基隆長庚）/ 座長：黃彥閔醫師（基隆長庚）' },
       { time: '20:20~20:30', topic: 'Discussion 綜合座談與討論', speaker: '全體與會貴賓' }
     ],
-    menuImgUrl: 'assets/rtt_menu.jpg',
+    menuImgUrl: 'assets/cgmh_1204_menu.jpg',
     menuItems: [
       '荷風海皇五拼盤（龍蝦、烏魚子、中卷、九孔、蟹肉棒）',
       'XO醬炒雙鮮',
@@ -1768,7 +1768,7 @@ function loadEventsDb() {
     saveEventsDb();
   }
 
-  // 自動清理/遷移舊 localStorage 殘留的 1124 或 6124 舊代碼
+  // 自動清理/遷移舊 localStorage 殘留的 1124 或 6124 舊代碼，並強制校正 1204 最新議程與菜單
   if (eventsDb['event_6124_1317']) {
     eventsDb['event_1204_1317'] = eventsDb['event_6124_1317'];
     eventsDb['event_1204_1317'].id = 'event_1204_1317';
@@ -1781,6 +1781,16 @@ function loadEventsDb() {
   }
   if (eventsDb['1204_cgmh']) {
     delete eventsDb['1204_cgmh'];
+    saveEventsDb();
+  }
+  if (eventsDb['event_1204_1317']) {
+    eventsDb['event_1204_1317'].title = '基隆長庚乳癌研討會 From Shared Decision to Long-Term Confidence';
+    eventsDb['event_1204_1317'].venue = '青樓中式餐酒館（台北市松山區八德路四段512-1號）';
+    eventsDb['event_1204_1317'].mealMode = 'TABLE';
+    eventsDb['event_1204_1317'].agendaImgUrl = 'assets/cgmh_1204_agenda.jpg';
+    eventsDb['event_1204_1317'].menuImgUrl = 'assets/cgmh_1204_menu.jpg';
+    eventsDb['event_1204_1317'].menuItems = DEFAULT_EVENTS['event_1204_1317'].menuItems;
+    eventsDb['event_1204_1317'].setOptions = null;
     saveEventsDb();
   }
 
@@ -1888,13 +1898,13 @@ function renderCurrentEvent() {
   // 1. 議程展示 (圖與條列智能呈現)
   let activeAgendaSrc = ev.agendaImgUrl;
   if (!activeAgendaSrc || activeAgendaSrc.includes('onrender.com') || ev.id === 'event_1204_1317') {
-    activeAgendaSrc = 'assets/rtt_agenda.jpg';
+    activeAgendaSrc = 'assets/cgmh_1204_agenda.jpg';
   }
   if (activeAgendaSrc && activeAgendaSrc.trim() !== '') {
     const agendaEl = document.getElementById('agendaImg');
     agendaEl.onerror = function() {
-      if (this.src !== 'assets/rtt_agenda.jpg' && !this.src.endsWith('assets/rtt_agenda.jpg')) {
-        this.src = 'assets/rtt_agenda.jpg';
+      if (!this.src.endsWith('assets/cgmh_1204_agenda.jpg') && !this.src.endsWith('assets/rtt_agenda.jpg')) {
+        this.src = 'assets/cgmh_1204_agenda.jpg';
       }
     };
     agendaEl.src = activeAgendaSrc;
@@ -1937,13 +1947,13 @@ function renderCurrentEvent() {
 
     let activeMenuSrc = ev.menuImgUrl;
     if (!activeMenuSrc || activeMenuSrc.includes('onrender.com') || ev.id === 'event_1204_1317') {
-      activeMenuSrc = 'assets/rtt_menu.jpg';
+      activeMenuSrc = 'assets/cgmh_1204_menu.jpg';
     }
     if (activeMenuSrc && activeMenuSrc.trim() !== '') {
       const menuEl = document.getElementById('menuImg');
       menuEl.onerror = function() {
-        if (this.src !== 'assets/rtt_menu.jpg' && !this.src.endsWith('assets/rtt_menu.jpg')) {
-          this.src = 'assets/rtt_menu.jpg';
+        if (!this.src.endsWith('assets/cgmh_1204_menu.jpg') && !this.src.endsWith('assets/rtt_menu.jpg')) {
+          this.src = 'assets/cgmh_1204_menu.jpg';
         }
       };
       menuEl.src = activeMenuSrc;
@@ -1992,13 +2002,13 @@ function renderCurrentEvent() {
 
     let activeMenuSrc = ev.menuImgUrl;
     if (!activeMenuSrc || activeMenuSrc.includes('onrender.com') || ev.id === 'event_1204_1317') {
-      activeMenuSrc = 'assets/rtt_menu.jpg';
+      activeMenuSrc = 'assets/cgmh_1204_menu.jpg';
     }
     if (activeMenuSrc && activeMenuSrc.trim() !== '') {
       const menuEl = document.getElementById('menuImg');
       menuEl.onerror = function() {
-        if (this.src !== 'assets/rtt_menu.jpg' && !this.src.endsWith('assets/rtt_menu.jpg')) {
-          this.src = 'assets/rtt_menu.jpg';
+        if (!this.src.endsWith('assets/cgmh_1204_menu.jpg') && !this.src.endsWith('assets/rtt_menu.jpg')) {
+          this.src = 'assets/cgmh_1204_menu.jpg';
         }
       };
       menuEl.src = activeMenuSrc;
