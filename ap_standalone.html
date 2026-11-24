@@ -576,8 +576,14 @@
                 <input type="text" class="form-control form-control-sm fw-bold" value="${ev.venue}" placeholder="汐止國泰B5會議室" oninput="events[${evIdx}].venue = this.value;">
               </div>
               <div class="col-md-3 col-6">
-                <label class="form-label fw-bold small text-muted">目標醫院 (HP Name) *</label>
-                <input type="text" class="form-control form-control-sm fw-bold" value="${ev.hospName}" placeholder="國泰綜合醫院汐止分院" oninput="handleEventHospInput(${evIdx}, this.value)">
+                <div class="d-flex justify-content-between align-items-center">
+                  <label class="form-label fw-bold small text-muted mb-0">目標醫院 (HP Name) *</label>
+                  <span class="badge bg-primary-subtle text-primary border small" id="evHospBadge_${evIdx}">HP: ${ev.hospCode || '223340'}</span>
+                </div>
+                <select class="form-select form-select-sm fw-bold border-primary mt-1" id="evHospSelect_${evIdx}" onchange="handleEventHospSelect(${evIdx}, this.value)">
+                  ${renderHospitalOptionsHTML(evIdx)}
+                </select>
+                <input type="text" class="form-control form-control-sm fw-bold mt-1 d-none" id="evHospCustom_${evIdx}" placeholder="請輸入自訂醫院全稱" oninput="handleEventCustomHospInput(${evIdx}, this.value)">
                 <input type="hidden" id="evHospCode_${evIdx}" value="${ev.hospCode}">
               </div>
             </div>
@@ -690,6 +696,133 @@
     function toggleEventCollapse(evIdx) {
       const body = document.getElementById(`evBody_${evIdx}`);
       body.classList.toggle('d-none');
+    }
+
+    const CORE_HOSPITALS = [
+      { id: '223340', n: '國泰綜合醫院汐止分院' },
+      { id: '177160', n: '三軍總醫院附設民眾診療服務處' },
+      { id: '232700', n: '長庚醫療財團法人基隆長庚紀念醫院' },
+      { id: '116840', n: '臺北市立萬芳醫院－委託臺北醫學大學辦理' },
+      { id: '5590', n: '國泰醫療財團法人國泰綜合醫院' },
+      { id: '71920', n: '國泰醫療財團法人新竹國泰綜合醫院' },
+      { id: '000580', n: '國立台灣大學醫學院附設醫院' },
+      { id: '000400', n: '臺北榮民總醫院' },
+      { id: '1570', n: '馬偕紀念醫院' },
+      { id: '1580', n: '臺北醫學大學附設醫院' },
+      { id: '232600', n: '長庚醫療財團法人林口長庚紀念醫院' },
+      { id: '131900', n: '長庚醫療財團法人台北長庚紀念醫院' },
+      { id: '015070', n: '醫療財團法人徐元智先生醫藥基金會亞東紀念醫院' },
+      { id: '234050', n: '衛生福利部雙和醫院〈委託臺北醫學大學興建經營〉' },
+      { id: '331330', n: '新北市立土城醫院（委託長庚醫療財團法人興建經營）' }
+    ];
+
+    function renderHospitalOptionsHTML(evIdx) {
+      const ev = events[evIdx];
+      const curHosp = ev.hospName || '';
+
+      // 1. 從議程中擷取所有出現過的醫師所屬醫院
+      const detectedHosps = [];
+      if (ev.agendaRows && ev.agendaRows.length > 0) {
+        ev.agendaRows.forEach(item => {
+          if (item.spkHosp && item.spkHosp !== '台灣諾華股份有限公司') {
+            const res = resolveHospital(item.spkHosp);
+            const hospName = res ? res.n : item.spkHosp;
+            const hospId = res ? res.id : '';
+            if (hospName && !detectedHosps.some(d => d.n === hospName)) {
+              detectedHosps.push({ id: hospId, n: hospName });
+            }
+          }
+          if (item.speaker) {
+            const resDoc = resolveDoctorDeep(item.speaker);
+            if (resDoc && resDoc.hpName && resDoc.hpName !== '台灣諾華股份有限公司') {
+              if (!detectedHosps.some(d => d.n === resDoc.hpName)) {
+                detectedHosps.push({ id: resDoc.hpCode || '', n: resDoc.hpName });
+              }
+            }
+          }
+          if (item.moderator) {
+            const resMod = resolveDoctorDeep(item.moderator);
+            if (resMod && resMod.hpName && resMod.hpName !== '台灣諾華股份有限公司') {
+              if (!detectedHosps.some(d => d.n === resMod.hpName)) {
+                detectedHosps.push({ id: resMod.hpCode || '', n: resMod.hpName });
+              }
+            }
+          }
+        });
+      }
+
+      let html = '';
+      let isSelectedAny = false;
+
+      // 如果有從議程偵測到的醫院，優先置頂
+      if (detectedHosps.length > 0) {
+        html += `<optgroup label="✨ 議程中偵測到的醫師所屬醫院 (一鍵套用)">`;
+        detectedHosps.forEach(h => {
+          const isSel = (curHosp === h.n || curHosp.includes(h.n) || (h.n && h.n.includes(curHosp)));
+          if (isSel && !isSelectedAny) isSelectedAny = true;
+          html += `<option value="${h.n}" ${isSel ? 'selected' : ''}>📌 ${h.n} ${h.id ? `(${h.id})` : ''}</option>`;
+        });
+        html += `</optgroup>`;
+      }
+
+      // 常見責任醫院
+      html += `<optgroup label="🏥 責任轄區 / 核心醫學中心">`;
+      CORE_HOSPITALS.forEach(h => {
+        const isSel = !isSelectedAny && (curHosp === h.n || curHosp.includes(h.n) || (h.n && h.n.includes(curHosp)));
+        if (isSel) isSelectedAny = true;
+        html += `<option value="${h.n}" ${isSel ? 'selected' : ''}>${h.n} (${h.id})</option>`;
+      });
+      html += `</optgroup>`;
+
+      // 如果當前值不在上面任何一個裡，補一個當前自訂選項
+      if (!isSelectedAny && curHosp && curHosp !== '__custom__') {
+        html += `<optgroup label="📝 當前指定醫院">`;
+        html += `<option value="${curHosp}" selected>${curHosp}</option>`;
+        html += `</optgroup>`;
+        isSelectedAny = true;
+      }
+
+      html += `<option value="__custom__">➕ 手動輸入其他醫院...</option>`;
+      return html;
+    }
+
+    function handleEventHospSelect(evIdx, val) {
+      const customInput = document.getElementById(`evHospCustom_${evIdx}`);
+      if (val === '__custom__') {
+        if (customInput) {
+          customInput.classList.remove('d-none');
+          customInput.focus();
+        }
+        return;
+      }
+      if (customInput) customInput.classList.add('d-none');
+
+      const res = resolveHospital(val);
+      if (res) {
+        events[evIdx].hospName = res.n;
+        events[evIdx].hospCode = res.id;
+      } else {
+        events[evIdx].hospName = val;
+        events[evIdx].hospCode = '';
+      }
+      const badge = document.getElementById(`evHospBadge_${evIdx}`);
+      if (badge) badge.innerText = `HP: ${events[evIdx].hospCode || '自訂'}`;
+      const hiddenCode = document.getElementById(`evHospCode_${evIdx}`);
+      if (hiddenCode) hiddenCode.value = events[evIdx].hospCode;
+    }
+
+    function handleEventCustomHospInput(evIdx, val) {
+      events[evIdx].hospName = val;
+      const res = resolveHospital(val);
+      if (res) {
+        events[evIdx].hospCode = res.id;
+      } else {
+        events[evIdx].hospCode = '';
+      }
+      const badge = document.getElementById(`evHospBadge_${evIdx}`);
+      if (badge) badge.innerText = `HP: ${events[evIdx].hospCode || '自訂'}`;
+      const hiddenCode = document.getElementById(`evHospCode_${evIdx}`);
+      if (hiddenCode) hiddenCode.value = events[evIdx].hospCode;
     }
 
     function handleEventHospInput(evIdx, val) {
@@ -1046,8 +1179,25 @@
         const toggleEl = document.getElementById(`evToggle_${evIdx}`);
         if (toggleEl) ev.enabled = toggleEl.checked;
 
-        const hospEl = document.querySelector(`#eventCard_${evIdx} input[placeholder*="國泰綜合醫院汐止分院"]`);
-        if (hospEl && hospEl.value.trim()) ev.hospName = hospEl.value.trim();
+        const hospSel = document.getElementById(`evHospSelect_${evIdx}`);
+        if (hospSel) {
+          if (hospSel.value === '__custom__') {
+            const customIn = document.getElementById(`evHospCustom_${evIdx}`);
+            if (customIn && customIn.value.trim()) {
+              ev.hospName = customIn.value.trim();
+              const res = resolveHospital(ev.hospName);
+              if (res) ev.hospCode = res.id;
+            }
+          } else if (hospSel.value) {
+            const res = resolveHospital(hospSel.value);
+            if (res) {
+              ev.hospName = res.n;
+              ev.hospCode = res.id;
+            } else {
+              ev.hospName = hospSel.value;
+            }
+          }
+        }
 
         const tbody = document.getElementById(`agendaTbody_${evIdx}`);
         if (tbody) {
