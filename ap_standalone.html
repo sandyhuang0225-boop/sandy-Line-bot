@@ -210,10 +210,13 @@ body {
   <!-- 🌟 模式切換按鈕 🌟 -->
   <div class="d-flex gap-2 p-1 bg-white border rounded-3 shadow-sm mb-3">
     <button type="button" class="btn mode-tab-btn flex-fill active" id="tabEvent" onclick="setMode('EVENT')">
-      <i class="fa-solid fa-chalkboard-user me-1"></i>模式一：Event 醫學研討會 (代號 576 · 講者/主持/Agenda)
+      <i class="fa-solid fa-chalkboard-user me-1"></i>模式一：Event 研討會 (576)
     </button>
     <button type="button" class="btn mode-tab-btn flex-fill text-dark" id="tabDetailing" onclick="setMode('DETAILING')">
-      <i class="fa-solid fa-utensils me-1"></i>模式二：Detailing 拜訪餐敘 (代號 951 · 極速 4 欄位)
+      <i class="fa-solid fa-utensils me-1"></i>模式二：Detailing 餐敘 (951)
+    </button>
+    <button type="button" class="btn mode-tab-btn flex-fill text-dark" id="tabBoth" onclick="setMode('BOTH')">
+      <i class="fa-solid fa-layer-group me-1"></i>模式三：同頁同時展開兩者 (Event + Detailing)
     </button>
   </div>
 
@@ -240,27 +243,56 @@ body {
   <!-- ========================================== -->
   <div id="sectionEvent">
     
-    <!-- 📸 AI 視覺辨識 Agenda 圖片匯入區 📸 -->
-    <div class="ai-upload-hero">
-      <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
-        <div class="text-start">
-          <h5 class="fw-black text-primary mb-1">
-            <i class="fa-solid fa-wand-magic-sparkles me-2"></i>AI 視覺辨識：直接匯入 Agenda 圖片
-          </h5>
-          <span class="text-muted small">
-            把您手邊做好的 Agenda 海報或照片上傳，AI 自動辨識會議名稱、副標題、日期、時間、地點、講者與主持人！
-          </span>
-        </div>
+    <!-- 🌟 上傳 Agenda 照片或 PDF 辨識區 (與 BeSure / 合約生成器完全一致) 🌟 -->
+    <div class="card border-2 border-primary rounded-3 p-3 shadow-sm mb-3 bg-white">
+      <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
         <div>
-          <input type="file" id="agendaImgInput" accept="image/*" class="d-none" onchange="handleAgendaImageUpload(this)">
-          <button type="button" class="btn btn-primary fw-bold px-3 py-2 shadow-sm" onclick="document.getElementById('agendaImgInput').click()">
-            <i class="fa-solid fa-camera me-1"></i>拍照或選取 Agenda 圖片
-          </button>
+          <h5 class="fw-bold text-primary mb-1">
+            <i class="fa-solid fa-wand-magic-sparkles me-2"></i>上傳 Agenda 議程照片或 PDF（AI 視覺辨識）
+          </h5>
+          <span class="text-muted small">由 Google Gemini 視覺 AI 即時辨識海報/照片/PDF，自動帶入會議名稱、日期、地點、外部醫師講者與主持人！</span>
+        </div>
+        <span class="badge bg-success-subtle text-success border border-success fw-bold px-3 py-2">
+          <i class="fa-solid fa-sparkles me-1"></i>Gemini 視覺 AI 已連線
+        </span>
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-6 col-12">
+          <div class="card p-3 border-2 border-primary bg-white shadow-sm h-100">
+            <label for="albumInput" class="form-label fw-bold text-primary fs-6 mb-1 d-block">
+              <i class="fa-solid fa-camera me-2"></i>【步驟 1：選取或拍攝 Agenda 照片】
+            </label>
+            <div class="text-secondary small mb-2">點擊下方按鈕挑選 Agenda 照片：</div>
+            <input type="file" id="albumInput" accept="image/*" class="form-control form-control-lg border-2 border-primary py-2" style="font-size: 1rem; cursor: pointer;" onchange="handleFileChosen(this, '照片')">
+            <div id="albumChosenNotice" class="text-success fw-bold small mt-2" style="display: none;"></div>
+          </div>
+        </div>
+        <div class="col-md-6 col-12">
+          <div class="card p-3 border-2 border-info bg-white shadow-sm h-100">
+            <label for="pdfInput" class="form-label fw-bold text-dark fs-6 mb-1 d-block">
+              <i class="fa-solid fa-file-pdf me-2 text-danger"></i>【步驟 1：或上傳 PDF 檔案】
+            </label>
+            <div class="text-secondary small mb-2">若議程為 PDF，點擊下方選取檔案：</div>
+            <input type="file" id="pdfInput" accept=".pdf,application/pdf" class="form-control form-control-lg border-2 border-info py-2" style="font-size: 1rem; cursor: pointer;" onchange="handleFileChosen(this, 'PDF')">
+            <div id="pdfChosenNotice" class="text-info fw-bold small mt-2" style="display: none;"></div>
+          </div>
         </div>
       </div>
+
+      <!-- 啟動與狀態按鈕 (選取檔案時會自動觸發，亦可隨時手動點擊) -->
+      <div style="background: #e8f5e9; border: 2px solid #2e7d32; padding: 15px; border-radius: 8px; margin-bottom: 12px; text-align: center;">
+        <button id="btnStartAI" type="button" class="btn btn-success btn-lg w-100" style="font-size: 1.2rem; font-weight: bold; padding: 14px; background-color: #2e7d32; border-color: #1b5e20;" onclick="triggerManualAnalysis()">
+          👉【點此立即辨識 Agenda 檔案】
+        </button>
+        <div style="color: #1b5e20; font-weight: bold; margin-top: 8px; font-size: 0.95rem;">
+          ⚡ 選取上方照片或 PDF 後，系統已為您「自動秒速啟動辨識」！亦可隨時點此重試。
+        </div>
+      </div>
+
       <!-- 狀態提示 -->
-      <div id="aiVisionNotice" class="alert alert-info py-2 px-3 mt-3 mb-0 small text-start d-none">
-        <span id="aiVisionMsg"><i class="fa-solid fa-spinner fa-spin me-1"></i>AI 正在高速解析 Agenda 圖片中，請稍候 3 秒...</span>
+      <div id="aiVisionNotice" class="alert alert-info py-2 px-3 mb-0 small text-start d-none">
+        <span id="aiVisionMsg"><i class="fa-solid fa-spinner fa-spin me-1"></i>AI 正在高速解析 Agenda 檔案中，請稍候 3 秒...</span>
       </div>
     </div>
 
@@ -383,6 +415,22 @@ body {
         </button>
         <button type="button" class="btn btn-warning fw-bold px-3 py-2 shadow-sm text-dark" onclick="addCurrentEventToPlan()">
           <i class="fa-solid fa-calendar-plus me-1"></i>加入本月費用規劃清單 (Add Event)
+        </button>
+      </div>
+    </div>
+
+    <!-- 💡 同月若有 Detailing 快速切換橫幅 💡 -->
+    <div class="alert alert-light border d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3 p-3">
+      <div>
+        <i class="fa-solid fa-utensils text-success me-2"></i><strong>同月若有 Detailing 拜訪餐敘 (951)？</strong>
+        <span class="text-muted small">點擊右側按鈕立即切換至 Detailing 4 欄位填寫，或同時展開同頁填寫！</span>
+      </div>
+      <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-success btn-sm fw-bold" onclick="setMode('DETAILING')">
+          前往填寫 Detailing (951)
+        </button>
+        <button type="button" class="btn btn-outline-primary btn-sm fw-bold" onclick="setMode('BOTH')">
+          同頁展開全部
         </button>
       </div>
     </div>
@@ -568,8 +616,16 @@ function setMode(mode) {
   currentMode = mode;
   document.getElementById('tabEvent').classList.toggle('active', mode === 'EVENT');
   document.getElementById('tabDetailing').classList.toggle('active', mode === 'DETAILING');
-  document.getElementById('sectionEvent').style.display = mode === 'EVENT' ? 'block' : 'none';
-  document.getElementById('sectionDetailing').style.display = mode === 'DETAILING' ? 'block' : 'none';
+  if (document.getElementById('tabBoth')) {
+    document.getElementById('tabBoth').classList.toggle('active', mode === 'BOTH');
+  }
+  document.getElementById('sectionEvent').style.display = (mode === 'EVENT' || mode === 'BOTH') ? 'block' : 'none';
+  document.getElementById('sectionDetailing').style.display = (mode === 'DETAILING' || mode === 'BOTH') ? 'block' : 'none';
+
+  if (mode === 'DETAILING') {
+    const el = document.getElementById('sectionDetailing');
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  }
   calculateAll();
 }
 
@@ -829,8 +885,13 @@ function readFileAsBase64(file) {
       try {
         const result = reader.result;
         const base64 = result.split(',')[1];
-        let mime = file.type || 'image/jpeg';
-        if (!mime || mime.includes('heic') || mime.includes('heif')) {
+        let mime = file.type;
+        if (!mime || mime === 'application/octet-stream') {
+          if (file.name.toLowerCase().endsWith('.pdf')) mime = 'application/pdf';
+          else if (file.name.toLowerCase().endsWith('.png')) mime = 'image/png';
+          else mime = 'image/jpeg';
+        }
+        if (mime.includes('heic') || mime.includes('heif')) {
           mime = 'image/jpeg';
         }
         resolve({ base64, mimeType: mime });
@@ -847,9 +908,50 @@ function compressImage(file) {
   return readFileAsBase64(file);
 }
 
+let currentSelectedFile = null;
+
+function handleFileChosen(input, typeLabel) {
+  if (input.files && input.files.length > 0) {
+    currentSelectedFile = input.files[0];
+    const notice = document.getElementById(typeLabel === '照片' ? 'albumChosenNotice' : 'pdfChosenNotice');
+    if (notice) {
+      notice.innerHTML = `<i class="fa-solid fa-circle-check me-1"></i>已選取${typeLabel}：<strong>${currentSelectedFile.name}</strong><br><span style="color:#059669; font-weight:bold;">⚡ AI 視覺辨識已自動為您啟動，請稍候 3 秒...</span>`;
+      notice.style.display = 'block';
+    }
+
+    const otherNotice = document.getElementById(typeLabel === '照片' ? 'pdfChosenNotice' : 'albumChosenNotice');
+    if (otherNotice) otherNotice.style.display = 'none';
+
+    triggerManualAnalysis();
+  }
+}
+
 async function handleAgendaImageUpload(input) {
-  if (!input.files || input.files.length === 0) return;
-  const file = input.files[0];
+  handleFileChosen(input, '照片');
+}
+
+async function triggerManualAnalysis() {
+  let file = currentSelectedFile;
+  if (!file) {
+    const albumEl = document.getElementById('albumInput');
+    const pdfEl = document.getElementById('pdfInput');
+    if (albumEl && albumEl.files && albumEl.files.length > 0) file = albumEl.files[0];
+    else if (pdfEl && pdfEl.files && pdfEl.files.length > 0) file = pdfEl.files[0];
+  }
+
+  if (!file) {
+    alert("請先於【步驟 1】點選「挑選 Agenda 照片」或「上傳 PDF 檔案」！");
+    const albumEl = document.getElementById('albumInput');
+    if (albumEl) albumEl.click();
+    return;
+  }
+
+  const btn = document.getElementById('btnStartAI');
+  if (btn) {
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin me-2"></i>視覺 AI 正在深度辨識 ${file.name} 中...`;
+    btn.style.backgroundColor = '#d97706';
+    btn.style.borderColor = '#b45309';
+  }
 
   const notice = document.getElementById('aiVisionNotice');
   const msg = document.getElementById('aiVisionMsg');
@@ -1052,6 +1154,13 @@ async function handleAgendaImageUpload(input) {
     console.error(e);
     notice.className = 'alert alert-warning py-2 px-3 mt-3 mb-0 small text-start';
     msg.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-warning me-1"></i>辨識提示：${e.message}。您可以直接在下方表格修改欄位。`;
+  } finally {
+    const btn = document.getElementById('btnStartAI');
+    if (btn) {
+      btn.innerHTML = `👉【點此立即辨識 Agenda 檔案】`;
+      btn.style.backgroundColor = '#2e7d32';
+      btn.style.borderColor = '#1b5e20';
+    }
   }
 }
 
@@ -1410,10 +1519,7 @@ function addCurrentDetailingToPlan(silent = false) {
   monthlyPlanList.push(item);
   renderCartTable();
   if (!silent) {
-    alert(`✅ 已成功將「${item.title}」加入本月清單！(目前共 ${monthlyPlanList.length} 場活動)`);
-    if (confirm('是否清空當前欄位，繼續輸入下一場活動？')) {
-      clearDetailingForm();
-    }
+    alert(`✅ 已成功將「${item.title}」加入本月費用規劃清單！\n目前清單共有 ${monthlyPlanList.length} 場活動，下方預算清單已同步更新！`);
   }
 }
 
@@ -1484,7 +1590,7 @@ function renderCartTable() {
 // ========================================================
 // 🌟 核心引擎：生成整月合併官方母檔 Excel (.xlsx) 🌟
 // ========================================================
-async async function generateMergedOfficialExcel(btn) {
+async function generateMergedOfficialExcel(btn) {
   syncAgendaFromDOM();
 
   const currentEvent = buildEventPlanFromCurrentForm();
