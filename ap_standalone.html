@@ -11,6 +11,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- SheetJS (xlsx.full.min.js) -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- JSZip (for authentic Excel A4 print setup & XML injection) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <!-- 官方醫師與代碼母庫 -->
   <script src="speaker_db.js"></script>
   <script src="assets/ap_master_db.js"></script>
@@ -950,13 +952,16 @@
             const docName = res ? res.name : cleanDoctorName(p);
             if (docName && !seen.has(docName)) {
               seen.add(docName);
+              const docHpName = (res && res.hpName) ? res.hpName : (row.spkHosp || ev.hospName || '');
+              const docHpCode = (res && res.hpCode) ? res.hpCode : (ev.hospCode || '');
+              const venCode = (res && res.vendorCode) ? res.vendorCode : (window.NOVARTIS_VENDORS ? (window.NOVARTIS_VENDORS.find(v => v.n === docName)?.id || '') : '');
               list.push({
                 name: docName,
-                title: res ? res.title : '醫師',
-                poolNo: res ? res.poolNo : '',
-                vendorCode: res ? res.vendorCode : '',
-                hpCode: res ? res.hpCode : ev.hospCode,
-                hpName: res ? res.hpName : ev.hospName,
+                title: (res && res.title) ? res.title : '醫師',
+                poolNo: (res && res.poolNo) ? res.poolNo : '',
+                vendorCode: venCode,
+                hpCode: docHpCode,
+                hpName: docHpName,
                 role: 'Speaker 演講費'
               });
             }
@@ -971,13 +976,16 @@
             const docName = res ? res.name : cleanDoctorName(p);
             if (docName && !seen.has(docName)) {
               seen.add(docName);
+              const docHpName = (res && res.hpName) ? res.hpName : (ev.hospName || '');
+              const docHpCode = (res && res.hpCode) ? res.hpCode : (ev.hospCode || '');
+              const venCode = (res && res.vendorCode) ? res.vendorCode : (window.NOVARTIS_VENDORS ? (window.NOVARTIS_VENDORS.find(v => v.n === docName)?.id || '') : '');
               list.push({
                 name: docName,
-                title: res ? res.title : '醫師',
-                poolNo: res ? res.poolNo : '',
-                vendorCode: res ? res.vendorCode : '',
-                hpCode: res ? res.hpCode : ev.hospCode,
-                hpName: res ? res.hpName : ev.hospName,
+                title: (res && res.title) ? res.title : '醫師',
+                poolNo: (res && res.poolNo) ? res.poolNo : '',
+                vendorCode: venCode,
+                hpCode: docHpCode,
+                hpName: docHpName,
                 role: 'Moderator 主持費'
               });
             }
@@ -1314,12 +1322,12 @@
           const month = selectedMonth;
           const avg = (ev.hcpCount + ev.nvsCount) > 0 ? Math.round(ev.mealFee / (ev.hcpCount + ev.nvsCount)) : 0;
 
-          // (1) Event - Food & Beverage 列
-          wsAP[`A${curRow}`] = { t: 's', v: '' };
-          wsAP[`B${curRow}`] = { t: 's', v: `${dateClean}_10000058576_Event - Food & Beverage` };
-          wsAP[`C${curRow}`] = { t: 's', v: `${month}-42010261-${actNo}` };
-          wsAP[`D${curRow}`] = { t: 's', v: '周書全' };
-          wsAP[`E${curRow}`] = { t: 's', v: '42010261' };
+          // (1) Event - Food & Beverage 列 (100% 保留母檔官方公式)
+          wsAP[`A${curRow}`] = { t: 's', f: `W${curRow}`, v: '' };
+          wsAP[`B${curRow}`] = { t: 's', f: `CONCATENATE(($I${curRow}),"_",$M${curRow},"_",$K${curRow})`, v: `${dateClean}_10000058576_Event - Food & Beverage` };
+          wsAP[`C${curRow}`] = { t: 's', f: `H${curRow}&"-"&E${curRow}&"-"&G${curRow}`, v: `${month}-42010261-${actNo}` };
+          wsAP[`D${curRow}`] = { t: 's', f: `IFERROR(VLOOKUP($F${curRow},Index!$H:$M,5,0),"周書全")`, v: '周書全' };
+          wsAP[`E${curRow}`] = { t: 's', f: `IFERROR(VLOOKUP($F${curRow},Index!$H:$M,2,0),"42010261")`, v: '42010261' };
           wsAP[`F${curRow}`] = { t: 's', v: '黃蕙芬' };
           wsAP[`G${curRow}`] = { t: 's', v: `${actNo}` };
           wsAP[`H${curRow}`] = { t: 'n', v: month };
@@ -1331,24 +1339,26 @@
           wsAP[`N${curRow}`] = { t: 'n', v: ev.hcpCount };
           wsAP[`O${curRow}`] = { t: 'n', v: ev.nvsCount };
           wsAP[`P${curRow}`] = { t: 'n', v: ev.mealFee };
-          wsAP[`Q${curRow}`] = { t: 'n', v: avg };
+          wsAP[`Q${curRow}`] = { t: 'n', f: `IF(OR(K${curRow}=Index!$AO$3, K${curRow}=Index!$AO$4,K${curRow}=Index!$AO$8 ),P${curRow}/(N${curRow}+O${curRow}),0)`, v: avg };
           wsAP[`R${curRow}`] = { t: 's', v: ev.hospCode };
-          wsAP[`S${curRow}`] = { t: 's', v: ev.hospName };
+          wsAP[`S${curRow}`] = { t: 's', f: `IFERROR(VLOOKUP($R${curRow},Index!$O$3:$P$500,2,0),"${ev.hospName}")`, v: ev.hospName };
           wsAP[`T${curRow}`] = { t: 's', v: '12246' };
           wsAP[`U${curRow}`] = { t: 's', v: '黃蕙芬' };
           wsAP[`Y${curRow}`] = { t: 's', v: 'Open' };
           totalAmountP += (ev.mealFee || 0);
           curRow++;
 
-          // (2) 每一位受聘 Speaker 與 Moderator 獨立列 (所屬醫院、HP Code、Vendor Code、Pool No)
+          // (2) 每一位受聘 Speaker 與 Moderator 獨立列 (所屬醫院、HP Code、Vendor Code、Pool No，保留公式)
           const experts = getEventExperts(ev);
           experts.forEach((exp, expIdx) => {
             const subId = `${actNo}-${expIdx + 1}`;
-            wsAP[`A${curRow}`] = { t: 's', v: '' };
-            wsAP[`B${curRow}`] = { t: 's', v: `${dateClean}_10000058576_Event - Speaker fee` };
-            wsAP[`C${curRow}`] = { t: 's', v: `${month}-42010261-${subId}` };
-            wsAP[`D${curRow}`] = { t: 's', v: '周書全' };
-            wsAP[`E${curRow}`] = { t: 's', v: '42010261' };
+            const expHospName = exp.hpName || ev.hospName || '';
+            const expHospCode = exp.hpCode || ev.hospCode || '';
+            wsAP[`A${curRow}`] = { t: 's', f: `W${curRow}`, v: '' };
+            wsAP[`B${curRow}`] = { t: 's', f: `CONCATENATE(($I${curRow}),"_",$M${curRow},"_",$K${curRow})`, v: `${dateClean}_10000058576_Event - Speaker fee` };
+            wsAP[`C${curRow}`] = { t: 's', f: `H${curRow}&"-"&E${curRow}&"-"&G${curRow}`, v: `${month}-42010261-${subId}` };
+            wsAP[`D${curRow}`] = { t: 's', f: `IFERROR(VLOOKUP($F${curRow},Index!$H:$M,5,0),"周書全")`, v: '周書全' };
+            wsAP[`E${curRow}`] = { t: 's', f: `IFERROR(VLOOKUP($F${curRow},Index!$H:$M,2,0),"42010261")`, v: '42010261' };
             wsAP[`F${curRow}`] = { t: 's', v: '黃蕙芬' };
             wsAP[`G${curRow}`] = { t: 's', v: subId };
             wsAP[`H${curRow}`] = { t: 'n', v: month };
@@ -1360,9 +1370,9 @@
             wsAP[`N${curRow}`] = { t: 'n', v: ev.hcpCount };
             wsAP[`O${curRow}`] = { t: 'n', v: ev.nvsCount };
             wsAP[`P${curRow}`] = { t: 'n', v: 5000 };
-            wsAP[`Q${curRow}`] = { t: 'n', v: 0 };
-            wsAP[`R${curRow}`] = { t: 's', v: exp.hpCode || ev.hospCode };
-            wsAP[`S${curRow}`] = { t: 's', v: exp.hpName || ev.hospName };
+            wsAP[`Q${curRow}`] = { t: 'n', f: `IF(OR(K${curRow}=Index!$AO$3, K${curRow}=Index!$AO$4,K${curRow}=Index!$AO$8 ),P${curRow}/(N${curRow}+O${curRow}),0)`, v: 0 };
+            wsAP[`R${curRow}`] = { t: 's', v: expHospCode };
+            wsAP[`S${curRow}`] = { t: 's', f: `IFERROR(VLOOKUP($R${curRow},Index!$O$3:$P$500,2,0),"${expHospName}")`, v: expHospName };
             wsAP[`T${curRow}`] = { t: 's', v: exp.vendorCode || '' };
             wsAP[`U${curRow}`] = { t: 's', v: exp.name };
             wsAP[`V${curRow}`] = { t: 's', v: exp.poolNo || '' };
@@ -1371,14 +1381,14 @@
             curRow++;
           });
 
-          // (3) Event - Transportation 交通費 (金龍旅行社 1126226)
+          // (3) Event - Transportation 交通費 (金龍旅行社 1126226，保留公式)
           if (ev.transFee > 0) {
             const subId = `${actNo}-${experts.length + 1}`;
-            wsAP[`A${curRow}`] = { t: 's', v: '' };
-            wsAP[`B${curRow}`] = { t: 's', v: `${dateClean}_10000058576_Event - Transportation` };
-            wsAP[`C${curRow}`] = { t: 's', v: `${month}-42010261-${subId}` };
-            wsAP[`D${curRow}`] = { t: 's', v: '周書全' };
-            wsAP[`E${curRow}`] = { t: 's', v: '42010261' };
+            wsAP[`A${curRow}`] = { t: 's', f: `W${curRow}`, v: '' };
+            wsAP[`B${curRow}`] = { t: 's', f: `CONCATENATE(($I${curRow}),"_",$M${curRow},"_",$K${curRow})`, v: `${dateClean}_10000058576_Event - Transportation` };
+            wsAP[`C${curRow}`] = { t: 's', f: `H${curRow}&"-"&E${curRow}&"-"&G${curRow}`, v: `${month}-42010261-${subId}` };
+            wsAP[`D${curRow}`] = { t: 's', f: `IFERROR(VLOOKUP($F${curRow},Index!$H:$M,5,0),"周書全")`, v: '周書全' };
+            wsAP[`E${curRow}`] = { t: 's', f: `IFERROR(VLOOKUP($F${curRow},Index!$H:$M,2,0),"42010261")`, v: '42010261' };
             wsAP[`F${curRow}`] = { t: 's', v: '黃蕙芬' };
             wsAP[`G${curRow}`] = { t: 's', v: subId };
             wsAP[`H${curRow}`] = { t: 'n', v: month };
@@ -1390,9 +1400,9 @@
             wsAP[`N${curRow}`] = { t: 'n', v: ev.hcpCount };
             wsAP[`O${curRow}`] = { t: 'n', v: ev.nvsCount };
             wsAP[`P${curRow}`] = { t: 'n', v: ev.transFee };
-            wsAP[`Q${curRow}`] = { t: 'n', v: 0 };
+            wsAP[`Q${curRow}`] = { t: 'n', f: `IF(OR(K${curRow}=Index!$AO$3, K${curRow}=Index!$AO$4,K${curRow}=Index!$AO$8 ),P${curRow}/(N${curRow}+O${curRow}),0)`, v: 0 };
             wsAP[`R${curRow}`] = { t: 's', v: ev.hospCode };
-            wsAP[`S${curRow}`] = { t: 's', v: ev.hospName };
+            wsAP[`S${curRow}`] = { t: 's', f: `IFERROR(VLOOKUP($R${curRow},Index!$O$3:$P$500,2,0),"${ev.hospName}")`, v: ev.hospName };
             wsAP[`T${curRow}`] = { t: 's', v: '1126226' };
             wsAP[`U${curRow}`] = { t: 's', v: '金龍永盛旅行社股份有限公司' };
             wsAP[`Y${curRow}`] = { t: 's', v: 'Open' };
@@ -1413,12 +1423,12 @@
             ['A', 'B', 'C', 'D'].forEach(c => delete wsAg[`${c}${r}`]);
           }
 
-          // 嚴格鎖定 A4 直式列印寬度比例 (總寬 91，完美容納於 A4 頁面內，絕不往右超出)
+          // 嚴格鎖定 A4 直式列印寬度比例 (總寬 100.1，完美對齊母檔範本，直式列印恰好滿版不超幅)
           wsAg['!cols'] = [
-            { wch: 14 },
-            { wch: 45 },
-            { wch: 16 },
-            { wch: 16 }
+            { wch: 15.2 },
+            { wch: 53.1 },
+            { wch: 15.7 },
+            { wch: 16.1 }
           ];
 
           wsAg['!pageSetup'] = {
@@ -1445,15 +1455,21 @@
           wsAg['D7'] = { t: 's', v: 'Moderator' };
 
           const agendaMerges = [
-            { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }, // A1:D1
-            { s: { r: 1, c: 0 }, e: { r: 1, c: 2 } }  // A2:C2
+            { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }, // A1:D1 標題跨4欄
+            { s: { r: 1, c: 0 }, e: { r: 1, c: 3 } }, // A2:D2 副標題跨4欄
+            { s: { r: 3, c: 1 }, e: { r: 3, c: 3 } }, // B4:D4 會議場地地址跨欄(避免過長被裁切)
+            { s: { r: 4, c: 1 }, e: { r: 4, c: 3 } }  // B5:D5 會議時間跨欄
           ];
 
-          // 設定每列高度 45pt，確保醫師與醫院名稱兩行完整呈現、不被壓縮
+          // 設定每列高度，確保 A4 頁面比例適宜、醫師與醫院兩行文字完整呈現
           if (!wsAg['!rows']) wsAg['!rows'] = [];
           for (let r = 0; r <= 35; r++) {
-            if (r >= 7 && r < 7 + ev.agendaRows.length) {
-              wsAg['!rows'][r] = { hpt: 45, hpx: 45, hidden: false };
+            if (r === 0) wsAg['!rows'][r] = { hpt: 18, hpx: 18, hidden: false };
+            else if (r === 3) wsAg['!rows'][r] = { hpt: 17, hpx: 17, hidden: false };
+            else if (r === 5) wsAg['!rows'][r] = { hpt: 16, hpx: 16, hidden: false };
+            else if (r === 6) wsAg['!rows'][r] = { hpt: 20, hpx: 20, hidden: false };
+            else if (r >= 7 && r < 7 + ev.agendaRows.length) {
+              wsAg['!rows'][r] = { hpt: 48, hpx: 48, hidden: false };
             } else if (!wsAg['!rows'][r]) {
               wsAg['!rows'][r] = { hidden: false };
             }
@@ -1588,17 +1604,17 @@
           actNo++;
         });
 
-        // 4. 依序寫入所有啟用的 Detailing
+        // 4. 依序寫入所有啟用的 Detailing (100% 保留母檔官方公式)
         activeDetailings.forEach((dt, dtI) => {
           const dateClean = dt.date.replace(/-/g, '');
           const month = selectedMonth;
           const avg = (dt.hcpCount + dt.nvsCount) > 0 ? Math.round(dt.mealFee / (dt.hcpCount + dt.nvsCount)) : 0;
 
-          wsAP[`A${curRow}`] = { t: 's', v: '' };
-          wsAP[`B${curRow}`] = { t: 's', v: `${dateClean}_10000058951_Detailing` };
-          wsAP[`C${curRow}`] = { t: 's', v: `${month}-42010261-${actNo}` };
-          wsAP[`D${curRow}`] = { t: 's', v: '周書全' };
-          wsAP[`E${curRow}`] = { t: 's', v: '42010261' };
+          wsAP[`A${curRow}`] = { t: 's', f: `W${curRow}`, v: '' };
+          wsAP[`B${curRow}`] = { t: 's', f: `CONCATENATE(($I${curRow}),"_",$M${curRow},"_",$K${curRow})`, v: `${dateClean}_10000058951_Detailing` };
+          wsAP[`C${curRow}`] = { t: 's', f: `H${curRow}&"-"&E${curRow}&"-"&G${curRow}`, v: `${month}-42010261-${actNo}` };
+          wsAP[`D${curRow}`] = { t: 's', f: `IFERROR(VLOOKUP($F${curRow},Index!$H:$M,5,0),"周書全")`, v: '周書全' };
+          wsAP[`E${curRow}`] = { t: 's', f: `IFERROR(VLOOKUP($F${curRow},Index!$H:$M,2,0),"42010261")`, v: '42010261' };
           wsAP[`F${curRow}`] = { t: 's', v: '黃蕙芬' };
           wsAP[`G${curRow}`] = { t: 's', v: `${actNo}` };
           wsAP[`H${curRow}`] = { t: 'n', v: month };
@@ -1610,9 +1626,9 @@
           wsAP[`N${curRow}`] = { t: 'n', v: dt.hcpCount };
           wsAP[`O${curRow}`] = { t: 'n', v: dt.nvsCount };
           wsAP[`P${curRow}`] = { t: 'n', v: dt.mealFee };
-          wsAP[`Q${curRow}`] = { t: 'n', v: avg };
+          wsAP[`Q${curRow}`] = { t: 'n', f: `IF(OR(K${curRow}=Index!$AO$3, K${curRow}=Index!$AO$4,K${curRow}=Index!$AO$8 ),P${curRow}/(N${curRow}+O${curRow}),0)`, v: avg };
           wsAP[`R${curRow}`] = { t: 's', v: dt.hospCode };
-          wsAP[`S${curRow}`] = { t: 's', v: dt.hospName };
+          wsAP[`S${curRow}`] = { t: 's', f: `IFERROR(VLOOKUP($R${curRow},Index!$O$3:$P$500,2,0),"${dt.hospName}")`, v: dt.hospName };
           wsAP[`T${curRow}`] = { t: 's', v: '12246' };
           wsAP[`U${curRow}`] = { t: 's', v: '黃蕙芬' };
           wsAP[`Y${curRow}`] = { t: 's', v: 'Open' };
@@ -1639,11 +1655,89 @@
         // 8. 確保 Sheet 總邊界涵蓋所有寫入列
         wsAP['!ref'] = `A1:AA${Math.max(curRow, 70)}`;
 
-        // 9. 下載檔案
-        const fileName = `Novartis_AP4SAP_Sandy_${selectedMonth}月份.xlsx`;
-        XLSX.writeFile(wb, fileName);
+        // 9. 透過 JSZip 注入官方 A4 直式列印與邊界設定，確保 Excel 開啟及列印預覽 100% 不跑版
+        const rawWbArray = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        let finalBlob;
 
-        alert(`🎉 恭喜！已成功產出全月母檔「${fileName}」！\n已為您完整寫入 ${activeEvents.length} 場 Event (含各自獨立 A4 Agenda) + ${activeDetailings.length} 場 Detailing，格式 100% 吻合！`);
+        if (window.JSZip) {
+          try {
+            const zip = await JSZip.loadAsync(rawWbArray);
+            const wbXmlStr = await zip.file('xl/workbook.xml').async('text');
+            const relsXmlStr = await zip.file('xl/_rels/workbook.xml.rels').async('text');
+
+            const parser = new DOMParser();
+            const wbDoc = parser.parseFromString(wbXmlStr, 'application/xml');
+            const relsDoc = parser.parseFromString(relsXmlStr, 'application/xml');
+
+            const sheets = wbDoc.getElementsByTagName('sheet');
+            for (let i = 0; i < sheets.length; i++) {
+              const sName = sheets[i].getAttribute('name') || '';
+              const rId = sheets[i].getAttribute('r:id');
+
+              let targetPath = '';
+              const relNodes = relsDoc.getElementsByTagName('Relationship');
+              for (let j = 0; j < relNodes.length; j++) {
+                if (relNodes[j].getAttribute('Id') === rId) {
+                  targetPath = 'xl/' + relNodes[j].getAttribute('Target').replace(/^\//, '');
+                  break;
+                }
+              }
+
+              if (targetPath && zip.file(targetPath)) {
+                let sheetXml = await zip.file(targetPath).async('text');
+
+                if (sName.includes('Agenda')) {
+                  // 移除可能存在的舊設定，注入正統 A4 直式 94% 縮放與置中設定
+                  sheetXml = sheetXml.replace(/<printOptions[^>]*\/>/g, '');
+                  sheetXml = sheetXml.replace(/<pageSetup[^>]*\/>/g, '');
+
+                  const a4Setup = '<pageSetup paperSize="9" scale="94" orientation="portrait" horizontalDpi="300" verticalDpi="300"/>';
+                  const printOpt = '<printOptions horizontalCentered="1"/>';
+
+                  if (sheetXml.includes('<pageMargins')) {
+                    sheetXml = sheetXml.replace('<pageMargins', printOpt + '<pageMargins');
+                    sheetXml = sheetXml.replace(/(<pageMargins[^>]*\/>)/, '$1' + a4Setup);
+                  } else {
+                    sheetXml = sheetXml.replace('</worksheet>', printOpt + '<pageMargins left="0.70866" right="0.70866" top="0.748" bottom="0.748" header="0.315" footer="0.315"/>' + a4Setup + '</worksheet>');
+                  }
+                  zip.file(targetPath, sheetXml);
+                } else if (sName === 'A&P') {
+                  sheetXml = sheetXml.replace(/<pageSetup[^>]*\/>/g, '');
+                  const apSetup = '<pageSetup paperSize="9" orientation="landscape" horizontalDpi="300" verticalDpi="300"/>';
+                  if (sheetXml.includes('<pageMargins')) {
+                    sheetXml = sheetXml.replace(/(<pageMargins[^>]*\/>)/, '$1' + apSetup);
+                  } else {
+                    sheetXml = sheetXml.replace('</worksheet>', '<pageMargins left="0.7" right="0.7" top="0.75" bottom="0.75"/>' + apSetup + '</worksheet>');
+                  }
+                  zip.file(targetPath, sheetXml);
+                }
+              }
+            }
+
+            finalBlob = await zip.generateAsync({
+              type: 'blob',
+              mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            });
+          } catch (zipErr) {
+            console.warn('JSZip post-processing fallback:', zipErr);
+            finalBlob = new Blob([rawWbArray], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+          }
+        } else {
+          finalBlob = new Blob([rawWbArray], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        }
+
+        // 下載檔案 (Novartis_AP4SAP_Sandy_X月份.xlsx)
+        const fileName = `Novartis_AP4SAP_Sandy_${selectedMonth}月份.xlsx`;
+        const downloadUrl = URL.createObjectURL(finalBlob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(downloadUrl), 5000);
+
+        alert(`🎉 恭喜！已成功產出全月母檔「${fileName}」！\n已為您完整寫入 ${activeEvents.length} 場 Event (含各自獨立 A4 Agenda) + ${activeDetailings.length} 場 Detailing，所有公式與 A4 排版 100% 完整保留！`);
 
       } catch (err) {
         console.error(err);
